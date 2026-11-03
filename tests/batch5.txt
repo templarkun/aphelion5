@@ -1,0 +1,361 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 5: UNITS (structured, machine-oriented)
+# DRAFT 2026-11-03, written by Claude from "unit_list_structured.txt" (conventions
+# E1-E14 and the section defaults), Campaign1.txt (Omega units),
+# company_vessels_structured.txt (Mecha upgrades) and Core Rules 3.4-3.8, 4, 6, 11.1,
+# at the designer's request. Awaiting the designer's agreement; once agreed, copy it
+# into the Project as "claude/Test scenarios batch 5.txt".
+#
+# Every card also has its own card test in the program. This batch holds the cases
+# where a card needs a reading of the rules, so the designer can check them.
+################################################################################
+
+=== FORMAT SPEC ===
+Same as "Test scenarios batch 4.txt". Unless stated: Overload under way (Sentinels,
+Flares and Omega units act there); Company V1, Flagship 6/6/6; "resolve X" = resolve
+X's Alert token.
+
+################################################################################
+=== SECTION: SENTINELS ===
+
+id: T5_SEN_01
+title: S_05 buries itself, then reveals and Boosts a Bot
+source: S_05; Core Rules glossary Bury, 3.4
+map: M1
+given: Overload under way. (0,0): S_05[AL] > fd:B_02 > fd.
+when: resolve S_05
+then: S_05 is buried (beneath B_02's tile). (0,0) is Dark, so it is revealed: B_02. B_02 is a
+      Bot: Boost it (B_02[S1]).
+
+id: T5_SEN_02
+title: S_16 turns once per Sentinel, then Boosts the Bots in its lines of fire
+source: S_16 (arrows 1, 4); unit file E8, E10; Core Rules 3.8
+map: M1
+given: Overload under way. (0,0): S_16[AL] > fd. (1,0): S_01 > fd. (1,-1): B_01 > fd.
+       (0,1): B_01 > fd.
+when: resolve S_16
+then: two Sentinels: S_16 turns 2 sides clockwise (facing 2). Its arrows now point to sides 3
+      and 6: lines of fire (1,0) (upper-right) and (-1,0) (lower-left). Bots in them: B_03 in
+      (-1,0) gets [S1]. S_01 in (1,0) is not a Bot. The B_01s are not in a line of fire.
+
+id: T5_SEN_03
+title: S_20 - no Mecha destroyed: 3 damage to your Flagship
+source: S_20
+map: M1
+given: Overload under way. (0,0): S_20[AL] > fd. (0,1): M_02 > fd. (0,-1): B_01 > fd.
+when: resolve S_20; choose the horizontal row q = 0
+then: 1 damage to every other unit in the row: B_01 destroyed, M_02 [D1], B_03 in (0,2) [D1].
+      No Mecha destroyed: Flagship takes 3. Variant: (0,1): M_01 > fd -> M_01 destroyed, no
+      Flagship damage.
+
+id: T5_SEN_04
+title: S_22's single hit on itself is cancelled by its Barrier
+source: S_22; Core Rules 6.4
+map: M1
+given: Overload under way. (0,0): S_22[AL][BAR] > fd. (0,1): S_01 > fd.
+when: resolve S_22
+then: one hit of 2 (two Sentinels) on S_22: the Barrier cancels it. S_22 has no tokens.
+
+id: T5_SEN_05
+title: S_25 teleports, may rotate, then Boosts every Targeted unit
+source: S_25 (arrows 1, 4); glossary Teleport, Dark sector
+map: M1
+given: Overload under way. (0,0): S_25[AL] > fd. (0,2): cleared.
+when: resolve S_25; teleport to (0,2) (Cleared may be used); choose facing 0
+then: (0,0) is Dark. S_25 is alone in (0,2). Arrow 1 targets (0,1): B_03 [S1]. Arrow 4 points
+      off the Field: nothing.
+assumption: "You may rotate it" lets you choose any of the six facings after the Teleport
+      (keeping it as it was is one of them).
+
+id: T5_SEN_06
+title: S_27 - 5 or more Shields: remove them all and 4 damage to your Flagship
+source: S_27
+map: M1
+given: Overload under way. (0,0): S_27[AL][S3] > fd. Every sector next to it holds a B_03.
+when: resolve S_27
+then: 6 adjacent Bots: Boost S_27 six times (3 + 6 = 9 Shields). It has 5 or more: remove all
+      9, and your Flagship takes 4. Then 1 damage to all Bots: every B_03 [D1].
+
+id: T5_SEN_07
+title: S_21 activates Sleepers and Gyros: they get Alerts during the Overload
+source: S_21; Core Rules 11.1 rule 6, 9.2
+map: M1
+given: Overload under way. (0,0): S_21[AL] > fd. (0,1): P_12 > fd. (1,0): G_05 > fd.
+when: resolve S_21
+then: P_12 [AL] and G_05 [AL]. Resolving G_05's Alert: it Drains (gain 1 Red) and is
+      discarded. End the Overload is offered only after both are resolved.
+
+################################################################################
+=== SECTION: FLARES ===
+
+id: T5_FLR_01
+title: F_02 reveals adjacent Sentinels, strips their Barrier and alerts them
+source: F_02; Core Rules 11.1 rule 1 (card text beats the rulebook), 4.5, 9.2
+map: M1
+given: Overload under way. (0,0): F_02[AL] > fd. (0,1): fd:S_01 > fd. (1,0): fd:B_02 > fd.
+when: resolve F_02 (reveal (0,1) first)
+then: S_01 revealed: it gets its Barrier, then F_02 removes it and gives S_01 an Alert (it acts
+      in this Overload, despite 9.2). B_02 revealed, unchanged.
+
+id: T5_FLR_02
+title: F_06 checks which units are damaged before doing anything
+source: F_06
+map: M1
+given: Overload under way. (0,0): F_06[AL] > fd. (0,-1): B_01[D1] > fd. (0,1): B_02 > fd.
+when: resolve F_06; choose the horizontal row q = 0
+then: B_01 loses its Damage (Strength 1, no hit). B_02 [D1], B_03 in (0,2) [D1]. F_06 itself
+      cannot be damaged.
+
+id: T5_FLR_03
+title: F_08 hits only the revealed units whose type appears twice
+source: F_08; unit file E3
+map: M1
+given: Overload under way. (0,0): F_08[AL] > fd. (0,1): fd:B_02 > fd. (1,0): fd:B_01 > fd.
+       (1,1): fd:G_05 > fd.
+when: resolve F_08; reveal (0,1), (1,0), (1,1)
+then: two Bots and a Gyro: B_02 [D1], B_01 destroyed, G_05 unchanged.
+      Variant: stop after one Reveal -> one unit, nothing to damage.
+
+id: T5_FLR_04
+title: F_17 checks Strength first, then hits or Boosts
+source: F_17
+map: M1
+given: Overload under way. (0,0): F_17[AL] > fd. (0,1): B_01 > fd. (1,0): B_02[D1] > fd.
+when: resolve F_17
+then: B_01 (Strength 1) gets [S1]. B_02 (Strength 1) gets its Damage removed. Every B_03 next to
+      F_17 (Strength 3) gets [D1].
+
+id: T5_FLR_05
+title: F_24 hits every unit tied for the highest Strength
+source: F_24; unit file E4
+map: M1
+given: Overload under way. Every other sector cleared. (0,0): F_24[AL] > fd. (0,1): B_03 > fd.
+       (1,0): B_02[S1] > fd. (1,1): B_01 > fd.
+when: resolve F_24
+then: B_03 and B_02 (both Strength 3) take 1 each: B_03 [D1], B_02 loses its Shield. B_01
+      unchanged.
+
+id: T5_FLR_06
+title: F_25 - an X cost counts as its minimum
+source: F_25; unit file E11
+map: M1
+given: Overload under way. (0,0): F_25[AL] > fd. Debris Sifter (Module 54, cost X) and Charged
+       Beam (cost 4) ready.
+when: resolve F_25
+then: the lowest cost is Debris Sifter (X counts as 1): 3 Blue energy on it.
+
+################################################################################
+=== SECTION: SLEEPERS ===
+
+id: T5_SLP_01
+title: P_07 - most abundant type other than Bot and Flare; Wrecks count
+source: P_07; unit file E4
+map: M1
+given: Overload under way. (0,0): P_07[AL] > fd. (0,1): G_05 > fd. (1,0): G_01 Wreck [WR][AL] > fd.
+       (1,1): S_01 > fd.
+when: resolve P_07
+then: Gyros 2 (with the Wreck), Sentinels 1, Sleepers 1: Gyros. G_05 destroyed (a Wreck [WR][AL]);
+      the G_01 Wreck is not damaged.
+
+id: T5_SLP_02
+title: P_08 - exactly one unit of a type takes 2; it may be P_08 itself
+source: P_08; CLAUDE.md "an effect finishes even if its own unit is destroyed"
+map: M1
+given: Every other sector cleared. (0,0): P_08[AL] > fd. (0,1): B_01 > fd. (1,0): S_01 > fd.
+       (1,1): S_01 > fd.
+when: Resolve Alerts: P_08
+then: one Bot: B_01 destroyed. Step 2, counted when it starts: one Sleeper (P_08 itself) takes 2
+      and is destroyed; two Sentinels: nothing. P_08 is in the Discard.
+assumption: step [2] counts each other type once, when step [2] starts (E4).
+
+id: T5_SLP_03
+title: P_15 - one unit of each type on the Field, Omega included
+source: P_15; unit file E2
+map: M1
+given: Every other sector cleared. (0,0): P_15[AL] > fd. (0,1): B_02 > fd. (1,0): O_01 > fd.
+       (1,1): G_05 > fd.
+when: Resolve Alerts: P_15
+then: B_02 [D1], O_01 [D1], G_05 destroyed (a Wreck [WR][AL]), and one Sleeper: P_15 itself
+      (the only Sleeper) takes 1 and is destroyed.
+assumption: P_15 counts as "one Sleeper" while it resolves, so it must damage itself when it is
+      the only Sleeper (E2: mandatory targets include your own units).
+
+id: T5_SLP_04
+title: P_24 with no damaged Sentinel
+source: P_24
+map: M1
+given: Every other sector cleared. (0,0): P_24[AL] > fd. (0,1): S_01 > fd.
+when: Resolve Alerts: P_24
+then: OPEN (open question Q5). Until answered the program stops with an error naming Q5.
+issue: OPEN - "Choose the Sentinel with the most Damage tokens" when no Sentinel has one: is a
+      Sentinel chosen anyway (all tied at 0), or does nothing happen?
+
+id: T5_SLP_05
+title: P_25 flips token-free neighbours face down, Flares too
+source: P_25; unit file rule 10; CLAUDE.md "Flares may be flipped"
+map: M1
+given: Every other sector cleared. (0,0): P_25[AL] > fd. (0,1): B_02 > fd. (1,0): F_01 > fd.
+       (-1,1): B_03[D1] > fd. (-1,0): M_01 > fd.
+when: Resolve Alerts: P_25
+then: B_02, F_01 and M_01 are flipped face down: (0,1), (1,0), (-1,0) are Dark. B_03 (it has a
+      Damage token) stays. The player has seen the flipped tiles: they stay "known".
+
+id: T5_SLP_06
+title: P_19 runs the cheapest Module you could run now, for free
+source: P_19; Core Rules 5.3
+map: M1
+given: Every other sector cleared. (0,0): P_19[AL] > fd. (0,1): B_01 > fd. Demolition Blast ready
+       (light, cost 3). Charged Beam ready (red, cost 4).
+when: Resolve Alerts: P_19
+then: Command phase: only Demolition Blast could be run: it runs without paying (Reserve
+      unchanged; it is exhausted). Choose B_01 for the 2 damage: destroyed. No Bot is left to
+      destroy.
+assumption: "could run right now" means ready and the right background for the phase; the cost
+      does not matter, since it is run for free.
+
+################################################################################
+=== SECTION: GYROS ===
+
+id: T5_GYR_01
+title: A Gyro's Drain never affects that Gyro itself
+source: G_10; unit file Gyro drain_self_rule
+map: M1
+given: Every other sector cleared. (0,0): G_10 > fd. (0,1): S_01 > fd. (1,0): B_01 > fd.
+when: Drain G_10
+then: S_01 [S1]. G_10 is not Boosted (and is discarded). B_01 is a Bot: unchanged.
+
+id: T5_GYR_02
+title: G_11 Drain - discard now, reveal, Boost twice
+source: G_11
+map: M1
+given: (0,0): G_11 > fd:B_01 > fd.
+when: Drain G_11
+then: G_11 to the Discard. (0,0) is Dark: reveal B_01. Boost it twice: B_01[S2].
+
+id: T5_GYR_03
+title: G_14 destroyed in the Command phase starts an Overload after its effect
+source: G_14; Core Rules 8.3, 9.1
+map: M1
+given: Command phase. (0,0): G_14 Wreck [WR][AL] > fd. (0,1): S_01 > fd.
+when: Resolve Alerts
+then: G_14's Destroyed effect asks for an Overload; G_14 goes to the Discard; then the Overload
+      starts: S_01 [AL].
+
+id: T5_GYR_04
+title: G_30 destroyed - damage any number of the revealed units
+source: G_30
+map: M1
+given: Command phase. (0,0): G_30 Wreck [WR][AL] > fd. (0,1): fd:B_01 > fd. (1,0): fd:M_01 > fd.
+       (1,1): fd:B_02 > fd.
+when: Resolve Alerts; reveal (0,1), (1,0), (1,1); choose B_01 and B_02
+then: B_01 destroyed, B_02 destroyed; M_01 (your Mecha) spared.
+
+id: T5_GYR_05
+title: G_36 Drain reveals every Dark sector; a Flare starts an Overload afterwards
+source: G_36; Core Rules 4.6, 9.1, 4.4
+map: M1
+given: Command phase. (0,0): G_36 > fd. (0,1): fd:F_01 > fd. (1,0): fd:P_12 > fd. Every other
+       sector as default.
+when: Drain G_36
+then: (0,1) and (1,0) are revealed, one at a time, in your order. F_01 has no ready Module for
+      its energy (it stays in the Supply). Once both are revealed no Dark sector is left: P_12
+      gets [AL] at once. Then G_36 is discarded and (0,0) is Dark again; P_12 keeps its Alert.
+      After the Drain, the Overload starts: F_01 [AL]; P_12's Alert carries into it.
+
+################################################################################
+=== SECTION: OMEGA UNITS ===
+
+id: T5_OMG_01
+title: O_02 destroys an Alpha and Boosts itself Strength + 1 times
+source: Campaign1.txt O_02; Core Rules 3.3, 4.8, 6.2
+map: M3
+given: Overload under way. Shield supply 2. (0,0): O_02[AL] > fd. (0,1): O_01[D1] > fd.
+when: resolve O_02
+then: O_01 (Strength 2) is destroyed and becomes a Wreck [WR][AL]. O_02 Boosts itself 3 times:
+      2 Shields from the Supply, then none is left: 1 damage to your Flagship.
+
+id: T5_OMG_02
+title: O_02 with no Alpha on the Field
+source: Campaign1.txt O_02
+map: M3
+given: Overload under way. (0,0): O_02[AL] > fd.
+when: resolve O_02
+then: OPEN (open question Q4). Until answered the program stops with an error naming Q4.
+issue: OPEN - "Destroy one Alpha unit. Boost self once per point of the destroyed unit's
+      Strength just before it was destroyed, plus one." With no Alpha: does O_02 still Boost
+      itself once ("plus one"), or does nothing happen?
+
+################################################################################
+=== SECTION: MECHA ===
+
+id: T5_MCH_01
+title: M_02 Expend hits all units in its lines of fire
+source: M_02 (arrows 1, 3); Core Rules 3.6, 3.8
+map: M1
+given: Command phase. (0,0): M_02 > fd.
+when: Command M_02: its Expend ability
+then: arrow 1: (0,-1) -> B_03 [D1]. Arrow 3: (1,0) -> B_03 [D1]. M_02 is destroyed.
+
+id: T5_MCH_02
+title: M_03 may Move before an Attack; Attack is legal if a target exists after the Move
+source: M_03; unit file Mecha passive_attack_rule
+map: M1
+given: Command phase. Every other sector cleared. (0,0): M_03 > fd. (0,2): B_01 > fd.
+       (0,1): fd.
+when: Command M_03: Attack; Move to (0,1) first; Attack B_01
+then: M_03 cannot reach B_01 from (0,0), but after moving to (0,1) it can: Attack is offered.
+      B_01 takes a hit of 2 and is destroyed. M_03 is destroyed.
+assumption: only Moves after which there is something to Attack are offered, so an Attack is
+      never started that cannot finish.
+
+id: T5_MCH_03
+title: M_04 Attacks at any distance in a straight line
+source: M_04
+map: M1
+given: Command phase. Every other sector cleared. (0,-1): M_04 > fd. (0,2): B_02 > fd.
+       (0,0): fd.
+when: Command M_04: Attack B_02
+then: B_02 takes a hit of 3: destroyed. The Dark sector between them is ignored.
+
+id: T5_MCH_04
+title: M_05 Jumps over a line of units; a gap stops it
+source: M_05; Core Rules 3.8
+map: M1
+given: Command phase. (0,-1): M_05 > fd. (0,0): B_01 > fd. (0,1): B_01 > fd. (0,2): cleared.
+when: Command M_05: Jump
+then: to the right: past (0,0) and (0,1), lands on (0,2). Other directions where the next sector
+      after the units is off the Field are not offered.
+
+id: T5_MCH_05
+title: M_06 may Swap with a token-free unit before an Attack
+source: M_06
+map: M1
+given: Command phase. Every other sector cleared. (0,-1): M_06 > fd. (0,2): B_02 > fd.
+       (0,1): B_01[D1] > fd. (1,1): B_03 > fd.
+when: Command M_06: Attack; Swap with B_03 in (1,1) first; Attack B_02
+then: M_06 is now in (1,1), B_03 in (0,-1). B_02 takes a hit of 3: destroyed. M_06 is destroyed.
+      B_01 (it has a token) could not be swapped with.
+
+id: T5_MCH_06
+title: M_07's chain of hits, each step optional after the first
+source: M_07
+map: M1
+given: Command phase. Every other sector cleared. (0,0): M_07 > fd. (0,1): B_01 > fd.
+       (0,2): B_02 > fd. (1,1): B_03 > fd.
+when: Command M_07: Expend; B_01, then B_02, then B_03
+then: B_01 destroyed; B_02 [D1] (adjacent to B_01's sector); B_03 [D1] (adjacent to B_02's
+      sector). M_07 is destroyed.
+
+id: T5_MCH_07
+title: V1_M04_U2 - after M_04 destroys a unit, you may Reveal the tile beneath
+source: V1_M04_U2, V1_M04_U2A
+map: M1
+given: Command phase. V1_M04_U2 filled. Every other sector cleared. (0,0): M_04 > fd.
+       (0,1): B_01 > fd:B_02 > fd.
+when: Command M_04: Attack B_01; yes, Reveal
+then: B_01 destroyed; reveal B_02 in (0,1); it is a Bot: 1 damage (B_02[D1]).
+      Variant: V1_M04_U2A filled too -> 2 damage: B_02 destroyed.
+assumption: "the tile that was underneath it" can be revealed only when the destroyed unit
+      left its sector (not a Wreck) and the tile now on top is face down.
+
+=== END OF FILE ===
