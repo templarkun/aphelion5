@@ -1,0 +1,320 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 4: OVERLOADS (structured, machine-oriented)
+# DRAFT 2026-11-03, written by Claude from Core Rules 4.2, 4.5, 4.6, 4.8, 5.2, 5.5,
+# 6.6, 8.2, 9.1-9.3 and 11.1, and from "Anomaly list.txt", at the designer's request.
+# Awaiting the designer's agreement; once agreed, copy it into the Project as
+# "claude/Test scenarios batch 4.txt".
+#
+# Batch 1 already covers part of this stage and is not repeated here:
+#   T_OVL_01 (kill a Sentinel before it fires), T_OVL_02 (Overloads never stack),
+#   T_OVL_04 (objective met mid-Overload), T_SHIP_01 (Crippled, rescued by an Anomaly),
+#   T_TOK_06 step 5 (Alerts made at Overload End are resolved in the Command phase).
+################################################################################
+
+=== FORMAT SPEC ===
+Same as "Test scenarios batch 1.txt". Summary:
+1. Records of "key: value" lines, separated by one blank line, starting with "id:".
+2. KEY ORDER: id, title, source, map, given, when, then, rule, assumption, issue, note
+3. map: a Campaign 1 map (M1 = C1_M1). Only the shape is used.
+4. given: stacks top first, "(q,r): TOP > next > ... > bottom". Tokens as in batch 1.
+   Sectors not listed: face-up B_03 with a tile beneath. Unless stated: Company V1,
+   Flagship 6/6/6, one empty Overhaul slot, token supplies full, Reserve empty, no
+   Modules, 6 Command tokens, no Anomaly cards, the mission's own Order only.
+   "Overload under way" = the Overload has started (9.1 already done).
+   "Overload ending" = you have just chosen to end the Overload: Overload End (9.3)
+   starts at step 1.
+5. when / then / rule / assumption / issue / note: as in batch 1.
+6. "Overload actions" lists the action menu of Core Rules 9.2. Concede is always offered
+   as well (Core Rules 10.3: "You may concede at any time").
+7. Card effects used here: S_01, S_12, F_01, F_04, F_13, P_05, O_01, O_03, the Energy
+   Gyros, M_01, M_02 with V1_M02_U2, Charged Beam (Module 26), Demolition Blast
+   (Module 1), V2 Bay 5. They are built early, in stage 4, so these tests can run.
+
+################################################################################
+=== SECTION: STARTING AN OVERLOAD ===
+
+id: T4_STA_01
+title: A Flare revealed in the Command phase starts an Overload; who is alerted
+source: Core Rules 4.6, 9.1; F_01, O_03
+map: M1
+given: Command phase. (0,1): fd:F_01 > fd. (0,0): S_01 > fd. (1,0): M_01 > fd.
+       (1,1): O_03 > fd. (1,-1): O_01 > fd. (-1,0): F_04 > fd. (-1,1): G_05 > fd.
+       Charged Beam ready.
+when: Reveal (0,1); place the Power Node's 1 Yellow, 1 Red, 1 Blue on Charged Beam
+then: Charged Beam holds 1 Yellow, 1 Red, 1 Blue. Once the Reveal has finished, an Overload
+      starts. Alerted: F_01 (just revealed), F_04 (a Flare already on the Field), S_01
+      (Sentinel), O_03 (Gamma, "At Overload:" on the Campaign board). Not alerted: M_01,
+      O_01 (Alpha has no At Overload trigger), G_05, every B_03.
+      Overload actions: resolve one of the four Alerts, Concede. End the Overload is not
+      offered (Alerts remain).
+
+id: T4_STA_02
+title: The Overload starts after the current effect; waiting Alerts carry into it
+source: Core Rules 8.3, 9.1; P_05
+map: M1
+given: Command phase. Flagship 6/6/5. (0,0): P_05[AL] > fd. (0,1): G_05 Wreck [WR][AL] > fd.
+       (1,0): S_01 > fd.
+when: Resolve Alerts; choose P_05 first
+then: P_05 [1] asks for an Overload; [2] a Sentinel is on the Field, so remove 1 damage
+      (Flagship 6/6/6). P_05 is discarded ((0,0) Dark). Only then does the Overload start:
+      S_01 gets [AL]. The G_05 Wreck is not resolved in the Command phase: its Alert
+      carries into the Overload and is resolved there.
+rule: "If one of these effects starts an Overload, the Overload begins as soon as that
+      effect finishes. Any Alert tokens still waiting carry into the Overload" (8.3).
+
+id: T4_STA_03
+title: No new Overload during Overload End
+source: Core Rules 9.1 "Overloads never stack", unit file E13
+map: M1
+given: Overload ending.
+when: during an Overload End step, an effect says "Start an Overload"
+then: nothing happens (logged). Overload End finishes and the Command phase begins; no
+      second Overload follows.
+note: no Campaign 1 card can do this at Overload End today (Fuses, Exposure, Bio-shields and
+      Anomaly rewards never start an Overload). The test checks the building block, so a
+      later card cannot break the rule.
+
+################################################################################
+=== SECTION: OVERLOAD ACTIONS ===
+
+id: T4_ACT_01
+title: The Overload action menu
+source: Core Rules 5.3, 5.6, 8.7, 9.2; V2 Bay 5; C1_ORDER_1, C1_ORDER_2
+map: M1
+given: Overload under way. Company V2, Flagship 6/5/4/3/2. (0,0): S_01[AL] > fd.
+       (0,1): M_01 > fd. (1,0): fd. (1,1): G_05 > fd. (-1,0): B_02[BS1] > fd.
+       Charged Beam ready, Demolition Blast ready, Reserve Yellow 3, Red 4. 6 Command tokens.
+       One empty Overhaul slot.
+when: list Overload actions
+then: Resolve S_01's Alert; Run a Module (Charged Beam only: Demolition Blast is light);
+      Use a Bay (Bay 5 only: "[Overload] Remove 1 damage from a unit"); Issue an Order
+      (C1_ORDER_1 and C1_ORDER_2 only: Mission 1's Order is not [Overload]); Concede.
+      Not offered: Command a Mecha (M_01 has no [Overload] ability), Reveal, Drain a Gyro,
+      Drain a Bio-shield, Overhaul, End the Overload (S_01 still has its Alert).
+
+id: T4_ACT_02
+title: Command a Mecha during an Overload: [Overload] abilities only
+source: Core Rules 4.2, 9.2; V1_M02_U2
+map: M1
+given: Overload under way. V1_M02_U2 filled. (0,0): M_02 > fd. (0,1): B_01 > fd. (1,0): fd.
+when: list Overload actions; Command M_02
+then: Command a Mecha is offered. M_02's only option is "[Overload] Command: Teleport to any
+      Dark sector". Attack, Scrap and its "Expend:" ability are not offered. Choose (1,0):
+      M_02 is on top of (1,0); (0,0) is Dark.
+
+id: T4_ACT_03
+title: An alerted Mecha may Attack or Scrap during an Overload
+source: Core Rules 4.2, 9.2; F_13
+map: M1
+given: Overload under way. (0,0): F_13[AL] > fd. (0,1): M_01 > fd. (1,0): B_01 > fd.
+when: resolve F_13 ("Activate all Mecha"); resolve M_01's Alert; choose Attack, target B_01
+then: F_13 gives M_01 an Alert token. Resolving it offers Attack, Scrap and "Command: Move
+      to an adjacent Dark sector". Attack: B_01 takes a hit of 1 and is destroyed; M_01 is
+      destroyed. (0,1) and (1,0) are Dark. F_13 stays on the Field until Overload End.
+rule: "When you resolve an alerted Mecha's Alert token during an Overload, it may Attack or
+      Scrap" (9.2, 4.2).
+
+id: T4_ACT_04
+title: Effects may Reveal during an Overload; the new Sentinel is not alerted
+source: Core Rules 4.5, 9.2; F_04
+map: M1
+given: Overload under way. (0,0): F_04[AL] > fd. (0,1): fd:S_01 > fd.
+when: resolve F_04: reveal (0,1); choose yes, deal 2 damage to S_01
+then: S_01 is revealed with a Barrier and no Alert. The 2-damage hit is cancelled by the
+      Barrier (S_01 has no Barrier and no Damage afterwards). No Alerts remain.
+rule: Reveal is not an action during an Overload, but effects that tell you to Reveal still
+      do it (9.2). A Sentinel revealed during an Overload does not act in it (4.5).
+
+################################################################################
+=== SECTION: ALERTS DURING AN OVERLOAD ===
+
+id: T4_ALR_01
+title: A Flare revealed during an Overload is alerted at once and starts nothing
+source: Core Rules 4.6, 9.1, 9.2; F_04
+map: M1
+given: Overload under way. (0,0): F_04[AL] > fd. (0,1): fd:F_01 > fd. Charged Beam ready.
+when: resolve F_04: reveal (0,1); place the 3 energy on Charged Beam
+then: F_01[AL]. Charged Beam holds 1 Yellow, 1 Red, 1 Blue. F_04's "you may deal 2 damage
+      to it" has nothing to do: F_01 is a Flare and cannot be damaged, so it is not asked.
+      Still the same Overload; End the Overload is not offered until F_01 is resolved
+      (it has no effect: resolving it only removes the Alert).
+assumption: F_04 [2] is skipped without a question when the revealed unit is a Flare or
+      Wreck (11.1 rule 5: do as much as you can).
+
+id: T4_ALR_02
+title: A unit that becomes a Wreck is alerted at once
+source: Core Rules 4.8, 9.2; G_05, Charged Beam
+map: M1
+given: Overload under way. (0,0): G_05 > fd. Charged Beam ready, Reserve Red 4.
+when: run Charged Beam on G_05 (no extra payment possible); list Overload actions;
+      resolve G_05's Alert
+then: G_05 becomes a Wreck [WR][AL]; End the Overload is not offered. Resolving it: gain
+      2 Red energy, G_05 to the Discard, (0,0) Dark. Now End the Overload is offered.
+
+id: T4_ALR_03
+title: Sleepers are alerted when the last Dark sector disappears during an Overload
+source: Core Rules 4.4, 9.2; F_04
+map: M1
+given: Overload under way. (0,0): F_04[AL] > fd. (0,1): fd:B_01. (1,0): P_12 > fd.
+       Every other sector as default, so the sector holding B_01 is the only Dark one.
+when: resolve F_04: reveal (0,1)
+then: no Dark sectors remain: P_12 gets [AL] at once. Choosing to deal 2 damage destroys
+      B_01 and (0,1) is Cleared; P_12 keeps its single Alert.
+
+id: T4_ALR_04
+title: An At Overload unit or Sentinel that appears later is not alerted
+source: Core Rules 3.4, 9.2; O_03, Charged Beam
+map: M1
+given: Overload under way. (0,0): B_01 > O_03 > fd. (0,1): B_01 > S_01 > fd.
+       Charged Beam ready, Reserve Red 7.
+when: run Charged Beam on B_01 in (0,0), paying no extra. Then (setup) destroy B_01 in
+      (0,1) by any effect.
+then: O_03 and S_01 are uncovered with no Alert token (and S_01 gets no Barrier: it was
+      not revealed). End the Overload is offered.
+
+id: T4_ALR_05
+title: An alerted unit destroyed before its Alert resolves
+source: Core Rules 4.8, 9.2, 11.1 rule 6; G_05, Charged Beam
+map: M1
+given: Overload under way. (0,0): G_05[AL] > fd (alerted to Drain). Charged Beam ready,
+       Reserve Red 4.
+when: run Charged Beam on G_05; resolve G_05's Alert
+then: G_05 becomes a Wreck with one Alert [WR][AL]. Resolving it: its Destroyed effect
+      (gain 2 Red), not its Drain (1 Red).
+      A unit with no Destroyed effect loses its Alert effect entirely: see T_OVL_01 (S_01).
+
+################################################################################
+=== SECTION: ENDING THE OVERLOAD ===
+
+id: T4_END_01
+title: End only when no Alerts remain; you may still act first
+source: Core Rules 9.2 "Ending the Overload"
+map: M1
+given: Overload under way. (0,0): S_01[AL] > fd. (0,1): B_02 > fd. Charged Beam ready,
+       Reserve Red 4.
+when: list Overload actions; resolve S_01 (Flagship damage to Bay 1); list Overload actions;
+      run Charged Beam on B_02; end the Overload
+then: first menu: resolve S_01, Run a Module, Concede; no End the Overload. After S_01:
+      Flagship 5/6/6; End the Overload, Run a Module and Concede are offered. Charged Beam
+      destroys B_02 ((0,1) Dark). Then Overload End runs.
+
+################################################################################
+=== SECTION: OVERLOAD END ===
+
+id: T4_OE_01
+title: Fuse tokens go off one at a time, in your order
+source: Core Rules 6.6, 9.3 step 1
+map: M1
+given: Overload ending. (0,0): B_03[FB][MORTAR] > fd. (0,1): B_01 > fd.
+when: Overload End step 1; choose Mortar first (target B_01), then Feedback (Bay 2)
+then: B_01 destroyed ((0,1) Dark). Flagship 6/5/6. Both tokens back in the Supply.
+      More Fuse cases: T_TOK_06 and T_TOK_07 (batch 1).
+
+id: T4_OE_02
+title: Exposure: 1 damage to every unit alone on its plate
+source: Core Rules 4.7, 6.1, 6.4, 9.3 step 2
+map: M1
+given: Overload ending. (0,0): B_02. (0,1): B_02 > fd. (1,0): O_01. (1,1): F_01.
+       (-1,0): G_05 Wreck [WR][AL]. (0,-1): S_01[BAR]. (-1,1): B_01[S1]. (1,-1): M_01.
+       (0,2): B_01 > M_01.
+when: Overload End (no Fuses, no Anomaly cards)
+then: B_02 in (0,0): [D1]. B_02 in (0,1) unchanged (a tile beneath). O_01 unchanged (Omega
+      units are immune). F_01 and the G_05 Wreck ignore it. S_01 loses its Barrier and takes
+      no damage. B_01 in (-1,1) loses its Shield. M_01 in (1,-1) is destroyed (your own
+      Mecha take Exposure too): (1,-1) Cleared. B_01 in (0,2) unchanged: the face-up M_01
+      beneath it is a tile beneath. Step 4: F_01 to the Trophy pile, (1,1) Cleared.
+      Step 5: Command phase; the G_05 Wreck's Alert is resolved there.
+assumption: Exposure is one hit of 1 on each unit (6.1), so a Barrier cancels it and
+      Shields absorb it. All Exposure hits happen together; units are chosen when step 2
+      starts, and any Bio-shield Destroyed effects resolve after the whole step.
+
+id: T4_OE_03
+title: Anomaly: choose one met card, put it at the bottom, choose one reward
+source: Core Rules 5.5, 9.3 step 3; Anomaly 01, 14
+map: M1
+given: Overload ending. Flagship 6/6/2. Anomaly cards 14 and 01 in hand. Anomaly deck: 05.
+       (1,-1), (1,1), (-1,0), (-1,2): cleared. Every other sector as default (6 B_03).
+when: Overload End step 3; choose Anomaly 01; choose the reward "take 6 energy" (6 Red)
+then: both cards are met (6 Bots; 4 Cleared sectors) but only one is used. Anomaly 01 goes
+      to the bottom of the Anomaly deck (deck: 05, 01); Anomaly 14 stays in hand.
+      Reserve Red 6. Flagship and Upgrade track unchanged.
+      Variant: reward "remove 3 damage from your Flagship" -> Flagship 6/6/5.
+      Variant: reward "gain 6 Upgrade points" -> Upgrade track 6.
+assumption: when at least one card is met, using one is not optional ("choose one of those
+      cards", 9.3). The program does not offer "use none". With exactly one met card and
+      auto-answer on, that card is used without a question.
+
+id: T4_OE_04
+title: No Anomaly met: no reward
+source: Core Rules 9.3 step 3; Anomaly 02
+map: M1
+given: Overload ending. Anomaly card 02 in hand. (0,0): M_01 > fd.
+when: Overload End
+then: Anomaly 02 (at least 4 Mecha) is not met: no question, no reward, the card stays.
+
+id: T4_OE_05
+title: Wrecks and Flares count for Anomalies at step 3
+source: Core Rules 4.8, 5.5, 9.3; "Anomaly list.txt" item 2; Anomaly 04, 12
+map: M1
+given: Overload ending. Anomaly cards 12 and 04 in hand. (0,0): S_01 > fd. (0,1): F_01 > fd.
+       (1,0): F_04 > fd. (1,1): F_13 > fd. (-1,0): G_05 > fd. (-1,1): G_08 > fd.
+       (0,-1): G_01 > fd. (1,-1): G_05 Wreck [WR][AL] > fd.
+when: Overload End step 3
+then: Anomaly 12 is met (1 Sentinel + 3 Flares = 4): Flares are still on the Field at step 3.
+      Anomaly 04 is met (3 Gyros + 1 Gyro Wreck = 4): a Wreck counts as a unit of its type.
+      You choose one of the two cards.
+      Variant: the G_05 Wreck is not on the Field -> only Anomaly 12 is met.
+
+id: T4_OE_06
+title: Clear Flares: Power Nodes to the Trophy pile, other Flares to the Discard
+source: Core Rules 3.4, 4.6, 9.3 step 4
+map: M1
+given: Overload ending. (0,0): F_01 > fd. (0,1): F_04. (1,0): F_04 > B_02 > fd.
+when: Overload End
+then: F_01 to the Trophy pile, (0,0) Dark. F_04 in (0,1) to the Discard, (0,1) Cleared
+      (Exposure ignored it). F_04 in (1,0) to the Discard; B_02 is uncovered (not revealed).
+issue: OPEN (open question Q3) - if a Flare is face up directly beneath another Flare, is
+      the uncovered Flare also removed in step 4? Until answered the program stops with an
+      error naming Q3.
+
+id: T4_OE_07
+title: Alerts made at Overload End are resolved in the Command phase
+source: Core Rules 9.3 step 5, 8.1; G_08
+map: M1
+given: Overload ending. (0,0): G_08. (1,0): fd.
+when: Overload End; then Resolve Alerts
+then: G_08 is alone on its plate: Exposure destroys it (Level 1) and it becomes a Wreck
+      [WR][AL]. Step 5: the Command phase begins. Only Resolve Alerts and Overhaul (and
+      Concede) are offered. Resolving it: gain 2 Blue, G_08 to the Discard, (0,0) Cleared.
+      See also T_TOK_06 step 5 (batch 1).
+
+################################################################################
+=== SECTION: CRIPPLED DURING AN OVERLOAD ===
+
+id: T4_CRP_01
+title: Crippled during an Overload: play on, extra damage ignored, no Bays
+source: Core Rules 5.2, 9.2
+map: M1
+given: Overload under way. Company V2, Flagship 0/0/0/0/1. (0,0): S_01[AL] > fd.
+       (0,1): S_01[AL] > fd. One empty Overhaul slot.
+when: resolve S_01 in (0,0); resolve S_01 in (0,1); end the Overload
+then: the first S_01 takes the last Integrity: Crippled (0/0/0/0/0). The second S_01's
+      damage is ignored. The Overload goes on; Use a Bay is never offered (Bay 5 is at 0).
+      Overload End runs in full. Before the first Command phase action: Crippled, so the
+      only actions are Overhaul and Concede.
+      Rescued by an Anomaly instead: T_SHIP_01 (batch 1).
+
+################################################################################
+=== SECTION: OBJECTIVE ===
+
+id: T4_OBJ_01
+title: The objective is not checked during an Overload or Overload End
+source: Core Rules 8.2
+map: M1
+given: Overload under way. Trophy pile: 6 O_01. (0,0): S_01[AL] > fd.
+when: list Overload actions; resolve S_01; end the Overload
+then: the Overload plays on as usual (S_01 deals 1 damage). Only when the Command phase
+      begins is the objective checked: Mission End.
+      Fuller case: T_OVL_04 (batch 1).
+
+=== END OF FILE ===
