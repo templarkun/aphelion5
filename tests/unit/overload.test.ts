@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { commandStep } from "../../src/engine/command.js";
-import { OpenQuestion, runEffect } from "../../src/engine/effect.js";
+import { runEffect } from "../../src/engine/effect.js";
 import { alertedUnits } from "../../src/engine/alerts.js";
 import { sectorState, tile, unitAt } from "../../src/engine/field.js";
 import { checkInvariants } from "../../src/engine/invariants.js";
@@ -264,6 +264,14 @@ describe("batch 4 - OVERLOAD END (9.3)", () => {
     // Variants.
     expect(oend(given("T4_OE_03"), [A.option("01"), A.option("repair")]).state.flagship).toEqual([6, 6, 5]);
     expect(oend(given("T4_OE_03"), [A.option("14"), A.option("upgrade")]).state.sheet.upgradePoints).toBe(6);
+    const none = oend(given("T4_OE_03"), [A.option("none")]).state;
+    expect(none.player.anomalies).toEqual(["14", "01"]);
+    expect(none.decks.anomalies).toEqual(["05"]);
+    expect(none.flagship).toEqual([6, 6, 2]);
+    expect(none.player.reserve).toEqual({ Yellow: 0, Red: 0, Blue: 0 });
+    // Even a single met card is a question: that card, or none.
+    const r = runEffect(data(), given("T4_OE_03", "Anomaly card 14 in hand"), (c) => overloadEnd(c), []);
+    expect(r.status === "question" && optionIds(r.question)).toEqual(["14", "none"]);
   });
 
   it("T4_OE_04 no Anomaly met: no reward", () => {
@@ -276,7 +284,7 @@ describe("batch 4 - OVERLOAD END (9.3)", () => {
     const s0 = given("T4_OE_05");
     expect(metAnomalies(ctx(s0))).toEqual(["12", "04"]);
     const r = runEffect(data(), s0, (c) => overloadEnd(c), []);
-    expect(r.status === "question" && optionIds(r.question)).toEqual(["12", "04"]);
+    expect(r.status === "question" && optionIds(r.question)).toEqual(["12", "04", "none"]);
     expect(metAnomalies(ctx(given("T4_OE_05", "(1,-1): B_03 > fd")))).toEqual(["12"]);
   });
 
@@ -294,8 +302,17 @@ describe("batch 4 - OVERLOAD END (9.3)", () => {
     expect(tokensAt(state, "1,0")).toBe("");
   });
 
-  it("T4_OE_06 issue (open question Q3): a Flare uncovered by step 4 stops the program", () => {
-    expect(() => oend(given("T4_OE_06", "(0,0): F_04 > F_01 > fd"))).toThrow(OpenQuestion);
+  it("T4_OE_06 variant (open question Q3, answered): a Flare uncovered by step 4 is removed too", () => {
+    const s0 = given("T4_OE_06", "(0,0): F_04 > F_01 > fd");
+    const [top, below] = [...s0.field["0,0"]!].reverse();
+    const { state } = oend(s0);
+    expect(state.piles.discard).toContain(top);
+    expect(state.piles.trophy).toContain(below);
+    expect(sectorState(state, "0,0")).toBe("dark");
+    expect(Object.keys(state.field).filter((k) => {
+      const u = unitAt(state, k);
+      return u !== undefined && state.tiles[u]!.unitId!.startsWith("F_");
+    })).toEqual([]);
   });
 
   it("T4_OE_07 Alerts made at Overload End are resolved in the Command phase", () => {
@@ -383,7 +400,7 @@ describe("batch 1 - Overload scenarios", () => {
 
   it("T_SHIP_01 Crippled during an Overload, rescued by an Anomaly", () => {
     const s0 = given("T_SHIP_01");
-    const v = drive(s0, [A.option(`alert:${at(s0, "0,0")}`), A.units(at(s0, "0,1")), A.option("endOverload"), A.option("repair"), A.split({ bay1: 1, bay2: 1, bay3: 1 })]);
+    const v = drive(s0, [A.option(`alert:${at(s0, "0,0")}`), A.units(at(s0, "0,1")), A.option("endOverload"), A.option("14"), A.option("repair"), A.split({ bay1: 1, bay2: 1, bay3: 1 })]);
     expect(v.status).toBe("question");
     if (v.status !== "question") return;
     expect(v.state.phase).toBe("command");

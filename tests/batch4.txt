@@ -1,9 +1,10 @@
 ################################################################################
 # APHELION 5 - TEST SCENARIOS, BATCH 4: OVERLOADS (structured, machine-oriented)
-# DRAFT 2026-11-03, written by Claude from Core Rules 4.2, 4.5, 4.6, 4.8, 5.2, 5.5,
-# 6.6, 8.2, 9.1-9.3 and 11.1, and from "Anomaly list.txt", at the designer's request.
-# Awaiting the designer's agreement; once agreed, copy it into the Project as
-# "claude/Test scenarios batch 4.txt".
+# Written 2026-11-03 by Claude from Core Rules 4.2, 4.5, 4.6, 4.8, 5.2, 5.5, 6.6, 8.2,
+# 9.1-9.3 and 11.1, and from "Anomaly list.txt", at the designer's request. AGREED by
+# the designer 2026-11-03, with one change: using an Anomaly at Overload End is
+# optional (T4_OE_03; Core Rules master rev 131). Q3 answered (T4_OE_06). Copy it into
+# the Project as "claude/Test scenarios batch 4.txt".
 #
 # Batch 1 already covers part of this stage and is not repeated here:
 #   T_OVL_01 (kill a Sentinel before it fires), T_OVL_02 (Overloads never stack),
@@ -243,9 +244,12 @@ then: both cards are met (6 Bots; 4 Cleared sectors) but only one is used. Anoma
       Reserve Red 6. Flagship and Upgrade track unchanged.
       Variant: reward "remove 3 damage from your Flagship" -> Flagship 6/6/5.
       Variant: reward "gain 6 Upgrade points" -> Upgrade track 6.
-assumption: when at least one card is met, using one is not optional ("choose one of those
-      cards", 9.3). The program does not offer "use none". With exactly one met card and
-      auto-answer on, that card is used without a question.
+      Variant: choose none -> both cards stay in hand, the deck is unchanged, no reward.
+rule: "you may choose one of those cards, or none (then nothing happens and every card
+      stays in your hand)" (9.3, master rev 131).
+note: CHANGED 2026-11-03 - the draft assumed using a met card was not optional. The
+      designer decided it is the player's choice, and Core Rules 9.3 step 3 now says so.
+      So even one met card is a question (that card, or none).
 
 id: T4_OE_04
 title: No Anomaly met: no reward
@@ -265,7 +269,7 @@ given: Overload ending. Anomaly cards 12 and 04 in hand. (0,0): S_01 > fd. (0,1)
 when: Overload End step 3
 then: Anomaly 12 is met (1 Sentinel + 3 Flares = 4): Flares are still on the Field at step 3.
       Anomaly 04 is met (3 Gyros + 1 Gyro Wreck = 4): a Wreck counts as a unit of its type.
-      You choose one of the two cards.
+      You choose one of the two cards, or none.
       Variant: the G_05 Wreck is not on the Field -> only Anomaly 12 is met.
 
 id: T4_OE_06
@@ -276,9 +280,10 @@ given: Overload ending. (0,0): F_01 > fd. (0,1): F_04. (1,0): F_04 > B_02 > fd.
 when: Overload End
 then: F_01 to the Trophy pile, (0,0) Dark. F_04 in (0,1) to the Discard, (0,1) Cleared
       (Exposure ignored it). F_04 in (1,0) to the Discard; B_02 is uncovered (not revealed).
-issue: OPEN (open question Q3) - if a Flare is face up directly beneath another Flare, is
-      the uncovered Flare also removed in step 4? Until answered the program stops with an
-      error naming Q3.
+      Variant: (0,0): F_04 > F_01 > fd -> F_04 to the Discard, then the uncovered F_01 to
+      the Trophy pile too; (0,0) Dark. No Flare is left on the Field.
+note: RESOLVED 2026-11-03 (open question Q3) - a Flare uncovered during step 4 is removed
+      as well; after step 4 there is no Flare on the Field.
 
 id: T4_OE_07
 title: Alerts made at Overload End are resolved in the Command phase

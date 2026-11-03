@@ -1,8 +1,8 @@
 ################################################################################
 # APHELION 5 - TEST SCENARIOS, BATCH 3: THE COMMAND PHASE (structured, machine-oriented)
-# DRAFT 2026-11-03, written by Claude from Core Rules 4.2, 5.2, 5.6, 6.3, 8.1-8.8,
-# 9.1 and 10.3, at the designer's request. Awaiting the designer's agreement;
-# once agreed, copy it into the Project as "claude/Test scenarios batch 3.txt".
+# Written 2026-11-03 by Claude from Core Rules 4.2, 5.2, 5.6, 6.3, 8.1-8.8, 9.1 and
+# 10.3, at the designer's request. AGREED by the designer 2026-11-03, including the
+# T3_REV_01 assumption. Copy it into the Project as "claude/Test scenarios batch 3.txt".
 ################################################################################
 
 === FORMAT SPEC ===

@@ -9,7 +9,7 @@
  */
 
 import type { AnomalyDef, AnomalyTerm } from "../data/anomalies.js";
-import { type Effect, OpenQuestion, type RunCtx, ask, asEffect, log, registerRoot } from "./effect.js";
+import { type Effect, type RunCtx, ask, asEffect, log, registerRoot } from "./effect.js";
 import { alertedUnits, resolveAlert } from "./alerts.js";
 import {
   ACTION_LABEL,
@@ -23,7 +23,7 @@ import {
   usableOrders,
   useBay,
 } from "./command.js";
-import { type Ctx, describe, isFlare, isWreck, sectorKeys, sectorState, stack, tile, topTileId, unitDef, unitType, units } from "./field.js";
+import { type Ctx, describe, isFlare, isWreck, sectorKeys, sectorState, stack, topTileId, unitDef, unitType, units } from "./field.js";
 import { commandMecha } from "./mecha.js";
 import { canRunModule, moduleDef, runModule } from "./modules.js";
 import type { Option } from "./questions.js";
@@ -151,7 +151,11 @@ export const ANOMALY_REWARDS: Option[] = [
   { id: "upgrade", label: "Gain 6 Upgrade points" },
 ];
 
-/** Overload End step 3: if any card is met, choose one, put it at the bottom of the deck, choose one reward. */
+/**
+ * Overload End step 3: if any card is met, you may choose one (or none),
+ * put it at the bottom of the deck and choose one reward. Using none was
+ * the designer's decision of 2026-11-03 (Core Rules master rev 131).
+ */
 function* anomalyStep(c: RunCtx): Effect {
   const met = metAnomalies(c);
   if (met.length === 0) {
@@ -160,11 +164,15 @@ function* anomalyStep(c: RunCtx): Effect {
   }
   const a = yield* ask(c, {
     kind: "option",
-    prompt: "Anomaly: choose one of your met cards.",
+    prompt: "Anomaly: choose one of your met cards, or none.",
     rule: "9.3",
-    options: met.map((id) => ({ id, label: `Anomaly ${id}: ${anomalyDef(c, id).text}` })),
+    options: [...met.map((id) => ({ id, label: `Anomaly ${id}: ${anomalyDef(c, id).text}` })), { id: "none", label: "None: keep all your cards, no reward" }],
   });
   const card = a.value as string;
+  if (card === "none") {
+    log(c, "you use no Anomaly card", "9.3");
+    return;
+  }
   c.state.player.anomalies.splice(c.state.player.anomalies.indexOf(card), 1);
   c.state.decks.anomalies.push(card);
   log(c, `Anomaly ${card} is met: it goes to the bottom of the Anomaly deck`, "9.3");
@@ -210,19 +218,21 @@ function isPowerNode(c: Ctx, u: TileId): boolean {
   return (unitDef(c, u).fields["removal_exception"] ?? "").includes("Trophy");
 }
 
-/** Step 4: remove every Flare unit. */
+/**
+ * Step 4: remove every Flare unit. A Flare uncovered by this step is removed
+ * too, so no Flare is left on the Field (designer, open question Q3).
+ */
 function clearFlares(c: Ctx): void {
-  const flares = units(c.state).filter((u) => isFlare(c, u));
+  let flares = units(c.state).filter((u) => isFlare(c, u));
   if (flares.length === 0) log(c, "no Flare on the Field", "9.3");
-  for (const f of flares) {
-    const pile = isPowerNode(c, f) ? "trophy" : "discard";
-    log(c, `${describe(c, f)} goes to the ${pile === "trophy" ? "Trophy pile" : "Discard"}`, "9.3");
-    const k = removeFromField(c, f, pile);
-    const top = topTileId(c.state, k);
-    if (top !== undefined && tile(c.state, top).faceUp && isFlare(c, top)) {
-      throw new OpenQuestion("Q3", `removing ${tile(c.state, f).unitId} in (${k}) uncovers the Flare ${tile(c.state, top).unitId}; is it removed in step 4 too?`);
+  while (flares.length > 0) {
+    for (const f of flares) {
+      const pile = isPowerNode(c, f) ? "trophy" : "discard";
+      log(c, `${describe(c, f)} goes to the ${pile === "trophy" ? "Trophy pile" : "Discard"}`, "9.3");
+      const k = removeFromField(c, f, pile);
+      afterTopTileLeaves(c, k);
     }
-    afterTopTileLeaves(c, k);
+    flares = units(c.state).filter((u) => isFlare(c, u));
   }
 }
 

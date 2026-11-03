@@ -646,7 +646,7 @@ Do these steps in order:
 
 1. **Fuse tokens.** Every Fuse token on the Field goes off, in the order you choose (see 6.6).
 2. **Exposure.** Every unit standing alone on its sector plate, with no tiles beneath it, takes 1 damage. Omega units are immune. Flares and Wrecks ignore it as usual.
-3. **Anomaly.** If any of your Anomaly cards' requirements are met right now, choose **one** of those cards. Put it on the bottom of the Anomaly deck and choose one reward:
+3. **Anomaly.** If any of your Anomaly cards' requirements are met right now, you may choose **one** of those cards, or none (then nothing happens and every card stays in your hand). Put the chosen card on the bottom of the Anomaly deck and choose one reward:
    - Remove 3 damage from your Flagship, **or**
    - take 6 energy in any mix of colours, **or**
    - gain 6 Upgrade points.
