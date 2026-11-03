@@ -42,6 +42,7 @@ Each stage ends with all its tests passing and a short report to the designer. R
 
 - 2026-11-03: Stage 2 (state and tokens) done: `src/engine/` (state, effects as generators + pure replay step, questions, token building blocks, invariants, scenario notation). 109 tests passing. Open rules questions live in `docs/open-questions.md`.
 - 2026-11-03: Stage 3 (Command phase) done: `src/engine/command.ts` (action menu, checks, Overhaul, Orders, Bays, Drains, Overload start), `mecha.ts`, `alerts.ts`, `modules.ts` (8.6 payment), `moves.ts`; card effects in `src/effects/` (Bays, Orders, Energy Gyros, M_01; others raise NotBuiltYet). `tests/batch3.txt` is Claude's DRAFT from Core Rules, awaiting the designer's agreement (then it goes into the Project). 154 tests incl. random play-throughs. Q1 and Q2 answered (`docs/open-questions.md`).
+- 2026-11-03: Stage 4 (Overloads) built. Master docs checked at stage start: Core Rules still rev 129, spec still rev 22 (no snapshot rebuild). `src/engine/overload.ts` (roots `overloadStep`, `overloadEnd`; Anomalies), `session.ts` (driver: right root per phase), `fixedBoard.ts`; text UI `src/cli/`, `npm run play [seed]`. Cards built early for the tests and the fixed board: S_01, S_12, F_04, F_13, P_05, O_01, O_03, V1_M02_U2, Modules 1 and 26. `tests/batch4.txt` is Claude's DRAFT, awaiting the designer (as is batch 3 and its no-arrows facing assumption). Q3 open (Flare uncovered by Overload End step 4; the program stops with an OpenQuestion error). 200 tests passing.
 
 ## Working with the designer
 
