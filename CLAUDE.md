@@ -40,6 +40,8 @@ Each stage ends with all its tests passing and a short report to the designer. R
   Code: `src/geometry/` (Core Rules 3.8), `src/data/` (readers for all six data files, data checks, test-batch reader), `scripts/build-data.ts` (`npm run build:data` writes `src/data/generated/*.json`; a test fails if they are stale).
 - 2026-11-03: Anomalies 18 and 19 were removed on purpose (designer); footnote C5 reference dropped, Core Rules master rev 129.
 
+- 2026-11-03: Stage 2 (state and tokens) done: `src/engine/` (state, effects as generators + pure replay step, questions, token building blocks, invariants, scenario notation). 109 tests passing. Open rules questions live in `docs/open-questions.md`.
+
 ## Working with the designer
 
 The designer is not a programmer. Explain in plain words, cite rule sections, keep reports short. Commit messages end with the session's attribution lines.
