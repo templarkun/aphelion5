@@ -1,0 +1,1278 @@
+[
+  {
+    "id": 1,
+    "name": "Demolition Blast",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Deal 2 damage to one unit. [2] Destroy one Bot.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "1",
+      "name": "Demolition Blast",
+      "cost": "3",
+      "effect": "[1] Deal 2 damage to one unit. [2] Destroy one Bot."
+    }
+  },
+  {
+    "id": 2,
+    "name": "Ion Sweep",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 2,
+    "effect": "Deal 1 damage to one unit, 1 damage to one Gyro and 1 damage to one Sleeper.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "2",
+      "name": "Ion Sweep",
+      "cost": "2",
+      "effect": "Deal 1 damage to one unit, 1 damage to one Gyro and 1 damage to one Sleeper."
+    }
+  },
+  {
+    "id": 3,
+    "name": "Capacitor Lance",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 9,
+    "effect": "Deal 3 damage to one unit.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "3",
+      "name": "Capacitor Lance",
+      "cost": "9",
+      "cost_reduction": "1 Yellow energy less for each of your other exhausted Modules.",
+      "effect": "Deal 3 damage to one unit."
+    },
+    "costReduction": "1 Yellow energy less for each of your other exhausted Modules."
+  },
+  {
+    "id": 4,
+    "name": "Tick Missile",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Deal 1 damage to one unit. [2] If it survives, place a Tick on it.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "4",
+      "name": "Tick Missile",
+      "cost": "3",
+      "effect": "[1] Deal 1 damage to one unit. [2] If it survives, place a Tick on it."
+    }
+  },
+  {
+    "id": 5,
+    "name": "Heavy Plasma Cannon",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Deal 4 damage to one unit. [2] Return all energy on all your Modules to the Supply.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "5",
+      "name": "Heavy Plasma Cannon",
+      "cost": "4",
+      "effect": "[1] Deal 4 damage to one unit. [2] Return all energy on all your Modules to the Supply."
+    }
+  },
+  {
+    "id": 6,
+    "name": "Accumulator Beam",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 1,
+    "effect": "Deal X damage to one unit, where X is the Yellow energy on this Module before you ran it (maximum 5).",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "6",
+      "name": "Accumulator Beam",
+      "cost": "1",
+      "effect": "Deal X damage to one unit, where X is the Yellow energy on this Module before you ran it (maximum 5)."
+    }
+  },
+  {
+    "id": 7,
+    "name": "Cluster Mine",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Deal 1 damage to one unit. [2] Place a Tick on every Gyro and every Sleeper adjacent to it.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "7",
+      "name": "Cluster Mine",
+      "cost": "4",
+      "effect": "[1] Deal 1 damage to one unit. [2] Place a Tick on every Gyro and every Sleeper adjacent to it."
+    }
+  },
+  {
+    "id": 8,
+    "name": "Proton Torpedoes",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 7,
+    "effect": "[1] Deal 2 damage to each of two units. [2] Gain 1 energy for each of them that was not destroyed.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "8",
+      "name": "Proton Torpedoes",
+      "cost": "7",
+      "effect": "[1] Deal 2 damage to each of two units. [2] Gain 1 energy for each of them that was not destroyed."
+    }
+  },
+  {
+    "id": 9,
+    "name": "Ricochet Missiles",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Deal 2 damage to one unit. [2] If this destroys it, deal 1 damage to another unit.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "9",
+      "name": "Ricochet Missiles",
+      "cost": "4",
+      "effect": "[1] Deal 2 damage to one unit. [2] If this destroys it, deal 1 damage to another unit."
+    }
+  },
+  {
+    "id": 10,
+    "name": "Twin Laser Turret",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 3,
+    "effect": "Choose two units adjacent to each other. Deal 1 damage to each.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "10",
+      "name": "Twin Laser Turret",
+      "cost": "3",
+      "effect": "Choose two units adjacent to each other. Deal 1 damage to each.",
+      "extra_payment": "Pay 3 more Yellow energy: deal 2 damage to each instead."
+    },
+    "extraPayment": "Pay 3 more Yellow energy: deal 2 damage to each instead."
+  },
+  {
+    "id": 11,
+    "name": "Capacitor Demolisher",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 9,
+    "effect": "Destroy two Bots adjacent to each other.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "11",
+      "name": "Capacitor Demolisher",
+      "cost": "9",
+      "cost_reduction": "1 Yellow energy less for each of your other exhausted Modules.",
+      "effect": "Destroy two Bots adjacent to each other."
+    },
+    "costReduction": "1 Yellow energy less for each of your other exhausted Modules."
+  },
+  {
+    "id": 12,
+    "name": "Tri-Lock Missiles",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Choose a unit type. [2] Deal 1 damage to each of three units of that type.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "12",
+      "name": "Tri-Lock Missiles",
+      "cost": "4",
+      "effect": "[1] Choose a unit type. [2] Deal 1 damage to each of three units of that type."
+    }
+  },
+  {
+    "id": 13,
+    "name": "Shrapnel Detonation",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Choose a Mecha. [2] Deal 1 damage to it and to each of up to three other units adjacent to it.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "13",
+      "name": "Shrapnel Detonation",
+      "cost": "3",
+      "effect": "[1] Choose a Mecha. [2] Deal 1 damage to it and to each of up to three other units adjacent to it."
+    }
+  },
+  {
+    "id": 14,
+    "name": "Splitter Missiles",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 5,
+    "effect": "Divide 3 damage among any number of units, as you choose. Each unit takes its share as one hit.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "14",
+      "name": "Splitter Missiles",
+      "cost": "5",
+      "effect": "Divide 3 damage among any number of units, as you choose. Each unit takes its share as one hit."
+    }
+  },
+  {
+    "id": 15,
+    "name": "Arc Cannon",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 2,
+    "effect": "Choose one: deal 1 damage to one unit, or deal 1 damage to each of two different Gyros.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "15",
+      "name": "Arc Cannon",
+      "cost": "2",
+      "effect": "Choose one: deal 1 damage to one unit, or deal 1 damage to each of two different Gyros."
+    }
+  },
+  {
+    "id": 16,
+    "name": "Autoturret Sweep",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 4,
+    "effect": "Deal 1 damage to one unit of each type: one Bot, one Mecha, one Gyro, one Sleeper, one Sentinel and one Omega unit.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "16",
+      "name": "Autoturret Sweep",
+      "cost": "4",
+      "effect": "Deal 1 damage to one unit of each type: one Bot, one Mecha, one Gyro, one Sleeper, one Sentinel and one Omega unit."
+    }
+  },
+  {
+    "id": 17,
+    "name": "Salvo Launcher",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 5,
+    "effect": "Choose three units that are all adjacent to each other. Deal 1 damage to each.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "17",
+      "name": "Salvo Launcher",
+      "cost": "5",
+      "cost_reduction": "1 Yellow energy less for each Cleared sector.",
+      "effect": "Choose three units that are all adjacent to each other. Deal 1 damage to each."
+    },
+    "costReduction": "1 Yellow energy less for each Cleared sector."
+  },
+  {
+    "id": 18,
+    "name": "Proton Cull",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Choose the unit type with the fewest units on the Field (ignore Flares and types with no units). [2] Deal 1 damage to every unit of that type.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "18",
+      "name": "Proton Cull",
+      "cost": "3",
+      "effect": "[1] Choose the unit type with the fewest units on the Field (ignore Flares and types with no units). [2] Deal 1 damage to every unit of that type."
+    }
+  },
+  {
+    "id": 19,
+    "name": "Electron Flood",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 5,
+    "effect": "[1] Deal 1 damage to every Bot. [2] Return all energy on your other Modules to the Supply.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "19",
+      "name": "Electron Flood",
+      "cost": "5",
+      "effect": "[1] Deal 1 damage to every Bot. [2] Return all energy on your other Modules to the Supply."
+    }
+  },
+  {
+    "id": 20,
+    "name": "Graviton Rockets",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 4,
+    "effect": "Choose one: deal 2 damage to every Gyro, or deal 1 damage to every Sentinel.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "20",
+      "name": "Graviton Rockets",
+      "cost": "4",
+      "effect": "Choose one: deal 2 damage to every Gyro, or deal 1 damage to every Sentinel."
+    }
+  },
+  {
+    "id": 21,
+    "name": "Ground Zero",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Destroy one Mecha. [2] Deal 1 damage to every unit on the Field whose Level is equal to or lower than that Mecha's Level, including your other Mecha and Omega units.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "21",
+      "name": "Ground Zero",
+      "cost": "4",
+      "effect": "[1] Destroy one Mecha. [2] Deal 1 damage to every unit on the Field whose Level is equal to or lower than that Mecha's Level, including your other Mecha and Omega units."
+    }
+  },
+  {
+    "id": 22,
+    "name": "Harmonic Collapse",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 7,
+    "effect": "Destroy every Level 1 unit.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "22",
+      "name": "Harmonic Collapse",
+      "cost": "7",
+      "cost_reduction": "1 Yellow energy less for each Dark sector.",
+      "effect": "Destroy every Level 1 unit."
+    },
+    "costReduction": "1 Yellow energy less for each Dark sector."
+  },
+  {
+    "id": 23,
+    "name": "Harmonic Pulse",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 5,
+    "effect": "Deal 1 damage to every Level 2 unit.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "23",
+      "name": "Harmonic Pulse",
+      "cost": "5",
+      "effect": "Deal 1 damage to every Level 2 unit."
+    }
+  },
+  {
+    "id": 24,
+    "name": "Rocket Barrage",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 5,
+    "effect": "[1] Choose a horizontal row. [2] Deal 1 damage to every unit in it.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "24",
+      "name": "Rocket Barrage",
+      "cost": "5",
+      "effect": "[1] Choose a horizontal row. [2] Deal 1 damage to every unit in it."
+    }
+  },
+  {
+    "id": 25,
+    "name": "Thin Line Barrage",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Choose the horizontal row with the fewest units (at least one). [2] Deal 1 damage to every unit in it.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "25",
+      "name": "Thin Line Barrage",
+      "cost": "4",
+      "cost_reduction": "1 Yellow energy less for each Dark sector.",
+      "effect": "[1] Choose the horizontal row with the fewest units (at least one). [2] Deal 1 damage to every unit in it."
+    },
+    "costReduction": "1 Yellow energy less for each Dark sector."
+  },
+  {
+    "id": 77,
+    "name": "Seismic Charge",
+    "colour": "Yellow",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Choose a Cleared sector. [2] Deal 1 damage to every unit adjacent to it.",
+    "fields": {
+      "energy_color": "Yellow",
+      "background": "light",
+      "id": "77",
+      "name": "Seismic Charge",
+      "cost": "3",
+      "effect": "[1] Choose a Cleared sector. [2] Deal 1 damage to every unit adjacent to it."
+    }
+  },
+  {
+    "id": 26,
+    "name": "Charged Beam",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "Deal 2 damage to one unit.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "26",
+      "name": "Charged Beam",
+      "cost": "4",
+      "effect": "Deal 2 damage to one unit.",
+      "extra_payment": "Pay 1 to 3 more Red energy: deal that much more damage."
+    },
+    "extraPayment": "Pay 1 to 3 more Red energy: deal that much more damage."
+  },
+  {
+    "id": 27,
+    "name": "Counter-Battery Beam",
+    "colour": "Red",
+    "background": "red",
+    "cost": 3,
+    "effect": "Deal X damage to one unit, where X is the number of Sentinels on the Field.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "27",
+      "name": "Counter-Battery Beam",
+      "cost": "3",
+      "effect": "Deal X damage to one unit, where X is the number of Sentinels on the Field."
+    }
+  },
+  {
+    "id": 28,
+    "name": "Mirror Lattice Beam",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Choose one unit. [2] Deal it X damage, where X is the number of Bots adjacent to it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "28",
+      "name": "Mirror Lattice Beam",
+      "cost": "4",
+      "effect": "[1] Choose one unit. [2] Deal it X damage, where X is the number of Bots adjacent to it."
+    }
+  },
+  {
+    "id": 29,
+    "name": "Siphon Blast",
+    "colour": "Red",
+    "background": "red",
+    "cost": 3,
+    "effect": "[1] Choose one unit and deal 2 damage to it. [2] Place a Bio-shield on each of two different non-Mecha units adjacent to it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "29",
+      "name": "Siphon Blast",
+      "cost": "3",
+      "effect": "[1] Choose one unit and deal 2 damage to it. [2] Place a Bio-shield on each of two different non-Mecha units adjacent to it."
+    }
+  },
+  {
+    "id": 30,
+    "name": "Capacitor Strike",
+    "colour": "Red",
+    "background": "red",
+    "cost": 6,
+    "effect": "Deal 2 damage to one unit.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "30",
+      "name": "Capacitor Strike",
+      "cost": "6",
+      "cost_reduction": "2 Red energy less for each of your other exhausted Modules.",
+      "effect": "Deal 2 damage to one unit."
+    },
+    "costReduction": "2 Red energy less for each of your other exhausted Modules."
+  },
+  {
+    "id": 31,
+    "name": "Backlash Beam",
+    "colour": "Red",
+    "background": "red",
+    "cost": 3,
+    "effect": "[1] Choose one unit. [2] Boost every unit adjacent to it. [3] Deal the chosen unit X damage, where X is the number of units that gained a Shield token or lost a Damage token this way.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "31",
+      "name": "Backlash Beam",
+      "cost": "3",
+      "effect": "[1] Choose one unit. [2] Boost every unit adjacent to it. [3] Deal the chosen unit X damage, where X is the number of units that gained a Shield token or lost a Damage token this way."
+    }
+  },
+  {
+    "id": 32,
+    "name": "Static Discharge",
+    "colour": "Red",
+    "background": "red",
+    "cost": 3,
+    "effect": "Deal 1 damage to one unit and to every Gyro adjacent to it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "32",
+      "name": "Static Discharge",
+      "cost": "3",
+      "effect": "Deal 1 damage to one unit and to every Gyro adjacent to it."
+    }
+  },
+  {
+    "id": 33,
+    "name": "Seeker Missile",
+    "colour": "Red",
+    "background": "red",
+    "cost": 5,
+    "effect": "[1] Deal 2 damage to one unit. [2] If it survives, place a Tick on one unit adjacent to it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "33",
+      "name": "Seeker Missile",
+      "cost": "5",
+      "effect": "[1] Deal 2 damage to one unit. [2] If it survives, place a Tick on one unit adjacent to it."
+    }
+  },
+  {
+    "id": 34,
+    "name": "Twin Pulse Beams",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Choose two units adjacent to each other. [2] Deal 1 damage to each. [3] If both are destroyed, deal 1 damage to another unit.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "34",
+      "name": "Twin Pulse Beams",
+      "cost": "4",
+      "effect": "[1] Choose two units adjacent to each other. [2] Deal 1 damage to each. [3] If both are destroyed, deal 1 damage to another unit."
+    }
+  },
+  {
+    "id": 35,
+    "name": "Tesla Overcharge",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Deal 1 damage to one unit. [2] Deal 1 damage to every adjacent unit of a different type from it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "35",
+      "name": "Tesla Overcharge",
+      "cost": "4",
+      "effect": "[1] Deal 1 damage to one unit. [2] Deal 1 damage to every adjacent unit of a different type from it."
+    }
+  },
+  {
+    "id": 36,
+    "name": "Triad Strike",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Choose a unit type. [2] If there are exactly three units of that type on the Field, deal 1 damage to each of them.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "36",
+      "name": "Triad Strike",
+      "cost": "4",
+      "effect": "[1] Choose a unit type. [2] If there are exactly three units of that type on the Field, deal 1 damage to each of them."
+    }
+  },
+  {
+    "id": 37,
+    "name": "Cascade Phaser",
+    "colour": "Red",
+    "background": "red",
+    "cost": 5,
+    "effect": "[1] Deal 2 damage to one Bot. [2] If this destroys it, deal 2 damage to one Gyro. [3] If this destroys it, deal 1 damage to one Sentinel.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "37",
+      "name": "Cascade Phaser",
+      "cost": "5",
+      "effect": "[1] Deal 2 damage to one Bot. [2] If this destroys it, deal 2 damage to one Gyro. [3] If this destroys it, deal 1 damage to one Sentinel."
+    }
+  },
+  {
+    "id": 38,
+    "name": "Arc Discharge",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Deal 1 damage to one unit. [2] If it survives, deal 1 damage to each of two other units adjacent to it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "38",
+      "name": "Arc Discharge",
+      "cost": "4",
+      "effect": "[1] Deal 1 damage to one unit. [2] If it survives, deal 1 damage to each of two other units adjacent to it."
+    }
+  },
+  {
+    "id": 39,
+    "name": "Bunker Busters",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Choose the horizontal row with the most Level 3 units (at least one). [2] Deal 1 damage to every unit in it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "39",
+      "name": "Bunker Busters",
+      "cost": "4",
+      "effect": "[1] Choose the horizontal row with the most Level 3 units (at least one). [2] Deal 1 damage to every unit in it."
+    }
+  },
+  {
+    "id": 40,
+    "name": "Polarity Sweep",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Choose a horizontal row and deal 1 damage to every unit in it. [2] Choose a horizontal row (the same one or another) and Boost every unit in it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "40",
+      "name": "Polarity Sweep",
+      "cost": "4",
+      "effect": "[1] Choose a horizontal row and deal 1 damage to every unit in it. [2] Choose a horizontal row (the same one or another) and Boost every unit in it."
+    }
+  },
+  {
+    "id": 41,
+    "name": "Beacon Strike",
+    "colour": "Red",
+    "background": "red",
+    "cost": 3,
+    "effect": "Deal 1 damage to every unit in each horizontal row that contains at least one Mecha.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "41",
+      "name": "Beacon Strike",
+      "cost": "3",
+      "effect": "Deal 1 damage to every unit in each horizontal row that contains at least one Mecha."
+    }
+  },
+  {
+    "id": 42,
+    "name": "Harmonic Strike",
+    "colour": "Red",
+    "background": "red",
+    "cost": 5,
+    "effect": "Deal 1 damage to every Level 3 unit.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "42",
+      "name": "Harmonic Strike",
+      "cost": "5",
+      "effect": "Deal 1 damage to every Level 3 unit."
+    }
+  },
+  {
+    "id": 43,
+    "name": "Harmonic Wave",
+    "colour": "Red",
+    "background": "red",
+    "cost": 3,
+    "effect": "Deal 1 damage to every Level 2 Bot and every Level 2 Mecha.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "43",
+      "name": "Harmonic Wave",
+      "cost": "3",
+      "effect": "Deal 1 damage to every Level 2 Bot and every Level 2 Mecha.",
+      "extra_payment": "Pay 3 more Red energy: deal 2 damage to each instead."
+    },
+    "extraPayment": "Pay 3 more Red energy: deal 2 damage to each instead."
+  },
+  {
+    "id": 44,
+    "name": "Chain Reaction Beam",
+    "colour": "Red",
+    "background": "red",
+    "cost": 6,
+    "effect": "[1] Deal 1 damage to one unit. [2] Each time this destroys a unit, deal 1 damage to one unit adjacent to it. [3] Stop when a hit destroys nothing.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "44",
+      "name": "Chain Reaction Beam",
+      "cost": "6",
+      "effect": "[1] Deal 1 damage to one unit. [2] Each time this destroys a unit, deal 1 damage to one unit adjacent to it. [3] Stop when a hit destroys nothing."
+    }
+  },
+  {
+    "id": 45,
+    "name": "Thermal Detonator",
+    "colour": "Red",
+    "background": "red",
+    "cost": 5,
+    "effect": "Deal 1 damage to every damaged unit.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "45",
+      "name": "Thermal Detonator",
+      "cost": "5",
+      "cost_reduction": "1 Red energy less for each Cleared sector.",
+      "effect": "Deal 1 damage to every damaged unit."
+    },
+    "costReduction": "1 Red energy less for each Cleared sector."
+  },
+  {
+    "id": 46,
+    "name": "Echo Ray",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Deal 1 damage to one Bot. [2] Repeat once for each Sentinel on the Field. Each repeat is a separate hit and may target the same Bot or another one.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "46",
+      "name": "Echo Ray",
+      "cost": "4",
+      "effect": "[1] Deal 1 damage to one Bot. [2] Repeat once for each Sentinel on the Field. Each repeat is a separate hit and may target the same Bot or another one."
+    }
+  },
+  {
+    "id": 47,
+    "name": "Lone Hunter Missiles",
+    "colour": "Red",
+    "background": "red",
+    "cost": 2,
+    "effect": "For each unit type that has exactly one unit on the Field, deal 1 damage to that unit.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "47",
+      "name": "Lone Hunter Missiles",
+      "cost": "2",
+      "effect": "For each unit type that has exactly one unit on the Field, deal 1 damage to that unit."
+    }
+  },
+  {
+    "id": 48,
+    "name": "Point-Defense Phaser",
+    "colour": "Red",
+    "background": "red",
+    "cost": 1,
+    "effect": "Deal 1 damage to each of X different Sentinels, where X is the Red energy on this Module before you ran it.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "48",
+      "name": "Point-Defense Phaser",
+      "cost": "1",
+      "effect": "Deal 1 damage to each of X different Sentinels, where X is the Red energy on this Module before you ran it."
+    }
+  },
+  {
+    "id": 49,
+    "name": "Drone Bomber",
+    "colour": "Red",
+    "background": "red",
+    "cost": 5,
+    "effect": "Place a Tick on each of two units of the same type.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "49",
+      "name": "Drone Bomber",
+      "cost": "5",
+      "effect": "Place a Tick on each of two units of the same type."
+    }
+  },
+  {
+    "id": 50,
+    "name": "Phantom Recon",
+    "colour": "Red",
+    "background": "red",
+    "cost": 4,
+    "effect": "[1] Reveal units one at a time, as many as you like. [2] When you stop, deal 2 damage to each of the last two units you revealed.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "50",
+      "name": "Phantom Recon",
+      "cost": "4",
+      "effect": "[1] Reveal units one at a time, as many as you like. [2] When you stop, deal 2 damage to each of the last two units you revealed."
+    }
+  },
+  {
+    "id": 78,
+    "name": "Signal Jammer",
+    "colour": "Red",
+    "background": "red",
+    "cost": 3,
+    "effect": "Choose one: remove the Alert token from one Sentinel (its effect is cancelled), or remove every Barrier from every unit.",
+    "fields": {
+      "energy_color": "Red",
+      "background": "red",
+      "id": "78",
+      "name": "Signal Jammer",
+      "cost": "3",
+      "effect": "Choose one: remove the Alert token from one Sentinel (its effect is cancelled), or remove every Barrier from every unit."
+    }
+  },
+  {
+    "id": 51,
+    "name": "Satellite Ion Scan",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Reveal units one at a time, as many as you like. [2] When you stop, if the last unit you revealed is a Bot, destroy it.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "51",
+      "name": "Satellite Ion Scan",
+      "cost": "4",
+      "effect": "[1] Reveal units one at a time, as many as you like. [2] When you stop, if the last unit you revealed is a Bot, destroy it."
+    }
+  },
+  {
+    "id": 52,
+    "name": "Tactical Scan",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Choose up to 4 Dark sectors and look at their top tiles. [2] Reveal every Bot among them and deal 1 damage to each of those Bots. [3] Put the other tiles back face down.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "52",
+      "name": "Tactical Scan",
+      "cost": "3",
+      "effect": "[1] Choose up to 4 Dark sectors and look at their top tiles. [2] Reveal every Bot among them and deal 1 damage to each of those Bots. [3] Put the other tiles back face down."
+    }
+  },
+  {
+    "id": 53,
+    "name": "Pathfinder Array",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Reveal X units. [2] Deal 2 damage to each Bot revealed this way.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "53",
+      "name": "Pathfinder Array",
+      "cost": "3",
+      "cost_variable": "Pay X more Blue energy (X chosen as you run it).",
+      "cost_reduction": "1 Blue energy less in total (base cost plus X) for each of your other exhausted Modules.",
+      "effect": "[1] Reveal X units. [2] Deal 2 damage to each Bot revealed this way."
+    },
+    "costVariable": "Pay X more Blue energy (X chosen as you run it).",
+    "costReduction": "1 Blue energy less in total (base cost plus X) for each of your other exhausted Modules."
+  },
+  {
+    "id": 54,
+    "name": "Debris Sifter",
+    "colour": "Blue",
+    "background": "light",
+    "cost": "X",
+    "effect": "[1] Look at the top X tiles of one Dark sector. [2] Discard one Bot among them, if there is one. [3] Put the rest back face down in the same order.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "54",
+      "name": "Debris Sifter",
+      "cost": "X",
+      "cost_variable": "X is at least 1.",
+      "effect": "[1] Look at the top X tiles of one Dark sector. [2] Discard one Bot among them, if there is one. [3] Put the rest back face down in the same order."
+    },
+    "costVariable": "X is at least 1."
+  },
+  {
+    "id": 55,
+    "name": "Minefield Layer",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 7,
+    "effect": "[1] Choose a horizontal row with at least one Mecha. [2] Place a Tick on every unit in it.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "55",
+      "name": "Minefield Layer",
+      "cost": "7",
+      "cost_reduction": "2 Blue energy less for each Cleared sector.",
+      "effect": "[1] Choose a horizontal row with at least one Mecha. [2] Place a Tick on every unit in it."
+    },
+    "costReduction": "2 Blue energy less for each Cleared sector."
+  },
+  {
+    "id": 56,
+    "name": "Scatter Minelayer",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 5,
+    "effect": "[1] Deal 1 damage to your Flagship. [2] Place a Tick on one Bot, one Sentinel, one Gyro, one Sleeper and one Mecha.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "56",
+      "name": "Scatter Minelayer",
+      "cost": "5",
+      "effect": "[1] Deal 1 damage to your Flagship. [2] Place a Tick on one Bot, one Sentinel, one Gyro, one Sleeper and one Mecha."
+    }
+  },
+  {
+    "id": 57,
+    "name": "Graviton Mine",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "Choose one: place a Tick on every Gyro and every Sleeper, or place a Tick on every Sentinel and Boost each of them.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "57",
+      "name": "Graviton Mine",
+      "cost": "3",
+      "effect": "Choose one: place a Tick on every Gyro and every Sleeper, or place a Tick on every Sentinel and Boost each of them."
+    }
+  },
+  {
+    "id": 58,
+    "name": "Ion Mine",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 4,
+    "effect": "Choose one: place a Tick on every Sentinel that has a Barrier, or remove every Barrier from every Sentinel.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "58",
+      "name": "Ion Mine",
+      "cost": "4",
+      "effect": "Choose one: place a Tick on every Sentinel that has a Barrier, or remove every Barrier from every Sentinel."
+    }
+  },
+  {
+    "id": 59,
+    "name": "Trojan Patch",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Place a Tick on every damaged Bot and every damaged Mecha. [2] Remove 1 Damage token from each of them.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "59",
+      "name": "Trojan Patch",
+      "cost": "4",
+      "effect": "[1] Place a Tick on every damaged Bot and every damaged Mecha. [2] Remove 1 Damage token from each of them."
+    }
+  },
+  {
+    "id": 60,
+    "name": "Tiered Minefield",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 5,
+    "effect": "[1] Place a Tick on every Level 1 unit. [2] Boost every Level 2 unit.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "60",
+      "name": "Tiered Minefield",
+      "cost": "5",
+      "effect": "[1] Place a Tick on every Level 1 unit. [2] Boost every Level 2 unit."
+    }
+  },
+  {
+    "id": 61,
+    "name": "Trap Line",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 5,
+    "effect": "[1] Choose a horizontal row. [2] Boost every unit in it and place a Tick on each of them.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "61",
+      "name": "Trap Line",
+      "cost": "5",
+      "effect": "[1] Choose a horizontal row. [2] Boost every unit in it and place a Tick on each of them."
+    }
+  },
+  {
+    "id": 62,
+    "name": "Proton Trap",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Choose the unit type with the fewest units on the Field (ignore Flares and types with no units). [2] Boost every unit of that type and place a Tick on each of them.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "62",
+      "name": "Proton Trap",
+      "cost": "3",
+      "effect": "[1] Choose the unit type with the fewest units on the Field (ignore Flares and types with no units). [2] Boost every unit of that type and place a Tick on each of them."
+    }
+  },
+  {
+    "id": 63,
+    "name": "Harmonic Trap",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Choose one unit. [2] Boost every unit with the same Level as it (including it) and place a Tick on each of them.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "63",
+      "name": "Harmonic Trap",
+      "cost": "4",
+      "effect": "[1] Choose one unit. [2] Boost every unit with the same Level as it (including it) and place a Tick on each of them."
+    }
+  },
+  {
+    "id": 64,
+    "name": "Power Relay",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "Place 1 energy on each of five different ready Modules other than this one.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "64",
+      "name": "Power Relay",
+      "cost": "3",
+      "effect": "Place 1 energy on each of five different ready Modules other than this one."
+    }
+  },
+  {
+    "id": 65,
+    "name": "Salvage Siphon",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 2,
+    "effect": "[1] Choose one ready Module other than this one. [2] Place 1 energy on it for each Bot on the Field. [3] Return all energy on your other Modules to the Supply.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "65",
+      "name": "Salvage Siphon",
+      "cost": "2",
+      "effect": "[1] Choose one ready Module other than this one. [2] Place 1 energy on it for each Bot on the Field. [3] Return all energy on your other Modules to the Supply."
+    }
+  },
+  {
+    "id": 66,
+    "name": "Deep Scan Probe",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 2,
+    "effect": "[1] Choose one Dark sector and look at its top tile. [2] You may put it face down at the bottom of that sector.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "66",
+      "name": "Deep Scan Probe",
+      "cost": "2",
+      "effect": "[1] Choose one Dark sector and look at its top tile. [2] You may put it face down at the bottom of that sector."
+    }
+  },
+  {
+    "id": 67,
+    "name": "Harvest Beacon",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 4,
+    "effect": "[1] Choose one ready Module other than this one. [2] Place 1 energy on it for each Sentinel on the Field. [3] Start an Overload.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "67",
+      "name": "Harvest Beacon",
+      "cost": "4",
+      "effect": "[1] Choose one ready Module other than this one. [2] Place 1 energy on it for each Sentinel on the Field. [3] Start an Overload."
+    }
+  },
+  {
+    "id": 68,
+    "name": "Tractor Beam",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Swap two units. [2] Make one of your other exhausted Modules ready.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "68",
+      "name": "Tractor Beam",
+      "cost": "3",
+      "effect": "[1] Swap two units. [2] Make one of your other exhausted Modules ready."
+    }
+  },
+  {
+    "id": 69,
+    "name": "Strata Shifter",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Take any number of tiles from the top of one Dark sector and look at them. [2] Place them on top of one adjacent Dark sector, in the same order and keeping each tile's face as it is.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "69",
+      "name": "Strata Shifter",
+      "cost": "3",
+      "effect": "[1] Take any number of tiles from the top of one Dark sector and look at them. [2] Place them on top of one adjacent Dark sector, in the same order and keeping each tile's face as it is."
+    }
+  },
+  {
+    "id": 70,
+    "name": "Core Drill",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 5,
+    "effect": "[1] Choose one Dark sector and look at all its tiles. [2] You may put its bottom tile face down on top of that sector, then Reveal it.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "70",
+      "name": "Core Drill",
+      "cost": "5",
+      "effect": "[1] Choose one Dark sector and look at all its tiles. [2] You may put its bottom tile face down on top of that sector, then Reveal it."
+    }
+  },
+  {
+    "id": 71,
+    "name": "Gravity Well",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 5,
+    "effect": "[1] Take the top tile from each of up to five different Dark sectors and look at them. [2] Put them face down on top of one Dark sector, in any order. [3] Remove 1 damage from your Flagship.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "71",
+      "name": "Gravity Well",
+      "cost": "5",
+      "effect": "[1] Take the top tile from each of up to five different Dark sectors and look at them. [2] Put them face down on top of one Dark sector, in any order. [3] Remove 1 damage from your Flagship."
+    }
+  },
+  {
+    "id": 72,
+    "name": "Seismic Sonar",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 5,
+    "effect": "[1] Look at the bottom tile of one sector. [2] Repeat once for each of your other exhausted Modules, choosing a different sector each time. [3] Start an Overload.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "72",
+      "name": "Seismic Sonar",
+      "cost": "5",
+      "effect": "[1] Look at the bottom tile of one sector. [2] Repeat once for each of your other exhausted Modules, choosing a different sector each time. [3] Start an Overload."
+    }
+  },
+  {
+    "id": 73,
+    "name": "Damage Control",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 4,
+    "effect": "Remove 1 damage from each of two different Bays of your Flagship.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "73",
+      "name": "Damage Control",
+      "cost": "4",
+      "effect": "Remove 1 damage from each of two different Bays of your Flagship."
+    }
+  },
+  {
+    "id": 74,
+    "name": "Repair Field",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Remove 1 Damage token from every unit. [2] Remove 1 damage from your Flagship.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "74",
+      "name": "Repair Field",
+      "cost": "3",
+      "effect": "[1] Remove 1 Damage token from every unit. [2] Remove 1 damage from your Flagship."
+    }
+  },
+  {
+    "id": 75,
+    "name": "Quantum Reformation",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "[1] Remove 1 damage from your Flagship for every two Sentinels on the Field (round down). [2] Start an Overload.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "75",
+      "name": "Quantum Reformation",
+      "cost": "3",
+      "effect": "[1] Remove 1 damage from your Flagship for every two Sentinels on the Field (round down). [2] Start an Overload."
+    }
+  },
+  {
+    "id": 76,
+    "name": "EMP Burst",
+    "colour": "Blue",
+    "background": "light",
+    "cost": 3,
+    "effect": "Remove every Damage, Barrier and Fuse token from every unit.",
+    "fields": {
+      "energy_color": "Blue",
+      "background": "light",
+      "id": "76",
+      "name": "EMP Burst",
+      "cost": "3",
+      "effect": "Remove every Damage, Barrier and Fuse token from every unit."
+    }
+  }
+]

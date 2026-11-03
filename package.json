@@ -1,0 +1,19 @@
+{
+  "name": "aphelion5",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aphelion 5 - solo campaign board game, computer version",
+  "type": "module",
+  "scripts": {
+    "build:data": "tsx scripts/build-data.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

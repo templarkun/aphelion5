@@ -33,7 +33,12 @@ Each stage ends with all its tests passing and a short report to the designer. R
 
 ## Status
 
-- 2026-11-03: repo created. `docs/core-rules.md` is behind the master doc (missing the X = 1 and "finish what you start" sentences). `docs/program-spec.md` and the data files `company_vessels_structured.txt`, `Anomaly list.txt`, `Expansion1.txt` are not yet copied in. Stage 1 not started.
+- 2026-11-03: repo created.
+- 2026-11-03: `docs/core-rules.md` (master rev 127) and `docs/program-spec.md` (master rev 22) rebuilt from the master docs.
+  `company_vessels_structured.txt`, `Anomaly list.txt`, `Expansion1.txt` are still NOT in `data/`: the cloud session had no tool to read the claude.ai Project. The designer must add them (upload or paste); their readers are written then.
+- 2026-11-03: Stage 1 done for the files present. `npm run check` = typecheck + tests (49 passing).
+  Code: `src/geometry/` (Core Rules 3.8), `src/data/` (readers, data checks), `scripts/build-data.ts` (`npm run build:data` writes `src/data/generated/*.json`; a test fails if they are stale).
+  Still open for stage 1: Company and Anomaly readers, and the "every id referenced exists" check for Company Mecha.
 
 ## Working with the designer
 

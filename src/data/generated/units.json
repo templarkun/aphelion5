@@ -1,0 +1,3480 @@
+[
+  {
+    "id": "B_01",
+    "type": "Bot",
+    "level": 1,
+    "copies": 10,
+    "arrows": [],
+    "text": {},
+    "fields": {
+      "type": "Bot",
+      "copies": "10",
+      "effect": "none (no trigger, no activation)",
+      "on destroy": "remove to Discard",
+      "id": "B_01",
+      "level": "1",
+      "dev_price": "-1"
+    },
+    "devPrice": -1
+  },
+  {
+    "id": "B_02",
+    "type": "Bot",
+    "level": 2,
+    "copies": 10,
+    "arrows": [],
+    "text": {},
+    "fields": {
+      "type": "Bot",
+      "copies": "10",
+      "effect": "none (no trigger, no activation)",
+      "on destroy": "remove to Discard",
+      "id": "B_02",
+      "level": "2",
+      "dev_price": "-2"
+    },
+    "devPrice": -2
+  },
+  {
+    "id": "B_03",
+    "type": "Bot",
+    "level": 3,
+    "copies": 10,
+    "arrows": [],
+    "text": {},
+    "fields": {
+      "type": "Bot",
+      "copies": "10",
+      "effect": "none (no trigger, no activation)",
+      "on destroy": "remove to Discard",
+      "id": "B_03",
+      "level": "3",
+      "dev_price": "-3"
+    },
+    "devPrice": -3
+  },
+  {
+    "id": "M_01",
+    "type": "Mecha",
+    "level": 1,
+    "copies": 10,
+    "arrows": [],
+    "text": {
+      "ability": "Command: Move to an adjacent Dark sector."
+    },
+    "fields": {
+      "type": "Mecha",
+      "copies": "10",
+      "command_options": "Attack | Scrap | use an ability (Core Rules 4.2)",
+      "ability_source": "this section is the only source of base abilities; upgrades live in the Company file",
+      "passive_attack_rule": "A Passive that lets this Mecha Move or Swap \"before an Attack\" is part of the Attack action. The Mecha then Attacks a unit adjacent to its new sector.",
+      "on destroy": "remove to Discard",
+      "id": "M_01",
+      "level": "1",
+      "ability_kind": "command",
+      "dev_price": "1.1",
+      "ability": "Command: Move to an adjacent Dark sector."
+    },
+    "abilityKind": "command",
+    "devPrice": 1.1
+  },
+  {
+    "id": "M_02",
+    "type": "Mecha",
+    "level": 2,
+    "copies": 10,
+    "arrows": [
+      1,
+      3
+    ],
+    "text": {
+      "ability": "Expend: Deal 1 damage to all units in its lines of fire."
+    },
+    "fields": {
+      "type": "Mecha",
+      "copies": "10",
+      "command_options": "Attack | Scrap | use an ability (Core Rules 4.2)",
+      "ability_source": "this section is the only source of base abilities; upgrades live in the Company file",
+      "passive_attack_rule": "A Passive that lets this Mecha Move or Swap \"before an Attack\" is part of the Attack action. The Mecha then Attacks a unit adjacent to its new sector.",
+      "on destroy": "remove to Discard",
+      "id": "M_02",
+      "level": "2",
+      "arrows": "1,3",
+      "ability_kind": "expend",
+      "dev_price": "2.1",
+      "ability": "Expend: Deal 1 damage to all units in its lines of fire."
+    },
+    "abilityKind": "expend",
+    "devPrice": 2.1
+  },
+  {
+    "id": "M_03",
+    "type": "Mecha",
+    "level": 2,
+    "copies": 10,
+    "arrows": [],
+    "text": {
+      "ability": "Passive: Before an Attack, it may Move to one adjacent Dark sector."
+    },
+    "fields": {
+      "type": "Mecha",
+      "copies": "10",
+      "command_options": "Attack | Scrap | use an ability (Core Rules 4.2)",
+      "ability_source": "this section is the only source of base abilities; upgrades live in the Company file",
+      "passive_attack_rule": "A Passive that lets this Mecha Move or Swap \"before an Attack\" is part of the Attack action. The Mecha then Attacks a unit adjacent to its new sector.",
+      "on destroy": "remove to Discard",
+      "id": "M_03",
+      "level": "2",
+      "ability_kind": "passive",
+      "dev_price": "1.9",
+      "ability": "Passive: Before an Attack, it may Move to one adjacent Dark sector."
+    },
+    "abilityKind": "passive",
+    "devPrice": 1.9
+  },
+  {
+    "id": "M_04",
+    "type": "Mecha",
+    "level": 3,
+    "copies": 10,
+    "arrows": [],
+    "text": {
+      "ability": "Passive: When it Attacks, it may target a unit in any sector in a straight line from it, at any distance, instead of an adjacent unit. Units, gaps, Dark and Cleared sectors in between are ignored."
+    },
+    "fields": {
+      "type": "Mecha",
+      "copies": "10",
+      "command_options": "Attack | Scrap | use an ability (Core Rules 4.2)",
+      "ability_source": "this section is the only source of base abilities; upgrades live in the Company file",
+      "passive_attack_rule": "A Passive that lets this Mecha Move or Swap \"before an Attack\" is part of the Attack action. The Mecha then Attacks a unit adjacent to its new sector.",
+      "on destroy": "remove to Discard",
+      "id": "M_04",
+      "level": "3",
+      "ability_kind": "passive",
+      "dev_price": "2.8",
+      "ability": "Passive: When it Attacks, it may target a unit in any sector in a straight line from it, at any distance, instead of an adjacent unit. Units, gaps, Dark and Cleared sectors in between are ignored."
+    },
+    "abilityKind": "passive",
+    "devPrice": 2.8
+  },
+  {
+    "id": "M_05",
+    "type": "Mecha",
+    "level": 1,
+    "copies": 10,
+    "arrows": [],
+    "text": {
+      "ability": "Command: Jump. [1] Choose one of the six directions in which the adjacent sector holds a unit. [2] Follow that line past every consecutive sector that holds a unit (Flares and Wrecks count). [3] If the next sector on that line is a Dark or Cleared sector, put this Mecha there with its tokens (on top of the stack). If it is a gap or off the Field, the Jump is not possible in that direction."
+    },
+    "fields": {
+      "type": "Mecha",
+      "copies": "10",
+      "command_options": "Attack | Scrap | use an ability (Core Rules 4.2)",
+      "ability_source": "this section is the only source of base abilities; upgrades live in the Company file",
+      "passive_attack_rule": "A Passive that lets this Mecha Move or Swap \"before an Attack\" is part of the Attack action. The Mecha then Attacks a unit adjacent to its new sector.",
+      "on destroy": "remove to Discard",
+      "id": "M_05",
+      "level": "1",
+      "ability_kind": "command",
+      "dev_price": "1.0",
+      "ability": "Command: Jump. [1] Choose one of the six directions in which the adjacent sector holds a unit. [2] Follow that line past every consecutive sector that holds a unit (Flares and Wrecks count). [3] If the next sector on that line is a Dark or Cleared sector, put this Mecha there with its tokens (on top of the stack). If it is a gap or off the Field, the Jump is not possible in that direction."
+    },
+    "abilityKind": "command",
+    "devPrice": 1
+  },
+  {
+    "id": "M_06",
+    "type": "Mecha",
+    "level": 3,
+    "copies": 10,
+    "arrows": [],
+    "text": {
+      "ability": "Passive: Before an Attack, it may Swap with any unit that has no tokens."
+    },
+    "fields": {
+      "type": "Mecha",
+      "copies": "10",
+      "command_options": "Attack | Scrap | use an ability (Core Rules 4.2)",
+      "ability_source": "this section is the only source of base abilities; upgrades live in the Company file",
+      "passive_attack_rule": "A Passive that lets this Mecha Move or Swap \"before an Attack\" is part of the Attack action. The Mecha then Attacks a unit adjacent to its new sector.",
+      "on destroy": "remove to Discard",
+      "id": "M_06",
+      "level": "3",
+      "ability_kind": "passive",
+      "dev_price": "2.0",
+      "ability": "Passive: Before an Attack, it may Swap with any unit that has no tokens."
+    },
+    "abilityKind": "passive",
+    "devPrice": 2
+  },
+  {
+    "id": "M_07",
+    "type": "Mecha",
+    "level": 2,
+    "copies": 10,
+    "arrows": [],
+    "text": {
+      "ability": "Expend: [1] Deal 1 damage to an adjacent Level 1 unit. [2] You may then deal 1 damage to a Level 2 unit adjacent to that unit's sector. [3] If you did, you may then deal 1 damage to a Level 3 unit adjacent to the sector of the unit damaged in [2]."
+    },
+    "fields": {
+      "type": "Mecha",
+      "copies": "10",
+      "command_options": "Attack | Scrap | use an ability (Core Rules 4.2)",
+      "ability_source": "this section is the only source of base abilities; upgrades live in the Company file",
+      "passive_attack_rule": "A Passive that lets this Mecha Move or Swap \"before an Attack\" is part of the Attack action. The Mecha then Attacks a unit adjacent to its new sector.",
+      "on destroy": "remove to Discard",
+      "id": "M_07",
+      "level": "2",
+      "ability_kind": "expend",
+      "dev_price": "2.9",
+      "ability": "Expend: [1] Deal 1 damage to an adjacent Level 1 unit. [2] You may then deal 1 damage to a Level 2 unit adjacent to that unit's sector. [3] If you did, you may then deal 1 damage to a Level 3 unit adjacent to the sector of the unit damaged in [2]."
+    },
+    "abilityKind": "expend",
+    "devPrice": 2.9
+  },
+  {
+    "id": "O_01",
+    "type": "Omega",
+    "level": "per_campaign",
+    "copies": 10,
+    "arrows": [],
+    "text": {},
+    "fields": {
+      "type": "Omega",
+      "level": "per_campaign (the Campaign board value counts as its Level for every effect)",
+      "dev_price": "per_campaign",
+      "properties_source": "Campaign board (Levels, triggers and abilities are campaign-specific)",
+      "on destroy": "remove to Trophy pile (after resolving its Destroyed effect, if any)",
+      "exposure": "immune to Exposure damage at Overload End",
+      "id": "O_01",
+      "role": "Alpha unit",
+      "copies": "10"
+    },
+    "devPrice": "per_campaign",
+    "role": "Alpha unit"
+  },
+  {
+    "id": "O_02",
+    "type": "Omega",
+    "level": "per_campaign",
+    "copies": 4,
+    "arrows": [],
+    "text": {},
+    "fields": {
+      "type": "Omega",
+      "level": "per_campaign (the Campaign board value counts as its Level for every effect)",
+      "dev_price": "per_campaign",
+      "properties_source": "Campaign board (Levels, triggers and abilities are campaign-specific)",
+      "on destroy": "remove to Trophy pile (after resolving its Destroyed effect, if any)",
+      "exposure": "immune to Exposure damage at Overload End",
+      "id": "O_02",
+      "role": "Beta unit",
+      "copies": "4"
+    },
+    "devPrice": "per_campaign",
+    "role": "Beta unit"
+  },
+  {
+    "id": "O_03",
+    "type": "Omega",
+    "level": "per_campaign",
+    "copies": 4,
+    "arrows": [],
+    "text": {},
+    "fields": {
+      "type": "Omega",
+      "level": "per_campaign (the Campaign board value counts as its Level for every effect)",
+      "dev_price": "per_campaign",
+      "properties_source": "Campaign board (Levels, triggers and abilities are campaign-specific)",
+      "on destroy": "remove to Trophy pile (after resolving its Destroyed effect, if any)",
+      "exposure": "immune to Exposure damage at Overload End",
+      "id": "O_03",
+      "role": "Gamma unit",
+      "copies": "4"
+    },
+    "devPrice": "per_campaign",
+    "role": "Gamma unit"
+  },
+  {
+    "id": "S_01",
+    "type": "Sentinel",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Deal 1 damage to your Flagship."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_01",
+      "level": "1",
+      "dev_price": "-3.0",
+      "activate": "Deal 1 damage to your Flagship."
+    },
+    "devPrice": -3
+  },
+  {
+    "id": "S_02",
+    "type": "Sentinel",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Remove 1 damage from each adjacent unit."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_02",
+      "level": "1",
+      "dev_price": "-2.6",
+      "activate": "Remove 1 damage from each adjacent unit."
+    },
+    "devPrice": -2.6
+  },
+  {
+    "id": "S_03",
+    "type": "Sentinel",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "If this unit's Strength is less than 3, Boost it."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_03",
+      "level": "1",
+      "dev_price": "-3.0",
+      "activate": "If this unit's Strength is less than 3, Boost it."
+    },
+    "devPrice": -3
+  },
+  {
+    "id": "S_04",
+    "type": "Sentinel",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Find the most abundant unit Level on the Field. [2] Boost all Bots of that Level."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_04",
+      "level": "1",
+      "dev_price": "-6.2",
+      "activate": "[1] Find the most abundant unit Level on the Field. [2] Boost all Bots of that Level."
+    },
+    "devPrice": -6.2
+  },
+  {
+    "id": "S_05",
+    "type": "Sentinel",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Bury this unit. [2] If its sector is now Dark, Reveal it. If the revealed unit is a Bot, Boost it."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_05",
+      "level": "1",
+      "dev_price": "-2.2",
+      "activate": "[1] Bury this unit. [2] If its sector is now Dark, Reveal it. If the revealed unit is a Bot, Boost it."
+    },
+    "devPrice": -2.2
+  },
+  {
+    "id": "S_06",
+    "type": "Sentinel",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Reveal one adjacent Dark sector. [2] Destroy one adjacent Mecha."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_06",
+      "level": "2",
+      "dev_price": "-3.9",
+      "activate": "[1] Reveal one adjacent Dark sector. [2] Destroy one adjacent Mecha."
+    },
+    "devPrice": -3.9
+  },
+  {
+    "id": "S_07",
+    "type": "Sentinel",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose a Mecha. [2] Remove all its tokens and put it at the very bottom of its sector."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_07",
+      "level": "2",
+      "dev_price": "-4.3",
+      "activate": "[1] Choose a Mecha. [2] Remove all its tokens and put it at the very bottom of its sector."
+    },
+    "devPrice": -4.3
+  },
+  {
+    "id": "S_08",
+    "type": "Sentinel",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Remove 1 energy from your Modules for each Bot on the Field that is not adjacent to this unit. You choose which energy."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_08",
+      "level": "2",
+      "dev_price": "-3.8",
+      "activate": "Remove 1 energy from your Modules for each Bot on the Field that is not adjacent to this unit. You choose which energy."
+    },
+    "devPrice": -3.8
+  },
+  {
+    "id": "S_09",
+    "type": "Sentinel",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose Level 1, Level 2 or Level 3. [2] Boost all Bots of the chosen Level."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_09",
+      "level": "2",
+      "dev_price": "-5.0",
+      "activate": "[1] Choose Level 1, Level 2 or Level 3. [2] Boost all Bots of the chosen Level."
+    },
+    "devPrice": -5
+  },
+  {
+    "id": "S_10",
+    "type": "Sentinel",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Reveal two units. [2] Boost every Bot just revealed."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_10",
+      "level": "2",
+      "dev_price": "-3.1",
+      "activate": "[1] Reveal two units. [2] Boost every Bot just revealed."
+    },
+    "devPrice": -3.1
+  },
+  {
+    "id": "S_11",
+    "type": "Sentinel",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Bury this unit. [2] If its sector is now Dark, Reveal it. If the revealed unit is a Mecha, deal 2 damage to it."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_11",
+      "level": "2",
+      "dev_price": "-3.5",
+      "activate": "[1] Bury this unit. [2] If its sector is now Dark, Reveal it. If the revealed unit is a Mecha, deal 2 damage to it."
+    },
+    "devPrice": -3.5
+  },
+  {
+    "id": "S_12",
+    "type": "Sentinel",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "If at least one Bot is adjacent, destroy one of them and deal 2 damage to your Flagship."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_12",
+      "level": "3",
+      "dev_price": "-4.2",
+      "activate": "If at least one Bot is adjacent, destroy one of them and deal 2 damage to your Flagship."
+    },
+    "devPrice": -4.2
+  },
+  {
+    "id": "S_13",
+    "type": "Sentinel",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Choose a Module with at least 1 energy on it. Remove all energy from that Module."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_13",
+      "level": "3",
+      "dev_price": "-4.3",
+      "activate": "Choose a Module with at least 1 energy on it. Remove all energy from that Module."
+    },
+    "devPrice": -4.3
+  },
+  {
+    "id": "S_14",
+    "type": "Sentinel",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose the row through this unit that has the most Bots. [2] If it has at least one Bot, Boost all units in that row, including this unit."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_14",
+      "level": "3",
+      "dev_price": "-4.5",
+      "activate": "[1] Choose the row through this unit that has the most Bots. [2] If it has at least one Bot, Boost all units in that row, including this unit."
+    },
+    "devPrice": -4.5
+  },
+  {
+    "id": "S_15",
+    "type": "Sentinel",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Reveal two units. [2] For each Mecha just revealed, deal 1 damage to your Flagship."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_15",
+      "level": "3",
+      "dev_price": "-4.1",
+      "activate": "[1] Reveal two units. [2] For each Mecha just revealed, deal 1 damage to your Flagship."
+    },
+    "devPrice": -4.1
+  },
+  {
+    "id": "S_16",
+    "type": "Sentinel",
+    "level": 3,
+    "copies": 4,
+    "arrows": [
+      1,
+      4
+    ],
+    "text": {
+      "activate": "[1] Turn this unit clockwise by one side for each Sentinel on the Field, including this unit. [2] Boost all Bots in its lines of fire."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_16",
+      "level": "3",
+      "arrows": "1,4",
+      "dev_price": "-4.5",
+      "activate": "[1] Turn this unit clockwise by one side for each Sentinel on the Field, including this unit. [2] Boost all Bots in its lines of fire."
+    },
+    "devPrice": -4.5
+  },
+  {
+    "id": "S_17",
+    "type": "Sentinel",
+    "level": 4,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Boost all adjacent Gyros."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_17",
+      "level": "4",
+      "dev_price": "-4.5",
+      "activate": "Boost all adjacent Gyros."
+    },
+    "devPrice": -4.5
+  },
+  {
+    "id": "S_18",
+    "type": "Sentinel",
+    "level": 4,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose a horizontal row with at least one Mecha in it. [2] Deal 1 damage to all Mecha and Gyros in that row."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_18",
+      "level": "4",
+      "dev_price": "-5.7",
+      "activate": "[1] Choose a horizontal row with at least one Mecha in it. [2] Deal 1 damage to all Mecha and Gyros in that row."
+    },
+    "devPrice": -5.7
+  },
+  {
+    "id": "S_19",
+    "type": "Sentinel",
+    "level": 4,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Deal 1 damage to all Gyros. [2] Deal 1 damage to your Flagship for each Gyro destroyed this way."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_19",
+      "level": "4",
+      "dev_price": "-5.4",
+      "activate": "[1] Deal 1 damage to all Gyros. [2] Deal 1 damage to your Flagship for each Gyro destroyed this way."
+    },
+    "devPrice": -5.4
+  },
+  {
+    "id": "S_20",
+    "type": "Sentinel",
+    "level": 4,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Deal 1 damage to all other units in a row through this unit. [2] If no Mecha was destroyed this way, deal 3 damage to your Flagship."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_20",
+      "level": "4",
+      "dev_price": "-5.1",
+      "activate": "[1] Deal 1 damage to all other units in a row through this unit. [2] If no Mecha was destroyed this way, deal 3 damage to your Flagship."
+    },
+    "devPrice": -5.1
+  },
+  {
+    "id": "S_21",
+    "type": "Sentinel",
+    "level": 4,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Activate all Sleepers. [2] Drain all Gyros."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_21",
+      "level": "4",
+      "dev_price": "-5.1",
+      "activate": "[1] Activate all Sleepers. [2] Drain all Gyros."
+    },
+    "devPrice": -5.1
+  },
+  {
+    "id": "S_22",
+    "type": "Sentinel",
+    "level": 5,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Deal 1 damage to this unit for each Sentinel on the Field, including this unit. This is a single hit."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_22",
+      "level": "5",
+      "dev_price": "-0.3",
+      "activate": "Deal 1 damage to this unit for each Sentinel on the Field, including this unit. This is a single hit."
+    },
+    "devPrice": -0.3
+  },
+  {
+    "id": "S_23",
+    "type": "Sentinel",
+    "level": 5,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Place a Barrier on one Sentinel that has none. It may be this unit."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_23",
+      "level": "5",
+      "dev_price": "-4.9",
+      "activate": "Place a Barrier on one Sentinel that has none. It may be this unit."
+    },
+    "devPrice": -4.9
+  },
+  {
+    "id": "S_24",
+    "type": "Sentinel",
+    "level": 5,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Destroy all Level 1 Bots. [2] Deal 1 damage to your Flagship for each Bot destroyed this way."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_24",
+      "level": "5",
+      "dev_price": "-6.2",
+      "activate": "[1] Destroy all Level 1 Bots. [2] Deal 1 damage to your Flagship for each Bot destroyed this way."
+    },
+    "devPrice": -6.2
+  },
+  {
+    "id": "S_25",
+    "type": "Sentinel",
+    "level": 5,
+    "copies": 4,
+    "arrows": [
+      1,
+      4
+    ],
+    "text": {
+      "activate": "[1] Teleport this unit to any Dark sector. You may rotate it. [2] Boost every Targeted unit."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_25",
+      "level": "5",
+      "arrows": "1,4",
+      "dev_price": "-6.5",
+      "activate": "[1] Teleport this unit to any Dark sector. You may rotate it. [2] Boost every Targeted unit."
+    },
+    "devPrice": -6.5
+  },
+  {
+    "id": "S_26",
+    "type": "Sentinel",
+    "level": 5,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Place a Bio-shield on every adjacent Bot."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_26",
+      "level": "5",
+      "dev_price": "-6.1",
+      "activate": "Place a Bio-shield on every adjacent Bot."
+    },
+    "devPrice": -6.1
+  },
+  {
+    "id": "S_27",
+    "type": "Sentinel",
+    "level": 5,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Boost this unit once for each adjacent Bot. [2] If it now has 5 or more Shield and Bio-shield tokens combined, remove all of them (Bio-shields removed this way have no effect) and deal 4 damage to your Flagship. [3] Deal 1 damage to all Bots."
+    },
+    "fields": {
+      "type": "Sentinel",
+      "copies": "4",
+      "trigger": "start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).",
+      "on_reveal": "every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5, 6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.",
+      "on destroy": "remove to Discard",
+      "id": "S_27",
+      "level": "5",
+      "dev_price": "-6.5",
+      "activate": "[1] Boost this unit once for each adjacent Bot. [2] If it now has 5 or more Shield and Bio-shield tokens combined, remove all of them (Bio-shields removed this way have no effect) and deal 4 damage to your Flagship. [3] Deal 1 damage to all Bots."
+    },
+    "devPrice": -6.5
+  },
+  {
+    "id": "F_01",
+    "type": "Flare",
+    "level": "none",
+    "copies": 10,
+    "arrows": [],
+    "text": {
+      "activate": "none"
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "10",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "none",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_01",
+      "border_exception": "white/black stripes",
+      "energy_on_reveal": "1 Yellow, 1 Red, 1 Blue (split among ready Modules as you like)",
+      "dev_price": "2.0",
+      "mission_end_reward": "1 Upgrade point per Power Node in the Trophy pile",
+      "removal_exception": "goes to the Trophy pile instead of the Discard",
+      "heat_module_note": "see Expansion1 (may gain 3 Heat tokens instead of the energy)"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 1,
+      "Blue": 1
+    },
+    "devPrice": 2
+  },
+  {
+    "id": "F_02",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Reveal all adjacent Dark sectors. [2] Remove the Barrier from each Sentinel just revealed and give it an Alert token."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Reveal all adjacent Dark sectors. [2] Remove the Barrier from each Sentinel just revealed and give it an Alert token.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_02",
+      "energy_on_reveal": "1 Yellow",
+      "dev_price": "0.6"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": 0.6
+  },
+  {
+    "id": "F_03",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Destroy one adjacent Bot. [2] Deal damage to your Flagship equal to that Bot's Strength just before it was destroyed."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Destroy one adjacent Bot. [2] Deal damage to your Flagship equal to that Bot's Strength just before it was destroyed.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_03",
+      "energy_on_reveal": "1 Yellow",
+      "dev_price": "-0.6"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": -0.6
+  },
+  {
+    "id": "F_04",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Reveal one unit. [2] You may deal 2 damage to it."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Reveal one unit. [2] You may deal 2 damage to it.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_04",
+      "energy_on_reveal": "1 Yellow",
+      "dev_price": "0.9"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": 0.9
+  },
+  {
+    "id": "F_05",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Boost all Level 1 units."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Boost all Level 1 units.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_05",
+      "energy_on_reveal": "1 Yellow",
+      "dev_price": "-0.5"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": -0.5
+  },
+  {
+    "id": "F_06",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose one horizontal row. [2] Remove 1 damage from every damaged unit in that row and deal 1 damage to every other unit in it. Check which units are damaged before doing either."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Choose one horizontal row. [2] Remove 1 damage from every damaged unit in that row and deal 1 damage to every other unit in it. Check which units are damaged before doing either.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_06",
+      "energy_on_reveal": "1 Yellow",
+      "dev_price": "-0.5"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": -0.5
+  },
+  {
+    "id": "F_07",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Remove 1 damage from your Flagship for each Gyro and each Sleeper on the Field. [2] Drain all Gyros and activate all Sleepers."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Remove 1 damage from your Flagship for each Gyro and each Sleeper on the Field. [2] Drain all Gyros and activate all Sleepers.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_07",
+      "energy_on_reveal": "1 Yellow",
+      "dev_price": "0.5"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": 0.5
+  },
+  {
+    "id": "F_08",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Reveal up to three units. [2] Deal 1 damage to each unit just revealed whose type appears at least twice among them."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Reveal up to three units. [2] Deal 1 damage to each unit just revealed whose type appears at least twice among them.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_08",
+      "energy_on_reveal": "1 Yellow",
+      "dev_price": "0.9"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": 0.9
+  },
+  {
+    "id": "F_09",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "text": {
+      "activate": "Boost every Targeted unit."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Boost every Targeted unit.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_09",
+      "energy_on_reveal": "1 Yellow",
+      "arrows": "1,2,3,4",
+      "dev_price": "0.2"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": 0.2
+  },
+  {
+    "id": "F_10",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Bury one Sentinel."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Bury one Sentinel.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_10",
+      "energy_on_reveal": "1 Yellow",
+      "dev_price": "-1.0"
+    },
+    "energyOnReveal": {
+      "Yellow": 1,
+      "Red": 0,
+      "Blue": 0
+    },
+    "devPrice": -1
+  },
+  {
+    "id": "F_11",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Deal 1 damage to all Gyros."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Deal 1 damage to all Gyros.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_11",
+      "energy_on_reveal": "1 Red",
+      "dev_price": "-0.2"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": -0.2
+  },
+  {
+    "id": "F_12",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [
+      1
+    ],
+    "text": {
+      "activate": "Deal 1 damage to every unit in its line of fire."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Deal 1 damage to every unit in its line of fire.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_12",
+      "energy_on_reveal": "1 Red",
+      "arrows": "1",
+      "dev_price": "1.7"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": 1.7
+  },
+  {
+    "id": "F_13",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Activate all Mecha."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Activate all Mecha.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_13",
+      "energy_on_reveal": "1 Red",
+      "dev_price": "0.4"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": 0.4
+  },
+  {
+    "id": "F_14",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] If there are three or more Mecha on the Field, destroy one Mecha. [2] Then, if there are three or more Bots on the Field, destroy one Bot."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] If there are three or more Mecha on the Field, destroy one Mecha. [2] Then, if there are three or more Bots on the Field, destroy one Bot.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_14",
+      "energy_on_reveal": "1 Red",
+      "dev_price": "1.4"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": 1.4
+  },
+  {
+    "id": "F_15",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Destroy one adjacent Bot or Mecha. [2] If it was a Bot, deal 2 damage to your Flagship. If it was a Mecha, remove 2 damage from your Flagship."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Destroy one adjacent Bot or Mecha. [2] If it was a Bot, deal 2 damage to your Flagship. If it was a Mecha, remove 2 damage from your Flagship.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_15",
+      "energy_on_reveal": "1 Red",
+      "dev_price": "0.4"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": 0.4
+  },
+  {
+    "id": "F_16",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "If there are exactly three Bots on the Field, deal 2 damage to your Flagship."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "If there are exactly three Bots on the Field, deal 2 damage to your Flagship.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_16",
+      "energy_on_reveal": "1 Red",
+      "dev_price": "-0.4"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": -0.4
+  },
+  {
+    "id": "F_17",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Check the Strength of every adjacent unit first. Then deal 1 damage to each one with Strength 2 or more, and Boost each one with Strength exactly 1."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Check the Strength of every adjacent unit first. Then deal 1 damage to each one with Strength 2 or more, and Boost each one with Strength exactly 1.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_17",
+      "energy_on_reveal": "1 Red",
+      "dev_price": "-1.1"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": -1.1
+  },
+  {
+    "id": "F_18",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "You may run one ready red-background Module without paying its cost."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "You may run one ready red-background Module without paying its cost.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_18",
+      "energy_on_reveal": "1 Red",
+      "dev_price": "1.7"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": 1.7
+  },
+  {
+    "id": "F_19",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Remove 1 Shield or Bio-shield token from each adjacent unit that has one (your choice which; a Bio-shield removed this way has no effect). [2] Then deal 1 damage to all adjacent units."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Remove 1 Shield or Bio-shield token from each adjacent unit that has one (your choice which; a Bio-shield removed this way has no effect). [2] Then deal 1 damage to all adjacent units.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_19",
+      "energy_on_reveal": "1 Red",
+      "dev_price": "0.4"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 1,
+      "Blue": 0
+    },
+    "devPrice": 0.4
+  },
+  {
+    "id": "F_20",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Reveal up to two units. [2] If you revealed two units with the same Level, deal 2 damage to each of them."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Reveal up to two units. [2] If you revealed two units with the same Level, deal 2 damage to each of them.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_20",
+      "energy_on_reveal": "1 Blue",
+      "dev_price": "0.1"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": 0.1
+  },
+  {
+    "id": "F_21",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Destroy one adjacent Mecha and one adjacent Bot."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Destroy one adjacent Mecha and one adjacent Bot.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_21",
+      "energy_on_reveal": "1 Blue",
+      "dev_price": "1.0"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": 1
+  },
+  {
+    "id": "F_22",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose a horizontal row with at least one Mecha in it. [2] Deal 1 damage to all units in that row."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Choose a horizontal row with at least one Mecha in it. [2] Deal 1 damage to all units in that row.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_22",
+      "energy_on_reveal": "1 Blue",
+      "dev_price": "1.1"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": 1.1
+  },
+  {
+    "id": "F_23",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [
+      1,
+      2,
+      4,
+      5
+    ],
+    "text": {
+      "activate": "Deal 1 damage to every Targeted unit."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Deal 1 damage to every Targeted unit.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_23",
+      "energy_on_reveal": "1 Blue",
+      "arrows": "1,2,4,5",
+      "dev_price": "1.5"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": 1.5
+  },
+  {
+    "id": "F_24",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Deal 1 damage to all units with the highest Strength on the Field."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Deal 1 damage to all units with the highest Strength on the Field.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_24",
+      "energy_on_reveal": "1 Blue",
+      "dev_price": "1.8"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": 1.8
+  },
+  {
+    "id": "F_25",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose a ready Module with the lowest cost. [2] Place 3 energy of that Module's colour on it."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Choose a ready Module with the lowest cost. [2] Place 3 energy of that Module's colour on it.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_25",
+      "energy_on_reveal": "1 Blue",
+      "dev_price": "1.7"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": 1.7
+  },
+  {
+    "id": "F_26",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Boost three different Bots and three different Mecha."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Boost three different Bots and three different Mecha.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_26",
+      "energy_on_reveal": "1 Blue",
+      "dev_price": "-0.4"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": -0.4
+  },
+  {
+    "id": "F_27",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Count 1 for each Bot on the Field, minus 1 for each Mecha. [2] If the total is above 0, you may place that much energy on one ready Module."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "[1] Count 1 for each Bot on the Field, minus 1 for each Mecha. [2] If the total is above 0, you may place that much energy on one ready Module.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_27",
+      "energy_on_reveal": "1 Blue",
+      "dev_price": "0.3"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": 0.3
+  },
+  {
+    "id": "F_28",
+    "type": "Flare",
+    "level": "none",
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Choose one horizontal row and Boost all units in it."
+    },
+    "fields": {
+      "type": "Flare",
+      "level": "none",
+      "copies": "4",
+      "indestructible": "true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)",
+      "flip_and_move": "allowed for effects that do not choose it (for example P_25); Core Rules 4.6",
+      "trigger": "when revealed",
+      "on_reveal_sequence": "[1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.",
+      "activate": "Choose one horizontal row and Boost all units in it.",
+      "uncovered": "an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare",
+      "removal": "removed at Overload End (to Discard; Power Node to Trophy pile)",
+      "id": "F_28",
+      "energy_on_reveal": "1 Blue",
+      "dev_price": "-0.6"
+    },
+    "energyOnReveal": {
+      "Yellow": 0,
+      "Red": 0,
+      "Blue": 1
+    },
+    "devPrice": -0.6
+  },
+  {
+    "id": "P_01",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [
+      1,
+      2,
+      3
+    ],
+    "text": {
+      "activate": "Deal 1 damage to every Targeted unit."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_01",
+      "level": "1",
+      "arrows": "1,2,3",
+      "dev_price": "2.5",
+      "activate": "Deal 1 damage to every Targeted unit."
+    },
+    "devPrice": 2.5
+  },
+  {
+    "id": "P_02",
+    "type": "Sleeper",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Boost all adjacent units."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_02",
+      "level": "2",
+      "dev_price": "-0.3",
+      "activate": "Boost all adjacent units."
+    },
+    "devPrice": -0.3
+  },
+  {
+    "id": "P_03",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Deal 1 damage to one adjacent Level 1 unit, one adjacent Level 2 unit and one adjacent Level 3 unit."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_03",
+      "level": "1",
+      "dev_price": "2.0",
+      "activate": "Deal 1 damage to one adjacent Level 1 unit, one adjacent Level 2 unit and one adjacent Level 3 unit."
+    },
+    "devPrice": 2
+  },
+  {
+    "id": "P_04",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Find the most abundant unit Level on the Field. [2] Deal 1 damage to all units of that Level."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_04",
+      "level": "1",
+      "dev_price": "3.1",
+      "activate": "[1] Find the most abundant unit Level on the Field. [2] Deal 1 damage to all units of that Level."
+    },
+    "devPrice": 3.1
+  },
+  {
+    "id": "P_05",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Start an Overload. [2] If there is at least one Sentinel on the Field, remove 1 damage from your Flagship."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_05",
+      "level": "1",
+      "dev_price": "1.0",
+      "activate": "[1] Start an Overload. [2] If there is at least one Sentinel on the Field, remove 1 damage from your Flagship."
+    },
+    "devPrice": 1
+  },
+  {
+    "id": "P_06",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Count 1 for each Bot on the Field, minus 1 for each Mecha. [2] If the total is above 0, place that much energy on your ready Modules, split as you choose. If it is below 0, remove that much energy from your Modules, your choice which."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_06",
+      "level": "1",
+      "dev_price": "1.6",
+      "activate": "[1] Count 1 for each Bot on the Field, minus 1 for each Mecha. [2] If the total is above 0, place that much energy on your ready Modules, split as you choose. If it is below 0, remove that much energy from your Modules, your choice which."
+    },
+    "devPrice": 1.6
+  },
+  {
+    "id": "P_07",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Find the most abundant unit type on the Field, other than Bot and Flare. [2] Deal 1 damage to all units of that type."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_07",
+      "level": "1",
+      "dev_price": "2.1",
+      "activate": "[1] Find the most abundant unit type on the Field, other than Bot and Flare. [2] Deal 1 damage to all units of that type."
+    },
+    "devPrice": 2.1
+  },
+  {
+    "id": "P_08",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] If there is exactly one Bot on the Field, deal 2 damage to it. [2] Do the same for each other unit type."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_08",
+      "level": "1",
+      "dev_price": "1.4",
+      "activate": "[1] If there is exactly one Bot on the Field, deal 2 damage to it. [2] Do the same for each other unit type."
+    },
+    "devPrice": 1.4
+  },
+  {
+    "id": "P_09",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [
+      1,
+      3,
+      5
+    ],
+    "text": {
+      "activate": "Place a Tick on every Targeted unit."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_09",
+      "level": "1",
+      "arrows": "1,3,5",
+      "dev_price": "2.7",
+      "activate": "Place a Tick on every Targeted unit."
+    },
+    "devPrice": 2.7
+  },
+  {
+    "id": "P_10",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "If there is at least one Sentinel on the Field, start an Overload."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_10",
+      "level": "1",
+      "dev_price": "-0.5",
+      "activate": "If there is at least one Sentinel on the Field, start an Overload."
+    },
+    "devPrice": -0.5
+  },
+  {
+    "id": "P_11",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Deal 1 damage to all damaged units. [2] Deal 1 damage to your Flagship for each unit destroyed this way."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_11",
+      "level": "1",
+      "dev_price": "1.0",
+      "activate": "[1] Deal 1 damage to all damaged units. [2] Deal 1 damage to your Flagship for each unit destroyed this way."
+    },
+    "devPrice": 1
+  },
+  {
+    "id": "P_12",
+    "type": "Sleeper",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Remove 1 damage from every unit on the Field."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_12",
+      "level": "2",
+      "dev_price": "-1.0",
+      "activate": "Remove 1 damage from every unit on the Field."
+    },
+    "devPrice": -1
+  },
+  {
+    "id": "P_13",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [
+      1
+    ],
+    "text": {
+      "activate": "[1] Turn this unit clockwise by one side for each Bot on the Field. [2] Deal 1 damage to all units in its line of fire."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_13",
+      "level": "1",
+      "arrows": "1",
+      "dev_price": "1.9",
+      "activate": "[1] Turn this unit clockwise by one side for each Bot on the Field. [2] Deal 1 damage to all units in its line of fire."
+    },
+    "devPrice": 1.9
+  },
+  {
+    "id": "P_14",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Place a Tick on every adjacent non-Bot unit."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_14",
+      "level": "1",
+      "dev_price": "1.1",
+      "activate": "Place a Tick on every adjacent non-Bot unit."
+    },
+    "devPrice": 1.1
+  },
+  {
+    "id": "P_15",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Deal 1 damage to one Bot. [2] Do the same for each other unit type on the Field."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_15",
+      "level": "1",
+      "dev_price": "2.3",
+      "activate": "[1] Deal 1 damage to one Bot. [2] Do the same for each other unit type on the Field."
+    },
+    "devPrice": 2.3
+  },
+  {
+    "id": "P_16",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose a horizontal row with the fewest Bots. [2] Deal 1 damage to all units in that row."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_16",
+      "level": "1",
+      "dev_price": "1.6",
+      "activate": "[1] Choose a horizontal row with the fewest Bots. [2] Deal 1 damage to all units in that row."
+    },
+    "devPrice": 1.6
+  },
+  {
+    "id": "P_17",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose a horizontal row and Boost all units in it. [2] Choose a different horizontal row and deal 1 damage to all units in it."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_17",
+      "level": "1",
+      "dev_price": "-0.5",
+      "activate": "[1] Choose a horizontal row and Boost all units in it. [2] Choose a different horizontal row and deal 1 damage to all units in it."
+    },
+    "devPrice": -0.5
+  },
+  {
+    "id": "P_18",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose a horizontal row and place a Tick on every Gyro in it. [2] Choose a different horizontal row and place a Tick on every Mecha in it. [3] Choose a third horizontal row, different from both, and place a Tick on every Sentinel in it."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_18",
+      "level": "1",
+      "dev_price": "3.0",
+      "activate": "[1] Choose a horizontal row and place a Tick on every Gyro in it. [2] Choose a different horizontal row and place a Tick on every Mecha in it. [3] Choose a third horizontal row, different from both, and place a Tick on every Sentinel in it."
+    },
+    "devPrice": 3
+  },
+  {
+    "id": "P_19",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose the lowest-cost ready Module you could run right now (light in the Command phase, red during an Overload). [2] Run it without paying its cost."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_19",
+      "level": "1",
+      "dev_price": "0.8",
+      "activate": "[1] Choose the lowest-cost ready Module you could run right now (light in the Command phase, red during an Overload). [2] Run it without paying its cost."
+    },
+    "devPrice": 0.8
+  },
+  {
+    "id": "P_20",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [
+      1
+    ],
+    "text": {
+      "activate": "[1] Turn this unit clockwise by one side for each Sentinel on the Field. [2] Boost all units in its line of fire."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_20",
+      "level": "1",
+      "arrows": "1",
+      "dev_price": "2.5",
+      "activate": "[1] Turn this unit clockwise by one side for each Sentinel on the Field. [2] Boost all units in its line of fire."
+    },
+    "devPrice": 2.5
+  },
+  {
+    "id": "P_21",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "If there are exactly three Bots on the Field, deal 1 damage to all Bots."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_21",
+      "level": "1",
+      "dev_price": "1.8",
+      "activate": "If there are exactly three Bots on the Field, deal 1 damage to all Bots."
+    },
+    "devPrice": 1.8
+  },
+  {
+    "id": "P_22",
+    "type": "Sleeper",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Deal 6 damage to your Flagship, minus 1 for each Bot on the Field (minimum 0)."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_22",
+      "level": "3",
+      "dev_price": "-1.3",
+      "activate": "Deal 6 damage to your Flagship, minus 1 for each Bot on the Field (minimum 0)."
+    },
+    "devPrice": -1.3
+  },
+  {
+    "id": "P_23",
+    "type": "Sleeper",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Boost five different non-Mecha units."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_23",
+      "level": "3",
+      "dev_price": "-2.0",
+      "activate": "Boost five different non-Mecha units."
+    },
+    "devPrice": -2
+  },
+  {
+    "id": "P_24",
+    "type": "Sleeper",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Choose the Sentinel with the most Damage tokens. [2] Remove all its tokens and put it at the very bottom of its sector."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_24",
+      "level": "2",
+      "dev_price": "-0.4",
+      "activate": "[1] Choose the Sentinel with the most Damage tokens. [2] Remove all its tokens and put it at the very bottom of its sector."
+    },
+    "devPrice": -0.4
+  },
+  {
+    "id": "P_25",
+    "type": "Sleeper",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Flip face down every adjacent unit that has no tokens. Each of those sectors becomes Dark."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_25",
+      "level": "2",
+      "dev_price": "-0.5",
+      "activate": "Flip face down every adjacent unit that has no tokens. Each of those sectors becomes Dark."
+    },
+    "devPrice": -0.5
+  },
+  {
+    "id": "P_26",
+    "type": "Sleeper",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "Place a Barrier on every Sentinel that has none."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_26",
+      "level": "2",
+      "dev_price": "-0.1",
+      "activate": "Place a Barrier on every Sentinel that has none."
+    },
+    "devPrice": -0.1
+  },
+  {
+    "id": "P_27",
+    "type": "Sleeper",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "activate": "[1] Deal 1 damage to all Sentinels. [2] Deal 1 damage to your Flagship for each Sentinel that survived."
+    },
+    "fields": {
+      "type": "Sleeper",
+      "copies": "4",
+      "trigger": "whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)",
+      "after resolving": "remove to Discard",
+      "destroyed_before_resolving": "its effect never happens (it has no Destroyed effect)",
+      "id": "P_27",
+      "level": "1",
+      "dev_price": "0.7",
+      "activate": "[1] Deal 1 damage to all Sentinels. [2] Deal 1 damage to your Flagship for each Sentinel that survived."
+    },
+    "devPrice": 0.7
+  },
+  {
+    "id": "G_01",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 5,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Yellow energy.",
+      "destroyed": "Gain 2 Yellow energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "5",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_01",
+      "level": "2",
+      "dev_price": "0.8",
+      "drain": "Gain 1 Yellow energy.",
+      "destroyed": "Gain 2 Yellow energy."
+    },
+    "devPrice": 0.8,
+    "energyGyro": true
+  },
+  {
+    "id": "G_02",
+    "type": "Gyro",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Yellow energy.",
+      "destroyed": "Gain 4 Yellow energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_02",
+      "level": "3",
+      "dev_price": "0.8",
+      "drain": "Gain 1 Yellow energy.",
+      "destroyed": "Gain 4 Yellow energy."
+    },
+    "devPrice": 0.8,
+    "energyGyro": true
+  },
+  {
+    "id": "G_03",
+    "type": "Gyro",
+    "level": 3,
+    "copies": 2,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Yellow energy.",
+      "destroyed": "Gain 5 Yellow energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "2",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_03",
+      "level": "3",
+      "dev_price": "1.0",
+      "drain": "Gain 1 Yellow energy.",
+      "destroyed": "Gain 5 Yellow energy."
+    },
+    "devPrice": 1,
+    "energyGyro": true
+  },
+  {
+    "id": "G_04",
+    "type": "Gyro",
+    "level": 4,
+    "copies": 3,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Yellow energy.",
+      "destroyed": "Gain 6 Yellow energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "3",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_04",
+      "level": "4",
+      "dev_price": "0.8",
+      "drain": "Gain 1 Yellow energy.",
+      "destroyed": "Gain 6 Yellow energy."
+    },
+    "devPrice": 0.8,
+    "energyGyro": true
+  },
+  {
+    "id": "G_05",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 9,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Red energy.",
+      "destroyed": "Gain 2 Red energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "9",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_05",
+      "level": "1",
+      "dev_price": "0.7",
+      "drain": "Gain 1 Red energy.",
+      "destroyed": "Gain 2 Red energy."
+    },
+    "devPrice": 0.7,
+    "energyGyro": true
+  },
+  {
+    "id": "G_06",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 5,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Red energy.",
+      "destroyed": "Gain 4 Red energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "5",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_06",
+      "level": "2",
+      "dev_price": "0.8",
+      "drain": "Gain 1 Red energy.",
+      "destroyed": "Gain 4 Red energy."
+    },
+    "devPrice": 0.8,
+    "energyGyro": true
+  },
+  {
+    "id": "G_07",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Blue energy.",
+      "destroyed": "Gain 1 Blue energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_07",
+      "level": "1",
+      "dev_price": "0.6",
+      "drain": "Gain 1 Blue energy.",
+      "destroyed": "Gain 1 Blue energy."
+    },
+    "devPrice": 0.6,
+    "energyGyro": true
+  },
+  {
+    "id": "G_08",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 6,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Blue energy.",
+      "destroyed": "Gain 2 Blue energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "6",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_08",
+      "level": "1",
+      "dev_price": "0.7",
+      "drain": "Gain 1 Blue energy.",
+      "destroyed": "Gain 2 Blue energy."
+    },
+    "devPrice": 0.7,
+    "energyGyro": true
+  },
+  {
+    "id": "G_09",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 Blue energy.",
+      "destroyed": "Gain 3 Blue energy."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "true",
+      "border": "dark/yellow stripes",
+      "energy_deck_member": "true",
+      "energy_deck_total": "42 (sum of copies G_01..G_09)",
+      "id": "G_09",
+      "level": "1",
+      "dev_price": "0.8",
+      "drain": "Gain 1 Blue energy.",
+      "destroyed": "Gain 3 Blue energy."
+    },
+    "devPrice": 0.8,
+    "energyGyro": true
+  },
+  {
+    "id": "G_10",
+    "type": "Gyro",
+    "level": 4,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Boost all other non-Bot units on the Field.",
+      "destroyed": "Deal 1 damage to all non-Bot units."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_10",
+      "level": "4",
+      "dev_price": "-2.0",
+      "drain": "Boost all other non-Bot units on the Field.",
+      "destroyed": "Deal 1 damage to all non-Bot units."
+    },
+    "devPrice": -2,
+    "energyGyro": false
+  },
+  {
+    "id": "G_11",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "[1] Discard this Gyro now. [2] If its sector is now Dark, Reveal it. [3] Boost the unit now on top of that sector twice.",
+      "destroyed": "[1] Discard this Wreck now. [2] If its sector is now Dark, Reveal it. [3] Deal 2 damage to the unit now on top of that sector."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_11",
+      "level": "1",
+      "dev_price": "-0.5",
+      "drain": "[1] Discard this Gyro now. [2] If its sector is now Dark, Reveal it. [3] Boost the unit now on top of that sector twice.",
+      "destroyed": "[1] Discard this Wreck now. [2] If its sector is now Dark, Reveal it. [3] Deal 2 damage to the unit now on top of that sector."
+    },
+    "devPrice": -0.5,
+    "energyGyro": false
+  },
+  {
+    "id": "G_12",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Deal 1 damage to your Flagship for each Mecha on the Field.",
+      "destroyed": "Remove 1 damage from your Flagship for each Sentinel on the Field."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_12",
+      "level": "1",
+      "dev_price": "-0.5",
+      "drain": "Deal 1 damage to your Flagship for each Mecha on the Field.",
+      "destroyed": "Remove 1 damage from your Flagship for each Sentinel on the Field."
+    },
+    "devPrice": -0.5,
+    "energyGyro": false
+  },
+  {
+    "id": "G_13",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "[1] Reveal up to four units. [2] Deal 1 damage to each Sentinel just revealed.",
+      "destroyed": "[1] Reveal up to four units. [2] Deal 1 damage to each Sentinel and each Bot just revealed."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_13",
+      "level": "1",
+      "dev_price": "0.1",
+      "drain": "[1] Reveal up to four units. [2] Deal 1 damage to each Sentinel just revealed.",
+      "destroyed": "[1] Reveal up to four units. [2] Deal 1 damage to each Sentinel and each Bot just revealed."
+    },
+    "devPrice": 0.1,
+    "energyGyro": false
+  },
+  {
+    "id": "G_14",
+    "type": "Gyro",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Deal 2 damage to your Flagship.",
+      "destroyed": "Start an Overload."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_14",
+      "level": "3",
+      "dev_price": "-2.0",
+      "drain": "Deal 2 damage to your Flagship.",
+      "destroyed": "Start an Overload."
+    },
+    "devPrice": -2,
+    "energyGyro": false
+  },
+  {
+    "id": "G_15",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Remove 1 energy from every Module.",
+      "destroyed": "Place 1 energy on every ready Module that has none."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_15",
+      "level": "2",
+      "dev_price": "1.0",
+      "drain": "Remove 1 energy from every Module.",
+      "destroyed": "Place 1 energy on every ready Module that has none."
+    },
+    "devPrice": 1,
+    "energyGyro": false
+  },
+  {
+    "id": "G_16",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Remove 1 energy from each of three different Modules that have energy (as many as possible).",
+      "destroyed": "Place 1 energy on each of three different ready Modules."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_16",
+      "level": "2",
+      "dev_price": "-1.3",
+      "drain": "Remove 1 energy from each of three different Modules that have energy (as many as possible).",
+      "destroyed": "Place 1 energy on each of three different ready Modules."
+    },
+    "devPrice": -1.3,
+    "energyGyro": false
+  },
+  {
+    "id": "G_17",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Lose 3 energy.",
+      "destroyed": "Gain 1 Command token."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_17",
+      "level": "2",
+      "dev_price": "-1.0",
+      "drain": "Lose 3 energy.",
+      "destroyed": "Gain 1 Command token."
+    },
+    "devPrice": -1,
+    "energyGyro": false
+  },
+  {
+    "id": "G_18",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Gain 1 energy.",
+      "destroyed": "Remove 1 damage from your Flagship."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_18",
+      "level": "1",
+      "dev_price": "-1.3",
+      "drain": "Gain 1 energy.",
+      "destroyed": "Remove 1 damage from your Flagship."
+    },
+    "devPrice": -1.3,
+    "energyGyro": false
+  },
+  {
+    "id": "G_19",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Remove 1 energy from each of three different Modules that have energy (as many as possible).",
+      "destroyed": "Place 1 energy on each of three different ready Modules."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_19",
+      "level": "1",
+      "dev_price": "-1.0",
+      "drain": "Remove 1 energy from each of three different Modules that have energy (as many as possible).",
+      "destroyed": "Place 1 energy on each of three different ready Modules."
+    },
+    "devPrice": -1,
+    "energyGyro": false
+  },
+  {
+    "id": "G_20",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Lose 1 Command token.",
+      "destroyed": "Gain 1 Command token."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_20",
+      "level": "1",
+      "dev_price": "-0.5",
+      "drain": "Lose 1 Command token.",
+      "destroyed": "Gain 1 Command token."
+    },
+    "devPrice": -0.5,
+    "energyGyro": false
+  },
+  {
+    "id": "G_21",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [
+      1,
+      3,
+      5
+    ],
+    "text": {
+      "drain": "Deal 1 damage to every Targeted unit.",
+      "destroyed": "Deal 1 damage to all adjacent units."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_21",
+      "level": "1",
+      "arrows": "1,3,5",
+      "dev_price": "2.6",
+      "drain": "Deal 1 damage to every Targeted unit.",
+      "destroyed": "Deal 1 damage to all adjacent units."
+    },
+    "devPrice": 2.6,
+    "energyGyro": false
+  },
+  {
+    "id": "G_22",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Deal 1 damage to all other Level 1 units in a row through this unit.",
+      "destroyed": "Deal 2 damage to all Level 2 units in a row through this unit."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_22",
+      "level": "1",
+      "dev_price": "1.8",
+      "drain": "Deal 1 damage to all other Level 1 units in a row through this unit.",
+      "destroyed": "Deal 2 damage to all Level 2 units in a row through this unit."
+    },
+    "devPrice": 1.8,
+    "energyGyro": false
+  },
+  {
+    "id": "G_23",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [
+      1,
+      3,
+      5
+    ],
+    "text": {
+      "drain": "Deal 1 damage to every Targeted unit.",
+      "destroyed": "Deal 2 damage to every Targeted unit."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_23",
+      "level": "1",
+      "arrows": "1,3,5",
+      "dev_price": "2.5",
+      "drain": "Deal 1 damage to every Targeted unit.",
+      "destroyed": "Deal 2 damage to every Targeted unit."
+    },
+    "devPrice": 2.5,
+    "energyGyro": false
+  },
+  {
+    "id": "G_24",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Deal 1 damage to all Bots in a row through this unit.",
+      "destroyed": "Deal 1 damage to all Bots in one horizontal row of your choice."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_24",
+      "level": "1",
+      "dev_price": "1.9",
+      "drain": "Deal 1 damage to all Bots in a row through this unit.",
+      "destroyed": "Deal 1 damage to all Bots in one horizontal row of your choice."
+    },
+    "devPrice": 1.9,
+    "energyGyro": false
+  },
+  {
+    "id": "G_25",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Deal 1 damage to all other damaged units in a row through this unit.",
+      "destroyed": "Deal 2 damage to all damaged units in a row through this unit."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_25",
+      "level": "1",
+      "dev_price": "2.5",
+      "drain": "Deal 1 damage to all other damaged units in a row through this unit.",
+      "destroyed": "Deal 2 damage to all damaged units in a row through this unit."
+    },
+    "devPrice": 2.5,
+    "energyGyro": false
+  },
+  {
+    "id": "G_26",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Boost all other units in a row through this unit.",
+      "destroyed": "Deal 1 damage to all units in a row through this unit."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_26",
+      "level": "1",
+      "dev_price": "1.6",
+      "drain": "Boost all other units in a row through this unit.",
+      "destroyed": "Deal 1 damage to all units in a row through this unit."
+    },
+    "devPrice": 1.6,
+    "energyGyro": false
+  },
+  {
+    "id": "G_27",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Boost all other units in a row through this unit and place a Tick on each of them.",
+      "destroyed": "Place a Tick on every unit in a row through this unit."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_27",
+      "level": "2",
+      "dev_price": "1.0",
+      "drain": "Boost all other units in a row through this unit and place a Tick on each of them.",
+      "destroyed": "Place a Tick on every unit in a row through this unit."
+    },
+    "devPrice": 1,
+    "energyGyro": false
+  },
+  {
+    "id": "G_28",
+    "type": "Gyro",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Place a Tick on every Mecha.",
+      "destroyed": "Place a Tick on every Sentinel."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_28",
+      "level": "3",
+      "dev_price": "0.6",
+      "drain": "Place a Tick on every Mecha.",
+      "destroyed": "Place a Tick on every Sentinel."
+    },
+    "devPrice": 0.6,
+    "energyGyro": false
+  },
+  {
+    "id": "G_29",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Mecha just revealed.",
+      "destroyed": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Bot just revealed."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_29",
+      "level": "2",
+      "dev_price": "-1.0",
+      "drain": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Mecha just revealed.",
+      "destroyed": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Bot just revealed."
+    },
+    "devPrice": -1,
+    "energyGyro": false
+  },
+  {
+    "id": "G_30",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "[1] Reveal three units. [2] Deal 2 damage to each unit just revealed.",
+      "destroyed": "[1] Reveal three units. [2] Deal 2 damage to any number of the units just revealed, your choice."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_30",
+      "level": "2",
+      "dev_price": "0.5",
+      "drain": "[1] Reveal three units. [2] Deal 2 damage to each unit just revealed.",
+      "destroyed": "[1] Reveal three units. [2] Deal 2 damage to any number of the units just revealed, your choice."
+    },
+    "devPrice": 0.5,
+    "energyGyro": false
+  },
+  {
+    "id": "G_31",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Deal 1 damage to all other units in one horizontal row of your choice that has at least one Mecha.",
+      "destroyed": "Deal 1 damage to all units in one horizontal row of your choice."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_31",
+      "level": "2",
+      "dev_price": "2.1",
+      "drain": "Deal 1 damage to all other units in one horizontal row of your choice that has at least one Mecha.",
+      "destroyed": "Deal 1 damage to all units in one horizontal row of your choice."
+    },
+    "devPrice": 2.1,
+    "energyGyro": false
+  },
+  {
+    "id": "G_32",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Remove the Barrier from every Sentinel.",
+      "destroyed": "Deal 1 damage to all Sentinels."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_32",
+      "level": "1",
+      "dev_price": "1.4",
+      "drain": "Remove the Barrier from every Sentinel.",
+      "destroyed": "Deal 1 damage to all Sentinels."
+    },
+    "devPrice": 1.4,
+    "energyGyro": false
+  },
+  {
+    "id": "G_33",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Deal 1 damage to all other damaged units in the horizontal row through this unit.",
+      "destroyed": "Deal 1 damage to all undamaged units in one horizontal row of your choice."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_33",
+      "level": "1",
+      "dev_price": "2.5",
+      "drain": "Deal 1 damage to all other damaged units in the horizontal row through this unit.",
+      "destroyed": "Deal 1 damage to all undamaged units in one horizontal row of your choice."
+    },
+    "devPrice": 2.5,
+    "energyGyro": false
+  },
+  {
+    "id": "G_34",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Lose 1 energy for each Bot on the Field.",
+      "destroyed": "Place 1 energy on your ready Modules for each Bot on the Field, split as you choose."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_34",
+      "level": "2",
+      "dev_price": "1.7",
+      "drain": "Lose 1 energy for each Bot on the Field.",
+      "destroyed": "Place 1 energy on your ready Modules for each Bot on the Field, split as you choose."
+    },
+    "devPrice": 1.7,
+    "energyGyro": false
+  },
+  {
+    "id": "G_35",
+    "type": "Gyro",
+    "level": 1,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Exhaust one ready Module and remove all energy from it.",
+      "destroyed": "Make one exhausted Module ready."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_35",
+      "level": "1",
+      "dev_price": "0.0",
+      "drain": "Exhaust one ready Module and remove all energy from it.",
+      "destroyed": "Make one exhausted Module ready."
+    },
+    "devPrice": 0,
+    "energyGyro": false
+  },
+  {
+    "id": "G_36",
+    "type": "Gyro",
+    "level": 3,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Reveal every Dark sector on the Field, one at a time.",
+      "destroyed": "[1] Reveal any number of units. [2] Gain 1 energy for each Bot just revealed."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_36",
+      "level": "3",
+      "dev_price": "0.5",
+      "drain": "Reveal every Dark sector on the Field, one at a time.",
+      "destroyed": "[1] Reveal any number of units. [2] Gain 1 energy for each Bot just revealed."
+    },
+    "devPrice": 0.5,
+    "energyGyro": false
+  },
+  {
+    "id": "G_37",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Deal 1 damage to all Level 3 units in one horizontal row of your choice.",
+      "destroyed": "Place a Tick on every Level 3 unit in one horizontal row of your choice."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_37",
+      "level": "2",
+      "dev_price": "0.0",
+      "drain": "Deal 1 damage to all Level 3 units in one horizontal row of your choice.",
+      "destroyed": "Place a Tick on every Level 3 unit in one horizontal row of your choice."
+    },
+    "devPrice": 0,
+    "energyGyro": false
+  },
+  {
+    "id": "G_38",
+    "type": "Gyro",
+    "level": 2,
+    "copies": 4,
+    "arrows": [],
+    "text": {
+      "drain": "Run one ready Module that costs 3 or less and that you could run right now (light in the Command phase, red during an Overload), without paying its cost.",
+      "destroyed": "Run one ready Module that you could run right now (light in the Command phase, red during an Overload), without paying its cost."
+    },
+    "fields": {
+      "type": "Gyro",
+      "copies": "4",
+      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
+      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
+      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
+      "energy_gyro": "false",
+      "border": "dark",
+      "energy_deck_member": "false",
+      "id": "G_38",
+      "level": "2",
+      "dev_price": "0.0",
+      "drain": "Run one ready Module that costs 3 or less and that you could run right now (light in the Command phase, red during an Overload), without paying its cost.",
+      "destroyed": "Run one ready Module that you could run right now (light in the Command phase, red during an Overload), without paying its cost."
+    },
+    "devPrice": 0,
+    "energyGyro": false
+  }
+]
