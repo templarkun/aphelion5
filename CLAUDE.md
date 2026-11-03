@@ -38,7 +38,7 @@ Each stage ends with all its tests passing and a short report to the designer. R
 - 2026-11-03: `company_vessels_structured.txt`, `Anomaly list.txt`, `Expansion1.txt` added to `data/` from files the designer uploaded (the cloud session cannot read the claude.ai Project; ask for uploads next time too).
 - 2026-11-03: Stage 1 done. `npm run check` = typecheck + tests (56 passing).
   Code: `src/geometry/` (Core Rules 3.8), `src/data/` (readers for all six data files, data checks, test-batch reader), `scripts/build-data.ts` (`npm run build:data` writes `src/data/generated/*.json`; a test fails if they are stale).
-  Open question for the designer: Core Rules footnote C5 mentions "Anomalies 18 and 19"; `Anomaly list.txt` has 01-17.
+- 2026-11-03: Anomalies 18 and 19 were removed on purpose (designer); footnote C5 reference dropped, Core Rules master rev 129.
 
 ## Working with the designer
 

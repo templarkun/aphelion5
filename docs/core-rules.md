@@ -809,7 +809,7 @@ Everything above follows your requested updates and terminology. Minor wording e
 2. **Wreck marker:** a Wreck carries a Wreck marker beside its Alert, so you can tell it from a Gyro alerted to Drain.
 3. **Bury removes Alert tokens too.** This makes F\_10 ("Bury one Sentinel") a real counter during an Overload. Bury with no tile beneath does nothing.
 4. **Overhaul:** step 5 now also removes Alert tokens and can't pick Wrecks. Step 3 refills each colour *up to* the starting amount and never reduces it.
-5. **Energy on Modules:** only on ready Modules, it pays only for that Module, and only in matching colours (5.3). Before, energy could be parked on exhausted Modules just to meet Anomalies 18 and 19.
+5. **Energy on Modules:** only on ready Modules, it pays only for that Module, and only in matching colours (5.3). Before, energy could be parked on exhausted Modules.
 6. **Objective check** (8.2): you check the objective only before Command phase actions, so an Overload already under way always finishes. Leftover Alert tokens are simply cleared at Mission End. The earlier draft's Mop-up step is gone.
 7. **Veteran campaigns reset Overhaul slots** (7.1, 10.3). "Don't erase Company sheets" would otherwise keep used Overhaul slots forever.
 8. **Flares hold no tokens**, and Boosting one is skipped without damaging your Flagship (6.2).
