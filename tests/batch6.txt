@@ -1,0 +1,221 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 6: MODULES (structured, machine-oriented)
+# DRAFT 2026-11-03, written by Claude from "Modules.txt" (its conventions 1-9),
+# Core Rules 5.3, 8.6, 9.1 and 11.1, and the CLAUDE.md decisions, at the designer's
+# request. Awaiting the designer's agreement; once agreed, copy it into the Project as
+# "claude/Test scenarios batch 6.txt".
+#
+# Every Module also has its own card test in the program. This batch holds the cases
+# where a Module needs a reading of the rules, so the designer can check them.
+################################################################################
+
+=== FORMAT SPEC ===
+Same as "Test scenarios batch 4.txt". "X ready" = you hold Module X, ready, with no energy
+on it. Unless stated, your Reserve holds enough energy of the Module's colour to pay.
+Light Modules run in the Command phase, red ones during an Overload.
+
+################################################################################
+=== SECTION: PAYING ===
+
+id: T6_PAY_01
+title: A cost reduction never counts the Module being run, and is counted when you pay
+source: Modules.txt convention 5; Capacitor Lance (3)
+map: M1
+given: Capacitor Lance ready. Demolition Blast and Ion Sweep exhausted. Reserve Yellow 7.
+when: list legal actions; run Capacitor Lance
+then: cost 9 - 2 (two other exhausted Modules) = 7: it can be run with 7 Yellow. Capacitor
+      Lance itself is not counted, although it is not ready while it resolves (8.6).
+
+id: T6_PAY_02
+title: Pathfinder Array - choose X as you run it; the reduction is on the total
+source: Pathfinder Array (53); unit file E11
+map: M1
+given: Pathfinder Array ready. Ion Sweep exhausted. Reserve Blue 4. (0,1): fd:B_01 > fd.
+       (1,0): fd:B_02 > fd. Every other sector cleared.
+when: run Pathfinder Array; choose X = 2; reveal (0,1) first
+then: X may be 0 to 2: the total 3 + X - 1 must be at most 4. Pay 4. Reveal 2 units; both are
+      Bots: 2 damage each (B_01 and B_02 destroyed).
+assumption: X may be 0 (E11: "Pathfinder Array = 3" is its smallest cost).
+
+id: T6_PAY_03
+title: A free run of an X-cost Module uses X = 1
+source: CLAUDE.md decision; Core Rules 5.3; G_38; Debris Sifter (54)
+map: M1
+given: Command phase. Debris Sifter ready. (0,0): G_38 Wreck [WR][AL] > fd. (0,1): fd:B_01 >
+       fd:B_02 > fd. Every other sector cleared.
+when: Resolve Alerts (G_38 Destroyed: run a Module free)
+then: Debris Sifter runs with X = 1: look at the top tile of (0,1) (B_01), discard it.
+      (0,1) is still Dark; B_02 is now its top tile.
+
+id: T6_PAY_04
+title: An extra payment is all or nothing, offered only when you can pay it
+source: Core Rules 8.6 step 3; Twin Laser Turret (10)
+map: M1
+given: Twin Laser Turret ready, Reserve Yellow 5. (0,1): B_02 > fd. (0,2): B_02 > fd. Every other
+       sector cleared.
+when: run Twin Laser Turret
+then: after the cost (3) you have 2 Yellow: not enough for "pay 3 more", so you are not asked.
+      Each B_02 takes 1 ([D1]). With Reserve Yellow 6 you are asked; yes: both destroyed.
+
+id: T6_PAY_05
+title: Accumulator Beam counts the Yellow on it before you ran it, at most 5
+source: Accumulator Beam (6); Core Rules 8.6 example
+map: M1
+given: Accumulator Beam ready with 6 Yellow on it. (0,1): B_03[S2] > fd. Every other sector cleared.
+when: run Accumulator Beam, paying its cost with 1 of the Yellow on it
+then: X = 5 (6, capped at 5): B_03 loses 2 Shields and takes 3 Damage: destroyed. The 5 unspent
+      Yellow return to the Supply.
+
+################################################################################
+=== SECTION: YELLOW ===
+
+id: T6_YEL_01
+title: Capacitor Demolisher with no two adjacent Bots does nothing
+source: Capacitor Demolisher (11); Core Rules 11.1 rule 5
+map: M1
+given: Capacitor Demolisher ready. (0,1): B_01 > fd. (1,-1): B_01 > fd. Every other sector cleared.
+when: run Capacitor Demolisher
+then: the two Bots are not adjacent: nothing is destroyed. The Module is still run and exhausted.
+assumption: the effect needs a pair; one Bot alone is not destroyed.
+
+id: T6_YEL_02
+title: Splitter Missiles - each share is its own hit
+source: Splitter Missiles (14); Core Rules 6.1, 6.4
+map: M1
+given: Splitter Missiles ready. (0,1): B_03[BAR] > fd. (1,0): B_01 > fd. Every other sector cleared.
+when: run Splitter Missiles; 2 to B_03, 1 to B_01
+then: the Barrier cancels B_03's share of 2 (B_03 unchanged, Barrier gone). B_01 destroyed.
+
+id: T6_YEL_03
+title: Ground Zero with no Mecha does nothing
+source: Ground Zero (21)
+map: M1
+given: Ground Zero ready. (0,1): B_01 > fd. Every other sector cleared.
+when: run Ground Zero
+then: no Mecha to destroy, so step [2] has no Level: nothing happens.
+assumption: step [2] depends on the Mecha destroyed in step [1].
+
+################################################################################
+=== SECTION: RED ===
+
+id: T6_RED_01
+title: Backlash Beam counts only real Shields or removed Damage
+source: Backlash Beam (31); Core Rules 6.2
+map: M1
+given: Overload under way. Shield supply 0. Backlash Beam ready. (0,0): B_03 > fd.
+       (0,1): B_01[D1] > fd. (1,0): B_02 > fd. Every other sector cleared.
+when: run Backlash Beam on B_03
+then: B_01 loses its Damage (counts 1). No Shield is left for B_02: your Flagship takes 1 instead,
+      and B_02 does not count. X = 1: B_03 [D1].
+
+id: T6_RED_02
+title: Chain Reaction Beam follows the destroyed units
+source: Chain Reaction Beam (44); Modules.txt convention 2
+map: M1
+given: Overload under way. Chain Reaction Beam ready. (0,0): B_01 > fd. (0,1): B_01 > fd.
+       (0,2): B_02 > fd. Every other sector cleared.
+when: run Chain Reaction Beam on B_01 in (0,0)
+then: B_01 in (0,0) destroyed; 1 damage to a unit adjacent to (0,0): B_01 in (0,1), destroyed;
+      1 damage to a unit adjacent to (0,1): B_02, [D1], not destroyed: stop.
+
+id: T6_RED_03
+title: Echo Ray counts the Sentinels when it starts
+source: Echo Ray (46); Modules.txt convention 3
+map: M1
+given: Overload under way. Echo Ray ready. (0,1): B_03 > fd. (1,0): S_01 > fd. (1,1): S_01 > fd.
+       Every other sector cleared.
+when: run Echo Ray
+then: 1 + 2 Sentinels = 3 hits of 1 on B_03: destroyed.
+
+id: T6_RED_04
+title: Phantom Recon with one unit revealed
+source: Phantom Recon (50)
+map: M1
+given: Overload under way. Phantom Recon ready. (0,1): fd:B_02 > fd. Every other sector cleared.
+when: run Phantom Recon; reveal one unit (B_02); stop
+then: "the last two units you revealed" is just B_02: 2 damage, destroyed.
+
+################################################################################
+=== SECTION: BLUE ===
+
+id: T6_BLU_01
+title: Satellite Ion Scan reveals a Flare: energy at once, the Overload after the Scan
+source: Satellite Ion Scan (51); Core Rules 9.1 example
+map: M1
+given: Command phase. Satellite Ion Scan ready. Charged Beam ready. (0,1): fd:F_04 > fd.
+       (1,0): fd:B_01 > fd. Every other sector cleared.
+when: run Satellite Ion Scan; reveal (0,1), then (1,0); stop
+then: F_04 places 1 Yellow on Charged Beam at once (Satellite Ion Scan is not ready while it
+      runs). The Scan goes on; the last unit is a Bot: B_01 destroyed. Then the Overload starts:
+      F_04 [AL].
+
+id: T6_BLU_02
+title: Tactical Scan - the tiles that are not Bots stay face down, and you remember them
+source: Tactical Scan (52); spec "remember tiles the player has looked at"
+map: M1
+given: Tactical Scan ready. (0,1): fd:B_01 > fd. (1,0): fd:S_01 > fd. Every other sector cleared.
+when: run Tactical Scan; look at (0,1) and (1,0)
+then: B_01 is revealed and takes 1: destroyed. The S_01 tile stays face down and is "known".
+
+id: T6_BLU_03
+title: Strata Shifter - tiles go onto an adjacent Dark sector only
+source: Strata Shifter (69); Core Rules glossary "Dark sector"
+map: M1
+given: Strata Shifter ready. (0,1): fd:B_01 > fd. (0,2): cleared. (1,1): fd. Every other sector
+       cleared.
+when: run Strata Shifter; take 1 tile from (0,1)
+then: the only adjacent Dark sector is (1,1): B_01's tile goes on top of it, face down. (0,1) is
+      still Dark (its other tile). (0,2), though Cleared, is not offered.
+assumption: the glossary's "a Cleared sector may be used" is for units; tiles moved by Strata
+      Shifter are not units, so they need a Dark sector. Taking 0 tiles is allowed (nothing
+      happens).
+
+id: T6_BLU_04
+title: Core Drill - the bottom tile goes on top face down, then is revealed
+source: Core Drill (70)
+map: M1
+given: Core Drill ready. (0,1): fd:B_01 > fd:G_05 > fd:S_01. Every other sector cleared.
+when: run Core Drill; yes
+then: you see all three tiles. S_01 is put face down on top and revealed: it gets a Barrier.
+
+id: T6_BLU_05
+title: Salvage Siphon
+source: Salvage Siphon (65)
+map: M1
+given: Salvage Siphon ready. Charged Beam ready. (0,1): B_01 > fd. Every other sector cleared.
+when: run Salvage Siphon
+then: OPEN (open question Q6). Until answered the program stops with an error naming Q6.
+issue: OPEN - step [3] "Return all energy on your other Modules": other than Salvage Siphon
+      (then it also empties the Module filled in [2]) or other than the Module chosen in [1]?
+
+id: T6_BLU_06
+title: Gravity Well - the tiles go in the order you choose
+source: Gravity Well (71)
+map: M1
+given: Flagship 6/6/5. Gravity Well ready. (0,1): fd:B_01 > fd. (1,0): fd:B_02 > fd. (1,1): fd.
+       Every other sector cleared.
+when: run Gravity Well; take the top tiles of (0,1) and (1,0); put them on (1,1), B_02 first
+then: (1,1) holds, top first: B_01, B_02, then its own tile, all face down. (0,1) and (1,0) are
+      still Dark. Flagship 6/6/6.
+
+id: T6_BLU_07
+title: Gravity Well leaves no Dark sector
+source: Gravity Well (71)
+map: M1
+given: Gravity Well ready. (0,1): fd:B_01. Every other sector cleared.
+when: run Gravity Well; take the top tile of (0,1)
+then: OPEN (open question Q7). (0,1) is now Cleared and no Dark sector is left. Until answered
+      the program stops with an error naming Q7.
+issue: OPEN - where do the taken tiles go when no Dark sector is left?
+
+id: T6_BLU_08
+title: Seismic Sonar - one look per other exhausted Module, then an Overload
+source: Seismic Sonar (72); Modules.txt convention 5
+map: M1
+given: Command phase. Seismic Sonar ready. Ion Sweep exhausted. (0,1): B_01 > fd:S_01.
+       (1,0): fd. (0,0): S_01 > fd. Every other sector cleared.
+when: run Seismic Sonar; look at the bottom of (0,1), then of (1,0)
+then: 1 + 1 looks (the Sonar itself does not count). You see S_01 at the bottom of (0,1); it is
+      "known". Then an Overload starts: S_01 in (0,0) [AL].
+
+=== END OF FILE ===

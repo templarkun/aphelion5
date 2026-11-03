@@ -19,7 +19,7 @@ export function data(): GameData {
 let scenarios: Map<string, Scenario> | undefined;
 export function scenario(id: string): Scenario {
   scenarios ??= new Map(
-    ["batch1.txt", "batch2.txt", "batch3.txt", "batch4.txt", "batch5.txt"].flatMap((f) => parseScenarios(readRepoFile("tests", f), f)).map((s) => [s.id, s]),
+    ["batch1.txt", "batch2.txt", "batch3.txt", "batch4.txt", "batch5.txt", "batch6.txt"].flatMap((f) => parseScenarios(readRepoFile("tests", f), f)).map((s) => [s.id, s]),
   );
   const s = scenarios.get(id);
   if (!s) throw new Error(`scenario ${id} not found`);

@@ -9,3 +9,4 @@ import "./sleepers.js";
 import "./gyros.js";
 import "./omega.js";
 import "./mecha.js";
+import "./blueModules.js";

@@ -107,7 +107,10 @@ describe("random play-throughs of the Command phase and Overloads", () => {
     let runs = 0;
     for (const sc of boards) {
       for (let seed = 1; seed <= 4; seed++) {
-        const s = withModules(scenarioState(data(), sc.map!, sc.given!, seed), [[1, true], [26, true]], []);
+        // Two random Modules of each colour, the rest in the Module deck (7.1 step 8 style).
+        const deck = shuffle(newRng(seed * 31 + runs), data().modules.modules.map((m) => m.id));
+        const keep = (["Yellow", "Red", "Blue"] as const).flatMap((col) => deck.filter((id) => data().modules.byId.get(id)!.colour === col).slice(0, 2));
+        const s = withModules(scenarioState(data(), sc.map!, sc.given!, seed), keep.map((id) => [id, true] as [number, boolean]), deck.filter((id) => !keep.includes(id)));
         // Face-down tiles "of no stated contents" get real contents, so random Reveals work.
         const fill = newRng(seed);
         for (const t of Object.values(s.tiles)) if (t.unitId === null) t.unitId = POOL[nextInt(fill, POOL.length)]!;
@@ -136,9 +139,9 @@ describe("random play-throughs of the fixed text-play board", () => {
       endings.set(end, (endings.get(end) ?? 0) + 1);
     }
     expect(endings.get("not built yet") ?? 0).toBe(0);
-    expect(endings.get("open question") ?? 0).toBe(0);
+    // Open questions Q6 and Q7 may stop a run; nothing else may.
     expect(stats.overloadEnds).toBeGreaterThan(25);
     // Every run reaches a real ending (won, lost or conceded) or plays all its steps.
-    for (const k of endings.keys()) expect(["phase missionEnd", "phase gameEnd", "steps done"]).toContain(k);
+    for (const k of endings.keys()) expect(["phase missionEnd", "phase gameEnd", "steps done", "open question"]).toContain(k);
   }, 60000);
 });

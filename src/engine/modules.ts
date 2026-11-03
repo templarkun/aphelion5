@@ -27,13 +27,21 @@ export function moduleState(c: Ctx, id: number): ModuleState {
  * effect is built, else the printed cost. An X cost counts as its minimum
  * for deciding whether you can start it (unit file E11).
  */
-export function moduleCost(c: RunCtx | Ctx, id: number): number {
+export function moduleCost(c: RunCtx | Ctx, id: number, x?: number): number {
   const d = moduleDef(c, id);
   if (hasModuleEffect(id)) {
     const fx = moduleEffect(id);
-    if (fx.cost) return Math.max(0, fx.cost(c as RunCtx));
+    const xx = x ?? fx.x?.min ?? 0;
+    if (fx.cost) return Math.max(0, fx.cost(c as RunCtx, xx));
   }
-  return d.cost === "X" ? 1 : d.cost;
+  return d.cost === "X" ? Math.max(1, x ?? 1) : d.cost;
+}
+
+/** Energy you can spend on this Module now: stored on it (its colour) plus your Reserve (8.6 steps 1-2). */
+export function payable(c: Ctx, id: number): number {
+  const m = moduleState(c, id);
+  const col = moduleDef(c, id).colour;
+  return m.energy[col] + c.state.player.reserve[col];
 }
 
 /** Can you start running it now (8.1: you can pay its cost)? */
@@ -44,7 +52,7 @@ export function canRunModule(c: Ctx, id: number): boolean {
   const phase = c.state.phase;
   if (d.background === "light" && phase !== "command") return false;
   if (d.background === "red" && phase !== "overload") return false;
-  return m.energy[d.colour] + c.state.player.reserve[d.colour] >= moduleCost(c, id);
+  return payable(c, id) >= moduleCost(c, id);
 }
 
 /** Run a Module (8.6). The caller has checked canRunModule. */
@@ -58,10 +66,17 @@ export function* runModule(c: RunCtx, id: number, free = false): Effect {
   m.ready = false;
   const run: ModuleRun = { id, storedBefore };
   if (free) {
-    if (d.cost === "X") run.x = 1; // CLAUDE.md decision: a free X-cost Module uses X = 1 (Core Rules 5.3).
+    if (d.cost === "X" || fx.x) run.x = 1; // CLAUDE.md decision: a free X-cost Module uses X = 1 (Core Rules 5.3).
     log(c, `run ${d.name} without paying its cost`, "5.3");
   } else {
-    const cost = moduleCost(c, id);
+    if (fx.x) {
+      // Choose X as you run it: from its minimum up to what you can pay (cost_variable).
+      let max = fx.x.min;
+      while (moduleCost(c, id, max + 1) <= payable(c, id) && max < 50) max++;
+      run.x = max === fx.x.min ? max : ((yield* ask(c, { kind: "amount", prompt: `${d.name}: choose X (${fx.x.min} to ${max}).`, rule: "8.6", min: fx.x.min, max })).value as number);
+      log(c, `${d.name}: X = ${run.x}`, "8.6");
+    }
+    const cost = moduleCost(c, id, run.x);
     // Step 1: use stored energy; step 2: pay the rest from the Reserve.
     const stored = m.energy[col];
     const min = Math.max(0, cost - c.state.player.reserve[col]);

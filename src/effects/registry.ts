@@ -44,8 +44,14 @@ export interface ModuleRun {
 
 export interface ModuleEffects {
   run: (c: RunCtx, m: ModuleRun) => Effect;
-  /** Cost after discounts (Module convention 5). Default: the printed cost. */
-  cost?: (c: RunCtx) => number;
+  /**
+   * Cost after discounts (Module convention 5), for a chosen X when the
+   * Module has one. Default: the printed cost. "Your other exhausted
+   * Modules" never counts the Module being run.
+   */
+  cost?: (c: RunCtx, x: number) => number;
+  /** An X chosen as you run it (cost_variable): its smallest value. */
+  x?: { min: number };
 }
 
 const unitFx = new Map<string, UnitEffects>();

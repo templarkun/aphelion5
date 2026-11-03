@@ -9,11 +9,11 @@
  * 6 G_00 from the top of the shuffled Energy deck) and Threat column A
  * (S_12, S_12, F_08, G_24): Threat Level Patrol.
  *
- * Still fixed, until stage 6 (Modules) and stage 7 (Campaign): the Modules
- * are Demolition Blast (Yellow, Command phase) and Charged Beam (Red,
- * Overload), and the Module deck is empty, so an Overhaul takes none; 4
- * Anomaly cards from the shuffled Anomaly deck; V1 starting energy 6/6/6;
- * 6 Command tokens. The deck is dealt round-robin in map order (the first
+ * Modules (stage 6): the Module deck is shuffled and you keep the first two
+ * of each colour (7.1 step 8); the rest stay in the deck for Overhauls.
+ * Still fixed until stage 7 (Campaign): no Module draw at Mission
+ * Preparation (7.2 step 6, a choice); 4 Anomaly cards from the shuffled
+ * Anomaly deck; V1 starting energy 6/6/6; 6 Command tokens. The deck is dealt round-robin in map order (the first
  * sectors take the extra tiles, instead of asking, 7.2 step 5). No Allied Drop.
  */
 
@@ -24,7 +24,6 @@ import { addTile, newMissionState } from "./scenario.js";
 import type { GameState } from "./state.js";
 
 export const FIXED_THREAT_COLUMN = "A" as const;
-export const FIXED_MODULES = [1, 26] as const;
 export const FIXED_ANOMALIES = 4;
 
 /** The fixed board's mission deck before dealing: [unit id, copies]; "G_00" = from the Energy deck. */
@@ -73,7 +72,17 @@ export function fixedBoard(data: GameData, seed = 1): GameState {
   s.player.anomalies = s.decks.anomalies.splice(0, FIXED_ANOMALIES);
 
   // Modules, energy, Command tokens.
-  s.player.modules = FIXED_MODULES.map((id) => ({ id, ready: true, energy: { Yellow: 0, Red: 0, Blue: 0 } }));
+  // Starting Modules (7.1 step 8): reveal one at a time, keep the first two of each colour; the others go to the bottom.
+  const deckM = shuffle(s.rng, data.modules.modules.map((m) => m.id));
+  const keep: number[] = [];
+  const rest: number[] = [];
+  for (const id of deckM) {
+    const col = data.modules.byId.get(id)!.colour;
+    if (keep.filter((k) => data.modules.byId.get(k)!.colour === col).length < 2) keep.push(id);
+    else rest.push(id);
+  }
+  s.decks.modules = rest;
+  s.player.modules = keep.map((id) => ({ id, ready: true, energy: { Yellow: 0, Red: 0, Blue: 0 } }));
   for (const col of ENERGY_COLOURS) {
     s.player.reserve[col] = co.startingEnergy[col];
     s.supply.energy[col] -= co.startingEnergy[col];
