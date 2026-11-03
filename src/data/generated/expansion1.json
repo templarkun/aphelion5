@@ -1,0 +1,47 @@
+{
+  "name": "Heat module",
+  "intro": "When playing with the Heat module, add these rules to the Core Rules.\n\nComponents:\nHeat tokens (10 copies).",
+  "heatTokens": 10,
+  "rules": [
+    {
+      "id": "H1",
+      "title": "Heat pool",
+      "text": "Keep your Heat tokens beside your Reserve. Heat is not energy: it cannot pay Module costs, and effects that gain, lose, remove or refill energy never affect it. This includes Overhaul step 3 (Core Rules 8.8): an Overhaul does not refill Heat.\nYou can never hold more than 10 Heat tokens. Heat you would gain beyond that is lost (Core Rules 6.7)."
+    },
+    {
+      "id": "H2",
+      "title": "Mission Preparation",
+      "text": "(New step after Core Rules 7.2, step 7.)\nTake 10 Heat tokens. You start every mission at the maximum."
+    },
+    {
+      "id": "H3",
+      "title": "Mission End",
+      "text": "(New step together with Core Rules 10.1, step 7.)\nReturn all your Heat tokens to the Supply. Heat never carries over to the next mission."
+    },
+    {
+      "id": "H4",
+      "title": "Power Node",
+      "text": "When a Power Node is revealed (not uncovered), choose one: place its 3 energy on your Modules as usual, or gain 3 Heat tokens instead. You cannot split the choice."
+    },
+    {
+      "id": "H5",
+      "title": "New Command phase action: Heat Wave",
+      "text": "Pay 1 Heat token: deal 1 damage to one Bot.\nThis is a normal Command phase action (add it to the table in Core Rules 8.1). You cannot take it while any Alert token is on the Field, and you cannot take it during an Overload. It is one hit, so a Barrier cancels it."
+    },
+    {
+      "id": "H6",
+      "title": "Overclock (when you run a Module)",
+      "text": "When you run a Module, in either phase, whether you pay its cost or run it for free:\n* You may pay 2 extra energy of that Module's colour to gain 1 Heat token.\n* If you do, you may also pay 1 extra Yellow energy to gain 1 more Heat token.\nYou may Overclock once per run. Discounts never reduce the extra energy. Energy stored on that Module may pay any part of the extra energy that matches the Module's colour (Core Rules 5.3)."
+    },
+    {
+      "id": "H7",
+      "title": "Meltdown (Overload End)",
+      "text": "(New step after Core Rules 9.3, step 4 Clear Flares, before step 5 Return to the Command phase.)\nPay 1 Heat token. If you can't, or don't want to:\n[1] Deal 1 damage to every Bot. Each Bot takes its own hit.\n[2] Count N = the number of Bots hit. Every hit counts, even if a Barrier cancelled it, it only removed a Shield, or it destroyed the Bot.\n[3] Gain N Heat tokens.\n[4] Deal N + 1 damage to your Flagship. If there are no Bots, N = 0 and you still take 1 damage.\nBio-shield effects triggered by step [1] resolve as soon as step [1] has finished (Core Rules 6.3). Meltdown always resolves, because the mission objective is only checked before Command phase actions (Core Rules 8.2)."
+    },
+    {
+      "id": "H8",
+      "title": "Game End modifier",
+      "text": "Subtract 2 from your final score (Core Rules 10.3)."
+    }
+  ]
+}

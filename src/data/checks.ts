@@ -157,5 +157,96 @@ export function runDataChecks(d: GameData): CheckResult[] {
     }
   });
 
+  check("Company starting Mecha exist, are Mecha, and fit the copies", (p) => {
+    for (const c of d.companies.companies) {
+      const seen = new Set<string>();
+      for (const m of c.startingMecha) {
+        if (seen.has(m.id)) p.push(`${c.id}: starting Mecha ${m.id} listed twice`);
+        seen.add(m.id);
+        const u = d.units.byId.get(m.id);
+        if (!u) p.push(`${c.id}: starting Mecha ${m.id} is not in the unit file`);
+        else if (u.type !== "Mecha") p.push(`${c.id}: starting Mecha ${m.id} is a ${u.type}`);
+        else if (m.count > u.copies) p.push(`${c.id}: starts with ${m.count} ${m.id}, only ${u.copies} copies exist`);
+      }
+    }
+  });
+
+  check("Company Flagships: Bays numbered 1..bay_count, Integrity adds up", (p) => {
+    for (const c of d.companies.companies) {
+      if (c.bays.length !== c.bayCount) p.push(`${c.id}: ${c.bays.length} Bays listed, bay_count says ${c.bayCount}`);
+      c.bays.forEach((b, i) => {
+        if (b.number !== i + 1) p.push(`${c.id}: Bay ${b.id} is out of order`);
+      });
+      const sum = c.bays.reduce((s, b) => s + b.integrity, 0);
+      if (sum !== c.totalIntegrity) p.push(`${c.id}: Bay Integrity adds up to ${sum}, total_integrity says ${c.totalIntegrity}`);
+    }
+  });
+
+  check("Company upgrades refer to things that exist, and unlock links agree", (p) => {
+    const allIds = new Set<string>();
+    for (const c of d.companies.companies) {
+      const own = new Map(c.upgrades.map((u) => [u.id, u]));
+      const startIds = new Set(c.startingMecha.map((m) => m.id));
+      for (const u of c.upgrades) {
+        const w = `${c.id} ${u.id}`;
+        if (allIds.has(u.id)) p.push(`${w}: upgrade id used twice`);
+        allIds.add(u.id);
+        if ((u.kind === "requisition") !== (u.part === "REQUISITIONS")) p.push(`${w}: kind ${u.kind} in part ${u.part}`);
+        if (u.kind === "requisition" && u.appliesTo.length > 0) p.push(`${w}: a requisition with applies_to`);
+        if (u.kind === "permanent_ability" && u.appliesTo.length === 0) p.push(`${w}: no applies_to`);
+        if (u.repeatable && u.kind !== "requisition") p.push(`${w}: only requisitions can be repeatable`);
+        for (const a of u.appliesTo) {
+          const bay = /^flagship_bay_(\d+)$/.exec(a);
+          if (bay) {
+            if (Number(bay[1]) < 1 || Number(bay[1]) > c.bayCount) p.push(`${w}: applies to Bay ${bay[1]}, the Flagship has ${c.bayCount}`);
+            if (u.part !== "FLAGSHIP_UPGRADES") p.push(`${w}: a Bay upgrade in part ${u.part}`);
+          } else if (a === "all_mecha") {
+            if (u.part !== "MECHA_UPGRADES") p.push(`${w}: a Mecha upgrade in part ${u.part}`);
+          } else {
+            const unit = d.units.byId.get(a);
+            if (!unit) p.push(`${w}: applies to ${a}, which is not in the unit file`);
+            else if (unit.type !== "Mecha") p.push(`${w}: applies to ${a}, a ${unit.type}`);
+            else if (!startIds.has(a)) p.push(`${w}: applies to ${a}, which ${c.id} does not list`);
+            if (u.part !== "MECHA_UPGRADES") p.push(`${w}: a Mecha upgrade in part ${u.part}`);
+          }
+        }
+        if ((u.state === "locked") !== (u.unlockedBy !== undefined)) p.push(`${w}: state ${u.state} but unlocked_by is ${u.unlockedBy ?? "absent"}`);
+        if ((u.unlocks.length > 0) !== (u.unlockMode !== undefined)) p.push(`${w}: unlocks and unlock_mode must come together`);
+        if (u.unlockedBy !== undefined) {
+          const by = own.get(u.unlockedBy);
+          if (!by) p.push(`${w}: unlocked_by ${u.unlockedBy} does not exist in ${c.id}`);
+          else if (!by.unlocks.includes(u.id)) p.push(`${w}: unlocked_by ${u.unlockedBy}, which does not list it in unlocks`);
+        }
+        for (const x of u.unlocks) {
+          const t = own.get(x);
+          if (!t) p.push(`${w}: unlocks ${x}, which does not exist in ${c.id}`);
+          else if (t.unlockedBy !== u.id) p.push(`${w}: unlocks ${x}, but ${x} says unlocked_by ${t.unlockedBy ?? "nothing"}`);
+        }
+        if (u.unlockMode === "choose_one") {
+          for (const x of u.unlocks) for (const y of u.unlocks) {
+            if (x !== y && !own.get(x)?.exclusiveWith.includes(y)) p.push(`${w}: choose_one, but ${x} is not exclusive_with ${y}`);
+          }
+        }
+        for (const x of u.exclusiveWith) {
+          const t = own.get(x);
+          if (!t) p.push(`${w}: exclusive_with ${x}, which does not exist in ${c.id}`);
+          else if (!t.exclusiveWith.includes(u.id)) p.push(`${w}: exclusive_with ${x}, but not the other way round`);
+        }
+        const imp = /^Improves ([A-Z0-9_]+?)(?:'s|:)/.exec(u.effect);
+        if (imp) {
+          const x = imp[1]!;
+          if (!own.has(x) && !d.units.byId.has(x)) p.push(`${w}: improves ${x}, which does not exist`);
+        }
+      }
+    }
+  });
+
+  check("Anomalies are numbered 01, 02, ... with no gaps", (p) => {
+    d.anomalies.anomalies.forEach((a, i) => {
+      const want = String(i + 1).padStart(2, "0");
+      if (a.id !== want) p.push(`Anomaly ${a.id} is where ${want} should be`);
+    });
+  });
+
   return out;
 }

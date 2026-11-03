@@ -7,7 +7,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { runDataChecks } from "../../src/data/checks.js";
-import { type GameData, MISSING_DATA_FILES } from "../../src/data/index.js";
+import { DATA_FILES, type GameData } from "../../src/data/index.js";
+import { parseCompanies } from "../../src/data/company.js";
 import { REPO_ROOT, loadGameData, readRepoFile } from "../../src/data/nodeLoad.js";
 import { parseRecordFile } from "../../src/data/records.js";
 import { parseScenarios } from "../../src/data/scenarios.js";
@@ -190,7 +191,89 @@ describe("generated data", () => {
     }
   });
 
-  it("the three files not yet copied in are still listed as missing", () => {
-    for (const f of MISSING_DATA_FILES) expect(existsSync(join(REPO_ROOT, "data", f))).toBe(false);
+  it("every component file named in the spec is in data/", () => {
+    for (const f of Object.values(DATA_FILES)) expect(existsSync(join(REPO_ROOT, "data", f)), f).toBe(true);
+  });
+});
+
+describe("Company file", () => {
+  it("reads both Companies", () => {
+    const [v1, v2] = d.companies.companies;
+    expect(d.companies.companies.map((c) => c.id)).toEqual(["V1", "V2"]);
+    expect(v1!.name).toBe("Support Vessel Of Ko and Van");
+    expect(v1!.trait).toBe("At Mission End: Remove 1 damage from each Bay of your Flagship.");
+    expect(v2!.trait).toBeUndefined(); // "none"
+    expect(v1!.startingEnergy).toEqual({ Yellow: 6, Red: 6, Blue: 6 });
+    expect(v2!.startingEnergy).toEqual({ Yellow: 8, Red: 7, Blue: 5 });
+    expect([v1!.overhaulSlots, v2!.overhaulSlots]).toEqual([1, 2]);
+  });
+
+  it("reads starting Mecha, Bays and Integrity", () => {
+    const v1 = d.companies.byId.get("V1")!;
+    const v2 = d.companies.byId.get("V2")!;
+    expect(v1.startingMecha).toEqual([
+      { id: "M_01", count: 10 },
+      { id: "M_02", count: 5 },
+      { id: "M_03", count: 6 },
+      { id: "M_04", count: 6 },
+    ]);
+    // Flagship V1 at 6/6/6 is the test batches' default.
+    expect(v1.bays.map((b) => b.integrity)).toEqual([6, 6, 6]);
+    expect(v2.bays.map((b) => [b.number, b.integrity])).toEqual([
+      [1, 6],
+      [2, 5],
+      [3, 4],
+      [4, 3],
+      [5, 2],
+    ]);
+    expect(v2.bays[4]!.ability).toBe("[Overload] Remove 1 damage from a unit.");
+  });
+
+  it("reads upgrades with their unlock links", () => {
+    const v1 = d.companies.byId.get("V1")!;
+    const v2 = d.companies.byId.get("V2")!;
+    expect(v1.upgrades.filter((u) => u.part === "FLAGSHIP_UPGRADES")).toEqual([]); // "none"
+    const u2 = v1.upgrades.find((u) => u.id === "V1_M04_U2")!;
+    expect([u2.unlocks, u2.unlockMode, u2.cost]).toEqual([["V1_M04_U2A", "V1_M04_U2B"], "choose_one", 5]);
+    const u2a = v1.upgrades.find((u) => u.id === "V1_M04_U2A")!;
+    expect([u2a.state, u2a.unlockedBy, u2a.exclusiveWith]).toEqual(["locked", "V1_M04_U2", ["V1_M04_U2B"]]);
+    const p1 = v2.upgrades.find((u) => u.id === "V2_P1")!; // used by batch 1 T_MOD_04
+    expect([p1.appliesTo, p1.effect]).toEqual([["flagship_bay_1"], 'Bay 1 gains: "Deal 1 damage to a Level 2 unit."']);
+    const t4 = v2.upgrades.find((u) => u.id === "V2_T4")!;
+    expect([t4.kind, t4.repeatable, t4.cost]).toEqual(["requisition", true, 5]);
+  });
+
+  it("refuses a file with a broken part", () => {
+    const text = readRepoFile("data", DATA_FILES.companies).replace("bay_count: 3", "bay_count: three");
+    expect(() => parseCompanies(text)).toThrow(/bay_count/);
+  });
+
+  it("the checks catch a bad unlock link", () => {
+    const broken: GameData = structuredClone(d);
+    broken.units.byId = new Map(broken.units.units.map((u) => [u.id, u]));
+    const u = broken.companies.companies[0]!.upgrades.find((x) => x.id === "V1_M03_U3")!;
+    u.unlockedBy = "V1_M03_U9";
+    const problems = runDataChecks(broken).flatMap((r) => r.problems);
+    expect(problems).toContain("V1 V1_M03_U3: unlocked_by V1_M03_U9 does not exist in V1");
+  });
+});
+
+describe("Anomaly file", () => {
+  it("reads 17 Anomalies with their terms", () => {
+    expect(d.anomalies.anomalies).toHaveLength(17);
+    expect(d.anomalies.byId.get("14")).toEqual({ id: "14", terms: ["Cleared sector"], minimum: 4, text: "At least 4 Cleared sectors." });
+    expect(d.anomalies.byId.get("06")!.terms).toEqual(["Bot", "Sentinel"]);
+    expect(d.anomalies.byId.get("13")!.terms).toEqual(["non-Bot unit"]);
+  });
+});
+
+describe("Expansion1 (Heat module)", () => {
+  it("reads the rules H1..H8 and the Heat token count", () => {
+    const x = d.expansion1;
+    expect(x.name).toBe("Heat module");
+    expect(x.heatTokens).toBe(10);
+    expect(x.rules.map((r) => r.id)).toEqual(["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8"]);
+    expect(x.byId.get("H7")!.title).toBe("Meltdown (Overload End)");
+    expect(x.byId.get("H8")!.text).toBe("Subtract 2 from your final score (Core Rules 10.3).");
   });
 });

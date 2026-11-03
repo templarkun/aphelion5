@@ -1,0 +1,407 @@
+################################################################################
+# APHELION 5 - COMPANY DATABASE (structured, machine-oriented)
+# Unit stats AND Mecha base abilities live only in the Unit database
+# (unit_list_structured.txt). This file stores Company-specific data: starting
+# Mecha counts, Flagship, Trait and upgrades. Rules semantics live in "Core Rules.txt".
+################################################################################
+
+=== FORMAT SPEC ===
+1. One COMPANY block per Company, starting with "=== COMPANY: <company_id> ===".
+2. Inside a Company, data is split into named PARTS ("--- PART: <name> ---").
+3. A part is either:
+   - FIELDS: "key: value" lines (single record), or
+   - RECORDS: blocks of "key: value" lines separated by one blank line; each starts with "id:".
+4. Key order inside a record is fixed (see each part). One key per line, no repeats.
+5. Effect text uses Core Rules terminology. V1_M04_U2, U2A and U2B were reworded for clarity.
+6. Ability tags (Core Rules 4.2):
+   Command:       optional; use it when you Command this Mecha in the Command phase.
+   Expend:        as Command, then destroy this Mecha.
+   Passive:       always on; modifies how the Mecha moves or attacks.
+   [Overload]     prefix; usable only during an Overload (never in the Command phase).
+   At Overload:   mandatory trigger; Alert token at the start of every Overload.
+   Bay abilities without [Overload] are used in the Command phase.
+7. Upgrade vocabulary:
+   cost          = number of upgrade slots that must be marked to fully fill the upgrade
+                   (1 Upgrade point marks 1 slot; Core Rules 10.2).
+   state         = "available" (can be filled from the start) or "locked" (cannot be filled
+                   until the upgrade named in unlocked_by is fully filled).
+   unlocks       = ids that become available when THIS upgrade is fully filled.
+   unlock_mode   = "all"        -> every listed id becomes available
+                   "choose_one" -> all listed ids become available, but they are mutually
+                                   exclusive (see exclusive_with)
+   exclusive_with= ids that can never be filled once this upgrade has received its first
+                   marked slot, until the sheet is erased for a Fresh campaign (Core Rules 7.1).
+   effect        = the new ability. It is a new option: whenever you use that Mecha or Bay,
+                   choose any one of its abilities, original or upgraded (Core Rules 10.2).
+                   "Improves X" upgrades simply modify ability X.
+   kind          = "permanent_ability" or "requisition" (one-time effect when fully filled;
+                   "repeatable: yes" means erase its slots afterwards so it can be filled again).
+8. "applies_to" lists Mecha unit ids (from the Unit database) or "all_mecha" / "flagship_bay_N".
+9. Starting Mecha: unit id + count only. Levels and base abilities are in the Unit database.
+10. TRAIT: a Company Trait is a special rule that is always in effect (Core Rules 5.1).
+    It states its own timing. "none" = this Company has no Trait.
+11. ALLY: each printed sheet has an "Ally" field. At the first Allied Drop of a campaign,
+    write the name of one other Company there; all Allied Drops that campaign come from it.
+    Erase it at Game End (Core Rules 7.3, 10.3).
+12. Effects that remove Alert tokens name the units they work on, and never work on Flares
+    or Wrecks (Core Rules 6.5).
+
+################################################################################
+=== COMPANY: V1 ===
+
+--- PART: IDENTITY ---
+company_id: V1
+name: Support Vessel Of Ko and Van
+
+--- PART: TRAIT ---
+trait: At Mission End: Remove 1 damage from each Bay of your Flagship.
+
+--- PART: STARTING_RESOURCES ---
+starting_energy_yellow: 6
+starting_energy_red: 6
+starting_energy_blue: 6
+starting_energy_destination: Reserve (taken from Supply)
+overhaul_slots: 1
+
+--- PART: STARTING_MECHA ---
+(These are added to the mission deck at game setup. Abilities: see the Unit database.)
+
+id: M_01
+count: 10
+
+id: M_02
+count: 5
+
+id: M_03
+count: 6
+
+id: M_04
+count: 6
+
+--- PART: FLAGSHIP ---
+bay_count: 3
+total_integrity: 18
+
+id: V1_BAY1
+integrity: 6
+ability: Deal 1 damage to any unit.
+
+id: V1_BAY2
+integrity: 6
+ability: Move one unit to an adjacent Dark sector.
+
+id: V1_BAY3
+integrity: 6
+ability: Choose one Dark sector. Look at its top 3 tiles and put them back in any order. Then Reveal that sector.
+
+--- PART: FLAGSHIP_UPGRADES ---
+none
+
+--- PART: MECHA_UPGRADES ---
+
+id: V1_M01_U1
+kind: permanent_ability
+applies_to: M_01
+cost: 4
+state: available
+effect: Improves M_01's Command: it may also move on top of a Mecha that has no tokens.
+
+id: V1_M02_U1
+kind: permanent_ability
+applies_to: M_02
+cost: 2
+state: available
+effect: Command: Turn this Mecha to face any direction.
+
+id: V1_M02_U2
+kind: permanent_ability
+applies_to: M_02
+cost: 3
+state: available
+effect: [Overload] Command: Teleport to any Dark sector.
+
+id: V1_M03_U1
+kind: permanent_ability
+applies_to: M_03
+cost: 3
+state: available
+effect: Improves M_03's Passive: it may move through any number of adjacent Dark sectors before an Attack.
+
+id: V1_M03_U2
+kind: permanent_ability
+applies_to: M_03
+cost: 2
+state: available
+unlocks: V1_M03_U3
+unlock_mode: all
+effect: [Overload] Expend: Deal 1 damage to one adjacent unit.
+
+id: V1_M03_U3
+kind: permanent_ability
+applies_to: M_03
+cost: 5
+state: locked
+unlocked_by: V1_M03_U2
+effect: Improves V1_M03_U2: also deal 1 damage to one other adjacent unit.
+
+id: V1_M04_U1
+kind: permanent_ability
+applies_to: M_04
+cost: 2
+state: available
+effect: Expend: Deal 2 damage to any single unit.
+
+id: V1_M04_U2
+kind: permanent_ability
+applies_to: M_04
+cost: 5
+state: available
+unlocks: V1_M04_U2A, V1_M04_U2B
+unlock_mode: choose_one
+effect: Passive: When this Mecha destroys a unit, you may Reveal the tile that was underneath it. If it is a Bot, deal 1 damage to it.
+note: When this upgrade is fully filled, V1_M04_U2A and V1_M04_U2B both become available, but only one of them can ever be filled (see exclusive_with).
+
+id: V1_M04_U2A
+kind: permanent_ability
+applies_to: M_04
+cost: 5
+state: locked
+unlocked_by: V1_M04_U2
+exclusive_with: V1_M04_U2B
+effect: Improves V1_M04_U2: the damage dealt to the revealed Bot is 2 instead of 1.
+
+id: V1_M04_U2B
+kind: permanent_ability
+applies_to: M_04
+cost: 5
+state: locked
+unlocked_by: V1_M04_U2
+exclusive_with: V1_M04_U2A
+effect: Improves V1_M04_U2: the 1 damage is dealt to the revealed unit of any type, not only to a Bot.
+
+--- PART: REQUISITIONS ---
+
+id: V1_T1
+kind: requisition
+cost: 2
+state: available
+repeatable: yes
+effect: Gain 1 Yellow energy.
+
+id: V1_T2
+kind: requisition
+cost: 3
+state: available
+repeatable: yes
+effect: Gain 2 Red energy.
+
+id: V1_T3
+kind: requisition
+cost: 4
+state: available
+repeatable: yes
+effect: Gain 3 Blue energy.
+
+id: V1_T4
+kind: requisition
+cost: 5
+state: available
+repeatable: yes
+effect: Take one Module from the top of the Module deck.
+
+################################################################################
+=== COMPANY: V2 ===
+
+--- PART: IDENTITY ---
+company_id: V2
+name: Kew'n X2
+
+--- PART: TRAIT ---
+trait: none
+
+--- PART: STARTING_RESOURCES ---
+starting_energy_yellow: 8
+starting_energy_red: 7
+starting_energy_blue: 5
+starting_energy_destination: Reserve (taken from Supply)
+overhaul_slots: 2
+
+--- PART: STARTING_MECHA ---
+(These are added to the mission deck at game setup. Abilities: see the Unit database.)
+
+id: M_05
+count: 10
+
+id: M_03
+count: 4
+
+id: M_07
+count: 4
+
+id: M_04
+count: 4
+
+id: M_06
+count: 4
+
+--- PART: FLAGSHIP ---
+bay_count: 5
+total_integrity: 20
+
+id: V2_BAY1
+integrity: 6
+ability: Deal 1 damage to a Level 3 unit.
+
+id: V2_BAY2
+integrity: 5
+ability: Swap two adjacent units.
+
+id: V2_BAY3
+integrity: 4
+ability: Choose one Dark sector and look at its top 3 tiles.
+
+id: V2_BAY4
+integrity: 3
+ability: Place a Tick on a Level 1 unit.
+
+id: V2_BAY5
+integrity: 2
+ability: [Overload] Remove 1 damage from a unit.
+
+--- PART: FLAGSHIP_UPGRADES ---
+
+id: V2_P1
+kind: permanent_ability
+applies_to: flagship_bay_1
+cost: 2
+state: available
+unlocks: V2_P1A
+unlock_mode: all
+effect: Bay 1 gains: "Deal 1 damage to a Level 2 unit."
+
+id: V2_P1A
+kind: permanent_ability
+applies_to: flagship_bay_1
+cost: 2
+state: locked
+unlocked_by: V2_P1
+effect: Bay 1 gains: "Deal 1 damage to a Level 1 unit."
+
+id: V2_P2
+kind: permanent_ability
+applies_to: flagship_bay_2
+cost: 3
+state: available
+unlocks: V2_P2A
+unlock_mode: all
+effect: Bay 2 gains: "Swap two units."
+
+id: V2_P2A
+kind: permanent_ability
+applies_to: flagship_bay_2
+cost: 3
+state: locked
+unlocked_by: V2_P2
+effect: Bay 2 gains: "Move a unit to an adjacent Dark sector."
+
+id: V2_P3
+kind: permanent_ability
+applies_to: flagship_bay_3
+cost: 3
+state: available
+unlocks: V2_P3A
+unlock_mode: all
+effect: Bay 3 gains: "Choose one Dark sector and look at its top 4 tiles. You may move the fourth tile to the top."
+
+id: V2_P3A
+kind: permanent_ability
+applies_to: flagship_bay_3
+cost: 3
+state: locked
+unlocked_by: V2_P3
+effect: Bay 3 gains: "Choose one Dark sector and look at its top 5 tiles. You may move the fifth tile to the top."
+
+id: V2_P4
+kind: permanent_ability
+applies_to: flagship_bay_4
+cost: 3
+state: available
+unlocks: V2_P4A
+unlock_mode: all
+effect: Bay 4 gains: "Place a Tick on a damaged unit."
+
+id: V2_P4A
+kind: permanent_ability
+applies_to: flagship_bay_4
+cost: 3
+state: locked
+unlocked_by: V2_P4
+effect: Bay 4 gains: "Place a Tick on a unit."
+
+id: V2_P5
+kind: permanent_ability
+applies_to: flagship_bay_5
+cost: 3
+state: available
+unlocks: V2_P5A
+unlock_mode: all
+effect: Bay 5 gains: "[Overload] Remove a Barrier from a unit."
+
+id: V2_P5A
+kind: permanent_ability
+applies_to: flagship_bay_5
+cost: 3
+state: locked
+unlocked_by: V2_P5
+effect: Bay 5 gains: "[Overload] Remove the Alert token from one Sentinel or one unit with an At Overload trigger (its effect is cancelled)."
+
+--- PART: MECHA_UPGRADES ---
+
+id: V2_M1
+kind: permanent_ability
+applies_to: all_mecha
+cost: 4
+state: available
+unlocks: V2_M1A
+unlock_mode: all
+effect: Every Mecha gains: "Command: If this Mecha has no tokens, Bury it."
+
+id: V2_M1A
+kind: permanent_ability
+applies_to: all_mecha
+cost: 5
+state: locked
+unlocked_by: V2_M1
+effect: Every Mecha gains: "Command: Bury this Mecha."
+
+--- PART: REQUISITIONS ---
+
+id: V2_T1
+kind: requisition
+cost: 2
+state: available
+repeatable: yes
+effect: Gain 1 Yellow energy.
+
+id: V2_T2
+kind: requisition
+cost: 3
+state: available
+repeatable: yes
+effect: Gain 2 Red energy.
+
+id: V2_T3
+kind: requisition
+cost: 4
+state: available
+repeatable: yes
+effect: Gain 3 Blue energy.
+
+id: V2_T4
+kind: requisition
+cost: 5
+state: available
+repeatable: yes
+effect: Take one Module from the top of the Module deck.
+
+=== END OF FILE ===

@@ -1,0 +1,117 @@
+################################################################################
+# APHELION 5 - ANOMALY DATABASE (structured, machine-oriented)
+# Rules semantics live in "Core Rules.txt" (5.5 Anomaly cards, 9.3 Overload End step 3).
+# This file only stores the Anomaly requirements.
+################################################################################
+
+=== FORMAT SPEC ===
+1. Each Anomaly is a RECORD: a block of "key: value" lines, one key per line, records
+   separated by one blank line. A record always begins with "id:". Keys never repeat.
+2. When checked: at Overload End, step 3, on the Field at that moment (Core Rules 9.3).
+   Requirements are checked at that moment only. A Wreck counts as a unit (Core Rules 4.8).
+   Flares are still on the Field at that step (they are removed in step 4), so they count.
+3. Reward (any Anomaly): choose one of: remove 3 damage from your Flagship, or take 6 energy
+   in any mix of colours, or gain 6 Upgrade points (Core Rules 9.3).
+
+KEY ORDER:
+  id, terms, minimum, text
+
+KEY DEFINITIONS:
+  id        Anomaly number (two digits).
+  terms     Comma-separated list of what is counted. The counts of all listed terms are added
+            together and compared with minimum. Allowed terms:
+              Bot | Mecha | Sentinel | Gyro | Sleeper | Flare   = units of that type on the Field
+              non-Bot unit                                      = units on the Field that are not Bots
+              Cleared sector                                    = sectors with no tiles
+  minimum   The total must be at least this number.
+  text      The requirement as printed on the card.
+
+################################################################################
+=== SECTION: ANOMALIES ===
+
+id: 01
+terms: Bot
+minimum: 6
+text: At least 6 Bots.
+
+id: 02
+terms: Mecha
+minimum: 4
+text: At least 4 Mecha.
+
+id: 03
+terms: Sentinel
+minimum: 3
+text: At least 3 Sentinels.
+
+id: 04
+terms: Gyro
+minimum: 4
+text: At least 4 Gyros.
+
+id: 05
+terms: Sleeper
+minimum: 2
+text: At least 2 Sleepers.
+
+id: 06
+terms: Bot, Sentinel
+minimum: 7
+text: At least 7 Bots and Sentinels combined.
+
+id: 07
+terms: Bot, Gyro
+minimum: 7
+text: At least 7 Bots and Gyros combined.
+
+id: 08
+terms: Bot, Sleeper
+minimum: 8
+text: At least 8 Bots and Sleepers combined.
+
+id: 09
+terms: Mecha, Gyro
+minimum: 5
+text: At least 5 Mecha and Gyros combined.
+
+id: 10
+terms: Mecha, Sleeper
+minimum: 5
+text: At least 5 Mecha and Sleepers combined.
+
+id: 11
+terms: Sentinel, Sleeper
+minimum: 4
+text: At least 4 Sentinels and Sleepers combined.
+
+id: 12
+terms: Sentinel, Flare
+minimum: 4
+text: At least 4 Sentinels and Flares combined.
+
+id: 13
+terms: non-Bot unit
+minimum: 7
+text: At least 7 units that are not Bots.
+
+id: 14
+terms: Cleared sector
+minimum: 4
+text: At least 4 Cleared sectors.
+
+id: 15
+terms: Cleared sector, Bot
+minimum: 7
+text: At least 7 Cleared sectors and Bots combined.
+
+id: 16
+terms: Cleared sector, Mecha
+minimum: 6
+text: At least 6 Cleared sectors and Mecha combined.
+
+id: 17
+terms: Cleared sector, Sentinel
+minimum: 5
+text: At least 5 Cleared sectors and Sentinels combined.
+
+=== END OF FILE ===

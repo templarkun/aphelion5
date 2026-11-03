@@ -806,7 +806,7 @@ Everything above follows your requested updates and terminology. Minor wording e
 ### C. Medium fixes made automatically
 
 1. **Effects that activate other units** ("Drain all Gyros", "Activate all Mecha") now place Alert tokens (11.1 #6). The old rules did not say whether these resolve on the spot. Alert tokens match your Overload rule, "if a Gyro or Prototype is triggered, put an activation token on them".
-2. **Wreck marker:** a Wreck carries a Damage token beside its Alert, so you can tell it from a Gyro alerted to Drain.
+2. **Wreck marker:** a Wreck carries a Wreck marker beside its Alert, so you can tell it from a Gyro alerted to Drain.
 3. **Bury removes Alert tokens too.** This makes F\_10 ("Bury one Sentinel") a real counter during an Overload. Bury with no tile beneath does nothing.
 4. **Overhaul:** step 5 now also removes Alert tokens and can't pick Wrecks. Step 3 refills each colour *up to* the starting amount and never reduces it.
 5. **Energy on Modules:** only on ready Modules, it pays only for that Module, and only in matching colours (5.3). Before, energy could be parked on exhausted Modules just to meet Anomalies 18 and 19.

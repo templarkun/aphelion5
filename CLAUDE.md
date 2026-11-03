@@ -34,11 +34,11 @@ Each stage ends with all its tests passing and a short report to the designer. R
 ## Status
 
 - 2026-11-03: repo created.
-- 2026-11-03: `docs/core-rules.md` (master rev 127) and `docs/program-spec.md` (master rev 22) rebuilt from the master docs.
-  `company_vessels_structured.txt`, `Anomaly list.txt`, `Expansion1.txt` are still NOT in `data/`: the cloud session had no tool to read the claude.ai Project. The designer must add them (upload or paste); their readers are written then.
-- 2026-11-03: Stage 1 done for the files present. `npm run check` = typecheck + tests (49 passing).
-  Code: `src/geometry/` (Core Rules 3.8), `src/data/` (readers, data checks), `scripts/build-data.ts` (`npm run build:data` writes `src/data/generated/*.json`; a test fails if they are stale).
-  Still open for stage 1: Company and Anomaly readers, and the "every id referenced exists" check for Company Mecha.
+- 2026-11-03: `docs/program-spec.md` (master rev 22) rebuilt. `docs/core-rules.md` rebuilt at master rev 128 (footnote C2 corrected at the designer's request: a Wreck carries a Wreck marker, not a Damage token).
+- 2026-11-03: `company_vessels_structured.txt`, `Anomaly list.txt`, `Expansion1.txt` added to `data/` from files the designer uploaded (the cloud session cannot read the claude.ai Project; ask for uploads next time too).
+- 2026-11-03: Stage 1 done. `npm run check` = typecheck + tests (56 passing).
+  Code: `src/geometry/` (Core Rules 3.8), `src/data/` (readers for all six data files, data checks, test-batch reader), `scripts/build-data.ts` (`npm run build:data` writes `src/data/generated/*.json`; a test fails if they are stale).
+  Open question for the designer: Core Rules footnote C5 mentions "Anomalies 18 and 19"; `Anomaly list.txt` has 01-17.
 
 ## Working with the designer
 

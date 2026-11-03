@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DATA_FILES, type GameData, parseGameData } from "./index.js";
+import { DATA_FILES, type DataTexts, type GameData, parseGameData } from "./index.js";
 
 export const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -12,9 +12,7 @@ export function readRepoFile(...parts: string[]): string {
 }
 
 export function loadGameData(): GameData {
-  return parseGameData({
-    units: readRepoFile("data", DATA_FILES.units),
-    modules: readRepoFile("data", DATA_FILES.modules),
-    campaign1: readRepoFile("data", DATA_FILES.campaign1),
-  });
+  const texts = {} as DataTexts;
+  for (const [k, file] of Object.entries(DATA_FILES)) texts[k as keyof DataTexts] = readRepoFile("data", file);
+  return parseGameData(texts);
 }

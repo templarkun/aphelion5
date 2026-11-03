@@ -1,0 +1,148 @@
+[
+  {
+    "id": "01",
+    "terms": [
+      "Bot"
+    ],
+    "minimum": 6,
+    "text": "At least 6 Bots."
+  },
+  {
+    "id": "02",
+    "terms": [
+      "Mecha"
+    ],
+    "minimum": 4,
+    "text": "At least 4 Mecha."
+  },
+  {
+    "id": "03",
+    "terms": [
+      "Sentinel"
+    ],
+    "minimum": 3,
+    "text": "At least 3 Sentinels."
+  },
+  {
+    "id": "04",
+    "terms": [
+      "Gyro"
+    ],
+    "minimum": 4,
+    "text": "At least 4 Gyros."
+  },
+  {
+    "id": "05",
+    "terms": [
+      "Sleeper"
+    ],
+    "minimum": 2,
+    "text": "At least 2 Sleepers."
+  },
+  {
+    "id": "06",
+    "terms": [
+      "Bot",
+      "Sentinel"
+    ],
+    "minimum": 7,
+    "text": "At least 7 Bots and Sentinels combined."
+  },
+  {
+    "id": "07",
+    "terms": [
+      "Bot",
+      "Gyro"
+    ],
+    "minimum": 7,
+    "text": "At least 7 Bots and Gyros combined."
+  },
+  {
+    "id": "08",
+    "terms": [
+      "Bot",
+      "Sleeper"
+    ],
+    "minimum": 8,
+    "text": "At least 8 Bots and Sleepers combined."
+  },
+  {
+    "id": "09",
+    "terms": [
+      "Mecha",
+      "Gyro"
+    ],
+    "minimum": 5,
+    "text": "At least 5 Mecha and Gyros combined."
+  },
+  {
+    "id": "10",
+    "terms": [
+      "Mecha",
+      "Sleeper"
+    ],
+    "minimum": 5,
+    "text": "At least 5 Mecha and Sleepers combined."
+  },
+  {
+    "id": "11",
+    "terms": [
+      "Sentinel",
+      "Sleeper"
+    ],
+    "minimum": 4,
+    "text": "At least 4 Sentinels and Sleepers combined."
+  },
+  {
+    "id": "12",
+    "terms": [
+      "Sentinel",
+      "Flare"
+    ],
+    "minimum": 4,
+    "text": "At least 4 Sentinels and Flares combined."
+  },
+  {
+    "id": "13",
+    "terms": [
+      "non-Bot unit"
+    ],
+    "minimum": 7,
+    "text": "At least 7 units that are not Bots."
+  },
+  {
+    "id": "14",
+    "terms": [
+      "Cleared sector"
+    ],
+    "minimum": 4,
+    "text": "At least 4 Cleared sectors."
+  },
+  {
+    "id": "15",
+    "terms": [
+      "Cleared sector",
+      "Bot"
+    ],
+    "minimum": 7,
+    "text": "At least 7 Cleared sectors and Bots combined."
+  },
+  {
+    "id": "16",
+    "terms": [
+      "Cleared sector",
+      "Mecha"
+    ],
+    "minimum": 6,
+    "text": "At least 6 Cleared sectors and Mecha combined."
+  },
+  {
+    "id": "17",
+    "terms": [
+      "Cleared sector",
+      "Sentinel"
+    ],
+    "minimum": 5,
+    "text": "At least 5 Cleared sectors and Sentinels combined."
+  }
+]

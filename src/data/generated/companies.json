@@ -1,0 +1,836 @@
+[
+  {
+    "id": "V1",
+    "name": "Support Vessel Of Ko and Van",
+    "startingEnergy": {
+      "Yellow": 6,
+      "Red": 6,
+      "Blue": 6
+    },
+    "startingEnergyDestination": "Reserve (taken from Supply)",
+    "overhaulSlots": 1,
+    "startingMecha": [
+      {
+        "id": "M_01",
+        "count": 10
+      },
+      {
+        "id": "M_02",
+        "count": 5
+      },
+      {
+        "id": "M_03",
+        "count": 6
+      },
+      {
+        "id": "M_04",
+        "count": 6
+      }
+    ],
+    "bayCount": 3,
+    "totalIntegrity": 18,
+    "bays": [
+      {
+        "id": "V1_BAY1",
+        "number": 1,
+        "integrity": 6,
+        "ability": "Deal 1 damage to any unit."
+      },
+      {
+        "id": "V1_BAY2",
+        "number": 2,
+        "integrity": 6,
+        "ability": "Move one unit to an adjacent Dark sector."
+      },
+      {
+        "id": "V1_BAY3",
+        "number": 3,
+        "integrity": 6,
+        "ability": "Choose one Dark sector. Look at its top 3 tiles and put them back in any order. Then Reveal that sector."
+      }
+    ],
+    "upgrades": [
+      {
+        "id": "V1_M01_U1",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_01"
+        ],
+        "cost": 4,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Improves M_01's Command: it may also move on top of a Mecha that has no tokens.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M01_U1",
+          "kind": "permanent_ability",
+          "applies_to": "M_01",
+          "cost": "4",
+          "state": "available",
+          "effect": "Improves M_01's Command: it may also move on top of a Mecha that has no tokens."
+        }
+      },
+      {
+        "id": "V1_M02_U1",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_02"
+        ],
+        "cost": 2,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Command: Turn this Mecha to face any direction.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M02_U1",
+          "kind": "permanent_ability",
+          "applies_to": "M_02",
+          "cost": "2",
+          "state": "available",
+          "effect": "Command: Turn this Mecha to face any direction."
+        }
+      },
+      {
+        "id": "V1_M02_U2",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_02"
+        ],
+        "cost": 3,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "[Overload] Command: Teleport to any Dark sector.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M02_U2",
+          "kind": "permanent_ability",
+          "applies_to": "M_02",
+          "cost": "3",
+          "state": "available",
+          "effect": "[Overload] Command: Teleport to any Dark sector."
+        }
+      },
+      {
+        "id": "V1_M03_U1",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_03"
+        ],
+        "cost": 3,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Improves M_03's Passive: it may move through any number of adjacent Dark sectors before an Attack.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M03_U1",
+          "kind": "permanent_ability",
+          "applies_to": "M_03",
+          "cost": "3",
+          "state": "available",
+          "effect": "Improves M_03's Passive: it may move through any number of adjacent Dark sectors before an Attack."
+        }
+      },
+      {
+        "id": "V1_M03_U2",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_03"
+        ],
+        "cost": 2,
+        "state": "available",
+        "unlocks": [
+          "V1_M03_U3"
+        ],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "[Overload] Expend: Deal 1 damage to one adjacent unit.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M03_U2",
+          "kind": "permanent_ability",
+          "applies_to": "M_03",
+          "cost": "2",
+          "state": "available",
+          "unlocks": "V1_M03_U3",
+          "unlock_mode": "all",
+          "effect": "[Overload] Expend: Deal 1 damage to one adjacent unit."
+        },
+        "unlockMode": "all"
+      },
+      {
+        "id": "V1_M03_U3",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_03"
+        ],
+        "cost": 5,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Improves V1_M03_U2: also deal 1 damage to one other adjacent unit.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M03_U3",
+          "kind": "permanent_ability",
+          "applies_to": "M_03",
+          "cost": "5",
+          "state": "locked",
+          "unlocked_by": "V1_M03_U2",
+          "effect": "Improves V1_M03_U2: also deal 1 damage to one other adjacent unit."
+        },
+        "unlockedBy": "V1_M03_U2"
+      },
+      {
+        "id": "V1_M04_U1",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_04"
+        ],
+        "cost": 2,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Expend: Deal 2 damage to any single unit.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M04_U1",
+          "kind": "permanent_ability",
+          "applies_to": "M_04",
+          "cost": "2",
+          "state": "available",
+          "effect": "Expend: Deal 2 damage to any single unit."
+        }
+      },
+      {
+        "id": "V1_M04_U2",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_04"
+        ],
+        "cost": 5,
+        "state": "available",
+        "unlocks": [
+          "V1_M04_U2A",
+          "V1_M04_U2B"
+        ],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Passive: When this Mecha destroys a unit, you may Reveal the tile that was underneath it. If it is a Bot, deal 1 damage to it.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M04_U2",
+          "kind": "permanent_ability",
+          "applies_to": "M_04",
+          "cost": "5",
+          "state": "available",
+          "unlocks": "V1_M04_U2A, V1_M04_U2B",
+          "unlock_mode": "choose_one",
+          "effect": "Passive: When this Mecha destroys a unit, you may Reveal the tile that was underneath it. If it is a Bot, deal 1 damage to it.",
+          "note": "When this upgrade is fully filled, V1_M04_U2A and V1_M04_U2B both become available, but only one of them can ever be filled (see exclusive_with)."
+        },
+        "unlockMode": "choose_one",
+        "note": "When this upgrade is fully filled, V1_M04_U2A and V1_M04_U2B both become available, but only one of them can ever be filled (see exclusive_with)."
+      },
+      {
+        "id": "V1_M04_U2A",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_04"
+        ],
+        "cost": 5,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [
+          "V1_M04_U2B"
+        ],
+        "repeatable": false,
+        "effect": "Improves V1_M04_U2: the damage dealt to the revealed Bot is 2 instead of 1.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M04_U2A",
+          "kind": "permanent_ability",
+          "applies_to": "M_04",
+          "cost": "5",
+          "state": "locked",
+          "unlocked_by": "V1_M04_U2",
+          "exclusive_with": "V1_M04_U2B",
+          "effect": "Improves V1_M04_U2: the damage dealt to the revealed Bot is 2 instead of 1."
+        },
+        "unlockedBy": "V1_M04_U2"
+      },
+      {
+        "id": "V1_M04_U2B",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "M_04"
+        ],
+        "cost": 5,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [
+          "V1_M04_U2A"
+        ],
+        "repeatable": false,
+        "effect": "Improves V1_M04_U2: the 1 damage is dealt to the revealed unit of any type, not only to a Bot.",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V1_M04_U2B",
+          "kind": "permanent_ability",
+          "applies_to": "M_04",
+          "cost": "5",
+          "state": "locked",
+          "unlocked_by": "V1_M04_U2",
+          "exclusive_with": "V1_M04_U2A",
+          "effect": "Improves V1_M04_U2: the 1 damage is dealt to the revealed unit of any type, not only to a Bot."
+        },
+        "unlockedBy": "V1_M04_U2"
+      },
+      {
+        "id": "V1_T1",
+        "kind": "requisition",
+        "appliesTo": [],
+        "cost": 2,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": true,
+        "effect": "Gain 1 Yellow energy.",
+        "part": "REQUISITIONS",
+        "fields": {
+          "id": "V1_T1",
+          "kind": "requisition",
+          "cost": "2",
+          "state": "available",
+          "repeatable": "yes",
+          "effect": "Gain 1 Yellow energy."
+        }
+      },
+      {
+        "id": "V1_T2",
+        "kind": "requisition",
+        "appliesTo": [],
+        "cost": 3,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": true,
+        "effect": "Gain 2 Red energy.",
+        "part": "REQUISITIONS",
+        "fields": {
+          "id": "V1_T2",
+          "kind": "requisition",
+          "cost": "3",
+          "state": "available",
+          "repeatable": "yes",
+          "effect": "Gain 2 Red energy."
+        }
+      },
+      {
+        "id": "V1_T3",
+        "kind": "requisition",
+        "appliesTo": [],
+        "cost": 4,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": true,
+        "effect": "Gain 3 Blue energy.",
+        "part": "REQUISITIONS",
+        "fields": {
+          "id": "V1_T3",
+          "kind": "requisition",
+          "cost": "4",
+          "state": "available",
+          "repeatable": "yes",
+          "effect": "Gain 3 Blue energy."
+        }
+      },
+      {
+        "id": "V1_T4",
+        "kind": "requisition",
+        "appliesTo": [],
+        "cost": 5,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": true,
+        "effect": "Take one Module from the top of the Module deck.",
+        "part": "REQUISITIONS",
+        "fields": {
+          "id": "V1_T4",
+          "kind": "requisition",
+          "cost": "5",
+          "state": "available",
+          "repeatable": "yes",
+          "effect": "Take one Module from the top of the Module deck."
+        }
+      }
+    ],
+    "trait": "At Mission End: Remove 1 damage from each Bay of your Flagship."
+  },
+  {
+    "id": "V2",
+    "name": "Kew'n X2",
+    "startingEnergy": {
+      "Yellow": 8,
+      "Red": 7,
+      "Blue": 5
+    },
+    "startingEnergyDestination": "Reserve (taken from Supply)",
+    "overhaulSlots": 2,
+    "startingMecha": [
+      {
+        "id": "M_05",
+        "count": 10
+      },
+      {
+        "id": "M_03",
+        "count": 4
+      },
+      {
+        "id": "M_07",
+        "count": 4
+      },
+      {
+        "id": "M_04",
+        "count": 4
+      },
+      {
+        "id": "M_06",
+        "count": 4
+      }
+    ],
+    "bayCount": 5,
+    "totalIntegrity": 20,
+    "bays": [
+      {
+        "id": "V2_BAY1",
+        "number": 1,
+        "integrity": 6,
+        "ability": "Deal 1 damage to a Level 3 unit."
+      },
+      {
+        "id": "V2_BAY2",
+        "number": 2,
+        "integrity": 5,
+        "ability": "Swap two adjacent units."
+      },
+      {
+        "id": "V2_BAY3",
+        "number": 3,
+        "integrity": 4,
+        "ability": "Choose one Dark sector and look at its top 3 tiles."
+      },
+      {
+        "id": "V2_BAY4",
+        "number": 4,
+        "integrity": 3,
+        "ability": "Place a Tick on a Level 1 unit."
+      },
+      {
+        "id": "V2_BAY5",
+        "number": 5,
+        "integrity": 2,
+        "ability": "[Overload] Remove 1 damage from a unit."
+      }
+    ],
+    "upgrades": [
+      {
+        "id": "V2_P1",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_1"
+        ],
+        "cost": 2,
+        "state": "available",
+        "unlocks": [
+          "V2_P1A"
+        ],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 1 gains: \"Deal 1 damage to a Level 2 unit.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P1",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_1",
+          "cost": "2",
+          "state": "available",
+          "unlocks": "V2_P1A",
+          "unlock_mode": "all",
+          "effect": "Bay 1 gains: \"Deal 1 damage to a Level 2 unit.\""
+        },
+        "unlockMode": "all"
+      },
+      {
+        "id": "V2_P1A",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_1"
+        ],
+        "cost": 2,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 1 gains: \"Deal 1 damage to a Level 1 unit.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P1A",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_1",
+          "cost": "2",
+          "state": "locked",
+          "unlocked_by": "V2_P1",
+          "effect": "Bay 1 gains: \"Deal 1 damage to a Level 1 unit.\""
+        },
+        "unlockedBy": "V2_P1"
+      },
+      {
+        "id": "V2_P2",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_2"
+        ],
+        "cost": 3,
+        "state": "available",
+        "unlocks": [
+          "V2_P2A"
+        ],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 2 gains: \"Swap two units.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P2",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_2",
+          "cost": "3",
+          "state": "available",
+          "unlocks": "V2_P2A",
+          "unlock_mode": "all",
+          "effect": "Bay 2 gains: \"Swap two units.\""
+        },
+        "unlockMode": "all"
+      },
+      {
+        "id": "V2_P2A",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_2"
+        ],
+        "cost": 3,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 2 gains: \"Move a unit to an adjacent Dark sector.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P2A",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_2",
+          "cost": "3",
+          "state": "locked",
+          "unlocked_by": "V2_P2",
+          "effect": "Bay 2 gains: \"Move a unit to an adjacent Dark sector.\""
+        },
+        "unlockedBy": "V2_P2"
+      },
+      {
+        "id": "V2_P3",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_3"
+        ],
+        "cost": 3,
+        "state": "available",
+        "unlocks": [
+          "V2_P3A"
+        ],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 3 gains: \"Choose one Dark sector and look at its top 4 tiles. You may move the fourth tile to the top.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P3",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_3",
+          "cost": "3",
+          "state": "available",
+          "unlocks": "V2_P3A",
+          "unlock_mode": "all",
+          "effect": "Bay 3 gains: \"Choose one Dark sector and look at its top 4 tiles. You may move the fourth tile to the top.\""
+        },
+        "unlockMode": "all"
+      },
+      {
+        "id": "V2_P3A",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_3"
+        ],
+        "cost": 3,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 3 gains: \"Choose one Dark sector and look at its top 5 tiles. You may move the fifth tile to the top.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P3A",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_3",
+          "cost": "3",
+          "state": "locked",
+          "unlocked_by": "V2_P3",
+          "effect": "Bay 3 gains: \"Choose one Dark sector and look at its top 5 tiles. You may move the fifth tile to the top.\""
+        },
+        "unlockedBy": "V2_P3"
+      },
+      {
+        "id": "V2_P4",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_4"
+        ],
+        "cost": 3,
+        "state": "available",
+        "unlocks": [
+          "V2_P4A"
+        ],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 4 gains: \"Place a Tick on a damaged unit.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P4",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_4",
+          "cost": "3",
+          "state": "available",
+          "unlocks": "V2_P4A",
+          "unlock_mode": "all",
+          "effect": "Bay 4 gains: \"Place a Tick on a damaged unit.\""
+        },
+        "unlockMode": "all"
+      },
+      {
+        "id": "V2_P4A",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_4"
+        ],
+        "cost": 3,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 4 gains: \"Place a Tick on a unit.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P4A",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_4",
+          "cost": "3",
+          "state": "locked",
+          "unlocked_by": "V2_P4",
+          "effect": "Bay 4 gains: \"Place a Tick on a unit.\""
+        },
+        "unlockedBy": "V2_P4"
+      },
+      {
+        "id": "V2_P5",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_5"
+        ],
+        "cost": 3,
+        "state": "available",
+        "unlocks": [
+          "V2_P5A"
+        ],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 5 gains: \"[Overload] Remove a Barrier from a unit.\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P5",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_5",
+          "cost": "3",
+          "state": "available",
+          "unlocks": "V2_P5A",
+          "unlock_mode": "all",
+          "effect": "Bay 5 gains: \"[Overload] Remove a Barrier from a unit.\""
+        },
+        "unlockMode": "all"
+      },
+      {
+        "id": "V2_P5A",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "flagship_bay_5"
+        ],
+        "cost": 3,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Bay 5 gains: \"[Overload] Remove the Alert token from one Sentinel or one unit with an At Overload trigger (its effect is cancelled).\"",
+        "part": "FLAGSHIP_UPGRADES",
+        "fields": {
+          "id": "V2_P5A",
+          "kind": "permanent_ability",
+          "applies_to": "flagship_bay_5",
+          "cost": "3",
+          "state": "locked",
+          "unlocked_by": "V2_P5",
+          "effect": "Bay 5 gains: \"[Overload] Remove the Alert token from one Sentinel or one unit with an At Overload trigger (its effect is cancelled).\""
+        },
+        "unlockedBy": "V2_P5"
+      },
+      {
+        "id": "V2_M1",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "all_mecha"
+        ],
+        "cost": 4,
+        "state": "available",
+        "unlocks": [
+          "V2_M1A"
+        ],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Every Mecha gains: \"Command: If this Mecha has no tokens, Bury it.\"",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V2_M1",
+          "kind": "permanent_ability",
+          "applies_to": "all_mecha",
+          "cost": "4",
+          "state": "available",
+          "unlocks": "V2_M1A",
+          "unlock_mode": "all",
+          "effect": "Every Mecha gains: \"Command: If this Mecha has no tokens, Bury it.\""
+        },
+        "unlockMode": "all"
+      },
+      {
+        "id": "V2_M1A",
+        "kind": "permanent_ability",
+        "appliesTo": [
+          "all_mecha"
+        ],
+        "cost": 5,
+        "state": "locked",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": false,
+        "effect": "Every Mecha gains: \"Command: Bury this Mecha.\"",
+        "part": "MECHA_UPGRADES",
+        "fields": {
+          "id": "V2_M1A",
+          "kind": "permanent_ability",
+          "applies_to": "all_mecha",
+          "cost": "5",
+          "state": "locked",
+          "unlocked_by": "V2_M1",
+          "effect": "Every Mecha gains: \"Command: Bury this Mecha.\""
+        },
+        "unlockedBy": "V2_M1"
+      },
+      {
+        "id": "V2_T1",
+        "kind": "requisition",
+        "appliesTo": [],
+        "cost": 2,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": true,
+        "effect": "Gain 1 Yellow energy.",
+        "part": "REQUISITIONS",
+        "fields": {
+          "id": "V2_T1",
+          "kind": "requisition",
+          "cost": "2",
+          "state": "available",
+          "repeatable": "yes",
+          "effect": "Gain 1 Yellow energy."
+        }
+      },
+      {
+        "id": "V2_T2",
+        "kind": "requisition",
+        "appliesTo": [],
+        "cost": 3,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": true,
+        "effect": "Gain 2 Red energy.",
+        "part": "REQUISITIONS",
+        "fields": {
+          "id": "V2_T2",
+          "kind": "requisition",
+          "cost": "3",
+          "state": "available",
+          "repeatable": "yes",
+          "effect": "Gain 2 Red energy."
+        }
+      },
+      {
+        "id": "V2_T3",
+        "kind": "requisition",
+        "appliesTo": [],
+        "cost": 4,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": true,
+        "effect": "Gain 3 Blue energy.",
+        "part": "REQUISITIONS",
+        "fields": {
+          "id": "V2_T3",
+          "kind": "requisition",
+          "cost": "4",
+          "state": "available",
+          "repeatable": "yes",
+          "effect": "Gain 3 Blue energy."
+        }
+      },
+      {
+        "id": "V2_T4",
+        "kind": "requisition",
+        "appliesTo": [],
+        "cost": 5,
+        "state": "available",
+        "unlocks": [],
+        "exclusiveWith": [],
+        "repeatable": true,
+        "effect": "Take one Module from the top of the Module deck.",
+        "part": "REQUISITIONS",
+        "fields": {
+          "id": "V2_T4",
+          "kind": "requisition",
+          "cost": "5",
+          "state": "available",
+          "repeatable": "yes",
+          "effect": "Take one Module from the top of the Module deck."
+        }
+      }
+    ]
+  }
+]
