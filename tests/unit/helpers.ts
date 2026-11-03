@@ -19,7 +19,7 @@ export function data(): GameData {
 let scenarios: Map<string, Scenario> | undefined;
 export function scenario(id: string): Scenario {
   scenarios ??= new Map(
-    [...parseScenarios(readRepoFile("tests", "batch1.txt"), "batch1.txt"), ...parseScenarios(readRepoFile("tests", "batch2.txt"), "batch2.txt")].map((s) => [s.id, s]),
+    ["batch1.txt", "batch2.txt", "batch3.txt"].flatMap((f) => parseScenarios(readRepoFile("tests", f), f)).map((s) => [s.id, s]),
   );
   const s = scenarios.get(id);
   if (!s) throw new Error(`scenario ${id} not found`);
@@ -101,6 +101,7 @@ export function play(state: GameState, fn: (c: RunCtx) => Effect<unknown>, answe
 /** Answer builders. */
 export const A = {
   units: (...value: TileId[]): Answer => ({ kind: "units", value }),
+  sectors: (...value: string[]): Answer => ({ kind: "sectors", value }),
   order: (value: string): Answer => ({ kind: "order", value }),
   option: (value: string): Answer => ({ kind: "option", value }),
   amount: (value: number): Answer => ({ kind: "amount", value }),
@@ -108,3 +109,22 @@ export const A = {
   yes: (): Answer => ({ kind: "yesno", value: true }),
   no: (): Answer => ({ kind: "yesno", value: false }),
 };
+
+/** Give the player Modules: [id, ready, stored energy]. */
+export function withModules(state: GameState, mods: [number, boolean, Partial<Record<"Yellow" | "Red" | "Blue", number>>?][], deck: number[] = []): GameState {
+  for (const [id, ready, energy] of mods) {
+    const e = { Yellow: 0, Red: 0, Blue: 0, ...energy };
+    state.player.modules.push({ id, ready, energy: e });
+    for (const k of ["Yellow", "Red", "Blue"] as const) state.supply.energy[k] -= e[k];
+  }
+  state.decks.modules = [...deck];
+  return state;
+}
+
+/** Ids of a question's options. */
+export function optionIds(q: Question | undefined): string[] {
+  if (!q) throw new Error("no question");
+  if (q.kind === "option" || q.kind === "order") return q.options.map((o) => o.id);
+  if (q.kind === "units" || q.kind === "sectors") return [...q.options];
+  throw new Error(`question ${q.kind} has no options`);
+}

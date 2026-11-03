@@ -85,6 +85,28 @@ export interface GameState {
   };
   /** Integrity per Bay, Bay 1 first. */
   flagship: number[];
+  /** What is written on the Company sheet (Core Rules 5.1, 10.2). */
+  sheet: {
+    /** Upgrades fully filled. */
+    filled: string[];
+    overhaulUsed: number;
+    /** Ally Company id, once chosen (7.3). */
+    ally?: string;
+  };
+  decks: {
+    /** Module deck, top first. */
+    modules: number[];
+    /** Anomaly deck, top first. */
+    anomalies: string[];
+  };
+  /** A Flare was revealed (or an effect said so) in the Command phase: the Overload starts when the current effect finishes (9.1). */
+  overloadPending: boolean;
+  /** Set when the game is over. */
+  outcome?: { result: "lost" | "conceded"; reason: string };
+  /** Face-down tiles the player has looked at (spec: "remember tiles the player has looked at"). */
+  seen: TileId[];
+  /** Goes up whenever new hidden information appears (Reveal, look, draw, shuffle): the undo limit. */
+  hiddenInfo: number;
   settings: {
     /** Answer questions that have exactly one legal answer automatically (spec "Player choices"). */
     autoAnswer: boolean;

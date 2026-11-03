@@ -23,7 +23,7 @@ A solo campaign board game, being built as a TypeScript web app. The designer is
 - Geometry: axial (q, r) per Core Rules 3.8. r+1 = right, q+1 = up-right. Horizontal row = same q.
 - Undo back to the last new hidden information; unlimited in Developer mode. Remember tiles the player has looked at.
 - Placeholders first; designer's art added later in the spec's Art format. English first, language files later.
-- Flares may be flipped and moved by effects that do not choose them. Module with X cost run free uses X = 1. An effect finishes even if its own unit is destroyed.
+- Flares may be flipped and moved by effects that do not choose them. Module with X cost run free uses X = 1. An effect finishes even if its own unit is destroyed. A hit is at least 1 damage: "deal 0 damage" does nothing at all (Q1).
 
 ## Build stages (spec "Build stages")
 
@@ -41,6 +41,7 @@ Each stage ends with all its tests passing and a short report to the designer. R
 - 2026-11-03: Anomalies 18 and 19 were removed on purpose (designer); footnote C5 reference dropped, Core Rules master rev 129.
 
 - 2026-11-03: Stage 2 (state and tokens) done: `src/engine/` (state, effects as generators + pure replay step, questions, token building blocks, invariants, scenario notation). 109 tests passing. Open rules questions live in `docs/open-questions.md`.
+- 2026-11-03: Stage 3 (Command phase) done: `src/engine/command.ts` (action menu, checks, Overhaul, Orders, Bays, Drains, Overload start), `mecha.ts`, `alerts.ts`, `modules.ts` (8.6 payment), `moves.ts`; card effects in `src/effects/` (Bays, Orders, Energy Gyros, M_01; others raise NotBuiltYet). `tests/batch3.txt` is Claude's DRAFT from Core Rules, awaiting the designer's agreement (then it goes into the Project). 154 tests incl. random play-throughs. Open: Q2 in `docs/open-questions.md`.
 
 ## Working with the designer
 

@@ -57,6 +57,11 @@ export function newMissionState(data: GameData, o: NewStateOptions): GameState {
     },
     player: { company: companyId, reserve: zero(), modules: [], anomalies: [], commandTokens: 0, heat: 0 },
     flagship: company.bays.map((b) => b.integrity),
+    sheet: { filled: [], overhaulUsed: 0 },
+    decks: { modules: [], anomalies: [] },
+    overloadPending: false,
+    seen: [],
+    hiddenInfo: 0,
     settings: { autoAnswer: true, heatModule: false },
     log: [],
   };
@@ -142,8 +147,17 @@ export interface ScenarioSetup {
   /** What unlisted sectors hold. */
   others: "default" | "cleared";
   shieldSupply?: number;
+  /** Other token supplies stated outright ("Barrier supply 0"). */
+  supplies: Partial<Record<"bioShield" | "barrier" | "tick" | "mortar" | "feedback", number>>;
   flagship?: number[];
   company?: string;
+  /** Tiles in the Trophy pile ("Trophy pile: 6 O_01, 5 F_01"). */
+  trophy: { id: string; count: number }[];
+  reserve?: Partial<Record<"Yellow" | "Red" | "Blue", number>>;
+  commandTokens?: number;
+  overhaulUsed?: number;
+  /** Upgrades fully filled ("V2_P3 filled"). */
+  filled: string[];
 }
 
 const COORD = String.raw`\(\s*-?\d+\s*,\s*-?\d+\s*\)`;
@@ -151,7 +165,7 @@ const COORD = String.raw`\(\s*-?\d+\s*,\s*-?\d+\s*\)`;
 /** Read a test's "given" text. Phrases it does not know are ignored (they are for the reader). */
 export function parseGiven(given: string): ScenarioSetup {
   const flat = given.replace(/\s+/g, " ");
-  const setup: ScenarioSetup = { phase: "command", stacks: new Map(), others: "default" };
+  const setup: ScenarioSetup = { phase: "command", stacks: new Map(), others: "default", supplies: {}, trophy: [], filled: [] };
   // State phrases are read first: some sit inside parentheses, "(Overload under way)".
   const text0 = flat;
 
@@ -165,6 +179,23 @@ export function parseGiven(given: string): ScenarioSetup {
     setup.flagship = [...fl[2]!.matchAll(/Bay(\d+) (\d+)/g)].map((x) => Number(x[2]));
   }
   if (/every other sector (is )?cleared|Every sector cleared except/i.test(text0)) setup.others = "cleared";
+  const co = /Company (V\d+)/.exec(text0);
+  if (co) setup.company = co[1]!;
+  const slash = /Flagship (\d+(?:\/\d+)+)/.exec(text0);
+  if (slash) setup.flagship = slash[1]!.split("/").map(Number);
+  for (const m of text0.matchAll(/(Bio-shield|Barrier|Tick|Mortar|Feedback) supply (\d+)/g)) {
+    const k = ({ "Bio-shield": "bioShield", Barrier: "barrier", Tick: "tick", Mortar: "mortar", Feedback: "feedback" } as const)[m[1] as "Barrier"];
+    setup.supplies[k] = Number(m[2]);
+  }
+  const tr = /Trophy pile: ((?:\d+ [A-Z]_\d+(?:, )?)+)/.exec(text0);
+  if (tr) setup.trophy = [...tr[1]!.matchAll(/(\d+) ([A-Z]_\d+)/g)].map((x) => ({ id: x[2]!, count: Number(x[1]) }));
+  const rs = /Reserve ((?:(?:Yellow|Red|Blue) \d+(?:, )?)+)/.exec(text0);
+  if (rs) setup.reserve = Object.fromEntries([...rs[1]!.matchAll(/(Yellow|Red|Blue) (\d+)/g)].map((x) => [x[1]!, Number(x[2])]));
+  const ct = /(\d+) Command tokens?(?! ?:)/.exec(text0);
+  if (ct) setup.commandTokens = Number(ct[1]);
+  if (/Both Overhaul slots used/i.test(text0)) setup.overhaulUsed = 2;
+  else if (/Overhaul slot used|No empty Overhaul slot/i.test(text0)) setup.overhaulUsed = 1;
+  for (const m of text0.matchAll(/\b([A-Z]\d+(?:_[A-Z0-9]+)+) filled/g)) setup.filled.push(m[1]!);
   // Then drop parenthetical remarks that are not coordinates: "(Strength 3)", "(no Alert)".
   const text = flat
     .replace(new RegExp(String.raw`\((?!\s*-?\d+\s*,\s*-?\d+\s*\))[^()]*\)`, "g"), "")
@@ -190,6 +221,12 @@ export function mergeSetups(base: ScenarioSetup, extra: ScenarioSetup, extraText
   if (extra.shieldSupply !== undefined) out.shieldSupply = extra.shieldSupply;
   if (extra.flagship !== undefined) out.flagship = extra.flagship;
   if (extra.company !== undefined) out.company = extra.company;
+  out.supplies = { ...base.supplies, ...extra.supplies };
+  if (extra.trophy.length > 0) out.trophy = extra.trophy;
+  if (extra.reserve !== undefined) out.reserve = extra.reserve;
+  if (extra.commandTokens !== undefined) out.commandTokens = extra.commandTokens;
+  if (extra.overhaulUsed !== undefined) out.overhaulUsed = extra.overhaulUsed;
+  out.filled = [...base.filled, ...extra.filled];
   return out;
 }
 
@@ -220,9 +257,21 @@ export function scenarioState(data: GameData, mapName: string, given: string, se
     s.supply.feedback -= t.tokens.feedback;
   }
   if (setup.shieldSupply !== undefined) s.supply.shield = setup.shieldSupply;
+  for (const [k, n] of Object.entries(setup.supplies)) s.supply[k as keyof typeof setup.supplies] = n;
   if (setup.flagship) {
     if (setup.flagship.length !== s.flagship.length) throw new Error(`Flagship given with ${setup.flagship.length} Bays`);
     s.flagship = setup.flagship;
   }
+  for (const t of setup.trophy) for (let i = 0; i < t.count; i++) s.piles.trophy.push(addTile(s, t.id, true));
+  for (const [col, n] of Object.entries(setup.reserve ?? {})) {
+    const k = col as "Yellow" | "Red" | "Blue";
+    s.player.reserve[k] = n;
+    s.supply.energy[k] -= n;
+  }
+  // A mission under way has taken its 6 Command tokens (7.2 step 7) unless stated.
+  s.player.commandTokens = setup.commandTokens ?? 6;
+  s.supply.command -= s.player.commandTokens;
+  s.sheet.overhaulUsed = setup.overhaulUsed ?? 0;
+  s.sheet.filled = [...setup.filled];
   return s;
 }

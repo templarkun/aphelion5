@@ -199,8 +199,8 @@ export function afterTopTileLeaves(c: Ctx, k: SectorKey): void {
   checkSleepers(c);
 }
 
-/** Take a tile off the Field into a pile. Tokens go back to the Supply. */
-function removeFromField(c: Ctx, id: TileId, pile: "discard" | "trophy"): SectorKey {
+/** Take a tile off the Field into a pile. Tokens go back to the Supply. Returns its sector. */
+export function removeFromField(c: Ctx, id: TileId, pile: "discard" | "trophy"): SectorKey {
   const k = sectorOf(c.state, id);
   if (k === undefined) throw new Error(`${id} is not on the Field`);
   const st = stack(c.state, k);
@@ -293,9 +293,11 @@ export type HitResult =
  * deals its own 1 damage once the current effect has finished (6.3).
  */
 export function* dealHit(c: RunCtx, id: TileId, amount: number, rule = "6.1"): Effect<HitResult> {
-  if (!Number.isInteger(amount) || amount < 1) {
-    // OPEN QUESTION (designer): is a "hit" of 0 a hit (does it use up a Barrier)? See docs/open-questions.md Q1.
-    throw new Error(`dealHit: amount must be 1 or more, got ${amount}`);
+  if (!Number.isInteger(amount) || amount < 0) throw new Error(`dealHit: bad amount ${amount}`);
+  if (amount === 0) {
+    // Designer, 2026-11-03 (open question Q1): a hit is at least 1 damage; 0 damage does nothing at all.
+    log(c, `0 damage to ${describe(c, id)}: nothing happens`, "6.1");
+    return { kind: "ignored" };
   }
   if (!isUnit(c.state, id) || isFlare(c, id) || isWreck(c, id)) {
     log(c, `${describe(c, id)} cannot be damaged`, isUnit(c.state, id) && isFlare(c, id) ? "4.6" : "4.8");

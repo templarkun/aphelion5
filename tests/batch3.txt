@@ -1,0 +1,398 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 3: THE COMMAND PHASE (structured, machine-oriented)
+# DRAFT 2026-11-03, written by Claude from Core Rules 4.2, 5.2, 5.6, 6.3, 8.1-8.8,
+# 9.1 and 10.3, at the designer's request. Awaiting the designer's agreement;
+# once agreed, copy it into the Project as "claude/Test scenarios batch 3.txt".
+################################################################################
+
+=== FORMAT SPEC ===
+Same as "Test scenarios batch 1.txt". Summary:
+1. Records of "key: value" lines, separated by one blank line, starting with "id:".
+2. KEY ORDER: id, title, source, map, given, when, then, rule, assumption, issue, note
+3. map: a Campaign 1 map (M1 = C1_M1). Only the shape is used.
+4. given: stacks top first, "(q,r): TOP > next > ... > bottom". Tokens as in batch 1.
+   Sectors not listed: face-up B_03 with a tile beneath. Unless stated: Command phase,
+   no Alerts, Company V1, Flagship 6/6/6, one empty Overhaul slot, token supplies full,
+   Reserve empty, no Modules, 6 Command tokens, the mission's own Order only.
+5. when / then / rule / assumption / issue / note: as in batch 1.
+6. "Legal actions" lists the action menu of Core Rules 8.1; Concede is always offered
+   as well (Core Rules 10.3: "You may concede at any time").
+
+################################################################################
+=== SECTION: TAKING ACTIONS ===
+
+id: T3_ACT_01
+title: The action menu lists every action you can start
+source: Core Rules 8.1
+map: M1
+given: (0,0): M_01 > fd. (0,1): fd:B_01. (1,0): G_05 > fd. (1,1): B_02[BS1] > fd.
+       Demolition Blast (Module 1, cost 3 Yellow) ready, Reserve Yellow 3.
+when: list legal actions
+then: Command a Mecha (M_01), Reveal ((0,1)), Run a Module (Demolition Blast), Use a Bay
+      (Bays 1, 2, 3), Drain a Gyro (G_05), Drain a Bio-shield (B_02), Issue an Order
+      (Mission 1: 4 Command tokens), Overhaul, Concede. Not Resolve Alerts: no Alert.
+
+id: T3_ACT_02
+title: An action you cannot pay for is not legal
+source: Core Rules 5.6, 8.1, 8.6
+map: M1
+given: Demolition Blast ready, Reserve Yellow 2. 3 Command tokens.
+when: list legal actions
+then: no Run a Module (2 Yellow for a cost of 3) and no Issue an Order (3 tokens for 4).
+      With 1 Yellow stored on Demolition Blast: Run a Module is legal (1 stored + 2 Reserve).
+
+id: T3_ACT_03
+title: [Overload] actions are never offered in the Command phase
+source: Core Rules 4.2, 5.6, 8.4, 8.7; C1_ORDER_1, C1_ORDER_2; V2 Bay 5
+map: M4X
+given: Company V2, Flagship 6/5/4/3/2. 6 Command tokens.
+when: list legal actions
+then: Use a Bay offers Bays 1-4, not Bay 5 ("[Overload] Remove 1 damage from a unit").
+      No Order is offered: C1_ORDER_1, C1_ORDER_2 and Mission 4x's Order are all [Overload].
+
+id: T3_ACT_04
+title: A Bay at 0 Integrity cannot be used
+source: Core Rules 5.2, 8.7
+map: M1
+given: Flagship 0/6/6.
+when: list legal actions
+then: Use a Bay offers Bays 2 and 3 only.
+
+id: T3_ACT_05
+title: An action that would do nothing is still legal
+source: Core Rules 8.1, 11.1 rule 5; V1 Bay 3
+map: M1
+given: no Dark sectors (every sector as default).
+when: list legal actions; Use Bay 3
+then: Bay 3 is offered. Using it costs 1 Integrity (Bay 3: 5) and does nothing else.
+
+id: T3_ACT_06
+title: No legal action is a loss
+source: Core Rules 8.1, 10.3
+map: M1
+given: Company V2, Flagship 0/0/0/0/2 (not Crippled). Both Overhaul slots used. 0 Command
+       tokens. Every sector: B_03 > fd (no Mecha, no Gyros, no Bio-shields, no Dark sector).
+when: before the next action
+then: Bays 1-4 are at 0 and Bay 5 is [Overload] only. No legal action: the game is lost.
+      Score the completed missions (10.3). Concede is not an action, so it does not count.
+
+id: T3_ACT_07
+title: Crippled: Overhaul is the only action
+source: Core Rules 5.2, 8.1, 8.8
+map: M1
+given: Flagship 0/0/0. One empty Overhaul slot. (0,0): G_05 Wreck [WR][AL].
+when: before the next action
+then: the only action offered is Overhaul (plus Concede), even with an Alert on the Field.
+
+################################################################################
+=== SECTION: OBJECTIVE ===
+
+id: T3_OBJ_01
+title: Eliminate met: Mission End, leftover Alerts cleared
+source: Core Rules 8.2
+map: M1
+given: Trophy pile: 6 O_01. (0,0): G_05 Wreck [WR][AL].
+when: before the next action
+then: objective met: Mission End. G_05's Alert is cleared without resolving (no energy).
+
+id: T3_OBJ_02
+title: Salvage needs 5 Power Nodes and 3 Cleared sectors
+source: Core Rules 8.2
+map: M2X
+given: Trophy pile: 5 F_01. (0,0), (1,0): cleared.
+when: before the next action
+then: not met (2 Cleared sectors): the action menu is offered.
+      Variant: (0,0), (1,0), (0,1) cleared -> met: Mission End.
+
+id: T3_OBJ_03
+title: The objective is checked before the Flagship
+source: Core Rules 8.1, 8.2
+map: M1
+given: Trophy pile: 6 O_01. Flagship 0/0/0. No empty Overhaul slot.
+when: before the next action
+then: objective met: Mission End. The mission counts; no loss.
+
+################################################################################
+=== SECTION: REVEAL ===
+
+id: T3_REV_01
+title: Reveal a Bot
+source: Core Rules 8.5, 3.7
+map: M1
+given: (0,1): fd:B_02 > fd.
+when: Reveal (0,1)
+then: B_02 face up on (0,1), now a unit. B_02 has no arrows, so no facing is asked.
+assumption: a tile without arrows looks the same at every facing, so the program does not
+      ask for one (facing stays 0). Tiles with arrows: the player chooses 0-5.
+
+id: T3_REV_02
+title: Reveal a Sentinel: it gets a Barrier at once
+source: Core Rules 4.5, 6.4, 8.5
+map: M1
+given: (0,1): fd:S_12 > fd.
+when: Reveal (0,1)
+then: S_12[BAR]. Barrier supply 9. No Alert (Command phase).
+      Variant: Barrier supply 0 -> S_12 gets no Barrier (6.7).
+
+id: T3_REV_03
+title: Reveal a unit with arrows: choose its facing
+source: Core Rules 3.7, 3.8, 8.5
+map: M1
+given: (0,0): fd:P_01 > fd.
+when: Reveal (0,0), choose facing 2
+then: P_01 f=2: its arrows on sides 1, 2, 3 point to sides 3, 4, 5.
+
+id: T3_REV_04
+title: Reveal a Flare: energy on a ready Module, then the Overload starts
+source: Core Rules 4.6, 8.5, 9.1
+map: M1
+given: (0,1): fd:F_02 > fd. (1,0): S_01[BAR]. Demolition Blast ready.
+when: Reveal (0,1)
+then: 1 Yellow from the Supply on Demolition Blast (the only ready Module). Then the
+      Overload starts: F_02 and S_01 get [AL]. Phase: Overload.
+
+id: T3_REV_05
+title: Power Node energy is split among ready Modules
+source: Core Rules 4.6
+map: M1
+given: (0,1): fd:F_01 > fd. Demolition Blast (Yellow) and Charged Beam (Red, Module 26) ready.
+when: Reveal (0,1); choose: Yellow and Blue on Demolition Blast, Red on Charged Beam
+then: Demolition Blast holds 1 Yellow, 1 Blue; Charged Beam holds 1 Red. Overload starts.
+rule: energy can go on any ready Module; it only pays for that Module, in its own colour
+      (Core Rules 5.3).
+
+id: T3_REV_06
+title: Reveal the last Dark sector: Sleepers wake
+source: Core Rules 4.4, 8.5
+map: M1
+given: (0,1): fd:B_01 > fd (the only Dark sector). (1,0): P_12.
+when: Reveal (0,1)
+then: no Dark sectors -> P_12 gets [AL]. Legal actions now: Resolve Alerts, Overhaul.
+
+################################################################################
+=== SECTION: MECHA ===
+
+id: T3_MCH_01
+title: Attack: one hit of the Mecha's Strength, then the Mecha is destroyed
+source: Core Rules 4.2
+map: M1
+given: (0,0): M_02[D1] > fd (Strength 1). (0,1): B_02.
+when: Command M_02: Attack B_02
+then: B_02[D1]. M_02 destroyed (to Discard); (0,0) is Dark.
+
+id: T3_MCH_02
+title: Scrap: energy equal to Strength, in any mix
+source: Core Rules 4.2
+map: M1
+given: (0,0): M_04[S1] (Strength 4).
+when: Command M_04: Scrap; choose 2 Yellow, 1 Red, 1 Blue
+then: Reserve Yellow 2, Red 1, Blue 1. M_04 to Discard; (0,0) Cleared.
+      Variant: Supply has 1 Red and 0 Yellow, 0 Blue -> gain 1 Red only (6.7).
+
+id: T3_MCH_03
+title: No adjacent unit that can be chosen: Attack is not offered
+source: Core Rules 4.2, 4.6, 4.8
+map: M1
+given: (0,2): M_01 > fd. (0,1): F_09. (1,1): fd. (-1,2): fd.
+when: Command M_01
+then: options: Scrap and Command: Move. No Attack: the only adjacent unit is F_09, which
+      cannot be chosen.
+
+id: T3_MCH_04
+title: [Overload] Mecha abilities are not offered in the Command phase
+source: Core Rules 4.2, 8.4; V1_M02_U2
+map: M1
+given: V1_M02_U2 filled. (0,0): M_02.
+when: Command M_02
+then: options: Attack, Scrap, Expend (M_02's own ability). "[Overload] Command: Teleport"
+      is not offered.
+
+id: T3_MCH_05
+title: An alerted Mecha must be Commanded, ignoring timing tags
+source: Core Rules 4.2, 11.1 rule 6
+map: M1
+given: V1_M02_U2 filled. (0,0): M_02[AL]. (0,1): fd.
+when: Resolve Alerts
+then: M_02 must be Commanded: Attack, Scrap, Expend or "[Overload] Command: Teleport"
+      (the tag is ignored). There is no "do nothing" option.
+
+################################################################################
+=== SECTION: BAYS ===
+
+id: T3_BAY_01
+title: Using a Bay costs 1 Integrity from that Bay
+source: Core Rules 5.2, 8.7; V1 Bay 1
+map: M1
+given: (0,1): B_02.
+when: Use Bay 1, target B_02
+then: Bay 1 Integrity 5. B_02[D1]. No split question: the cost is taken from Bay 1.
+
+id: T3_BAY_02
+title: V1 Bay 2 moves a unit onto an adjacent Dark sector
+source: V1 Bay 2; Core Rules glossary (Move, Dark sector)
+map: M1
+given: (0,0): B_02[S1] > fd:B_01. (0,1): fd:S_12 > fd. (1,0): cleared.
+when: Use Bay 2: move B_02 to (0,1)
+then: (0,1): B_02[S1] > fd:S_12 > fd. (0,0) is Dark (B_01 face down on top).
+      Variant: move to (1,0) instead (a Cleared sector may be used, glossary).
+      F_09, a Wreck, or a sector with a unit in it are never offered.
+
+id: T3_BAY_03
+title: V1 Bay 3 reorders the top tiles, then reveals
+source: V1 Bay 3
+map: M1
+given: (0,1): fd:B_01 > fd:S_12 > fd:G_05 > fd.
+when: Use Bay 3 on (0,1); look at B_01, S_12, G_05; put back S_12 on top, then G_05, B_01
+then: Reveal (0,1): S_12[BAR] on top of (0,1). The player remembers G_05 and B_01 beneath.
+      With only 2 tiles in the sector, look at both.
+
+id: T3_BAY_04
+title: A Bay's last Integrity still pays for its ability
+source: Core Rules 5.2, 8.1, 8.7
+map: M1
+given: Flagship 0/0/1. (0,1): fd:B_01 > fd.
+when: Use Bay 3 on (0,1)
+then: Bay 3 at 0: Crippled. The ability resolves: B_01 revealed. Before the next action:
+      Overhaul is forced.
+
+id: T3_BAY_05
+title: V2 Bay 2 swaps two adjacent units with their tokens
+source: V2 Bay 2; Core Rules glossary (Swap)
+map: M1
+given: Company V2. (0,0): B_02[S1] > fd. (0,1): S_12[BAR] f=2 > fd.
+when: Use Bay 2: swap B_02 and S_12
+then: (0,0): S_12[BAR] f=2 > fd. (0,1): B_02[S1] > fd. Facings kept.
+
+id: T3_BAY_06
+title: An upgraded Bay offers every ability it has
+source: Core Rules 10.2; V2_P3; T_MOD_04
+map: M1
+given: Company V2 with V2_P3 filled. (0,1): fd:B_01 > fd:B_02 > fd:B_03 > fd:S_01 > fd.
+when: Use Bay 3; choose "look at top 4, you may move the fourth to the top"; move S_01 up
+then: (0,1): fd:S_01 > fd:B_01 > fd:B_02 > fd:B_03 > fd. Nothing revealed.
+      The original "look at top 3" was offered too.
+
+id: T3_BAY_07
+title: V2 Bay 4 places a Tick on a Level 1 unit
+source: V2 Bay 4
+map: M1
+given: Company V2. (0,0): B_01. (0,1): F_09.
+when: Use Bay 4
+then: only B_01 is offered (F_09 has no Level and cannot be chosen; B_03s are Level 3).
+      B_01[TICK]. Tick supply 9.
+
+################################################################################
+=== SECTION: DRAIN ===
+
+id: T3_DRN_01
+title: Drain an Energy Gyro
+source: Core Rules 4.3, 8.7; G_01
+map: M1
+given: (0,0): G_01 > fd.
+when: Drain G_01
+then: Reserve Yellow 1. G_01 to Discard; (0,0) is Dark.
+
+id: T3_DRN_02
+title: Drain a Bio-shield: Boost an adjacent non-Mecha unit
+source: Core Rules 6.3, 8.7
+map: M1
+given: (0,0): B_02[BS1]. (0,1): M_01. (1,0): B_01.
+when: Drain the Bio-shield on B_02; Boost B_01
+then: B_02 has no tokens (the Bio-shield returns; no Destroyed effect, nothing damaged it).
+      B_01[S1]. M_01 was not offered (Mecha).
+
+id: T3_DRN_03
+title: Drain a Bio-shield with nothing to Boost
+source: Core Rules 6.3, 8.1, 11.1 rule 5
+map: M1
+given: (0,2): B_02[BS1]. (0,1): M_01. (1,1): M_01. (-1,2): F_09.
+when: Drain the Bio-shield on B_02
+then: legal. The Bio-shield returns to the Supply; nothing is Boosted.
+
+################################################################################
+=== SECTION: ORDERS ===
+
+id: T3_ORD_01
+title: Mission 1 Order: 1 damage to all units
+source: Core Rules 5.6, 6.1; C1_M1 Order
+map: M1
+given: (0,0): B_01. (0,1): F_09. (1,0): S_12[BAR]. (1,1): G_05 > fd.
+when: Issue the Mission 1 Order
+then: 2 Command tokens left. B_01 destroyed. S_12 loses its Barrier only. G_05 becomes a
+      Wreck [WR][AL]. Each B_03 [D1]. F_09 is skipped.
+      Next: Alerts first (G_05).
+
+id: T3_ORD_02
+title: An Order can be issued again while you can pay
+source: Core Rules 5.6
+map: M2Y
+given: 6 Command tokens. (0,0): B_02. (0,1): B_02[BAR].
+when: Issue the Mission 2y Order twice: destroy B_02 in (0,0), then B_02 in (0,1)
+then: both destroyed (Destroy ignores the Barrier; the Barrier returns with its unit).
+      2 Command tokens left; the Order is still offered once more (cost 2).
+
+################################################################################
+=== SECTION: OVERHAUL ===
+
+id: T3_OVH_01
+title: Overhaul, all five steps
+source: Core Rules 8.8
+map: M1
+given: Flagship 2/0/6. Reserve Yellow 2, Red 7, Blue 0. Modules: Demolition Blast (ready),
+       Ion Sweep (exhausted). Module deck top: Capacitor Lance, Tick Missile.
+       (0,0): S_01[BAR][AL]. (0,1): B_02[D1] > fd:B_01. (0,2): F_09[AL].
+when: Overhaul; step 4: put Ion Sweep on the bottom; step 5: choose S_01 and B_02
+then: Overhaul slot marked. Flagship 6/6/6. Reserve Yellow 6, Red 7, Blue 6.
+      Modules: Demolition Blast, Capacitor Lance (ready), Tick Missile (ready).
+      (0,0): S_01 alone at the bottom of its own sector, no tokens (its Alert is cancelled).
+      (0,1): B_01 (face down, now on top) > B_02 face up at the bottom, no tokens: (0,1) Dark.
+      F_09 was not offered in step 5.
+
+id: T3_OVH_02
+title: Overhaul is allowed while Alerts wait
+source: Core Rules 8.1
+map: M1
+given: (0,0): G_05 Wreck [WR][AL].
+when: list legal actions
+then: Resolve Alerts, Overhaul, Concede.
+
+id: T3_OVH_03
+title: No empty Overhaul slot: Overhaul is not offered
+source: Core Rules 8.8
+map: M1
+given: Overhaul slot used.
+when: list legal actions
+then: Overhaul is not offered.
+
+################################################################################
+=== SECTION: RESOLVE ALERTS ===
+
+id: T3_ALR_01
+title: Resolve Alerts until none are left, in your order
+source: Core Rules 8.3, 4.8; G_05, G_08
+map: M1
+given: (0,0): G_05 Wreck [WR][AL] > fd. (0,1): G_08 Wreck [WR][AL].
+when: Resolve Alerts; choose G_08 first
+then: gain 2 Blue, G_08 to Discard ((0,1) Cleared); gain 2 Red, G_05 to Discard ((0,0)
+      Dark). No Alerts left: the action menu returns.
+
+id: T3_ALR_02
+title: An alerted Gyro destroyed before it drains: the Destroyed effect replaces the Drain
+source: Core Rules 11.1 rule 6, 4.8
+map: M1
+given: (0,0): G_05[AL] (alerted to Drain). (0,1): G_08 Wreck [WR][AL].
+when: (setup) deal 1 damage to G_05 (any effect); Resolve Alerts
+then: G_05 becomes a Wreck [WR][AL] (one Alert). Resolving it: gain 2 Red (Destroyed), not 1.
+
+################################################################################
+=== SECTION: GAME END ===
+
+id: T3_END_01
+title: Concede is a loss
+source: Core Rules 10.3
+map: M1
+given: Command phase.
+when: Concede
+then: the game ends as a loss. Score the completed missions (10.3).
+
+=== END OF FILE ===

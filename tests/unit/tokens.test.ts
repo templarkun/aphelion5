@@ -259,9 +259,11 @@ describe("Core Rules 3.3 and 6.1-6.3: Strength, hits, Shields, Bio-shields", () 
     expect(state.flagship).toEqual([6, 6, 6]);
   });
 
-  it("a hit of 0 is refused until the designer decides (open question Q1)", () => {
-    const s0 = given("T_TOK_01");
-    expect(() => play(s0, (c) => dealHit(c, at(c.state, "0,0"), 0))).toThrow(/amount must be 1 or more/);
+  it("0 damage is not a hit: nothing happens, a Barrier stays (designer, Q1)", () => {
+    const s0 = given("T_TOK_05");
+    const { state } = play(s0, (c) => dealHit(c, at(c.state, "0,1"), 0));
+    expect(tokensAt(state, "0,1")).toBe("[BAR]");
+    expect(state.supply.barrier).toBe(s0.supply.barrier);
   });
 });
 
