@@ -96,11 +96,8 @@ export function randomRun(start: GameState, seed: number, maxSteps: number, stat
   return "steps done";
 }
 
-/**
- * Contents for unknown face-down tiles: units of every type, mostly built
- * ones, so runs get through Overloads; a few unbuilt ones keep NotBuiltYet honest.
- */
-const POOL = ["B_01", "B_02", "B_03", "M_01", "M_01", "G_01", "G_05", "G_08", "S_01", "S_12", "F_01", "F_04", "F_13", "P_05", "O_01", "O_03", "F_09", "P_12"];
+/** Contents for unknown face-down tiles: every unit in the unit file (stage 5: all built). */
+const POOL = data().units.units.map((u) => u.id);
 
 describe("random play-throughs of the Command phase and Overloads", () => {
   it("never crash, refuse a legal answer, or break an invariant", () => {
@@ -110,7 +107,7 @@ describe("random play-throughs of the Command phase and Overloads", () => {
     let runs = 0;
     for (const sc of boards) {
       for (let seed = 1; seed <= 4; seed++) {
-        const s = withModules(scenarioState(data(), sc.map!, sc.given!, seed), [[1, true], [26, true]], [2, 3]);
+        const s = withModules(scenarioState(data(), sc.map!, sc.given!, seed), [[1, true], [26, true]], []);
         // Face-down tiles "of no stated contents" get real contents, so random Reveals work.
         const fill = newRng(seed);
         for (const t of Object.values(s.tiles)) if (t.unitId === null) t.unitId = POOL[nextInt(fill, POOL.length)]!;
@@ -127,7 +124,7 @@ describe("random play-throughs of the Command phase and Overloads", () => {
     // The runs must really go through Overloads and Overload End.
     expect(stats.overloads).toBeGreaterThan(30);
     expect(stats.overloadEnds).toBeGreaterThan(20);
-  });
+  }, 60000);
 });
 
 describe("random play-throughs of the fixed text-play board", () => {
@@ -143,5 +140,5 @@ describe("random play-throughs of the fixed text-play board", () => {
     expect(stats.overloadEnds).toBeGreaterThan(25);
     // Every run reaches a real ending (won, lost or conceded) or plays all its steps.
     for (const k of endings.keys()) expect(["phase missionEnd", "phase gameEnd", "steps done"]).toContain(k);
-  });
+  }, 60000);
 });

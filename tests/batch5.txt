@@ -176,7 +176,8 @@ given: Every other sector cleared. (0,0): P_15[AL] > fd. (0,1): B_02 > fd. (1,0)
        (1,1): G_05 > fd.
 when: Resolve Alerts: P_15
 then: B_02 [D1], O_01 [D1], G_05 destroyed (a Wreck [WR][AL]), and one Sleeper: P_15 itself
-      (the only Sleeper) takes 1 and is destroyed.
+      (the only Sleeper) takes 1 and is destroyed. Resolve Alerts goes on: the G_05 Wreck
+      resolves (gain 2 Red).
 assumption: P_15 counts as "one Sleeper" while it resolves, so it must damage itself when it is
       the only Sleeper (E2: mandatory targets include your own units).
 

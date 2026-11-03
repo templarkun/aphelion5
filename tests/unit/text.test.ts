@@ -3,7 +3,7 @@
 import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { parseAnswer, renderQuestion, renderState } from "../../src/cli/text.js";
-import { FIXED_DECK, FIXED_ENERGY_GYROS, fixedBoard } from "../../src/engine/fixedBoard.js";
+import { fixedBoard, fixedDeck } from "../../src/engine/fixedBoard.js";
 import { darkSectors } from "../../src/engine/field.js";
 import { checkInvariants } from "../../src/engine/invariants.js";
 import type { Question } from "../../src/engine/questions.js";
@@ -11,9 +11,10 @@ import { answerSession, startSession } from "../../src/engine/session.js";
 import { ctx, data } from "./helpers.js";
 
 describe("the fixed board", () => {
-  it("deals the whole fixed deck face down onto Mission 1's 10 sectors, as evenly as possible", () => {
+  it("deals Mission 1's deck (Threat column A) face down onto its 10 sectors, as evenly as possible", () => {
     const s = fixedBoard(data(), 7);
-    const total = FIXED_DECK.reduce((a, [, n]) => a + n, 0) + FIXED_ENERGY_GYROS;
+    const total = fixedDeck(data()).reduce((a, [, n]) => a + n, 0);
+    expect(total).toBe(30 + 27 + 25 + 4); // Bots, V1 Mecha, Mission 1 Deployment, Threat column A
     const heights = Object.values(s.field).map((st) => st.length);
     expect(heights.reduce((a, b) => a + b, 0)).toBe(total);
     expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(1);
