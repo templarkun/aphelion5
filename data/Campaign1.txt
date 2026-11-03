@@ -1,0 +1,221 @@
+################################################################################
+# APHELION 5 - CAMPAIGN 1 DATABASE (structured, machine-oriented)
+# Rules semantics live in "Core Rules.txt" (7.2 Mission Preparation, 7.3 Allied Drop,
+# 8.2 Mission objectives, 5.6 Orders). Unit stats live in "unit_list_structured.txt".
+# This file stores the Campaign board (Omega units, campaign Orders) and the missions.
+################################################################################
+
+=== FORMAT SPEC ===
+1. The file has SECTIONS. Each section starts with "=== SECTION: <name> ===".
+2. Each entry is a RECORD: a block of "key: value" lines, one key per line, records
+   separated by one blank line. A record always begins with "id:". Keys never repeat.
+3. Absent key = not applicable. "none" is written only where absence is meaningful.
+4. Multi-step effects are numbered inline: "[1] ... [2] ...". Execute in order.
+5. Effect text uses Core Rules terminology. Do not reinterpret.
+6. Tile lists. "ID xN" = N copies of tile ID (shuffled into the mission deck; Core Rules 7.2,
+   step 2). A Threat column lists each tile individually (a repeated ID = several copies).
+   "G_00" = take one tile from the top of the Energy deck without looking (Core Rules 4.3).
+7. Omega placement. "omega_placed" lists Omega unit types that are NOT shuffled in: one such
+   tile is placed face up on each sector listed under "omega_sectors" (Core Rules 7.2,
+   step 2). Sectors holding an Omega unit receive no tiles when the mission deck is dealt
+   (Core Rules 7.2, step 5).
+8. Mission map coordinates: axial (q, r), as defined in Core Rules 3.8. (0,0) is the
+   starting sector. r + 1 = one step right; q + 1 = one step up-right. A horizontal row is
+   every map sector with the same q. Each sector is written "(q, r)".
+9. Objectives (Core Rules 8.2): objective_type "salvage" = at least 5 Power Nodes in the
+   Trophy pile and at least 3 Cleared sectors. objective_type "eliminate" = at least
+   objective_count units of type objective_target in the Trophy pile.
+10. Mission events (event_type): allied_drop (event_level = Level; Core Rules 7.3) |
+    gain_energy (event_amount; colours of your choice, Core Rules 5.4) |
+    take_module_top (take one Module from the top of the Module deck) | none.
+11. Alternative routes: missions sharing a number (2x/2y, 4x/4y) are alternatives; choose
+    one, the other is skipped for this campaign (Core Rules 7.2, step 1).
+12. Orders: Core Rules 5.6. "[Overload]" = usable only during an Overload.
+
+KEY ORDER (MISSION):
+  id, number, route, deployment_shuffled, omega_placed, omega_sectors,
+  threat_A, threat_B, threat_C, threat_D, objective_type, objective_target,
+  objective_count, event_type, event_level, event_amount, map_sector_count, map, orders
+
+################################################################################
+=== SECTION: OMEGA ===
+SECTION_DEFAULTS:
+  on destroy: remove to Trophy pile (after resolving its Destroyed effect, if any)
+
+id: O_01
+role: Alpha unit
+level: 3
+destroyed: Boost one adjacent non-Mecha unit.
+
+id: O_02
+role: Beta unit
+level: 13
+at_overload: Destroy one Alpha unit. Boost self once per point of the destroyed unit's Strength just before it was destroyed, plus one.
+
+id: O_03
+role: Gamma unit
+level: 25
+at_overload: If adjacent to an Alpha unit, deal 1 damage to your Flagship.
+
+################################################################################
+=== SECTION: CAMPAIGN ORDERS ===
+(Available in every mission of this Campaign.)
+
+id: C1_ORDER_1
+tokens: 1
+overload_only: yes
+effect: Teleport a Mecha to a Dark sector.
+
+id: C1_ORDER_2
+tokens: 1
+overload_only: yes
+effect: Swap a Mecha with another unit.
+
+################################################################################
+=== SECTION: MISSIONS ===
+
+id: C1_M1
+number: 1
+route: single
+deployment_shuffled: O_01 x8, F_01 x3, F_24 x2, P_15 x2, G_22 x2, G_24 x2, G_00 x6
+threat_A: S_12, S_12, F_08, G_24
+threat_B: S_08, S_08, F_09, G_22
+threat_C: S_12, S_12, F_24, P_05
+threat_D: S_08, S_08, F_11, P_15
+objective_type: eliminate
+objective_target: O_01
+objective_count: 6
+event_type: allied_drop
+event_level: 1
+map_sector_count: 10
+map: (0, 0), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (0, 2), (-1, 2)
+orders: 4 Command tokens: Deal 1 damage to all units.
+
+id: C1_M2X
+number: 2
+route: x (alternative to C1_M2Y)
+deployment_shuffled: F_01 x6, F_04 x4, S_18 x4, P_09 x2, G_24 x2, G_00 x6
+threat_A: S_01, S_11, P_07, P_22
+threat_B: S_01, S_24, G_22, G_32
+threat_C: S_01, S_08, F_09, F_08
+threat_D: S_01, S_03, S_03, P_15
+objective_type: salvage
+event_type: gain_energy
+event_amount: 3
+map_sector_count: 11
+map: (0, 0), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (-1, 2), (1, 2), (-1, 3)
+orders: none
+
+id: C1_M2Y
+number: 2
+route: y (alternative to C1_M2X)
+deployment_shuffled: F_01 x7, F_11 x4, S_24 x4, P_07 x3, G_22 x2, G_00 x6
+threat_A: S_11, S_01, P_05, P_24
+threat_B: S_11, S_18, G_24, G_26
+threat_C: S_11, S_08, F_04, F_08
+threat_D: S_11, S_03, S_03, P_04
+objective_type: salvage
+event_type: none
+map_sector_count: 10
+map: (0, 0), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1), (2, -1), (-1, -1), (-1, 2)
+orders: 2 Command tokens: Destroy one Level 2 Bot.
+
+id: C1_M3
+number: 3
+route: single
+deployment_shuffled: F_01 x4, F_08 x3, P_04 x3, G_26 x3, G_00 x6
+omega_placed: O_02
+omega_sectors: (0, -1), (1, 2), (-1, 3)
+threat_A: S_12, S_24, P_09, G_24
+threat_B: S_12, S_01, F_09, P_05
+threat_C: S_12, S_18, F_12, G_31
+threat_D: S_12, F_11, P_24, P_22
+objective_type: eliminate
+objective_target: O_02
+objective_count: 3
+event_type: allied_drop
+event_level: 2
+map_sector_count: 12
+map: (0, 0), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (0, 2), (-1, 2), (1, 2), (-1, 3)
+orders: 2 Command tokens: Deal 2 damage to all Gyros.
+
+id: C1_M4X
+number: 4
+route: x (alternative to C1_M4Y)
+deployment_shuffled: F_01 x8, F_04 x3, S_08 x4, S_03 x3, P_05 x3, G_28 x3, G_00 x6
+threat_A: S_18, S_11, F_24, G_26
+threat_B: S_18, F_11, P_22, G_32
+threat_C: S_18, S_12, P_05, P_04
+threat_D: S_18, S_01, F_09, P_09
+objective_type: salvage
+event_type: none
+map_sector_count: 10
+map: (0, 0), (1, 0), (0, -1), (-1, 0), (-1, 1), (0, 1), (-1, -1), (0, 2), (1, 1), (1, 2)
+orders: [Overload] 1 Command token: Swap two units.
+
+id: C1_M4Y
+number: 4
+route: y (alternative to C1_M4X)
+deployment_shuffled: F_01 x6, F_25 x3, S_11 x4, P_22 x4, G_32 x3, G_00 x6
+threat_A: S_08, S_12, F_04, G_28
+threat_B: S_08, S_01, F_09, P_05
+threat_C: S_08, S_03, F_11, G_30
+threat_D: S_08, S_18, P_07, G_22
+objective_type: salvage
+event_type: none
+map_sector_count: 11
+map: (0, 0), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1), (-1, -1), (1, -2), (1, 1), (-1, 2)
+orders: 4 Command tokens: Deal 1 damage to all units.
+
+id: C1_M5
+number: 5
+route: single
+deployment_shuffled: O_01 x8, F_01 x4, F_12 x4, P_07 x3, G_31 x4, G_00 x6
+omega_placed: O_02
+omega_sectors: (1, 0)
+threat_A: S_24, F_04, P_22, G_30
+threat_B: S_24, S_01, G_24, G_26
+threat_C: S_24, S_03, F_08, G_22
+threat_D: S_24, S_12, P_04, G_32
+objective_type: eliminate
+objective_target: O_02
+objective_count: 1
+event_type: allied_drop
+event_level: 3
+map_sector_count: 12
+map: (0, 0), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (0, 2), (-1, 2), (-1, -1), (-1, 3)
+orders: 2 Command tokens: Take an Anomaly card.
+
+id: C1_M6
+number: 6
+route: single
+deployment_shuffled: F_01 x6, F_09 x4, S_12 x4, S_01 x4, P_24 x4, G_30 x3, G_00 x6
+threat_A: S_03, S_24, G_32, G_26
+threat_B: S_03, S_18, F_08, G_28
+threat_C: S_03, S_11, P_22, P_15
+threat_D: S_03, S_08, F_11, F_04
+objective_type: salvage
+event_type: none
+map_sector_count: 11
+map: (0, 0), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1), (2, -1), (2, 0), (0, 2), (-1, 2)
+orders: 2 Command tokens: Deal 1 damage to all damaged units in one horizontal row.
+
+id: C1_M7
+number: 7
+route: single
+deployment_shuffled: F_01 x5, F_25 x3, P_15 x3, P_09 x3, G_26 x3, G_00 x6
+omega_placed: O_03
+omega_sectors: (1, -1), (-1, 2)
+threat_A: O_01, O_01, F_01, P_05
+threat_B: O_01, O_01, F_01, G_30
+threat_C: O_01, O_01, F_01, F_09
+threat_D: O_01, O_01, F_01, F_11
+objective_type: eliminate
+objective_target: O_03
+objective_count: 2
+event_type: take_module_top
+map_sector_count: 12
+map: (0, 0), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1), (1, -2), (1, 1), (0, 2), (-1, 2), (-1, 3)
+orders: 4 Command tokens: Place a Tick on every unit adjacent to one Gamma unit.
+
+=== END OF FILE ===

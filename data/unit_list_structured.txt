@@ -1,0 +1,935 @@
+################################################################################
+# APHELION 5 - UNIT DATABASE (structured, machine-oriented)
+# Source: "Unit description list.txt", updated to Core Rules v2 terminology.
+# Rules semantics live in "Core Rules.txt"; this file only stores unit data.
+# This file is the ONLY source of Mecha base abilities. The Company file lists
+# which Mecha each Company starts with and their upgrades, and refers here.
+# Revision: 2026-11-03 - Flares may be flipped and moved (restriction removed; Core Rules 4.6).
+################################################################################
+
+=== FORMAT SPEC ===
+1. The file has SECTIONS. Each section starts with a line "=== SECTION: <name> ===".
+2. Each section has a SECTION_DEFAULTS block. A unit inherits every default unless the unit
+   record sets the same key itself (unit value always wins).
+3. Each unit is a RECORD: a block of "key: value" lines, one key per line, records separated by
+   one blank line. A record always begins with "id:".
+4. Keys never repeat inside a record. Key order is fixed (see KEY ORDER).
+5. Absent key = not applicable / use section default. "none" is written only where
+   absence is meaningful.
+6. Multi-sentence effects are numbered inline: "[1] ... [2] ...". Execute in order
+   unless the text says otherwise.
+7. Effect text uses rules keywords defined in Core Rules (Boost, Bury, Reveal, Drain, Destroy,
+   Move, Swap, Teleport, Flip, Dark sector, Cleared sector, Row, Horizontal row, Line of fire,
+   Targeted, etc.). Do not reinterpret them. "A row through this unit" = choose one of the
+   three rows that pass through this unit's sector.
+8. "Flagship" = the player's Flagship. "Level N unit" = unit with Level N (printed shields;
+   for Omega units, the value on the Campaign board).
+   "Strength" = Level + Shields + Bio-shields - Damage. "Deal damage" with no number = 1.
+9. ID prefixes are kept from earlier versions: P_ = Sleeper (formerly Prototype).
+10. Flares and Wrecks can never be chosen by an effect, never gain or lose tokens except their
+    own Alert, and are skipped by effects that hit or Boost "all" units (Core Rules 4.6, 4.8).
+    Flares may be flipped or moved by effects that do not choose them (for example P_25);
+    Wrecks may not (Core Rules 4.8).
+
+=== EFFECT TEXT CONVENTIONS (apply to every unit unless its text says otherwise) ===
+E1. Choices. You make every choice in every effect, including enemy effects and ties
+    (Core Rules 11.1, rule 2).
+E2. Mandatory targets. Every target an effect names is mandatory whenever a legal one
+    exists, including your own Mecha. Only text that says "you may" or "up to" is
+    optional. If part of an effect is impossible, do the rest (Core Rules 11.1, rule 5).
+E3. Reveal N. "Reveal N units" / "Reveal N Dark sectors" = Reveal (Core Rules 8.5) N times,
+    one at a time, choosing a Dark sector each time. "Reveal up to N" = you choose how many,
+    from 0 to N. A Flare revealed this way fires as usual (Core Rules 4.6).
+    "Just revealed" = revealed by this effect.
+E4. Counts and conditions ("for each", "exactly", "at least", "most", "fewest", "most
+    abundant", "highest") are checked once, when that numbered step starts. "This way"
+    counts only the results of this effect. Wrecks and Flares count as units of their type;
+    Flares have no Level and no Strength, so Level and Strength counts ignore them.
+E5. Damage on units vs. the Flagship. "Remove N damage from a unit" = remove N Damage
+    tokens from it. "Remove N damage from your Flagship" = repair it (Core Rules 5.2).
+    A "damaged unit" is a unit with at least one Damage token.
+E6. Hits. "Deal X damage to a unit" is one hit of X. "Deal 1 damage to this unit for each Y"
+    is also one hit, of the total (Core Rules 6.1).
+E7. "This unit" = the unit whose effect is resolving. In a Destroyed effect it means its
+    Wreck and that Wreck's sector. "All units in a row through this unit" includes this
+    unit unless the text says "other".
+E8. Lines of fire and Targeted sectors start at the adjacent sector. They never include the
+    unit's own sector (Core Rules 3.6).
+E9. "Put it at the very bottom of its sector" = put the tile face up at the bottom of its
+    own stack, keeping its facing. Then check the sector's new top tile (Core Rules 3.4).
+E10. "Turn this unit clockwise by one side for each X" = rotate it one side clockwise per X.
+    Six turns is a full turn.
+E11. Module costs named by a unit ("the lowest cost", "costs 3 or less") use the printed
+    cost. An X cost counts as its minimum (Debris Sifter = 1, Pathfinder Array = 3).
+    Discounts are ignored.
+E12. Energy. "Place energy on a Module" = take it from the Supply and put it on a ready
+    Module; if no colour is named, you choose. "Remove energy from a Module" = return it to
+    the Supply. "Gain/lose energy" with no Module named = your Reserve (Core Rules 5.4).
+E13. "Start an Overload" does nothing during an Overload or Overload End (Core Rules 9.1).
+E14. "Choose a row" / "choose a horizontal row" allows any row, including one with no units,
+    unless the text adds a condition ("with at least one Mecha").
+
+KEY ORDER:
+  id, level, copies, arrows, energy_on_reveal, ability_kind, dev_price,
+  then effect keys (activate | ability | drain | destroyed)
+
+KEY DEFINITIONS:
+  id                 Unique unit code (e.g. S_01).
+  level              Printed unit Level = number of printed shields. "none" for Flares
+                     (no Level, no Strength; they cannot be damaged, destroyed or chosen).
+                     "per_campaign" for Omega (the Campaign board value counts as its Level).
+  copies             Number of physical copies in the game.
+  arrows             Comma-separated side numbers that have arrows. Side 1 = the flat left side
+                     (sectors are pointy-top hexes); numbers continue CLOCKWISE (1..6):
+                     1 left, 2 upper-left, 3 upper-right, 4 right, 5 lower-right, 6 lower-left.
+                     Absent = no arrows.
+  energy_on_reveal   Energy placed on ready Modules when this Flare is revealed (Core Rules 4.6).
+  ability_kind       Mecha only. One of:
+                       command   = "Command:" ability, used when you Command the Mecha
+                       expend    = "Expend:" ability, then the Mecha is destroyed
+                       passive   = "Passive:" always-on modifier to Move/Attack, not an action
+  dev_price          Developer-only balance number. Hidden from players. Not a game rule.
+  activate           Effect resolved when this unit's Alert token resolves (Sentinel, Flare, Sleeper).
+  drain / destroyed  Gyro effects. drain = Command phase action, or an effect that Drains it
+                     (then the Gyro is discarded); destroyed = resolved from the Wreck's Alert
+                     token after the Gyro is destroyed (Core Rules 4.3, 4.8).
+
+GLOBAL FACTS:
+  default_copies: 4 for every unit unless the section or record says otherwise.
+  Arrow numbering is the same for every unit type.
+  G_00 = a placeholder meaning "take the top tile of the Energy deck". The Energy deck is made of
+         all copies of G_01..G_09 (42 tiles). G_00 is NOT a unit type with its own record.
+
+TYPE SUMMARY (derived from Core Rules; informational):
+  Type       | Background | Border                          | When it acts
+  -----------+------------+---------------------------------+-------------------------------------------
+  Bot        | white      | none                            | never (obstacle)
+  Mecha      | orange     | none                            | when you Command it / when alerted by an effect
+  Sentinel   | red        | dark                            | alerted at the start of every Overload
+  Flare      | yellow     | dark (Power Node: white/black   | when revealed; effect resolves in the Overload;
+             |            | stripes)                        | removed at Overload End
+  Sleeper    | blue       | dark                            | when no Dark sectors remain on the Field
+  Gyro       | green      | dark (Energy Gyro: dark/yellow  | when you Drain it, or when it is destroyed
+             |            | stripes)                        |
+  Omega      | violet     | white/black stripes             | per campaign
+
+================================================================================
+=== SECTION: BOT ===
+SECTION_DEFAULTS:
+  type: Bot
+  copies: 10
+  effect: none (no trigger, no activation)
+  on destroy: remove to Discard
+
+id: B_01
+level: 1
+dev_price: -1
+
+id: B_02
+level: 2
+dev_price: -2
+
+id: B_03
+level: 3
+dev_price: -3
+
+================================================================================
+=== SECTION: MECHA ===
+SECTION_DEFAULTS:
+  type: Mecha
+  copies: 10
+  command_options: Attack | Scrap | use an ability (Core Rules 4.2)
+  ability_source: this section is the only source of base abilities; upgrades live in the Company file
+  passive_attack_rule: A Passive that lets this Mecha Move or Swap "before an Attack" is part of the
+                       Attack action. The Mecha then Attacks a unit adjacent to its new sector.
+  on destroy: remove to Discard
+
+id: M_01
+level: 1
+ability_kind: command
+dev_price: 1.1
+ability: Command: Move to an adjacent Dark sector.
+
+id: M_02
+level: 2
+arrows: 1,3
+ability_kind: expend
+dev_price: 2.1
+ability: Expend: Deal 1 damage to all units in its lines of fire.
+
+id: M_03
+level: 2
+ability_kind: passive
+dev_price: 1.9
+ability: Passive: Before an Attack, it may Move to one adjacent Dark sector.
+
+id: M_04
+level: 3
+ability_kind: passive
+dev_price: 2.8
+ability: Passive: When it Attacks, it may target a unit in any sector in a straight line from it, at any distance, instead of an adjacent unit. Units, gaps, Dark and Cleared sectors in between are ignored.
+
+id: M_05
+level: 1
+ability_kind: command
+dev_price: 1.0
+ability: Command: Jump. [1] Choose one of the six directions in which the adjacent sector holds a unit. [2] Follow that line past every consecutive sector that holds a unit (Flares and Wrecks count). [3] If the next sector on that line is a Dark or Cleared sector, put this Mecha there with its tokens (on top of the stack). If it is a gap or off the Field, the Jump is not possible in that direction.
+
+id: M_06
+level: 3
+ability_kind: passive
+dev_price: 2.0
+ability: Passive: Before an Attack, it may Swap with any unit that has no tokens.
+
+id: M_07
+level: 2
+ability_kind: expend
+dev_price: 2.9
+ability: Expend: [1] Deal 1 damage to an adjacent Level 1 unit. [2] You may then deal 1 damage to a Level 2 unit adjacent to that unit's sector. [3] If you did, you may then deal 1 damage to a Level 3 unit adjacent to the sector of the unit damaged in [2].
+
+================================================================================
+=== SECTION: OMEGA ===
+SECTION_DEFAULTS:
+  type: Omega
+  level: per_campaign (the Campaign board value counts as its Level for every effect)
+  dev_price: per_campaign
+  properties_source: Campaign board (Levels, triggers and abilities are campaign-specific)
+  on destroy: remove to Trophy pile (after resolving its Destroyed effect, if any)
+  exposure: immune to Exposure damage at Overload End
+
+id: O_01
+role: Alpha unit
+copies: 10
+
+id: O_02
+role: Beta unit
+copies: 4
+
+id: O_03
+role: Gamma unit
+copies: 4
+
+================================================================================
+=== SECTION: SENTINEL ===
+SECTION_DEFAULTS:
+  type: Sentinel
+  copies: 4
+  trigger: start of every Overload (Alert token on every Sentinel on the Field). A Sentinel that
+           becomes a unit after the Overload started is not alerted in that Overload (Core Rules 4.5).
+  on_reveal: every revealed Sentinel gets a Barrier token at once, as part of the Reveal (Core Rules 4.5,
+             6.4, 8.5). Uncovered Sentinels, or Sentinels put onto the Field any other way, get none.
+  on destroy: remove to Discard
+
+id: S_01
+level: 1
+dev_price: -3.0
+activate: Deal 1 damage to your Flagship.
+
+id: S_02
+level: 1
+dev_price: -2.6
+activate: Remove 1 damage from each adjacent unit.
+
+id: S_03
+level: 1
+dev_price: -3.0
+activate: If this unit's Strength is less than 3, Boost it.
+
+id: S_04
+level: 1
+dev_price: -6.2
+activate: [1] Find the most abundant unit Level on the Field. [2] Boost all Bots of that Level.
+
+id: S_05
+level: 1
+dev_price: -2.2
+activate: [1] Bury this unit. [2] If its sector is now Dark, Reveal it. If the revealed unit is a Bot, Boost it.
+
+id: S_06
+level: 2
+dev_price: -3.9
+activate: [1] Reveal one adjacent Dark sector. [2] Destroy one adjacent Mecha.
+
+id: S_07
+level: 2
+dev_price: -4.3
+activate: [1] Choose a Mecha. [2] Remove all its tokens and put it at the very bottom of its sector.
+
+id: S_08
+level: 2
+dev_price: -3.8
+activate: Remove 1 energy from your Modules for each Bot on the Field that is not adjacent to this unit. You choose which energy.
+
+id: S_09
+level: 2
+dev_price: -5.0
+activate: [1] Choose Level 1, Level 2 or Level 3. [2] Boost all Bots of the chosen Level.
+
+id: S_10
+level: 2
+dev_price: -3.1
+activate: [1] Reveal two units. [2] Boost every Bot just revealed.
+
+id: S_11
+level: 2
+dev_price: -3.5
+activate: [1] Bury this unit. [2] If its sector is now Dark, Reveal it. If the revealed unit is a Mecha, deal 2 damage to it.
+
+id: S_12
+level: 3
+dev_price: -4.2
+activate: If at least one Bot is adjacent, destroy one of them and deal 2 damage to your Flagship.
+
+id: S_13
+level: 3
+dev_price: -4.3
+activate: Choose a Module with at least 1 energy on it. Remove all energy from that Module.
+
+id: S_14
+level: 3
+dev_price: -4.5
+activate: [1] Choose the row through this unit that has the most Bots. [2] If it has at least one Bot, Boost all units in that row, including this unit.
+
+id: S_15
+level: 3
+dev_price: -4.1
+activate: [1] Reveal two units. [2] For each Mecha just revealed, deal 1 damage to your Flagship.
+
+id: S_16
+level: 3
+arrows: 1,4
+dev_price: -4.5
+activate: [1] Turn this unit clockwise by one side for each Sentinel on the Field, including this unit. [2] Boost all Bots in its lines of fire.
+
+id: S_17
+level: 4
+dev_price: -4.5
+activate: Boost all adjacent Gyros.
+
+id: S_18
+level: 4
+dev_price: -5.7
+activate: [1] Choose a horizontal row with at least one Mecha in it. [2] Deal 1 damage to all Mecha and Gyros in that row.
+
+id: S_19
+level: 4
+dev_price: -5.4
+activate: [1] Deal 1 damage to all Gyros. [2] Deal 1 damage to your Flagship for each Gyro destroyed this way.
+
+id: S_20
+level: 4
+dev_price: -5.1
+activate: [1] Deal 1 damage to all other units in a row through this unit. [2] If no Mecha was destroyed this way, deal 3 damage to your Flagship.
+
+id: S_21
+level: 4
+dev_price: -5.1
+activate: [1] Activate all Sleepers. [2] Drain all Gyros.
+
+id: S_22
+level: 5
+dev_price: -0.3
+activate: Deal 1 damage to this unit for each Sentinel on the Field, including this unit. This is a single hit.
+
+id: S_23
+level: 5
+dev_price: -4.9
+activate: Place a Barrier on one Sentinel that has none. It may be this unit.
+
+id: S_24
+level: 5
+dev_price: -6.2
+activate: [1] Destroy all Level 1 Bots. [2] Deal 1 damage to your Flagship for each Bot destroyed this way.
+
+id: S_25
+level: 5
+arrows: 1,4
+dev_price: -6.5
+activate: [1] Teleport this unit to any Dark sector. You may rotate it. [2] Boost every Targeted unit.
+
+id: S_26
+level: 5
+dev_price: -6.1
+activate: Place a Bio-shield on every adjacent Bot.
+
+id: S_27
+level: 5
+dev_price: -6.5
+activate: [1] Boost this unit once for each adjacent Bot. [2] If it now has 5 or more Shield and Bio-shield tokens combined, remove all of them (Bio-shields removed this way have no effect) and deal 4 damage to your Flagship. [3] Deal 1 damage to all Bots.
+
+================================================================================
+=== SECTION: FLARE ===
+SECTION_DEFAULTS:
+  type: Flare
+  level: none
+  copies: 4
+  indestructible: true (cannot be damaged, destroyed or chosen by any effect; never gains or loses tokens except its own Alert token)
+  flip_and_move: allowed for effects that do not choose it (for example P_25); Core Rules 4.6
+  trigger: when revealed
+  on_reveal_sequence: [1] Place the energy listed in energy_on_reveal from the Supply on any ready Module(s). [2] If it is the Command phase, start an Overload once the current effect has finished; if an Overload is under way, give this Flare an Alert token.
+  activate: resolves when its Alert token resolves during the Overload
+  uncovered: an uncovered Flare gives no energy and starts no Overload; it is alerted at the next Overload like any Flare
+  removal: removed at Overload End (to Discard; Power Node to Trophy pile)
+
+# ---- Power Node ----
+id: F_01
+copies: 10
+border_exception: white/black stripes
+energy_on_reveal: 1 Yellow, 1 Red, 1 Blue (split among ready Modules as you like)
+dev_price: 2.0
+activate: none
+mission_end_reward: 1 Upgrade point per Power Node in the Trophy pile
+removal_exception: goes to the Trophy pile instead of the Discard
+heat_module_note: see Expansion1 (may gain 3 Heat tokens instead of the energy)
+
+# ---- Yellow-energy Flares ----
+id: F_02
+energy_on_reveal: 1 Yellow
+dev_price: 0.6
+activate: [1] Reveal all adjacent Dark sectors. [2] Remove the Barrier from each Sentinel just revealed and give it an Alert token.
+
+id: F_03
+energy_on_reveal: 1 Yellow
+dev_price: -0.6
+activate: [1] Destroy one adjacent Bot. [2] Deal damage to your Flagship equal to that Bot's Strength just before it was destroyed.
+
+id: F_04
+energy_on_reveal: 1 Yellow
+dev_price: 0.9
+activate: [1] Reveal one unit. [2] You may deal 2 damage to it.
+
+id: F_05
+energy_on_reveal: 1 Yellow
+dev_price: -0.5
+activate: Boost all Level 1 units.
+
+id: F_06
+energy_on_reveal: 1 Yellow
+dev_price: -0.5
+activate: [1] Choose one horizontal row. [2] Remove 1 damage from every damaged unit in that row and deal 1 damage to every other unit in it. Check which units are damaged before doing either.
+
+id: F_07
+energy_on_reveal: 1 Yellow
+dev_price: 0.5
+activate: [1] Remove 1 damage from your Flagship for each Gyro and each Sleeper on the Field. [2] Drain all Gyros and activate all Sleepers.
+
+id: F_08
+energy_on_reveal: 1 Yellow
+dev_price: 0.9
+activate: [1] Reveal up to three units. [2] Deal 1 damage to each unit just revealed whose type appears at least twice among them.
+
+id: F_09
+energy_on_reveal: 1 Yellow
+arrows: 1,2,3,4
+dev_price: 0.2
+activate: Boost every Targeted unit.
+
+id: F_10
+energy_on_reveal: 1 Yellow
+dev_price: -1.0
+activate: Bury one Sentinel.
+
+# ---- Red-energy Flares ----
+id: F_11
+energy_on_reveal: 1 Red
+dev_price: -0.2
+activate: Deal 1 damage to all Gyros.
+
+id: F_12
+energy_on_reveal: 1 Red
+arrows: 1
+dev_price: 1.7
+activate: Deal 1 damage to every unit in its line of fire.
+
+id: F_13
+energy_on_reveal: 1 Red
+dev_price: 0.4
+activate: Activate all Mecha.
+
+id: F_14
+energy_on_reveal: 1 Red
+dev_price: 1.4
+activate: [1] If there are three or more Mecha on the Field, destroy one Mecha. [2] Then, if there are three or more Bots on the Field, destroy one Bot.
+
+id: F_15
+energy_on_reveal: 1 Red
+dev_price: 0.4
+activate: [1] Destroy one adjacent Bot or Mecha. [2] If it was a Bot, deal 2 damage to your Flagship. If it was a Mecha, remove 2 damage from your Flagship.
+
+id: F_16
+energy_on_reveal: 1 Red
+dev_price: -0.4
+activate: If there are exactly three Bots on the Field, deal 2 damage to your Flagship.
+
+id: F_17
+energy_on_reveal: 1 Red
+dev_price: -1.1
+activate: Check the Strength of every adjacent unit first. Then deal 1 damage to each one with Strength 2 or more, and Boost each one with Strength exactly 1.
+
+id: F_18
+energy_on_reveal: 1 Red
+dev_price: 1.7
+activate: You may run one ready red-background Module without paying its cost.
+
+id: F_19
+energy_on_reveal: 1 Red
+dev_price: 0.4
+activate: [1] Remove 1 Shield or Bio-shield token from each adjacent unit that has one (your choice which; a Bio-shield removed this way has no effect). [2] Then deal 1 damage to all adjacent units.
+
+# ---- Blue-energy Flares ----
+id: F_20
+energy_on_reveal: 1 Blue
+dev_price: 0.1
+activate: [1] Reveal up to two units. [2] If you revealed two units with the same Level, deal 2 damage to each of them.
+
+id: F_21
+energy_on_reveal: 1 Blue
+dev_price: 1.0
+activate: Destroy one adjacent Mecha and one adjacent Bot.
+
+id: F_22
+energy_on_reveal: 1 Blue
+dev_price: 1.1
+activate: [1] Choose a horizontal row with at least one Mecha in it. [2] Deal 1 damage to all units in that row.
+
+id: F_23
+energy_on_reveal: 1 Blue
+arrows: 1,2,4,5
+dev_price: 1.5
+activate: Deal 1 damage to every Targeted unit.
+
+id: F_24
+energy_on_reveal: 1 Blue
+dev_price: 1.8
+activate: Deal 1 damage to all units with the highest Strength on the Field.
+
+id: F_25
+energy_on_reveal: 1 Blue
+dev_price: 1.7
+activate: [1] Choose a ready Module with the lowest cost. [2] Place 3 energy of that Module's colour on it.
+
+id: F_26
+energy_on_reveal: 1 Blue
+dev_price: -0.4
+activate: Boost three different Bots and three different Mecha.
+
+id: F_27
+energy_on_reveal: 1 Blue
+dev_price: 0.3
+activate: [1] Count 1 for each Bot on the Field, minus 1 for each Mecha. [2] If the total is above 0, you may place that much energy on one ready Module.
+
+id: F_28
+energy_on_reveal: 1 Blue
+dev_price: -0.6
+activate: Choose one horizontal row and Boost all units in it.
+
+================================================================================
+=== SECTION: SLEEPER ===
+SECTION_DEFAULTS:
+  type: Sleeper
+  copies: 4
+  trigger: whenever there are no Dark sectors on the Field (Alert token on every Sleeper without one; Core Rules 4.4)
+  after resolving: remove to Discard
+  destroyed_before_resolving: its effect never happens (it has no Destroyed effect)
+
+id: P_01
+level: 1
+arrows: 1,2,3
+dev_price: 2.5
+activate: Deal 1 damage to every Targeted unit.
+
+id: P_02
+level: 2
+dev_price: -0.3
+activate: Boost all adjacent units.
+
+id: P_03
+level: 1
+dev_price: 2.0
+activate: Deal 1 damage to one adjacent Level 1 unit, one adjacent Level 2 unit and one adjacent Level 3 unit.
+
+id: P_04
+level: 1
+dev_price: 3.1
+activate: [1] Find the most abundant unit Level on the Field. [2] Deal 1 damage to all units of that Level.
+
+id: P_05
+level: 1
+dev_price: 1.0
+activate: [1] Start an Overload. [2] If there is at least one Sentinel on the Field, remove 1 damage from your Flagship.
+
+id: P_06
+level: 1
+dev_price: 1.6
+activate: [1] Count 1 for each Bot on the Field, minus 1 for each Mecha. [2] If the total is above 0, place that much energy on your ready Modules, split as you choose. If it is below 0, remove that much energy from your Modules, your choice which.
+
+id: P_07
+level: 1
+dev_price: 2.1
+activate: [1] Find the most abundant unit type on the Field, other than Bot and Flare. [2] Deal 1 damage to all units of that type.
+
+id: P_08
+level: 1
+dev_price: 1.4
+activate: [1] If there is exactly one Bot on the Field, deal 2 damage to it. [2] Do the same for each other unit type.
+
+id: P_09
+level: 1
+arrows: 1,3,5
+dev_price: 2.7
+activate: Place a Tick on every Targeted unit.
+
+id: P_10
+level: 1
+dev_price: -0.5
+activate: If there is at least one Sentinel on the Field, start an Overload.
+
+id: P_11
+level: 1
+dev_price: 1.0
+activate: [1] Deal 1 damage to all damaged units. [2] Deal 1 damage to your Flagship for each unit destroyed this way.
+
+id: P_12
+level: 2
+dev_price: -1.0
+activate: Remove 1 damage from every unit on the Field.
+
+id: P_13
+level: 1
+arrows: 1
+dev_price: 1.9
+activate: [1] Turn this unit clockwise by one side for each Bot on the Field. [2] Deal 1 damage to all units in its line of fire.
+
+id: P_14
+level: 1
+dev_price: 1.1
+activate: Place a Tick on every adjacent non-Bot unit.
+
+id: P_15
+level: 1
+dev_price: 2.3
+activate: [1] Deal 1 damage to one Bot. [2] Do the same for each other unit type on the Field.
+
+id: P_16
+level: 1
+dev_price: 1.6
+activate: [1] Choose a horizontal row with the fewest Bots. [2] Deal 1 damage to all units in that row.
+
+id: P_17
+level: 1
+dev_price: -0.5
+activate: [1] Choose a horizontal row and Boost all units in it. [2] Choose a different horizontal row and deal 1 damage to all units in it.
+
+id: P_18
+level: 1
+dev_price: 3.0
+activate: [1] Choose a horizontal row and place a Tick on every Gyro in it. [2] Choose a different horizontal row and place a Tick on every Mecha in it. [3] Choose a third horizontal row, different from both, and place a Tick on every Sentinel in it.
+
+id: P_19
+level: 1
+dev_price: 0.8
+activate: [1] Choose the lowest-cost ready Module you could run right now (light in the Command phase, red during an Overload). [2] Run it without paying its cost.
+
+id: P_20
+level: 1
+arrows: 1
+dev_price: 2.5
+activate: [1] Turn this unit clockwise by one side for each Sentinel on the Field. [2] Boost all units in its line of fire.
+
+id: P_21
+level: 1
+dev_price: 1.8
+activate: If there are exactly three Bots on the Field, deal 1 damage to all Bots.
+
+id: P_22
+level: 3
+dev_price: -1.3
+activate: Deal 6 damage to your Flagship, minus 1 for each Bot on the Field (minimum 0).
+
+id: P_23
+level: 3
+dev_price: -2.0
+activate: Boost five different non-Mecha units.
+
+id: P_24
+level: 2
+dev_price: -0.4
+activate: [1] Choose the Sentinel with the most Damage tokens. [2] Remove all its tokens and put it at the very bottom of its sector.
+
+id: P_25
+level: 2
+dev_price: -0.5
+activate: Flip face down every adjacent unit that has no tokens. Each of those sectors becomes Dark.
+
+id: P_26
+level: 2
+dev_price: -0.1
+activate: Place a Barrier on every Sentinel that has none.
+
+id: P_27
+level: 1
+dev_price: 0.7
+activate: [1] Deal 1 damage to all Sentinels. [2] Deal 1 damage to your Flagship for each Sentinel that survived.
+
+================================================================================
+=== SECTION: GYRO ===
+SECTION_DEFAULTS:
+  type: Gyro
+  copies: 4
+  drain_rule: Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.
+  drain_self_rule: A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).
+  destroyed_rule: When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.
+
+# ---- Energy Gyros (G_01..G_09): 42 tiles total, form the Energy deck ----
+SUBSECTION_DEFAULTS (G_01..G_09):
+  energy_gyro: true
+  border: dark/yellow stripes
+  energy_deck_member: true
+  energy_deck_total: 42 (sum of copies G_01..G_09)
+
+id: G_01
+level: 2
+copies: 5
+dev_price: 0.8
+drain: Gain 1 Yellow energy.
+destroyed: Gain 2 Yellow energy.
+
+id: G_02
+level: 3
+copies: 4
+dev_price: 0.8
+drain: Gain 1 Yellow energy.
+destroyed: Gain 4 Yellow energy.
+
+id: G_03
+level: 3
+copies: 2
+dev_price: 1.0
+drain: Gain 1 Yellow energy.
+destroyed: Gain 5 Yellow energy.
+
+id: G_04
+level: 4
+copies: 3
+dev_price: 0.8
+drain: Gain 1 Yellow energy.
+destroyed: Gain 6 Yellow energy.
+
+id: G_05
+level: 1
+copies: 9
+dev_price: 0.7
+drain: Gain 1 Red energy.
+destroyed: Gain 2 Red energy.
+
+id: G_06
+level: 2
+copies: 5
+dev_price: 0.8
+drain: Gain 1 Red energy.
+destroyed: Gain 4 Red energy.
+
+id: G_07
+level: 1
+copies: 4
+dev_price: 0.6
+drain: Gain 1 Blue energy.
+destroyed: Gain 1 Blue energy.
+
+id: G_08
+level: 1
+copies: 6
+dev_price: 0.7
+drain: Gain 1 Blue energy.
+destroyed: Gain 2 Blue energy.
+
+id: G_09
+level: 1
+copies: 4
+dev_price: 0.8
+drain: Gain 1 Blue energy.
+destroyed: Gain 3 Blue energy.
+
+# ---- Other Gyros (G_10..G_38) ----
+SUBSECTION_DEFAULTS (G_10..G_38):
+  energy_gyro: false
+  border: dark
+  energy_deck_member: false
+
+id: G_10
+level: 4
+dev_price: -2.0
+drain: Boost all other non-Bot units on the Field.
+destroyed: Deal 1 damage to all non-Bot units.
+
+id: G_11
+level: 1
+dev_price: -0.5
+drain: [1] Discard this Gyro now. [2] If its sector is now Dark, Reveal it. [3] Boost the unit now on top of that sector twice.
+destroyed: [1] Discard this Wreck now. [2] If its sector is now Dark, Reveal it. [3] Deal 2 damage to the unit now on top of that sector.
+
+id: G_12
+level: 1
+dev_price: -0.5
+drain: Deal 1 damage to your Flagship for each Mecha on the Field.
+destroyed: Remove 1 damage from your Flagship for each Sentinel on the Field.
+
+id: G_13
+level: 1
+dev_price: 0.1
+drain: [1] Reveal up to four units. [2] Deal 1 damage to each Sentinel just revealed.
+destroyed: [1] Reveal up to four units. [2] Deal 1 damage to each Sentinel and each Bot just revealed.
+
+id: G_14
+level: 3
+dev_price: -2.0
+drain: Deal 2 damage to your Flagship.
+destroyed: Start an Overload.
+
+id: G_15
+level: 2
+dev_price: 1.0
+drain: Remove 1 energy from every Module.
+destroyed: Place 1 energy on every ready Module that has none.
+
+id: G_16
+level: 2
+dev_price: -1.3
+drain: Remove 1 energy from each of three different Modules that have energy (as many as possible).
+destroyed: Place 1 energy on each of three different ready Modules.
+
+id: G_17
+level: 2
+dev_price: -1.0
+drain: Lose 3 energy.
+destroyed: Gain 1 Command token.
+
+id: G_18
+level: 1
+dev_price: -1.3
+drain: Gain 1 energy.
+destroyed: Remove 1 damage from your Flagship.
+
+id: G_19
+level: 1
+dev_price: -1.0
+drain: Remove 1 energy from each of three different Modules that have energy (as many as possible).
+destroyed: Place 1 energy on each of three different ready Modules.
+
+id: G_20
+level: 1
+dev_price: -0.5
+drain: Lose 1 Command token.
+destroyed: Gain 1 Command token.
+
+id: G_21
+level: 1
+arrows: 1,3,5
+dev_price: 2.6
+drain: Deal 1 damage to every Targeted unit.
+destroyed: Deal 1 damage to all adjacent units.
+
+id: G_22
+level: 1
+dev_price: 1.8
+drain: Deal 1 damage to all other Level 1 units in a row through this unit.
+destroyed: Deal 2 damage to all Level 2 units in a row through this unit.
+
+id: G_23
+level: 1
+arrows: 1,3,5
+dev_price: 2.5
+drain: Deal 1 damage to every Targeted unit.
+destroyed: Deal 2 damage to every Targeted unit.
+
+id: G_24
+level: 1
+dev_price: 1.9
+drain: Deal 1 damage to all Bots in a row through this unit.
+destroyed: Deal 1 damage to all Bots in one horizontal row of your choice.
+
+id: G_25
+level: 1
+dev_price: 2.5
+drain: Deal 1 damage to all other damaged units in a row through this unit.
+destroyed: Deal 2 damage to all damaged units in a row through this unit.
+
+id: G_26
+level: 1
+dev_price: 1.6
+drain: Boost all other units in a row through this unit.
+destroyed: Deal 1 damage to all units in a row through this unit.
+
+id: G_27
+level: 2
+dev_price: 1.0
+drain: Boost all other units in a row through this unit and place a Tick on each of them.
+destroyed: Place a Tick on every unit in a row through this unit.
+
+id: G_28
+level: 3
+dev_price: 0.6
+drain: Place a Tick on every Mecha.
+destroyed: Place a Tick on every Sentinel.
+
+id: G_29
+level: 2
+dev_price: -1.0
+drain: [1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Mecha just revealed.
+destroyed: [1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Bot just revealed.
+
+id: G_30
+level: 2
+dev_price: 0.5
+drain: [1] Reveal three units. [2] Deal 2 damage to each unit just revealed.
+destroyed: [1] Reveal three units. [2] Deal 2 damage to any number of the units just revealed, your choice.
+
+id: G_31
+level: 2
+dev_price: 2.1
+drain: Deal 1 damage to all other units in one horizontal row of your choice that has at least one Mecha.
+destroyed: Deal 1 damage to all units in one horizontal row of your choice.
+
+id: G_32
+level: 1
+dev_price: 1.4
+drain: Remove the Barrier from every Sentinel.
+destroyed: Deal 1 damage to all Sentinels.
+
+id: G_33
+level: 1
+dev_price: 2.5
+drain: Deal 1 damage to all other damaged units in the horizontal row through this unit.
+destroyed: Deal 1 damage to all undamaged units in one horizontal row of your choice.
+
+id: G_34
+level: 2
+dev_price: 1.7
+drain: Lose 1 energy for each Bot on the Field.
+destroyed: Place 1 energy on your ready Modules for each Bot on the Field, split as you choose.
+
+id: G_35
+level: 1
+dev_price: 0.0
+drain: Exhaust one ready Module and remove all energy from it.
+destroyed: Make one exhausted Module ready.
+
+id: G_36
+level: 3
+dev_price: 0.5
+drain: Reveal every Dark sector on the Field, one at a time.
+destroyed: [1] Reveal any number of units. [2] Gain 1 energy for each Bot just revealed.
+
+id: G_37
+level: 2
+dev_price: 0.0
+drain: Deal 1 damage to all Level 3 units in one horizontal row of your choice.
+destroyed: Place a Tick on every Level 3 unit in one horizontal row of your choice.
+
+id: G_38
+level: 2
+dev_price: 0.0
+drain: Run one ready Module that costs 3 or less and that you could run right now (light in the Command phase, red during an Overload), without paying its cost.
+destroyed: Run one ready Module that you could run right now (light in the Command phase, red during an Overload), without paying its cost.
+
+=== END OF FILE ===

@@ -1,0 +1,455 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 2: UNIT AND MODULE EDGE CASES
+# Purpose: acceptance tests for a computer implementation. Each test is a small
+# board state, one action, and the exact expected result.
+# Rules semantics live in "Core Rules.txt"; card data in "unit_list_structured.txt"
+# and "Modules.txt". Written 2026-11-03.
+################################################################################
+
+=== FORMAT SPEC ===
+Same as "Test scenarios batch 1.txt". Summary:
+1. Records of "key: value" lines, separated by one blank line, starting with "id:".
+2. KEY ORDER: id, title, source, map, given, when, then, rule, assumption, issue, note
+3. map: a Campaign 1 map (M1 = C1_M1). Only the shape is used. M1 sectors and neighbours:
+     (1,-1): (1,0) (0,0) (0,-1)            (1,0): (1,-1) (1,1) (0,1) (0,0)
+     (1,1): (1,0) (0,2) (0,1)              (0,-1): (1,-1) (0,0) (-1,0)
+     (0,0): all six of (0,-1) (1,-1) (1,0) (0,1) (-1,1) (-1,0)
+     (0,1): (0,0) (1,0) (1,1) (0,2) (-1,2) (-1,1)
+     (0,2): (0,1) (1,1) (-1,2)             (-1,0): (0,-1) (0,0) (-1,1)
+     (-1,1): (-1,0) (0,0) (0,1) (-1,2)     (-1,2): (-1,1) (0,1) (0,2)
+   Horizontal rows: q=1 (1,-1) (1,0) (1,1) | q=0 (0,-1) (0,0) (0,1) (0,2) | q=-1 (-1,0) (-1,1) (-1,2)
+4. given: stacks top first, "(q,r): TOP > next > ... > bottom". "B_02[S1]" = 1 Shield.
+   [D1] Damage, [S1] Shield, [BS1] Bio-shield, [BAR] Barrier, [AL] Alert, [WR] Wreck marker,
+   [TICK]. "fd" = face-down tile ("fd:B_01" when its contents matter). "cleared" = no tiles.
+   Sectors not listed: face-up B_03 with a tile beneath. "every other sector cleared" overrides
+   this where counts matter. Unless stated: Command phase, no Alerts, Flagship V1 at 6/6/6,
+   token supplies full, all Modules exhausted except those named.
+5. when: actions in order; "choose:" lists the player's choices.
+6. then: the checks. Anything not mentioned is unchanged.
+7. rule: the rule the test checks. assumption: a reading not stated outright.
+   issue: a rules problem (OPEN until fixed). note: what was changed, with the date.
+
+################################################################################
+=== SECTION: SENTINELS ===
+
+id: T2_SEN_01
+title: S_05 buries itself, then reveals and Boosts a Bot
+source: S_05; Core Rules glossary (Bury), 8.5
+map: M1
+given: Overload under way. (0,0): S_05[AL][BAR] > fd:B_02 > fd.
+when: resolve S_05's Alert; choose facing 0 for B_02
+then: [1] Bury: S_05's Barrier returns to the Supply; S_05 swaps with the tile beneath, faces kept.
+      (0,0): fd:B_02 > S_05 (face up, buried, not a unit) > fd. The sector is Dark.
+      [2] Reveal (0,0): B_02 is a Bot -> B_02[S1].
+
+id: T2_SEN_02
+title: S_11 reveals a Mecha and kills it, uncovering itself
+source: S_11; Core Rules 3.4, 4.5
+map: M1
+given: Overload under way. (0,0): S_11[AL] > fd:M_03 > fd.
+when: resolve S_11's Alert
+then: Bury: (0,0): fd:M_03 > S_11 (face up) > fd. Reveal: M_03 takes 2 damage, is destroyed (Discard).
+      S_11 is now uncovered on top: no Barrier, no Alert (it was not revealed, and the Overload
+      is already under way).
+
+id: T2_SEN_03
+title: S_22 hits itself once; a Barrier cancels all of it
+source: S_22; Core Rules 6.4; unit file E6
+map: M1
+given: Overload under way. (0,0): S_22[AL] (no Barrier). (1,1): S_01. (-1,2): S_12[BAR].
+       No other Sentinels.
+when: resolve S_22's Alert
+then: 3 Sentinels including itself -> one hit of 3: S_22[D3], Strength 2.
+      Variant: if S_22 has [BAR], the whole hit is cancelled and the Barrier is removed.
+
+id: T2_SEN_04
+title: S_20 - Flagship damage unless a Mecha dies
+source: S_20
+map: M1
+given: Overload under way. (0,0): S_20[AL]. (0,-1): M_03. (0,1): B_01. (0,2): S_01[BAR][AL].
+when: resolve S_20's Alert; choose: the horizontal row q=0
+then: M_03[D1] (survives), B_01 destroyed, S_01 loses its Barrier (its Alert stays).
+      S_20 itself is not hit ("other"). No Mecha destroyed -> Flagship takes 3.
+      Variant: with M_01 in (0,-1) instead, M_01 is destroyed and the Flagship takes nothing.
+
+id: T2_SEN_05
+title: S_27 overloads its own Shields
+source: S_27
+map: M1
+given: Overload under way. (0,0): S_27[S2][AL]. (0,-1): B_01. (1,-1): B_02. (1,0): B_03.
+       (1,1): B_01. Every other sector cleared. Shield supply 8.
+when: resolve S_27's Alert
+then: [1] 3 adjacent Bots -> 3 Boosts: S_27 has 5 Shields (supply 5).
+      [2] 5 or more -> all 5 removed (supply 10), Flagship takes 4.
+      [3] Every Bot takes 1: both B_01 destroyed, B_02[D1], B_03[D1]. S_27 ends at Strength 5.
+
+id: T2_SEN_06
+title: S_21 alerts a Gyro; destroying it first swaps Drain for Destroyed
+source: S_21; Core Rules 11.1 rule 6, 4.8
+map: M1
+given: Overload under way. (0,0): S_21[AL]. (0,1): G_05. (0,2): P_12. Charged Beam ready.
+       Reserve Red 4.
+when: resolve S_21; run Charged Beam on G_05 (2 damage); resolve G_05's Alert
+then: S_21 gives P_12 and G_05 an Alert each. G_05 is destroyed: it becomes a Wreck and keeps
+      its one Alert. Resolving it gives its Destroyed effect (gain 2 Red), not its Drain (1 Red).
+      Reserve Red: 4 - 4 + 2 = 2. P_12's Alert still waits.
+
+################################################################################
+=== SECTION: FLARES ===
+
+id: T2_FLR_01
+title: F_02 makes a just-revealed Sentinel act in this Overload
+source: F_02; Core Rules 4.5
+map: M1
+given: Overload under way. (0,2): F_02[AL]. (0,1): fd:S_01 > fd. (1,1): fd:B_01 > fd.
+       (-1,2): S_12[BAR] (no Alert).
+when: resolve F_02
+then: Reveal (0,1) and (1,1), one at a time. S_01 gets its Barrier on Reveal, then F_02 removes
+      it and gives S_01 an Alert. B_01 is unaffected. S_12 keeps its Barrier (not just revealed).
+      The Overload cannot end until S_01's Alert is resolved (Flagship 1) or S_01 is destroyed.
+
+id: T2_FLR_02
+title: F_17 checks every Strength before changing any
+source: F_17
+map: M1
+given: Overload under way. (0,0): F_17[AL]. (0,-1): B_01. (1,-1): B_02. (1,0): B_02[D1].
+       (0,1): B_03. (-1,1): M_01. (-1,0): S_01[BAR].
+when: resolve F_17
+then: Strength 2 or more: B_02 in (1,-1) -> [D1]; B_03 -> [D1].
+      Strength exactly 1: B_01 -> [S1]; B_02[D1] in (1,0) -> no tokens; M_01 -> [S1];
+      S_01 -> [BAR][S1]. B_02 in (1,-1) is not Boosted, although it ends at Strength 1.
+
+id: T2_FLR_03
+title: F_24 hits all units tied for highest Strength
+source: F_24; Core Rules 4.6, 4.8
+map: M1
+given: Overload under way. (0,0): F_24[AL]. (0,1): O_01 (Strength 3). (1,0): B_03.
+       (0,2): M_04. (-1,1): B_02[S2] (Strength 4). (1,1): G_05 Wreck [WR][AL].
+       Every other sector cleared.
+when: resolve F_24
+then: Highest Strength is 4: only B_02 -> B_02[S1].
+      Variant without B_02: O_01, B_03 and M_04 tie at 3 and each take 1.
+      F_24 and the Wreck have no Strength and are ignored.
+
+################################################################################
+=== SECTION: SLEEPERS ===
+
+id: T2_SLP_01
+title: P_25 flips an uncovered Flare face down; it can then be revealed
+source: P_25; Core Rules 4.6, 4.8; unit file format spec 10
+map: M1
+given: Command phase. (0,0): P_25[AL] > fd. (0,1): F_09 (uncovered earlier, no tokens) > fd.
+       (1,-1): B_02 > fd. (1,0): B_02[D1] > fd. (0,-1): S_01[BAR] > fd.
+       (-1,0): G_05 Wreck [WR][AL] > fd. (-1,1): cleared. One ready light Module.
+when: resolve P_25; resolve G_05's Alert; Reveal (0,1)
+then: Flipped face down: F_09 and B_02 in (1,-1); (0,1) and (1,-1) are Dark and lose facing.
+      Not flipped: B_02[D1] and S_01[BAR] (tokens), the G_05 Wreck (Wrecks cannot be flipped).
+      P_25 is discarded; (0,0) is Dark.
+      Revealing (0,1): F_09 is revealed, not uncovered -> 1 Yellow on the ready Module, and an
+      Overload starts.
+rule: Flares may be flipped and moved by effects that do not choose them (decided 2026-11-03).
+note: Consequence for the designer: P_25 can turn an uncovered Flare, which gives nothing, into
+      one that can be revealed for energy and an Overload. P_25 is the only card that does this.
+
+id: T2_SLP_02
+title: P_08 can hit itself
+source: P_08; Core Rules 11.1 rule 3; unit file E4
+map: M1
+given: No Dark sectors. (0,0): P_08[AL]. (0,1): B_01. (0,2): M_01. (1,1): G_05. (1,0): G_08.
+       Every other sector cleared.
+when: resolve P_08
+then: [1] Exactly one Bot: B_01 takes 2, destroyed.
+      [2] Counted when step 2 starts: one Mecha -> M_01 takes 2, destroyed; two Gyros -> nothing;
+      one Sleeper, P_08 itself -> takes 2, destroyed (Discard, no Destroyed effect).
+      No other type has exactly one unit.
+rule: an effect finishes even if its own unit is destroyed partway through (Core Rules 11.1,
+      rule 3).
+note: RESOLVED 2026-11-03.
+
+id: T2_SLP_03
+title: P_22 shrinks with Bots on the Field
+source: P_22
+map: M1
+given: No Dark sectors. (0,0): P_22[AL]. Bots: (0,1) B_01, (0,2) B_02, (1,0) B_03, (1,1) B_01.
+       Every other sector cleared.
+when: resolve P_22
+then: 6 - 4 Bots = Flagship takes 2. Variant: with 6 or more Bots, it takes 0.
+
+id: T2_SLP_04
+title: A Wreck counts for "most abundant Level" but is not hit
+source: P_04; Core Rules 4.8; unit file E4
+map: M1
+given: No Dark sectors. (0,0): P_04[AL]. (0,1): M_01. (0,2): G_06 Wreck [WR][AL] (Level 2).
+       (1,0): B_02. (1,1): B_02. Every other sector cleared.
+when: resolve P_04 first
+then: Level 1: P_04 and M_01 = 2. Level 2: the Wreck and two B_02 = 3. Level 2 wins.
+      Both B_02 -> [D1]. The Wreck is skipped. Without the Wreck it would be a 2-2 tie.
+
+################################################################################
+=== SECTION: GYROS ===
+
+id: T2_GYR_01
+title: G_11 Drain reveals the tile beneath and Boosts it twice
+source: G_11
+map: M1
+given: (0,0): G_11 > fd:B_01 > fd.
+when: Drain G_11
+then: G_11 is discarded at once; (0,0) is Dark -> Reveal B_01 -> B_01[S2].
+      Variant: if the tile beneath is a face-up S_01, nothing is revealed and S_01 gets 2 Shields.
+
+id: T2_GYR_02
+title: G_11 Destroyed reveals a Sentinel whose Barrier eats the hit
+source: G_11; Core Rules 4.5, 6.4
+map: M1
+given: (0,0): G_11 > fd:S_12 > fd.
+when: destroy G_11 (any effect); Resolve Alerts
+then: G_11 becomes a Wreck [WR][AL]. Resolving it: the Wreck is discarded, (0,0) is Dark,
+      S_12 is revealed and gets a Barrier, the 2 damage is cancelled and the Barrier removed.
+      S_12 has no tokens and no Alert (revealed in the Command phase).
+
+id: T2_GYR_03
+title: G_14 Destroyed starts an Overload only in the Command phase
+source: G_14; Core Rules 9.1
+map: M1
+given: (0,0): G_14 Wreck [WR][AL]. (0,1): S_01[BAR].
+when: Resolve Alerts
+then: G_14's Destroyed effect starts an Overload once it has finished; G_14 goes to the Discard.
+      The Overload starts: S_01 gets an Alert.
+      Variant: if G_14 becomes a Wreck during an Overload, its effect does nothing.
+
+id: T2_GYR_04
+title: G_22 Drain never hits itself
+source: G_22; unit file drain_self_rule
+map: M1
+given: (0,0): G_22. (0,-1): B_01. (0,1): M_01. (0,2): B_02.
+when: Drain G_22; choose: the horizontal row q=0
+then: B_01 and M_01 are destroyed. B_02 is unaffected (Level 2). G_22 (Level 1) is not hit,
+      then is discarded.
+
+id: T2_GYR_05
+title: G_36 reveals the whole Field; a Flare waits for the end of the Drain
+source: G_36; Core Rules 4.4, 9.1
+map: M1
+given: (0,0): G_36 (nothing beneath). (0,1): fd:F_09 > fd. (0,2): fd:B_01 > fd.
+       (-1,0): P_12 > fd. No other Dark sectors. Tactical Scan ready.
+when: Drain G_36; choose: F_09's Yellow on Tactical Scan
+then: Reveal (0,1): F_09 places 1 Yellow on Tactical Scan at once; revealing continues.
+      Reveal (0,2): B_01. No Dark sectors remain -> P_12 gets an Alert at once.
+      G_36 is discarded; (0,0) is Cleared. Then the Overload starts: F_09 gets an Alert;
+      P_12 keeps its Alert and is resolved in the Overload.
+
+################################################################################
+=== SECTION: MECHA ===
+
+id: T2_MCH_01
+title: M_07 chains Level 1, 2 and 3 targets
+source: M_07
+map: M1
+given: (0,0): M_07. (0,1): B_01. (0,2): B_02. (1,1): B_03.
+when: Command M_07: Expend; choose: B_01, then B_02, then B_03
+then: B_01 destroyed. B_02 in (0,2) (adjacent to B_01's sector) -> [D1].
+      B_03 in (1,1) (adjacent to B_02's sector) -> [D1]. M_07 destroyed.
+
+id: T2_MCH_02
+title: M_06 swaps before attacking; a Barrier blocks the swap
+source: M_06; Mecha section passive_attack_rule
+map: M1
+given: (0,0): M_06. (0,2): B_01 > fd. (1,1): B_02. (0,1): S_12[BAR].
+when: Command M_06: Attack; Passive: Swap with B_01; Attack B_02
+then: M_06 is in (0,2), B_01 in (0,0). B_02 (adjacent to (0,2)) takes 3, destroyed.
+      M_06 is destroyed; (0,2) is Dark. S_12 was not a legal Swap target (it has a token).
+
+id: T2_MCH_03
+title: M_03 moves into a Dark sector, then attacks from there
+source: M_03
+map: M1
+given: (0,0): M_03 > fd. (0,1): fd. (0,2): B_02.
+when: Command M_03: Attack; Passive: Move to (0,1); Attack B_02
+then: (0,0) is Dark. M_03 sits on top of (0,1). B_02 takes 2, destroyed.
+      M_03 is destroyed; (0,1) is Dark again.
+
+################################################################################
+=== SECTION: MODULES ===
+
+id: T2_MOD_01
+title: Siphon Blast - damage the chosen unit, shield two neighbours
+source: Module 29 (text updated 2026-11-03); Modules convention 2
+map: M1
+given: Overload under way. Siphon Blast ready, Reserve Red 3. (0,0): B_02 > fd. (0,-1): M_01.
+       (1,-1): G_05. (1,0): S_01[BAR]. (0,1): F_09. (-1,1): B_01. (-1,0): cleared.
+when: run Siphon Blast on B_02; choose: G_05 and S_01 for the Bio-shields
+then: B_02 takes 2, destroyed; (0,0) is Dark. Adjacency is still measured from (0,0).
+      Legal Bio-shield targets: G_05, S_01, B_01 (not M_01: Mecha; not F_09: cannot be chosen).
+      G_05[BS1], S_01[BAR][BS1]. Bio-shield supply 8.
+
+id: T2_MOD_02
+title: Chain Reaction Beam stops at the first survivor
+source: Module 44
+map: M1
+given: Overload under way. Reserve Red 6. (0,0): B_01 > fd. (0,1): B_01 > fd. (0,2): B_02 > fd.
+when: run Chain Reaction Beam on (0,0); choose: (0,1), then (0,2)
+then: B_01 in (0,0) destroyed -> 1 damage to B_01 in (0,1), destroyed -> 1 damage to B_02,
+      which survives at [D1] -> stop.
+
+id: T2_MOD_03
+title: Proton Torpedoes pay out for a Barrier
+source: Module 8; Core Rules 6.4
+map: M1
+given: Reserve Yellow 7. (0,0): S_12[BAR]. (0,1): B_01.
+when: run Proton Torpedoes on S_12 and B_01
+then: S_12's hit is cancelled (Barrier removed); B_01 destroyed. S_12 was not destroyed ->
+      gain 1 energy (any colour).
+
+id: T2_MOD_04
+title: Splitter Missiles - each share is its own hit
+source: Module 14; Core Rules 6.1, 6.4
+map: M1
+given: Reserve Yellow 5. (0,0): S_12[BAR]. (0,1): B_02.
+when: run Splitter Missiles; choose: 1 to S_12, 2 to B_02
+then: S_12's 1 is cancelled (Barrier removed). B_02 destroyed.
+      Variant: all 3 to S_12 -> the whole 3 is cancelled.
+
+id: T2_MOD_05
+title: Capacitor Lance discount
+source: Module 3; Modules convention 5
+map: M1
+given: Capacitor Lance ready; 4 other Modules exhausted. Reserve Yellow 5. (0,0): B_03.
+when: run Capacitor Lance on B_03
+then: Cost 9 - 4 = 5; Reserve Yellow 0. B_03 destroyed. Lance exhausted.
+      Variant: with 10 other exhausted Modules, the cost is 0, never below.
+
+id: T2_MOD_06
+title: Pathfinder Array - discount on the whole cost
+source: Module 53
+map: M1
+given: Pathfinder Array ready; 2 other Modules exhausted. Reserve Blue 5.
+       Dark: (0,0) fd:B_01, (0,1) fd:B_03, (0,2) fd:S_01, (1,1) fd:G_05 (each > fd).
+when: run Pathfinder Array with X = 4; reveal all four
+then: Cost (3 + 4) - 2 = 5; Reserve Blue 0. B_01 takes 2, destroyed. B_03 -> [D2].
+      S_01 gets a Barrier and no damage (not a Bot). G_05 unharmed.
+
+id: T2_MOD_07
+title: Point-Defense Phaser counts its own energy before paying
+source: Module 48; Core Rules 8.6
+map: M1
+given: Overload under way. Point-Defense Phaser ready with 3 Red on it.
+       Sentinels: (0,0) S_01[BAR], (0,1) S_03, (0,2) S_12. No others.
+when: run Point-Defense Phaser, paying its cost of 1 from its own energy
+then: X = 3. S_01 loses its Barrier; S_03 destroyed; S_12 -> [D1]. 2 unspent Red return to
+      the Supply.
+
+id: T2_MOD_08
+title: Thin Line Barrage finds the emptiest horizontal row
+source: Module 25; Core Rules 3.8
+map: M1
+given: (1,-1): B_01. (1,0): cleared. (1,1): cleared. (0,-1), (0,0), (0,1), (0,2): B_03 each.
+       (-1,0): B_01. (-1,1): B_02. (-1,2): fd. Thin Line Barrage ready, Reserve Yellow 3.
+when: run Thin Line Barrage
+then: 1 Dark sector -> cost 3. Rows: q=1 has 1 unit, q=0 has 4, q=-1 has 2.
+      Row q=1 is chosen: B_01 in (1,-1) destroyed.
+
+id: T2_MOD_09
+title: Salvo Launcher needs three mutually adjacent units
+source: Module 17; Core Rules 3.8
+map: M1
+given: (1,1) and (0,2): cleared. Salvo Launcher ready, Reserve Yellow 3.
+when: run Salvo Launcher
+then: 2 Cleared sectors -> cost 3. (0,0), (0,1), (1,0) is legal: each pair is adjacent.
+      (0,-1), (0,0), (0,1) is not legal: (0,-1) and (0,1) are not adjacent.
+
+id: T2_MOD_10
+title: Ground Zero hits by Level, skipping Flares
+source: Module 21
+map: M1
+given: (0,0): M_03. (0,1): B_01. (0,2): B_02. (1,1): M_01. (1,0): G_06. (-1,1): O_01.
+       (-1,0): F_09. Reserve Yellow 4.
+when: run Ground Zero; choose: M_03
+then: M_03 destroyed (Level 2). Every unit of Level 2 or lower takes 1: B_01 destroyed,
+      B_02 -> [D1], M_01 destroyed, G_06 -> [D1]. O_01 (Level 3) and the B_03 defaults are
+      unharmed. F_09 has no Level and is skipped.
+
+id: T2_MOD_11
+title: Backlash Beam when Shields run out
+source: Module 31; Core Rules 6.2
+map: M1
+given: Overload under way. Shield supply 1. Reserve Red 3. (0,0): B_03. (0,1): B_02[D1].
+       (0,-1): B_01. (1,0): B_02. (1,-1), (-1,1), (-1,0): cleared.
+when: run Backlash Beam on B_03; choose Boost order: B_02[D1], B_01, B_02 in (1,0)
+then: B_02[D1] loses its Damage (counts). B_01 gets the last Shield (counts).
+      B_02 in (1,0) gets nothing: Flagship takes 1 (does not count). X = 2 -> B_03[D2].
+rule: the player chooses the Boost order (Core Rules 11.1, rule 2), which decides who gets the
+      last Shield.
+
+id: T2_MOD_12
+title: Harvest Beacon starts an Overload after it finishes
+source: Module 67; Core Rules 9.1
+map: M1
+given: Harvest Beacon and Tactical Scan ready. Reserve Blue 4. Sentinels: (0,0) S_01[BAR],
+       (0,1) S_12[BAR]. No others.
+when: run Harvest Beacon; choose: Tactical Scan, 2 Blue
+then: 2 Blue on Tactical Scan. Harvest Beacon is exhausted and cleaned up; then the Overload
+      starts: S_01 and S_12 get Alerts.
+
+id: T2_MOD_13
+title: Tractor Beam swaps tokens along and readies another Module
+source: Module 68
+map: M1
+given: Tractor Beam ready, Charged Beam exhausted. Reserve Blue 3. (0,0): B_01. (0,2): S_12[BAR].
+when: run Tractor Beam; Swap B_01 and S_12; ready Charged Beam
+then: (0,0): S_12[BAR]; (0,2): B_01. Charged Beam is ready. Tractor Beam is exhausted and could
+      not have readied itself ("other"). A Flare could not have been swapped (it cannot be chosen).
+
+id: T2_MOD_14
+title: Strata Shifter moves face-down tiles and uncovers what was under them
+source: Module 69; Core Rules 3.4
+map: M1
+given: (0,0): fd:B_01 > fd:B_02 > S_01 (face up). (0,1): fd:B_03 > fd. Reserve Blue 3.
+when: run Strata Shifter; take the top 2 tiles of (0,0); place them on (0,1)
+then: (0,1): fd:B_01 > fd:B_02 > fd:B_03 > fd (same order). (0,0): S_01 is uncovered:
+      no Barrier, no Alert.
+
+id: T2_MOD_15
+title: Phantom Recon - the last two revealed may take nothing
+source: Module 50; Core Rules 4.5, 4.6, 8.6
+map: M1
+given: Overload under way. Phantom Recon ready, Tactical Scan exhausted, Charged Beam ready.
+       Reserve Red 4. (0,0): fd:B_02 > fd. (0,1): fd:F_11 > fd. (0,2): fd:S_01 > fd.
+when: run Phantom Recon; reveal (0,0), (0,1), (0,2); stop
+then: F_11 places 1 Red on Charged Beam (Phantom Recon is not ready while it resolves) and gets
+      an Alert. S_01 gets a Barrier, no Alert. The last two revealed are F_11 (cannot be damaged)
+      and S_01 (Barrier cancels the 2). B_02 is not damaged.
+
+id: T2_MOD_16
+title: G_38 Drain runs a cheap Module for free
+source: G_38; Core Rules 5.3; unit file E11
+map: M1
+given: Ready: Tactical Scan (Blue 3), Signal Jammer (Red 3), Heavy Plasma Cannon (Yellow 4),
+       Debris Sifter (Blue X). (0,0): G_38.
+when: Drain G_38
+then: Legal choices: Tactical Scan and Debris Sifter (X counts as 1). Not Signal Jammer
+      (red, Command phase) and not Heavy Plasma Cannon (costs 4).
+      Choosing Tactical Scan: it runs without payment, then is exhausted.
+      Choosing Debris Sifter: it runs with X = 1 (look at the top tile of one Dark sector).
+rule: a Module with an X cost run for free uses X = 1 (Core Rules 5.3). Pathfinder Array run
+      for free through P_19 also uses X = 1: it reveals 1 unit.
+note: RESOLVED 2026-11-03.
+
+id: T2_MOD_17
+title: Accumulator Beam stops at 5
+source: Module 6
+map: M1
+given: Accumulator Beam ready with 7 Yellow on it. (0,0): G_04 (Level 4).
+when: run Accumulator Beam on G_04, paying 1 from its own energy
+then: X = 5 (maximum): G_04 destroyed (Wreck). 6 unspent Yellow return to the Supply.
+
+id: T2_MOD_18
+title: Lone Hunter Missiles - a lone Flare cannot be hit
+source: Module 47; Core Rules 4.6
+map: M1
+given: Overload under way. Reserve Red 2. (0,0): F_09. (0,1): P_12. (0,2): M_01. (1,1): M_01.
+       (1,0): G_05. Every other sector cleared.
+when: run Lone Hunter Missiles
+then: Types with exactly one unit: Flare (F_09, skipped), Sleeper (P_12 -> [D1]), Gyro
+      (G_05 destroyed -> Wreck [WR][AL]). Mecha (2) and Bot (0) are not hit.
+
+=== END OF FILE ===

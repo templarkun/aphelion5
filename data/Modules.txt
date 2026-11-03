@@ -1,0 +1,489 @@
+################################################################################
+# APHELION 5 - MODULE DATABASE (structured, machine-oriented)
+# Rules semantics live in "Core Rules.txt" (5.3 Modules, 8.6 Run a Module, 9.2 Overloads).
+# This file only stores Module data and the text conventions that apply to Module effects.
+################################################################################
+
+=== FORMAT SPEC ===
+1. The file has SECTIONS (one per energy colour). Each section starts with a line
+   "=== SECTION: <name> ===" and has a SECTION_DEFAULTS block.
+2. A Module inherits every default unless the record sets the same key itself
+   (record value wins).
+3. Each Module is a RECORD: a block of "key: value" lines, one key per line, records
+   separated by one blank line. A record always begins with "id:". Keys never repeat.
+4. Absent key = not applicable.
+5. Multi-step effects are numbered inline: "[1] ... [2] ...". Execute in order unless the
+   text says otherwise.
+6. Effect text uses Core Rules terminology (Boost, Bury, Reveal, Drain, Destroy, Dark sector,
+   Cleared sector, Horizontal row, Tick, Barrier, Overload, etc.). Do not reinterpret.
+
+KEY ORDER:
+  id, name, cost, cost_variable, cost_reduction, effect, extra_payment
+
+KEY DEFINITIONS:
+  id              Unique Module ID (integer).
+  name            Final Module name.
+  cost            Base cost, in the section's energy colour. "X" = variable cost (see cost_variable).
+  cost_variable   Explains X, or the extra payment that is part of the cost itself.
+  cost_reduction  Discount applied when you pay (Convention 5). A cost never drops below 0.
+  effect          What the Module does when run (Core Rules 8.6, step 3).
+  extra_payment   Optional. An additional payment, made while resolving the effect, for a bigger
+                  effect. You may pay it or skip that part (Core Rules 8.6, step 3).
+
+SECTION-LEVEL FIELDS (inherited by every Module in the section):
+  energy_color    Colour of the Module's cost.
+  background      light = run only in the Command phase; red = run only during an Overload
+                  (Core Rules 5.3).
+
+DISTRIBUTION: one copy of each Module, 78 cards: 26 Yellow (IDs 1-25, 77), 26 Red (IDs 26-50, 78),
+26 Blue (IDs 51-76).
+
+--------------------------------------------------------------------------------
+MODULE TEXT CONVENTIONS (apply to every Module unless its text says otherwise)
+--------------------------------------------------------------------------------
+1. Targets. "A unit" / "one unit" means any unit on the Field that can be chosen. When one
+   effect names several targets ("one unit ... one Gyro ... one Sleeper"), each must be a
+   different unit.
+2. "Adjacent to it" after damage is measured from that unit's sector, even if the
+   damage destroyed it.
+3. Counts ("for each Bot", "exactly three", "the fewest", "the most") use the units on
+   the Field when the effect starts. Wrecks and Flares count (Core Rules 4.6, 4.8). Ties: you
+   choose (Core Rules 11.1, rule 2).
+4. "Deal X damage to one unit" is a single hit of X (Core Rules 6.1). Bonus damage that an
+   effect adds before dealing it is part of the same hit.
+5. Cost reductions are counted when you pay. A cost never drops below 0. "Your other
+   exhausted Modules" never counts the Module being run.
+6. "Place energy on a Module" = take it from the Supply and put it on a ready Module
+   (Core Rules 5.3). If no colour is named, you choose the colours. "Return energy" =
+   put it back in the Supply. The Module being run is not ready while it resolves, so
+   energy is never placed on it (Core Rules 8.6).
+7. Flares and Wrecks can never be chosen (Core Rules 4.6, 4.8). They never gain or lose
+   tokens except their own Alert, and effects that hit or Boost "all" units skip them.
+8. Effects that remove Alert tokens name the units they work on; they never work on
+   Flares or Wrecks (Core Rules 6.5).
+9. An effect that runs another Module for free still follows the background rule:
+   light in the Command phase, red during an Overload (Core Rules 5.3).
+
+################################################################################
+=== SECTION: YELLOW ===
+SECTION_DEFAULTS:
+  energy_color: Yellow
+  background: light
+
+id: 1
+name: Demolition Blast
+cost: 3
+effect: [1] Deal 2 damage to one unit. [2] Destroy one Bot.
+
+id: 2
+name: Ion Sweep
+cost: 2
+effect: Deal 1 damage to one unit, 1 damage to one Gyro and 1 damage to one Sleeper.
+
+id: 3
+name: Capacitor Lance
+cost: 9
+cost_reduction: 1 Yellow energy less for each of your other exhausted Modules.
+effect: Deal 3 damage to one unit.
+
+id: 4
+name: Tick Missile
+cost: 3
+effect: [1] Deal 1 damage to one unit. [2] If it survives, place a Tick on it.
+
+id: 5
+name: Heavy Plasma Cannon
+cost: 4
+effect: [1] Deal 4 damage to one unit. [2] Return all energy on all your Modules to the Supply.
+
+id: 6
+name: Accumulator Beam
+cost: 1
+effect: Deal X damage to one unit, where X is the Yellow energy on this Module before you ran it (maximum 5).
+
+id: 7
+name: Cluster Mine
+cost: 4
+effect: [1] Deal 1 damage to one unit. [2] Place a Tick on every Gyro and every Sleeper adjacent to it.
+
+id: 8
+name: Proton Torpedoes
+cost: 7
+effect: [1] Deal 2 damage to each of two units. [2] Gain 1 energy for each of them that was not destroyed.
+
+id: 9
+name: Ricochet Missiles
+cost: 4
+effect: [1] Deal 2 damage to one unit. [2] If this destroys it, deal 1 damage to another unit.
+
+id: 10
+name: Twin Laser Turret
+cost: 3
+effect: Choose two units adjacent to each other. Deal 1 damage to each.
+extra_payment: Pay 3 more Yellow energy: deal 2 damage to each instead.
+
+id: 11
+name: Capacitor Demolisher
+cost: 9
+cost_reduction: 1 Yellow energy less for each of your other exhausted Modules.
+effect: Destroy two Bots adjacent to each other.
+
+id: 12
+name: Tri-Lock Missiles
+cost: 4
+effect: [1] Choose a unit type. [2] Deal 1 damage to each of three units of that type.
+
+id: 13
+name: Shrapnel Detonation
+cost: 3
+effect: [1] Choose a Mecha. [2] Deal 1 damage to it and to each of up to three other units adjacent to it.
+
+id: 14
+name: Splitter Missiles
+cost: 5
+effect: Divide 3 damage among any number of units, as you choose. Each unit takes its share as one hit.
+
+id: 15
+name: Arc Cannon
+cost: 2
+effect: Choose one: deal 1 damage to one unit, or deal 1 damage to each of two different Gyros.
+
+id: 16
+name: Autoturret Sweep
+cost: 4
+effect: Deal 1 damage to one unit of each type: one Bot, one Mecha, one Gyro, one Sleeper, one Sentinel and one Omega unit.
+
+id: 17
+name: Salvo Launcher
+cost: 5
+cost_reduction: 1 Yellow energy less for each Cleared sector.
+effect: Choose three units that are all adjacent to each other. Deal 1 damage to each.
+
+id: 18
+name: Proton Cull
+cost: 3
+effect: [1] Choose the unit type with the fewest units on the Field (ignore Flares and types with no units). [2] Deal 1 damage to every unit of that type.
+
+id: 19
+name: Electron Flood
+cost: 5
+effect: [1] Deal 1 damage to every Bot. [2] Return all energy on your other Modules to the Supply.
+
+id: 20
+name: Graviton Rockets
+cost: 4
+effect: Choose one: deal 2 damage to every Gyro, or deal 1 damage to every Sentinel.
+
+id: 21
+name: Ground Zero
+cost: 4
+effect: [1] Destroy one Mecha. [2] Deal 1 damage to every unit on the Field whose Level is equal to or lower than that Mecha's Level, including your other Mecha and Omega units.
+
+id: 22
+name: Harmonic Collapse
+cost: 7
+cost_reduction: 1 Yellow energy less for each Dark sector.
+effect: Destroy every Level 1 unit.
+
+id: 23
+name: Harmonic Pulse
+cost: 5
+effect: Deal 1 damage to every Level 2 unit.
+
+id: 24
+name: Rocket Barrage
+cost: 5
+effect: [1] Choose a horizontal row. [2] Deal 1 damage to every unit in it.
+
+id: 25
+name: Thin Line Barrage
+cost: 4
+cost_reduction: 1 Yellow energy less for each Dark sector.
+effect: [1] Choose the horizontal row with the fewest units (at least one). [2] Deal 1 damage to every unit in it.
+
+id: 77
+name: Seismic Charge
+cost: 3
+effect: [1] Choose a Cleared sector. [2] Deal 1 damage to every unit adjacent to it.
+
+################################################################################
+=== SECTION: RED ===
+SECTION_DEFAULTS:
+  energy_color: Red
+  background: red
+
+id: 26
+name: Charged Beam
+cost: 4
+effect: Deal 2 damage to one unit.
+extra_payment: Pay 1 to 3 more Red energy: deal that much more damage.
+
+id: 27
+name: Counter-Battery Beam
+cost: 3
+effect: Deal X damage to one unit, where X is the number of Sentinels on the Field.
+
+id: 28
+name: Mirror Lattice Beam
+cost: 4
+effect: [1] Choose one unit. [2] Deal it X damage, where X is the number of Bots adjacent to it.
+
+id: 29
+name: Siphon Blast
+cost: 3
+effect: [1] Choose one unit and deal 2 damage to it. [2] Place a Bio-shield on each of two different non-Mecha units adjacent to it.
+
+id: 30
+name: Capacitor Strike
+cost: 6
+cost_reduction: 2 Red energy less for each of your other exhausted Modules.
+effect: Deal 2 damage to one unit.
+
+id: 31
+name: Backlash Beam
+cost: 3
+effect: [1] Choose one unit. [2] Boost every unit adjacent to it. [3] Deal the chosen unit X damage, where X is the number of units that gained a Shield token or lost a Damage token this way.
+
+id: 32
+name: Static Discharge
+cost: 3
+effect: Deal 1 damage to one unit and to every Gyro adjacent to it.
+
+id: 33
+name: Seeker Missile
+cost: 5
+effect: [1] Deal 2 damage to one unit. [2] If it survives, place a Tick on one unit adjacent to it.
+
+id: 34
+name: Twin Pulse Beams
+cost: 4
+effect: [1] Choose two units adjacent to each other. [2] Deal 1 damage to each. [3] If both are destroyed, deal 1 damage to another unit.
+
+id: 35
+name: Tesla Overcharge
+cost: 4
+effect: [1] Deal 1 damage to one unit. [2] Deal 1 damage to every adjacent unit of a different type from it.
+
+id: 36
+name: Triad Strike
+cost: 4
+effect: [1] Choose a unit type. [2] If there are exactly three units of that type on the Field, deal 1 damage to each of them.
+
+id: 37
+name: Cascade Phaser
+cost: 5
+effect: [1] Deal 2 damage to one Bot. [2] If this destroys it, deal 2 damage to one Gyro. [3] If this destroys it, deal 1 damage to one Sentinel.
+
+id: 38
+name: Arc Discharge
+cost: 4
+effect: [1] Deal 1 damage to one unit. [2] If it survives, deal 1 damage to each of two other units adjacent to it.
+
+id: 39
+name: Bunker Busters
+cost: 4
+effect: [1] Choose the horizontal row with the most Level 3 units (at least one). [2] Deal 1 damage to every unit in it.
+
+id: 40
+name: Polarity Sweep
+cost: 4
+effect: [1] Choose a horizontal row and deal 1 damage to every unit in it. [2] Choose a horizontal row (the same one or another) and Boost every unit in it.
+
+id: 41
+name: Beacon Strike
+cost: 3
+effect: Deal 1 damage to every unit in each horizontal row that contains at least one Mecha.
+
+id: 42
+name: Harmonic Strike
+cost: 5
+effect: Deal 1 damage to every Level 3 unit.
+
+id: 43
+name: Harmonic Wave
+cost: 3
+effect: Deal 1 damage to every Level 2 Bot and every Level 2 Mecha.
+extra_payment: Pay 3 more Red energy: deal 2 damage to each instead.
+
+id: 44
+name: Chain Reaction Beam
+cost: 6
+effect: [1] Deal 1 damage to one unit. [2] Each time this destroys a unit, deal 1 damage to one unit adjacent to it. [3] Stop when a hit destroys nothing.
+
+id: 45
+name: Thermal Detonator
+cost: 5
+cost_reduction: 1 Red energy less for each Cleared sector.
+effect: Deal 1 damage to every damaged unit.
+
+id: 46
+name: Echo Ray
+cost: 4
+effect: [1] Deal 1 damage to one Bot. [2] Repeat once for each Sentinel on the Field. Each repeat is a separate hit and may target the same Bot or another one.
+
+id: 47
+name: Lone Hunter Missiles
+cost: 2
+effect: For each unit type that has exactly one unit on the Field, deal 1 damage to that unit.
+
+id: 48
+name: Point-Defense Phaser
+cost: 1
+effect: Deal 1 damage to each of X different Sentinels, where X is the Red energy on this Module before you ran it.
+
+id: 49
+name: Drone Bomber
+cost: 5
+effect: Place a Tick on each of two units of the same type.
+
+id: 50
+name: Phantom Recon
+cost: 4
+effect: [1] Reveal units one at a time, as many as you like. [2] When you stop, deal 2 damage to each of the last two units you revealed.
+
+id: 78
+name: Signal Jammer
+cost: 3
+effect: Choose one: remove the Alert token from one Sentinel (its effect is cancelled), or remove every Barrier from every unit.
+
+################################################################################
+=== SECTION: BLUE ===
+SECTION_DEFAULTS:
+  energy_color: Blue
+  background: light
+
+id: 51
+name: Satellite Ion Scan
+cost: 4
+effect: [1] Reveal units one at a time, as many as you like. [2] When you stop, if the last unit you revealed is a Bot, destroy it.
+
+id: 52
+name: Tactical Scan
+cost: 3
+effect: [1] Choose up to 4 Dark sectors and look at their top tiles. [2] Reveal every Bot among them and deal 1 damage to each of those Bots. [3] Put the other tiles back face down.
+
+id: 53
+name: Pathfinder Array
+cost: 3
+cost_variable: Pay X more Blue energy (X chosen as you run it).
+cost_reduction: 1 Blue energy less in total (base cost plus X) for each of your other exhausted Modules.
+effect: [1] Reveal X units. [2] Deal 2 damage to each Bot revealed this way.
+
+id: 54
+name: Debris Sifter
+cost: X
+cost_variable: X is at least 1.
+effect: [1] Look at the top X tiles of one Dark sector. [2] Discard one Bot among them, if there is one. [3] Put the rest back face down in the same order.
+
+id: 55
+name: Minefield Layer
+cost: 7
+cost_reduction: 2 Blue energy less for each Cleared sector.
+effect: [1] Choose a horizontal row with at least one Mecha. [2] Place a Tick on every unit in it.
+
+id: 56
+name: Scatter Minelayer
+cost: 5
+effect: [1] Deal 1 damage to your Flagship. [2] Place a Tick on one Bot, one Sentinel, one Gyro, one Sleeper and one Mecha.
+
+id: 57
+name: Graviton Mine
+cost: 3
+effect: Choose one: place a Tick on every Gyro and every Sleeper, or place a Tick on every Sentinel and Boost each of them.
+
+id: 58
+name: Ion Mine
+cost: 4
+effect: Choose one: place a Tick on every Sentinel that has a Barrier, or remove every Barrier from every Sentinel.
+
+id: 59
+name: Trojan Patch
+cost: 4
+effect: [1] Place a Tick on every damaged Bot and every damaged Mecha. [2] Remove 1 Damage token from each of them.
+
+id: 60
+name: Tiered Minefield
+cost: 5
+effect: [1] Place a Tick on every Level 1 unit. [2] Boost every Level 2 unit.
+
+id: 61
+name: Trap Line
+cost: 5
+effect: [1] Choose a horizontal row. [2] Boost every unit in it and place a Tick on each of them.
+
+id: 62
+name: Proton Trap
+cost: 3
+effect: [1] Choose the unit type with the fewest units on the Field (ignore Flares and types with no units). [2] Boost every unit of that type and place a Tick on each of them.
+
+id: 63
+name: Harmonic Trap
+cost: 4
+effect: [1] Choose one unit. [2] Boost every unit with the same Level as it (including it) and place a Tick on each of them.
+
+id: 64
+name: Power Relay
+cost: 3
+effect: Place 1 energy on each of five different ready Modules other than this one.
+
+id: 65
+name: Salvage Siphon
+cost: 2
+effect: [1] Choose one ready Module other than this one. [2] Place 1 energy on it for each Bot on the Field. [3] Return all energy on your other Modules to the Supply.
+
+id: 66
+name: Deep Scan Probe
+cost: 2
+effect: [1] Choose one Dark sector and look at its top tile. [2] You may put it face down at the bottom of that sector.
+
+id: 67
+name: Harvest Beacon
+cost: 4
+effect: [1] Choose one ready Module other than this one. [2] Place 1 energy on it for each Sentinel on the Field. [3] Start an Overload.
+
+id: 68
+name: Tractor Beam
+cost: 3
+effect: [1] Swap two units. [2] Make one of your other exhausted Modules ready.
+
+id: 69
+name: Strata Shifter
+cost: 3
+effect: [1] Take any number of tiles from the top of one Dark sector and look at them. [2] Place them on top of one adjacent Dark sector, in the same order and keeping each tile's face as it is.
+
+id: 70
+name: Core Drill
+cost: 5
+effect: [1] Choose one Dark sector and look at all its tiles. [2] You may put its bottom tile face down on top of that sector, then Reveal it.
+
+id: 71
+name: Gravity Well
+cost: 5
+effect: [1] Take the top tile from each of up to five different Dark sectors and look at them. [2] Put them face down on top of one Dark sector, in any order. [3] Remove 1 damage from your Flagship.
+
+id: 72
+name: Seismic Sonar
+cost: 5
+effect: [1] Look at the bottom tile of one sector. [2] Repeat once for each of your other exhausted Modules, choosing a different sector each time. [3] Start an Overload.
+
+id: 73
+name: Damage Control
+cost: 4
+effect: Remove 1 damage from each of two different Bays of your Flagship.
+
+id: 74
+name: Repair Field
+cost: 3
+effect: [1] Remove 1 Damage token from every unit. [2] Remove 1 damage from your Flagship.
+
+id: 75
+name: Quantum Reformation
+cost: 3
+effect: [1] Remove 1 damage from your Flagship for every two Sentinels on the Field (round down). [2] Start an Overload.
+
+id: 76
+name: EMP Burst
+cost: 3
+effect: Remove every Damage, Barrier and Fuse token from every unit.
+
+=== END OF FILE ===

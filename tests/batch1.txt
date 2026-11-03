@@ -1,0 +1,416 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 1 (structured, machine-oriented)
+# Purpose: acceptance tests for a computer implementation. Each test is a small
+# board state, one action, and the exact expected result.
+# Rules semantics live in "Core Rules.txt" (geometry: Core Rules 3.8).
+# Sources: the worked examples in Core Rules, made exact, plus edge cases.
+################################################################################
+
+=== FORMAT SPEC ===
+1. Each test is a RECORD: "key: value" lines, records separated by one blank line,
+   starting with "id:". Keys never repeat.
+2. KEY ORDER: id, title, source, map, given, when, then, rule, assumption, issue, note
+3. map: a mission map from Campaign1.txt (M1 = C1_M1, M2X = C1_M2X, ...). Only the
+   map shape is used; ignore that mission's deployment unless "given" says otherwise.
+4. given: the state. Notation for a sector's stack, top first:
+     (q,r): TOP > next > ... > bottom
+     "B_02[S1]"   = face-up B_02 with 1 Shield token
+     "[D1]" Damage, "[BS1]" Bio-shield, "[BAR]" Barrier, "[AL]" Alert, "[WR]" Wreck
+     marker, "[TICK]" "[MORTAR]" "[FB]" Fuse tokens, "f=N" facing (Core Rules 3.8)
+     "fd" = face-down tile (contents given if they matter, e.g. "fd:B_01")
+     "cleared" = no tiles
+   Sectors not listed: top tile is face up B_03 with at least one tile beneath
+   (so they never take Exposure and never affect Dark-sector checks).
+   Unless stated: phase = Command; no Alerts; Flagship V1 with full Integrity
+   (6/6/6); Shield supply 10; all Modules exhausted except those named.
+5. when: the action(s), in order. "choose: ..." lists the player's choices.
+6. then: the checks. Anything not mentioned must be unchanged.
+7. assumption: a reading the test relies on that the rules do not state outright.
+8. rule: the rule the test checks, quoted where it is new.
+9. issue: a problem found in the rules while writing the test (OPEN until fixed).
+10. note: what was changed to resolve an issue, with the date.
+
+################################################################################
+=== SECTION: GEOMETRY ===
+
+id: T_GEO_01
+title: Neighbours of a central and an edge sector
+source: Core Rules 3.8
+map: M1
+given: empty Field
+when: query neighbours of (0,0) and (0,2)
+then: (0,0) -> side1 (0,-1), side2 (1,-1), side3 (1,0), side4 (0,1), side5 (-1,1), side6 (-1,0).
+      (0,2) -> side1 (0,1), side2 (1,1), side6 (-1,2); sides 3, 4, 5 have no neighbour.
+
+id: T_GEO_02
+title: The three rows through a sector
+source: Core Rules 3.6, 3.8
+map: M1
+given: empty Field
+when: query the rows through (0,0)
+then: horizontal q=0 = {(0,-1),(0,0),(0,1),(0,2)};
+      rising r=0 = {(-1,0),(0,0),(1,0)};
+      falling q+r=0 = {(-1,1),(0,0),(1,-1)}.
+
+id: T_GEO_03
+title: Facing rotates Targeted sectors
+source: Core Rules 3.7, 3.8; F_09 (arrows 1,2,3,4)
+map: M1
+given: (0,0): F_09 f=1 [AL] (Overload under way). (1,-1): B_01. (1,0): B_01. (0,1): B_01.
+       (-1,1): B_01. (0,-1): B_01. (-1,0): B_01.
+when: resolve F_09's Alert
+then: arrows point to sides 2,3,4,5. Boost B_01 in (1,-1), (1,0), (0,1), (-1,1): 1 Shield each.
+      (0,-1) and (-1,0) unchanged. Shield supply 6.
+
+id: T_GEO_04
+title: Turning clockwise, then lines of fire
+source: S_16; unit file E8, E10; Core Rules 3.8
+map: M1
+given: Overload under way. (0,0): S_16 f=0 [AL]. (1,1): S_01 (no Alert). (1,0): B_01.
+       (-1,0): B_02. (0,1): B_01. No other Sentinels.
+when: resolve S_16's Alert
+then: 2 Sentinels -> turn 2 -> f=2. Arrows 1,4 now point to sides 3 and 6.
+      Line of fire side 3 = {(1,0)}; side 6 = {(-1,0)}.
+      B_01 in (1,0) and B_02 in (-1,0) gain 1 Shield. B_01 in (0,1) unchanged.
+
+id: T_GEO_05
+title: A line of fire continues across a gap
+source: Core Rules 3.6, 3.8; M_02 (arrows 1,3)
+map: M2X
+given: (1,2): M_02 f=5. (-1,2): B_01. (0,1): B_01.
+when: Command M_02: Expend
+then: side 1 -> actual side 6: line = {(-1,2)} (the gap at (0,2) is skipped).
+      Side 3 -> actual side 2: (2,1) is off the map, so the line is empty.
+      B_01 in (-1,2) is destroyed. B_01 in (0,1) unchanged. M_02 destroyed (to Discard).
+
+id: T_GEO_06
+title: A gap next to an arrow means nothing is Targeted
+source: Core Rules 3.6 (Targeted); F_23 (arrows 1,2,4,5)
+map: M2X
+given: Overload under way. (0,1): F_23 f=0 [AL]. (0,0): B_01. (1,0): B_01. (-1,2): B_01.
+when: resolve F_23's Alert
+then: side 4 points at the gap (0,2): nothing Targeted on that side.
+      B_01 in (0,0), (1,0) and (-1,2) are destroyed.
+
+id: T_GEO_07
+title: M_05 Jump over a chain of units
+source: M_05 ability
+map: M1
+given: (0,-1): M_05 > fd. (0,0): B_01. (0,1): F_09 (a Flare unit). (0,2): fd:B_02.
+when: Command M_05: Jump, choose direction side 4
+then: passes (0,0) and (0,1) (Flares count); lands on top of (0,2).
+      (0,2): M_05 > fd:B_02. (0,-1) is Dark.
+      If (0,2) had held a unit instead, the next sector (0,3) is off the map: Jump not
+      possible in that direction.
+
+id: T_GEO_08
+title: M_04 ranged Attack along a row
+source: Core Rules 4.2 example; M_04 Passive
+map: M1
+given: (0,-1): M_04[D1] (Strength 2). (0,0): B_01. (0,1): fd. (0,2): B_03.
+when: Command M_04: Attack, target B_03 in (0,2)
+then: B_03 takes one hit of 2: B_03[D2], Strength 1. B_01 in (0,0) unchanged.
+      M_04 destroyed (to Discard).
+
+################################################################################
+=== SECTION: STRENGTH AND TOKENS ===
+
+id: T_TOK_01
+title: Damage removes Shields first
+source: Core Rules 3.3 example
+map: M1
+given: (0,0): B_02[S1] (Strength 3).
+when: deal one hit of 2 to B_02 (any effect)
+then: B_02[D1], Strength 1. Shield supply +1.
+
+id: T_TOK_02
+title: Boosting a damaged unit removes Damage
+source: Core Rules 3.3
+map: M1
+given: (0,0): B_02[D1]. Shield supply 10.
+when: Boost B_02
+then: B_02 has no tokens, Strength 2. Shield supply still 10.
+
+id: T_TOK_03
+title: Boost with no Shield left damages the Flagship
+source: Core Rules 6.2
+map: M1
+given: Shield supply 0. (0,0): B_01. (0,1): F_09.
+when: Boost B_01 (any effect); then an effect that Boosts all units
+then: first Boost: no token placed, Flagship takes 1 damage.
+      "Boost all": every non-Flare, non-Wreck unit costs the Flagship 1 damage;
+      F_09 is skipped and causes no Flagship damage.
+
+id: T_TOK_04
+title: Bio-shield Destroyed effect hits the same type
+source: Core Rules 6.3 example
+map: M1
+given: (0,0): G_05[BS1] (Strength 2). (0,1): G_08. (1,0): B_01.
+when: deal one hit of 1 to G_05
+then: Bio-shield removed, G_05 Strength 1. After that effect finishes: deal 1 damage to
+      an adjacent Gyro -> G_08 (the only one; B_01 is not eligible). G_08 becomes a Wreck
+      [WR][AL] in (0,1).
+
+id: T_TOK_05
+title: Barrier cancels a Mecha Attack; the Mecha still dies
+source: Core Rules 6.4 example
+map: M1
+given: (0,0): M_04 (Strength 3). (0,1): S_12[BAR].
+when: Command M_04: Attack S_12
+then: hit cancelled, Barrier removed, S_12 has no tokens. M_04 destroyed.
+
+id: T_TOK_06
+title: Fuse order - Tick first kills the Mortar
+source: Core Rules 6.6 example; 9.3 step 1
+map: M1
+given: Overload ending. (0,0): G_05[TICK][MORTAR] > fd. (0,1): B_02 > fd.
+when: Overload End step 1, choose: Tick first
+then: G_05 becomes a Wreck [WR][AL]; Mortar returned to Supply without firing; B_02 unchanged.
+      Step 5: back in the Command phase, Resolve Alerts -> gain 2 Red energy, G_05 to Discard.
+
+id: T_TOK_07
+title: Fuse order - Mortar first
+source: Core Rules 6.6 example
+map: M1
+given: same as T_TOK_06
+when: Overload End step 1, choose: Mortar first (target B_02), then Tick
+then: B_02[D1]. Then G_05 becomes a Wreck [WR][AL].
+
+################################################################################
+=== SECTION: UNITS ===
+
+id: T_UNIT_01
+title: Sleepers trigger when a Move covers the last Dark sector
+source: Core Rules 4.4 example
+map: M1
+given: (1,1): M_01 (nothing beneath). (0,2): fd (the only Dark sector). (-1,0): P_12 > fd.
+when: Command M_01: Move to (0,2)
+then: (1,1) is Cleared. (0,2): M_01 > fd. No Dark sectors -> P_12 gets [AL].
+      Legal actions now: Resolve Alerts, Overhaul only.
+
+id: T_UNIT_02
+title: An uncovered Sleeper is alerted at once
+source: Core Rules 4.4
+map: M1
+given: no Dark sectors on the Field. (0,0): B_01 > P_12 (face up) > fd.
+when: destroy B_01 (any effect)
+then: P_12 is uncovered and gets [AL] immediately.
+
+id: T_UNIT_03
+title: An uncovered Flare gives no energy and starts no Overload
+source: Core Rules 3.4, 4.6
+map: M1
+given: (0,0): B_01 > F_09 (face up) > fd. One ready light Module.
+when: destroy B_01 (any effect)
+then: F_09 uncovered: no energy placed, no Overload. At the next Overload, F_09 gets [AL];
+      at that Overload's End it goes to the Discard.
+
+id: T_UNIT_04
+title: Uncovered Sentinel - no Barrier, no Alert mid-Overload
+source: Core Rules 4.5, 9.2
+map: M1
+given: Overload under way. (0,0): B_01 > S_01 (face up) > fd. No other Alerts.
+when: destroy B_01 (red Module)
+then: S_01 uncovered: no Barrier, no Alert. You may end the Overload now.
+
+id: T_UNIT_05
+title: Sentinel revealed mid-Overload - Barrier yes, Alert no
+source: Core Rules 4.5, 9.2; F_04
+map: M1
+given: Overload under way. (0,0): F_04 [AL]. (0,1): fd:S_01.
+when: resolve F_04, choose: reveal (0,1), skip the 2 damage
+then: S_01 gets [BAR], no [AL]. You may end the Overload.
+
+id: T_UNIT_06
+title: Beta destroys an Alpha; the Alpha still counts
+source: Core Rules 4.7 example; O_01, O_02
+map: M3
+given: Overload just started. (0,0): O_02 [AL]. (0,1): O_01[S1] (Strength 4).
+       (1,0): B_01. Objective: Eliminate O_01 (for this test).
+when: resolve O_02's Alert
+then: O_01 destroyed: Shield returned, [WR][AL] placed. O_02 gains 5 Shields (4 + 1).
+      Then resolve O_01's Alert: Boost one adjacent non-Mecha unit (mandatory, E2): any adjacent
+      non-Mecha unit, e.g. O_02 or B_01. O_01 goes to the Trophy pile and counts toward the objective.
+rule: a destroyed unit's values are its values just before it was destroyed (Core Rules 3.3).
+note: RESOLVED 2026-11-03 - O_02 text updated in Campaign1.txt.
+
+id: T_UNIT_07
+title: A Wreck's Boost with no legal target does nothing
+source: Core Rules 4.8 example; 6.2
+map: M1
+given: (0,2): O_01 (nothing beneath). (0,1): F_09. (1,1): G_05 Wreck [WR][AL]. (-1,2): M_01.
+when: destroy O_01, then resolve its Alert
+then: no legal target (Flare and Wreck can't be chosen; M_01 is a Mecha). No Shield placed,
+      no Flagship damage (6.2 does not apply: nothing was Boosted). O_01 to Trophy pile.
+
+################################################################################
+=== SECTION: FLAGSHIP ===
+
+id: T_SHIP_01
+title: Crippled during an Overload, rescued by an Anomaly
+source: Core Rules 5.2 example; 9.3
+map: M1
+given: Flagship V1 Integrity Bay1 1, Bay2 1, Bay3 0. Overload just started.
+       (0,0): S_12 [AL] > fd. (0,1): B_01 > fd. (1,-1), (1,1), (-1,0), (-1,2): cleared.
+       Anomaly card 14 in hand. One empty Overhaul slot.
+when: resolve S_12 (choose B_01); end the Overload; at step 3 choose Anomaly 14, reward "remove 3 damage"
+then: B_01 destroyed, Flagship takes 2 -> Crippled. Overload continues normally.
+      Anomaly 14 goes to the bottom of the Anomaly deck; Integrity restored by 3 (split as
+      chosen). First Command phase check: not Crippled -> no forced Overhaul; slot unused.
+
+id: T_SHIP_02
+title: Crippled with no Overhaul slot = loss
+source: Core Rules 5.2, 8.1
+map: M1
+given: Flagship Crippled. No empty Overhaul slot. Command phase.
+when: before the next action
+then: game lost. Score the completed missions (10.3).
+
+################################################################################
+=== SECTION: SETUP ===
+
+id: T_SET_01
+title: Dealing the mission deck
+source: Core Rules 7.2 step 5 example
+map: M3
+given: O_02 face up on (0,-1), (1,2), (-1,3). Mission deck 84 tiles.
+when: Mission Preparation step 5, choose extra tiles for (0,0), (1,0), (0,1)
+then: the 3 Beta sectors hold only the Beta. (0,0), (1,0), (0,1) hold 10 face-down tiles;
+      the other 6 sectors hold 9. Total 84.
+
+id: T_SET_02
+title: Copy limits on Threat columns
+source: Core Rules 10.1 example; 6.7
+map: M3
+given: all 4 S_12 are in the mission deck (left alive in Mission 1). Supply has 0 S_12.
+when: Mission 3 Preparation, choose Threat columns A-D
+then: each S_12 entry adds nothing; other tiles in the columns are added. 4 columns marked;
+      they score 4 points if the mission is completed.
+
+################################################################################
+=== SECTION: MODULES ===
+
+id: T_MOD_01
+title: Accumulator Beam paid from its own energy
+source: Core Rules 8.6 example; Module 6
+map: M1
+given: Accumulator Beam ready with 4 Yellow on it. Reserve Yellow 6. (0,0): G_04 (Level 4).
+when: run Accumulator Beam on G_04, pay its cost with 1 Yellow from the Module
+then: X = 4: one hit of 4, G_04 becomes a Wreck. 3 Yellow return to the Supply.
+      Reserve Yellow still 6. Module exhausted.
+
+id: T_MOD_02
+title: Flare revealed mid-effect - Overload waits
+source: Core Rules 9.1 example; Module 51
+map: M1
+given: Satellite Ion Scan ready, Tactical Scan ready. (0,0): fd:B_01. (0,1): fd:F_09.
+       (0,2): fd:B_02.
+when: run Satellite Ion Scan; reveal (0,0), (0,1), (0,2); stop.
+      On F_09: choose to place its Yellow on Tactical Scan.
+then: 1 Yellow on Tactical Scan as soon as F_09 is revealed. Revealing continues.
+      Last revealed = B_02 (Bot) -> destroyed. Scan exhausted. Then the Overload starts:
+      F_09 gets [AL].
+rule: the Module being run is not ready while it resolves, so F_09's energy cannot be placed
+      on Satellite Ion Scan (Core Rules 8.6).
+note: RESOLVED 2026-11-03.
+
+id: T_MOD_03
+title: Flare energy with no ready Module
+source: Core Rules 5.3, 4.6
+map: M1
+given: every Module exhausted. (0,0): fd:F_09.
+when: Reveal (0,0)
+then: the Yellow energy stays in the Supply. The Overload still starts.
+
+id: T_MOD_04
+title: Upgraded Bay offers a choice of abilities
+source: Core Rules 10.2 example; V2_P1
+map: M1
+given: Company V2 with V2_P1 filled. (0,0): B_02. (0,1): B_03.
+when: Use Bay 1
+then: offered choices: "1 damage to a Level 3 unit" or "1 damage to a Level 2 unit".
+      Either way Bay 1 loses 1 Integrity.
+
+################################################################################
+=== SECTION: OVERLOADS AND TIMING ===
+
+id: T_OVL_01
+title: Kill a Sentinel before it fires
+source: Core Rules 9.2 example
+map: M1
+given: Overload just started. (0,0): S_01 [AL] (no Barrier). (0,1): F_04 [AL].
+       (1,0): fd:B_02. Charged Beam ready, Reserve Red 4.
+when: run Charged Beam on S_01 (2 damage); resolve F_04: reveal (1,0), deal 2 damage to B_02
+then: S_01 destroyed, its Alert never resolves, Flagship undamaged. B_02 destroyed.
+      No Alerts remain: the Overload may end.
+note: RESOLVED 2026-11-03 - Core Rules 9.2 example now says S_01 lost its Barrier to an
+      earlier hit.
+
+id: T_OVL_02
+title: Overloads never stack
+source: Core Rules 9.1; P_05
+map: M1
+given: Overload under way. (0,0): P_05 [AL]. (0,1): S_01. Flagship has 2 damage.
+when: resolve P_05
+then: "Start an Overload" does nothing. A Sentinel is on the Field -> Flagship repaired by 1.
+
+id: T_OVL_03
+title: Alerts first in the Command phase
+source: Core Rules 6.5, 8.1
+map: M1
+given: Command phase. (0,0): G_05 Wreck [WR][AL]. A Dark sector exists. A ready light Module.
+when: list legal actions
+then: only Resolve Alerts and Overhaul (if an empty slot exists). Reveal, Run a Module,
+      Command, Bay, Drain and Order are illegal.
+
+id: T_OVL_04
+title: Objective met mid-Overload - the Overload still finishes
+source: Core Rules 8.2, 9.3
+map: M1
+given: Objective Eliminate 6 O_01; Trophy pile has 5 O_01. Overload under way.
+       (0,0): O_01[D2] (Strength 1). (1,0): S_01 [AL]. (0,1): G_05[TICK].
+when: destroy O_01 (red Module); resolve O_01's Alert; resolve S_01; end the Overload
+then: Trophy has 6 O_01, but play continues: S_01 still resolves (Flagship -1), all Overload
+      End steps run (the Tick makes G_05 a Wreck [AL]). Before the next Command action, the
+      objective is met: Mission End. G_05's Alert is cleared without resolving (no energy).
+
+id: T_OVL_05
+title: Most abundant Level - tie broken by the player
+source: Core Rules 11.1 example; P_04
+map: M1
+given: Command phase, no Dark sectors. Units on the Field: P_04 [AL] (Level 1), M_01, M_01,
+       B_02, B_02, B_02, plus nothing else (every other sector Cleared).
+when: resolve P_04, choose: Level 2
+then: each B_02 takes 1 damage (B_02[D1]). M_01s and P_04 unchanged. P_04 to Discard.
+rule: P_04 counts itself while it resolves (Core Rules 11.1 example).
+note: RESOLVED 2026-11-03 - example now uses Level 2 Bots and names P_04 as a Level 1 unit.
+
+################################################################################
+=== SECTION: HEAT MODULE ===
+
+id: T_HEAT_01
+title: Meltdown when you cannot pay
+source: Expansion1 H7
+map: M1
+given: Heat module in play, Heat 0. Overload End step 4 done. Bots on the Field:
+       (0,0): B_01. (0,1): B_02[S1]. Every other sector cleared.
+when: Meltdown
+then: B_01 destroyed; B_02 loses its Shield. N = 2. Heat becomes 2. Flagship takes 3.
+
+id: T_HEAT_02
+title: Meltdown with no Bots
+source: Expansion1 H7
+map: M1
+given: Heat module in play, Heat 0. Every sector cleared except (0,0): S_01 > fd.
+when: Meltdown
+then: N = 0. Heat stays 0. Flagship takes 1.
+
+id: T_HEAT_03
+title: Paying 1 Heat avoids Meltdown
+source: Expansion1 H7
+map: M1
+given: Heat module in play, Heat 4. Unlisted sectors as default (Bots).
+when: Meltdown, choose: pay
+then: Heat 3. No Bot damaged, no Flagship damage.
+
+=== END OF FILE ===
