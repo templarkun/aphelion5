@@ -45,8 +45,10 @@ then: Charged Beam holds 1 Yellow, 1 Red, 1 Blue. Once the Reveal has finished, 
       starts. Alerted: F_01 (just revealed), F_04 (a Flare already on the Field), S_01
       (Sentinel), O_03 (Gamma, "At Overload:" on the Campaign board). Not alerted: M_01,
       O_01 (Alpha has no At Overload trigger), G_05, every B_03.
-      Overload actions: resolve one of the four Alerts, Concede. End the Overload is not
-      offered (Alerts remain).
+      Overload actions: resolve one of the four Alerts; Issue an Order (the Campaign's
+      [Overload] Orders, 1 Command token each); Concede. Charged Beam cannot be run (no Red
+      in the Reserve, 1 Red on it for a cost of 4). End the Overload is not offered (Alerts
+      remain).
 
 id: T4_STA_02
 title: The Overload starts after the current effect; waiting Alerts carry into it
@@ -194,8 +196,9 @@ given: Overload under way. (0,0): S_01[AL] > fd. (0,1): B_02 > fd. Charged Beam 
        Reserve Red 4.
 when: list Overload actions; resolve S_01 (Flagship damage to Bay 1); list Overload actions;
       run Charged Beam on B_02; end the Overload
-then: first menu: resolve S_01, Run a Module, Concede; no End the Overload. After S_01:
-      Flagship 5/6/6; End the Overload, Run a Module and Concede are offered. Charged Beam
+then: first menu: resolve S_01, Run a Module, Issue an Order (the Campaign's [Overload]
+      Orders), Concede; no End the Overload. After S_01: Flagship 5/6/6; Run a Module,
+      Issue an Order, End the Overload and Concede are offered. Charged Beam
       destroys B_02 ((0,1) Dark). Then Overload End runs.
 
 ################################################################################
@@ -299,7 +302,8 @@ given: Overload under way. Company V2, Flagship 0/0/0/0/1. (0,0): S_01[AL] > fd.
        (0,1): S_01[AL] > fd. One empty Overhaul slot.
 when: resolve S_01 in (0,0); resolve S_01 in (0,1); end the Overload
 then: the first S_01 takes the last Integrity: Crippled (0/0/0/0/0). The second S_01's
-      damage is ignored. The Overload goes on; Use a Bay is never offered (Bay 5 is at 0).
+      damage is ignored. The Overload goes on; Use a Bay is no longer offered (Bay 5 is at
+      0). The Campaign's [Overload] Orders still are.
       Overload End runs in full. Before the first Command phase action: Crippled, so the
       only actions are Overhaul and Concede.
       Rescued by an Anomaly instead: T_SHIP_01 (batch 1).

@@ -2,3 +2,4 @@
 import "./units.js";
 import "./bays.js";
 import "./orders.js";
+import "./modules.js";

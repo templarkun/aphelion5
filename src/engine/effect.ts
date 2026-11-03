@@ -179,3 +179,17 @@ export function answer(data: GameData, e: EngineState, a: Answer): StepResult {
   // An illegal answer leaves the engine where it was.
   return r.status === "illegal" ? { ...r, engine: e } : r;
 }
+
+/**
+ * A rules gap the designer has not answered yet (docs/open-questions.md).
+ * The program does not guess: the case stops with this error, naming the question.
+ */
+export class OpenQuestion extends Error {
+  constructor(
+    readonly question: string,
+    detail: string,
+  ) {
+    super(`open question ${question}: ${detail}`);
+    this.name = "OpenQuestion";
+  }
+}

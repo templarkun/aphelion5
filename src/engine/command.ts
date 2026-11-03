@@ -209,6 +209,13 @@ export function lose(c: Ctx, reason: string, rule: string): void {
   log(c, `you lose: ${reason}`, rule);
 }
 
+/** Concede (10.3): you may concede at any time; it counts as a loss. */
+export function concede(c: Ctx): void {
+  c.state.outcome = { result: "conceded", reason: "you conceded" };
+  c.state.phase = "gameEnd";
+  log(c, "you concede: the game ends as a loss", "10.3");
+}
+
 /** Mission won (8.2): leftover Alert tokens are simply cleared; Mission End follows (stage 7). */
 function missionWon(c: Ctx): void {
   for (const u of alertedUnits(c)) tile(c.state, u).tokens.alert = false;
@@ -217,7 +224,7 @@ function missionWon(c: Ctx): void {
 }
 
 /** Units with an "At Overload:" trigger (4.2, 9.1). */
-function hasAtOverload(c: Ctx, id: TileId): boolean {
+export function hasAtOverload(c: Ctx, id: TileId): boolean {
   const d = unitDef(c, id);
   if (d.type === "Omega") {
     const camp = c.data.campaigns.find((x) => x.prefix === c.state.campaign)!;
@@ -248,7 +255,7 @@ export function startOverload(c: Ctx): void {
 
 export type ActionId = "resolveAlerts" | "commandMecha" | "reveal" | "runModule" | "useBay" | "drainGyro" | "drainBioShield" | "issueOrder" | "overhaul";
 
-const ACTION_LABEL: Record<ActionId | "concede", string> = {
+export const ACTION_LABEL: Record<ActionId | "concede", string> = {
   resolveAlerts: "Resolve Alerts",
   commandMecha: "Command a Mecha",
   reveal: "Reveal",
@@ -261,8 +268,9 @@ const ACTION_LABEL: Record<ActionId | "concede", string> = {
   concede: "Concede",
 };
 
-export function mechaUnits(c: Ctx): TileId[] {
-  return units(c.state).filter((u) => unitType(c, u) === "Mecha" && commandOptions(c, u, "command").length > 0);
+/** Mecha you can Command now: in the Command phase, or (mode "overload") with an [Overload] ability (8.4, 9.2). */
+export function mechaUnits(c: Ctx, mode: "command" | "overload" = "command"): TileId[] {
+  return units(c.state).filter((u) => unitType(c, u) === "Mecha" && !isWreck(c, u) && commandOptions(c, u, mode).length > 0);
 }
 
 /** Every Command phase action you can start now (8.1), in rulebook order. */
@@ -283,7 +291,7 @@ export function legalActions(c: Ctx): ActionId[] {
   return out;
 }
 
-function* chooseOne<T>(c: RunCtx, prompt: string, rule: string, items: T[], label: (x: T) => Option): Effect<T> {
+export function* chooseOne<T>(c: RunCtx, prompt: string, rule: string, items: T[], label: (x: T) => Option): Effect<T> {
   if (items.length === 1) return items[0]!;
   const opts = items.map(label);
   const a = yield* ask(c, { kind: "option", prompt, rule, options: opts });
@@ -369,9 +377,7 @@ export function* commandStep(c: RunCtx): Effect {
   const options: Option[] = [...legal, "concede" as const].map((id) => ({ id, label: ACTION_LABEL[id] }));
   const a = yield* ask(c, { kind: "option", prompt: isCrippled(c) ? "Your Flagship is Crippled: you must Overhaul." : "Choose an action.", rule: "8.1", options });
   if (a.value === "concede") {
-    c.state.outcome = { result: "conceded", reason: "you conceded" };
-    c.state.phase = "gameEnd";
-    log(c, "you concede: the game ends as a loss", "10.3");
+    concede(c);
     return;
   }
   yield* asEffect(c, doAction(c, a.value as ActionId));

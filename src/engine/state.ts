@@ -90,6 +90,8 @@ export interface GameState {
     /** Upgrades fully filled. */
     filled: string[];
     overhaulUsed: number;
+    /** Upgrade points written on the Upgrade track, spent at Mission End (10.2). */
+    upgradePoints: number;
     /** Ally Company id, once chosen (7.3). */
     ally?: string;
   };

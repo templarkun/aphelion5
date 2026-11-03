@@ -57,7 +57,7 @@ export function newMissionState(data: GameData, o: NewStateOptions): GameState {
     },
     player: { company: companyId, reserve: zero(), modules: [], anomalies: [], commandTokens: 0, heat: 0 },
     flagship: company.bays.map((b) => b.integrity),
-    sheet: { filled: [], overhaulUsed: 0 },
+    sheet: { filled: [], overhaulUsed: 0, upgradePoints: 0 },
     decks: { modules: [], anomalies: [] },
     overloadPending: false,
     seen: [],
@@ -158,6 +158,10 @@ export interface ScenarioSetup {
   overhaulUsed?: number;
   /** Upgrades fully filled ("V2_P3 filled"). */
   filled: string[];
+  /** Anomaly cards in hand ("Anomaly cards 14 and 01 in hand"). */
+  anomalies?: string[];
+  /** The Anomaly deck, top first ("Anomaly deck: 05, 01"). */
+  anomalyDeck?: string[];
 }
 
 const COORD = String.raw`\(\s*-?\d+\s*,\s*-?\d+\s*\)`;
@@ -196,6 +200,10 @@ export function parseGiven(given: string): ScenarioSetup {
   if (/Both Overhaul slots used/i.test(text0)) setup.overhaulUsed = 2;
   else if (/Overhaul slot used|No empty Overhaul slot/i.test(text0)) setup.overhaulUsed = 1;
   for (const m of text0.matchAll(/\b([A-Z]\d+(?:_[A-Z0-9]+)+) filled/g)) setup.filled.push(m[1]!);
+  const an = /Anomaly cards? ((?:\d{2}(?:,? and |, )?)+) in hand/.exec(text0);
+  if (an) setup.anomalies = [...an[1]!.matchAll(/\d{2}/g)].map((x) => x[0]);
+  const ad = /Anomaly deck: ((?:\d{2}(?:, )?)+)/.exec(text0);
+  if (ad) setup.anomalyDeck = [...ad[1]!.matchAll(/\d{2}/g)].map((x) => x[0]);
   // Then drop parenthetical remarks that are not coordinates: "(Strength 3)", "(no Alert)".
   const text = flat
     .replace(new RegExp(String.raw`\((?!\s*-?\d+\s*,\s*-?\d+\s*\))[^()]*\)`, "g"), "")
@@ -227,6 +235,8 @@ export function mergeSetups(base: ScenarioSetup, extra: ScenarioSetup, extraText
   if (extra.commandTokens !== undefined) out.commandTokens = extra.commandTokens;
   if (extra.overhaulUsed !== undefined) out.overhaulUsed = extra.overhaulUsed;
   out.filled = [...base.filled, ...extra.filled];
+  if (extra.anomalies !== undefined) out.anomalies = extra.anomalies;
+  if (extra.anomalyDeck !== undefined) out.anomalyDeck = extra.anomalyDeck;
   return out;
 }
 
@@ -273,5 +283,7 @@ export function scenarioState(data: GameData, mapName: string, given: string, se
   s.supply.command -= s.player.commandTokens;
   s.sheet.overhaulUsed = setup.overhaulUsed ?? 0;
   s.sheet.filled = [...setup.filled];
+  if (setup.anomalies) s.player.anomalies = [...setup.anomalies];
+  if (setup.anomalyDeck) s.decks.anomalies = [...setup.anomalyDeck];
   return s;
 }
