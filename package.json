@@ -8,7 +8,8 @@
     "build:data": "tsx scripts/build-data.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "npm run typecheck && npm run test"
+    "check": "npm run typecheck && npm run test",
+    "play": "tsx scripts/play.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

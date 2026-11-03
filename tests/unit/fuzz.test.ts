@@ -7,7 +7,9 @@
 
 import { describe, expect, it } from "vitest";
 import { commandStep } from "../../src/engine/command.js";
-import { runEffect } from "../../src/engine/effect.js";
+import { type Effect, OpenQuestion, type RunCtx, runEffect } from "../../src/engine/effect.js";
+import { fixedBoard } from "../../src/engine/fixedBoard.js";
+import { overloadEnd, overloadStep } from "../../src/engine/overload.js";
 import { NotBuiltYet } from "../../src/effects/registry.js";
 import { checkInvariants } from "../../src/engine/invariants.js";
 import type { Answer, Question } from "../../src/engine/questions.js";
@@ -45,20 +47,35 @@ export function randomAnswer(r: RngState, q: Question): Answer {
   }
 }
 
-/** Play random Command phase steps; returns how the run ended. */
-function randomRun(start: GameState, seed: number, maxSteps: number): string {
+/** The root effect that plays each phase (as the session driver does). */
+const ROOT: Partial<Record<GameState["phase"], (c: RunCtx) => Effect>> = {
+  command: (c) => commandStep(c),
+  overload: (c) => overloadStep(c),
+  overloadEnd: (c) => overloadEnd(c),
+};
+
+export interface RunStats {
+  overloads: number;
+  overloadEnds: number;
+}
+
+/** Play random steps through the Command phase, Overloads and Overload End; returns how the run ended. */
+export function randomRun(start: GameState, seed: number, maxSteps: number, stats: RunStats = { overloads: 0, overloadEnds: 0 }): string {
   const r = newRng(seed);
   let s = start;
   for (let n = 0; n < maxSteps; n++) {
-    if (s.phase !== "command") return `phase ${s.phase}`;
+    const root = ROOT[s.phase];
+    if (!root) return `phase ${s.phase}`;
+    const before = s.phase;
     const answers: Answer[] = [];
     for (let guard = 0; ; guard++) {
-      if (guard > 200) throw new Error("a single action asked over 200 questions");
+      if (guard > 300) throw new Error("a single step asked over 300 questions");
       let res;
       try {
-        res = runEffect(data(), s, (c) => commandStep(c), answers);
+        res = runEffect(data(), s, root, answers);
       } catch (e) {
         if (e instanceof NotBuiltYet) return "not built yet";
+        if (e instanceof OpenQuestion) return "open question";
         throw e;
       }
       if (res.status === "illegal") throw new Error(`a random legal answer was refused: ${res.reason}`);
@@ -70,36 +87,61 @@ function randomRun(start: GameState, seed: number, maxSteps: number): string {
       }
       // Concede rarely, so runs get somewhere.
       let a = randomAnswer(r, res.question);
-      if (a.kind === "option" && a.value === "concede" && nextInt(r, 20) > 0) a = randomAnswer(r, res.question);
+      for (let k = 0; k < 20 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, res.question);
       answers.push(a);
     }
+    if (before !== "overload" && s.phase === "overload") stats.overloads++;
+    if (before === "overloadEnd") stats.overloadEnds++;
   }
   return "steps done";
 }
 
-/** Contents for unknown face-down tiles: units of every type. */
-const POOL = ["B_01", "B_02", "B_03", "M_01", "M_02", "G_01", "G_05", "G_08", "G_10", "S_01", "S_12", "F_01", "F_02", "F_09", "P_01", "P_12", "O_01"];
+/**
+ * Contents for unknown face-down tiles: units of every type, mostly built
+ * ones, so runs get through Overloads; a few unbuilt ones keep NotBuiltYet honest.
+ */
+const POOL = ["B_01", "B_02", "B_03", "M_01", "M_01", "G_01", "G_05", "G_08", "S_01", "S_12", "F_01", "F_04", "F_13", "P_05", "O_01", "O_03", "F_09", "P_12"];
 
-describe("random play-throughs of the Command phase", () => {
+describe("random play-throughs of the Command phase and Overloads", () => {
   it("never crash, refuse a legal answer, or break an invariant", () => {
-    const boards = allScenarios().filter((sc) => sc.map && sc.given !== undefined && !/same as|Overload/.test(sc.given));
+    const boards = allScenarios().filter((sc) => sc.map && sc.given !== undefined && !/same as/.test(sc.given));
+    const stats: RunStats = { overloads: 0, overloadEnds: 0 };
     const endings = new Map<string, number>();
     let runs = 0;
     for (const sc of boards) {
       for (let seed = 1; seed <= 4; seed++) {
-        const s = withModules(scenarioState(data(), sc.map!, sc.given!, seed), [[1, true], [2, true]], [3, 4, 5, 6]);
+        const s = withModules(scenarioState(data(), sc.map!, sc.given!, seed), [[1, true], [26, true]], [2, 3]);
         // Face-down tiles "of no stated contents" get real contents, so random Reveals work.
         const fill = newRng(seed);
         for (const t of Object.values(s.tiles)) if (t.unitId === null) t.unitId = POOL[nextInt(fill, POOL.length)]!;
         s.player.reserve = { Yellow: 5, Red: 5, Blue: 5 };
         s.supply.energy = { Yellow: 5, Red: 5, Blue: 5 };
-        const end = randomRun(s, seed * 7919 + runs, 30);
+        const end = randomRun(s, seed * 7919 + runs, 30, stats);
         endings.set(end, (endings.get(end) ?? 0) + 1);
         runs++;
       }
     }
     expect(runs).toBeGreaterThan(200);
     // Some runs must get through all their steps or reach a real ending.
-    expect((endings.get("steps done") ?? 0) + (endings.get("phase overload") ?? 0) + (endings.get("phase gameEnd") ?? 0)).toBeGreaterThan(20);
+    expect((endings.get("steps done") ?? 0) + (endings.get("phase missionEnd") ?? 0) + (endings.get("phase gameEnd") ?? 0)).toBeGreaterThan(20);
+    // The runs must really go through Overloads and Overload End.
+    expect(stats.overloads).toBeGreaterThan(30);
+    expect(stats.overloadEnds).toBeGreaterThan(20);
+  });
+});
+
+describe("random play-throughs of the fixed text-play board", () => {
+  it("play whole missions with only built cards: never blocked, never broken", () => {
+    const endings = new Map<string, number>();
+    const stats: RunStats = { overloads: 0, overloadEnds: 0 };
+    for (let seed = 1; seed <= 25; seed++) {
+      const end = randomRun(fixedBoard(data(), seed), seed * 104729, 600, stats);
+      endings.set(end, (endings.get(end) ?? 0) + 1);
+    }
+    expect(endings.get("not built yet") ?? 0).toBe(0);
+    expect(endings.get("open question") ?? 0).toBe(0);
+    expect(stats.overloadEnds).toBeGreaterThan(25);
+    // Every run reaches a real ending (won, lost or conceded) or plays all its steps.
+    for (const k of endings.keys()) expect(["phase missionEnd", "phase gameEnd", "steps done"]).toContain(k);
   });
 });
