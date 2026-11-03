@@ -60,7 +60,7 @@ function* lookAtTop(c: RunCtx, id: string, n: number): Effect<{ sector: SectorKe
 /**
  * Put the looked-at tiles back in `order` (top first). They are the top of
  * the stack. A face-up tile put on top is uncovered, not revealed (3.4;
- * open question Q2 asks the designer to confirm).
+ * designer confirmed, open question Q2).
  */
 function putBack(c: RunCtx, k: SectorKey, order: TileId[]): void {
   const st = c.state.field[k]!;
