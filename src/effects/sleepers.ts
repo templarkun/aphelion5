@@ -1,7 +1,7 @@
 /** Sleeper effects (P_01-P_27), resolved from their Alert token; the Sleeper is discarded afterwards (4.4). */
 
 import type { UnitType } from "../data/units.js";
-import { type Effect, OpenQuestion, type RunCtx, ask, log } from "../engine/effect.js";
+import { type Effect, type RunCtx, ask, log } from "../engine/effect.js";
 import { canBeChosen, choosableUnits, describe, level, sectorOf, tile, unitType, units } from "../engine/field.js";
 import { moduleDef, runModule } from "../engine/modules.js";
 import { markSeen, putAtBottom, requestOverload } from "../engine/moves.js";
@@ -218,7 +218,7 @@ sleeper("P_24", function* (c) {
     return;
   }
   const most = Math.max(...ss.map((u) => tile(c.state, u).tokens.damage));
-  if (most === 0) throw new OpenQuestion("Q5", "P_24: no Sentinel has a Damage token. Is one of them chosen anyway (all tied at 0), or does nothing happen?");
+  // Designer, Q5: with no Damage on any Sentinel they are all tied at 0, and you choose one of them.
   const s = yield* chooseOneOf(c, "P_24: choose the Sentinel with the most Damage tokens.", "P_24", ss.filter((u) => tile(c.state, u).tokens.damage === most));
   returnTokens(c, s!);
   putAtBottom(c, s!, "P_24");

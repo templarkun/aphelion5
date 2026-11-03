@@ -1,10 +1,10 @@
 ################################################################################
 # APHELION 5 - TEST SCENARIOS, BATCH 5: UNITS (structured, machine-oriented)
-# DRAFT 2026-11-03, written by Claude from "unit_list_structured.txt" (conventions
-# E1-E14 and the section defaults), Campaign1.txt (Omega units),
-# company_vessels_structured.txt (Mecha upgrades) and Core Rules 3.4-3.8, 4, 6, 11.1,
-# at the designer's request. Awaiting the designer's agreement; once agreed, copy it
-# into the Project as "claude/Test scenarios batch 5.txt".
+# Written 2026-11-03 by Claude from "unit_list_structured.txt" (conventions E1-E14 and
+# the section defaults), Campaign1.txt (Omega units), company_vessels_structured.txt
+# (Mecha upgrades) and Core Rules 3.4-3.8, 4, 6, 11.1, at the designer's request.
+# AGREED by the designer 2026-11-03; Q4 and Q5 answered. Copy it into the Project as
+# "claude/Test scenarios batch 5.txt".
 #
 # Every card also has its own card test in the program. This batch holds the cases
 # where a card needs a reading of the rules, so the designer can check them.
@@ -187,9 +187,9 @@ source: P_24
 map: M1
 given: Every other sector cleared. (0,0): P_24[AL] > fd. (0,1): S_01 > fd.
 when: Resolve Alerts: P_24
-then: OPEN (open question Q5). Until answered the program stops with an error naming Q5.
-issue: OPEN - "Choose the Sentinel with the most Damage tokens" when no Sentinel has one: is a
-      Sentinel chosen anyway (all tied at 0), or does nothing happen?
+then: no Sentinel has Damage: all are tied at 0, so S_01 is chosen. Its tokens are removed and
+      it goes to the very bottom of (0,1); (0,1) is Dark.
+note: RESOLVED 2026-11-03 (open question Q5) - a Sentinel is chosen anyway (all tied at 0).
 
 id: T5_SLP_05
 title: P_25 flips token-free neighbours face down, Flares too
@@ -281,10 +281,9 @@ source: Campaign1.txt O_02
 map: M3
 given: Overload under way. (0,0): O_02[AL] > fd.
 when: resolve O_02
-then: OPEN (open question Q4). Until answered the program stops with an error naming Q4.
-issue: OPEN - "Destroy one Alpha unit. Boost self once per point of the destroyed unit's
-      Strength just before it was destroyed, plus one." With no Alpha: does O_02 still Boost
-      itself once ("plus one"), or does nothing happen?
+then: no Alpha to destroy: nothing happens. O_02 is not Boosted.
+note: RESOLVED 2026-11-03 (open question Q4) - O_02 Boosts itself only when it actually
+      destroys an Alpha.
 
 ################################################################################
 === SECTION: MECHA ===

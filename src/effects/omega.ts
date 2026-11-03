@@ -1,6 +1,6 @@
 /** Campaign 1 Omega units (Campaign board, Campaign1.txt): O_01 Alpha, O_02 Beta, O_03 Gamma. */
 
-import { OpenQuestion, ask, log } from "../engine/effect.js";
+import { ask, log } from "../engine/effect.js";
 import { canBeChosen, choosableUnits, sectorOf, tile, unitType } from "../engine/field.js";
 import type { TileId } from "../engine/state.js";
 import { boost, damageFlagship, destroy } from "../engine/tokens.js";
@@ -24,7 +24,8 @@ registerUnit("O_01", {
 registerUnit("O_02", {
   atOverload: function* (c, self) {
     const alphas = choosableUnits(c, (u) => tile(c.state, u).unitId === "O_01");
-    if (alphas.length === 0) throw new OpenQuestion("Q4", "O_02 resolves with no Alpha unit to destroy. Does it still Boost itself once (\"plus one\"), or does nothing happen?");
+    // Designer, Q4: with no Alpha to destroy, nothing happens (it Boosts itself only when it destroys one).
+    if (alphas.length === 0) return log(c, "O_02: no Alpha unit to destroy, nothing happens", "O_02");
     const a = yield* chooseOneOf(c, "O_02: destroy which Alpha unit?", "O_02", alphas);
     const info = destroy(c, a!, "O_02");
     const n = (info?.strength ?? 0) + 1;

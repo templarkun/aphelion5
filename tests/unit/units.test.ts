@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import { commandStep } from "../../src/engine/command.js";
-import { OpenQuestion, runEffect } from "../../src/engine/effect.js";
+import { runEffect } from "../../src/engine/effect.js";
 import { sectorState, tile, unitAt } from "../../src/engine/field.js";
 import { overloadMenu, overloadStep } from "../../src/engine/overload.js";
 import type { Answer } from "../../src/engine/questions.js";
@@ -153,8 +153,10 @@ describe("batch 5 - SLEEPERS", () => {
     expect(inPile(state, "discard", "P_15")).toBe(1);
   });
 
-  it("T5_SLP_04 P_24 with no damaged Sentinel: open question Q5", () => {
-    expect(() => cmd(given("T5_SLP_04"), [A.option("resolveAlerts")])).toThrow(OpenQuestion);
+  it("T5_SLP_04 P_24 with no damaged Sentinel: one is chosen anyway (Q5)", () => {
+    const { state } = cmd(given("T5_SLP_04"), [A.option("resolveAlerts")]);
+    expect(state.tiles[state.field["0,1"]![0]!]!.unitId).toBe("S_01");
+    expect(sectorState(state, "0,1")).toBe("dark");
   });
 
   it("T5_SLP_05 P_25 flips token-free neighbours face down, Flares too", () => {
@@ -231,8 +233,10 @@ describe("batch 5 - OMEGA UNITS", () => {
     expect(state.flagship).toEqual([5, 6, 6]);
   });
 
-  it("T5_OMG_02 O_02 with no Alpha: open question Q4", () => {
-    expect(() => resolve(given("T5_OMG_02"), "0,0")).toThrow(OpenQuestion);
+  it("T5_OMG_02 O_02 with no Alpha: nothing happens (Q4)", () => {
+    const { state } = resolve(given("T5_OMG_02"), "0,0");
+    expect(tokensAt(state, "0,0")).toBe("");
+    expect(state.flagship).toEqual([6, 6, 6]);
   });
 });
 
