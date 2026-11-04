@@ -19,12 +19,13 @@ import {
   concede,
   issueOrder,
   mechaUnits,
+  splitShortcut,
   usableBayAbilities,
   usableOrders,
   useBay,
 } from "./command.js";
 import { type Ctx, describe, isFlare, isWreck, sectorKeys, sectorState, stack, topTileId, unitDef, unitType, units } from "./field.js";
-import { commandMecha } from "./mecha.js";
+import { commandMecha, commandOptions } from "./mecha.js";
 import { canRunModule, moduleDef, runModule } from "./modules.js";
 import type { Option } from "./questions.js";
 import type { TileId } from "./state.js";
@@ -99,7 +100,7 @@ function* doOverloadAction(c: RunCtx, id: string): Effect {
 export function* overloadStep(c: RunCtx): Effect {
   if (c.state.phase !== "overload") throw new Error(`overloadStep in phase ${c.state.phase}`);
   const options = overloadMenu(c);
-  const a = yield* ask(c, { kind: "option", prompt: "Overload: choose an action.", rule: "9.2", options });
+  const a = yield* ask(c, { kind: "option", prompt: "Overload: choose an action.", rule: "9.2", options, shortcuts: overloadShortcuts(c) });
   const id = a.value as string;
   if (id === "concede") {
     concede(c);
@@ -110,7 +111,40 @@ export function* overloadStep(c: RunCtx): Effect {
     log(c, "you end the Overload: Overload End", "9.2");
     return;
   }
-  yield* asEffect(c, doOverloadAction(c, id));
+  yield* asEffect(c, options.some((o) => o.id === id) ? doOverloadAction(c, id) : doOverloadShortcut(c, id));
+}
+
+/** The Overload menu spelled out to its targets (9.2), for the screen; same checks as the menu. */
+export function overloadShortcuts(c: Ctx): Option[] {
+  const out: Option[] = [];
+  const alerts = alertedUnits(c);
+  for (const u of alerts) out.push({ id: `alert:${u}`, label: `Resolve the Alert${isWreck(c, u) ? " (Wreck)" : ""}`, on: { kind: "unit", id: u } });
+  for (const m of c.state.player.modules) if (canRunModule(c, m.id)) out.push({ id: `module:${m.id}`, label: `Run ${moduleDef(c, m.id).name}`, on: { kind: "module", id: m.id } });
+  for (const u of mechaUnits(c, "overload")) for (const o of commandOptions(c, u, "overload")) out.push({ id: `mecha:${u}:${o.id}`, label: o.label, on: { kind: "unit", id: u } });
+  for (const b of usableBayAbilities(c)) out.push({ id: `bay:${b.id}`, label: `Bay ${b.bay}: ${b.text}`, on: { kind: "bay", bay: b.bay, ability: b.id } });
+  for (const o of usableOrders(c)) out.push({ id: `order:${o.id}`, label: o.effect, on: { kind: "order", id: o.id } });
+  if (alerts.length === 0) out.push({ id: "endOverload", label: "End the Overload", on: { kind: "game" } });
+  out.push({ id: "concede", label: ACTION_LABEL.concede, on: { kind: "game" } });
+  return out;
+}
+
+function* doOverloadShortcut(c: RunCtx, id: string): Effect {
+  const [kind, x, choice] = splitShortcut(id);
+  switch (kind) {
+    case "module":
+      yield* runModule(c, Number(x));
+      return;
+    case "mecha":
+      yield* commandMecha(c, x, "overload", choice);
+      return;
+    case "bay":
+      yield* useBay(c, usableBayAbilities(c).find((b) => b.id === x)!);
+      return;
+    case "order":
+      yield* issueOrder(c, usableOrders(c).find((o) => o.id === x)!);
+      return;
+  }
+  throw new Error(`unknown shortcut ${id}`);
 }
 
 // ---------------------------------------------------------------------------

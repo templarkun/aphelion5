@@ -24,7 +24,7 @@ import type { Option } from "./questions.js";
 import { newRng, shuffle } from "./rng.js";
 import { addTile } from "./scenario.js";
 import { newMissionState } from "./scenario.js";
-import { type GameState, type Profile, type TileId, emptyProfile, noTokens } from "./state.js";
+import { type GameState, type Profile, type SectorKey, type TileId, emptyProfile, noTokens } from "./state.js";
 import { gainEnergy, printedIntegrity, returnTokens } from "./tokens.js";
 
 export const camp = (c: Ctx): CampaignDatabase => c.data.campaigns.find((x) => x.prefix === c.state.campaign)!;
@@ -98,18 +98,15 @@ export function filledFrom(co: CompanyDef, marks: Record<string, number>): strin
 
 function* gameSetup(c: RunCtx): Effect {
   const s = c.state;
-  // 1. Choose a Campaign (only Campaign 1 in version 1).
+  // 1. Choose a Campaign. Always asked, even with only one (designer 2026-11-04).
   const camps = c.data.campaigns;
-  let cp = camps[0]!;
-  if (camps.length > 1) {
-    const pick = yield* ask(c, { kind: "option", prompt: "Choose a Campaign.", rule: "7.1", options: camps.map((x) => ({ id: x.prefix, label: x.prefix })) });
-    cp = camps.find((x) => x.prefix === pick.value)!;
-  }
+  const pick = yield* ask(c, { kind: "option", always: true, prompt: "Choose a Campaign.", rule: "7.1", options: camps.map((x) => ({ id: x.prefix, label: campaignName(x.prefix) })) });
+  const cp = camps.find((x) => x.prefix === pick.value)!;
   s.campaign = cp.prefix;
   log(c, `Campaign ${cp.prefix}`, "7.1");
   // 2. Choose a Company.
   const cos = c.data.companies.companies;
-  const a = yield* ask(c, { kind: "option", prompt: "Choose your Company.", rule: "7.1", options: cos.map((x) => ({ id: x.id, label: `${x.id}: ${x.name}` })) });
+  const a = yield* ask(c, { kind: "option", always: true, prompt: "Choose your Company.", rule: "7.1", options: cos.map((x) => ({ id: x.id, label: `${x.id}: ${x.name}` })) });
   const co = c.data.companies.byId.get(a.value as string)!;
   s.player.company = co.id;
   s.flagship = co.bays.map((b) => b.integrity);
@@ -127,9 +124,9 @@ function* gameSetup(c: RunCtx): Effect {
   s.sheet.filled = filledFrom(co, s.sheet.marks);
   s.sheet.overhaulUsed = 0; // erase marked Overhaul slots in both cases
   log(c, `${fresh ? "Fresh" : "Veteran"} campaign with ${co.name}`, "7.1");
-  // Heat module (spec "Scope": an option at game setup).
-  const h = yield* ask(c, { kind: "yesno", prompt: "Play with the Heat module (Expansion1)?", rule: "H1" });
-  s.settings.heatModule = h.value === true;
+  // Expansion modules (spec "Scope": chosen at game setup): select any, all or none.
+  const x = yield* ask(c, { kind: "several", always: true, prompt: "Choose the expansion modules to play with (any, all or none).", rule: "H1", options: EXPANSION_MODULES, min: 0, max: EXPANSION_MODULES.length });
+  s.settings.heatModule = (x.value as string[]).includes("heat");
   // 4. Starting energy.
   for (const col of ENERGY_COLOURS) {
     const n = Math.min(co.startingEnergy[col], s.supply.energy[col]);
@@ -156,6 +153,15 @@ function* gameSetup(c: RunCtx): Effect {
   s.hiddenInfo += 1;
   log(c, `starting Modules: ${keep.map((k) => moduleDef(c, k).name).join(", ")}`, "7.1");
   s.phase = "preparation";
+}
+
+/** Expansion modules offered at game setup. Only the Heat module (Expansion1) so far. */
+export const EXPANSION_MODULES = [{ id: "heat", label: "Heat module (Expansion1)" }];
+
+/** "C1" -> "Campaign 1". */
+export function campaignName(prefix: string): string {
+  const m = /^C(\d+)$/.exec(prefix);
+  return m ? `Campaign ${m[1]}` : prefix;
 }
 
 function push(xs: TileId[], t: TileId | undefined): void {
@@ -231,10 +237,9 @@ function* missionPreparation(c: RunCtx): Effect {
   const targets = sectorKeys(s).filter((k) => !omegaSectors.has(k));
   const each = Math.floor(deck.length / targets.length);
   const extra = deck.length - each * targets.length;
-  let extras: string[] = [];
-  if (extra > 0) {
-    extras = (yield* ask(c, { kind: "sectors", prompt: `${deck.length} tiles for ${targets.length} sectors: ${each} each. Choose the ${extra} sector${extra === 1 ? "" : "s"} that get${extra === 1 ? "s" : ""} one extra tile.`, rule: "7.2", options: targets, min: extra, max: extra })).value as string[];
-  }
+  // Extra tiles (computer version, designer 2026-11-04): (0,0) first, then (0,1),
+  // if they can take tiles; the rest go to sectors chosen at random.
+  const extras = extraTileSectors(s, targets, extra);
   for (const k of targets) {
     const n = each + (extras.includes(k) ? 1 : 0);
     for (let i = 0; i < n; i++) {
@@ -288,6 +293,18 @@ function* missionPreparation(c: RunCtx): Effect {
   log(c, "the Command phase begins", "7.2");
 }
 
+/**
+ * The sectors that get one extra tile when the deal is uneven (7.2 step 5).
+ * The computer version does not ask: (0,0) and (0,1) first, when they are
+ * among the sectors dealt to, then sectors chosen at random from the others.
+ */
+export function extraTileSectors(s: GameState, targets: SectorKey[], extra: number): SectorKey[] {
+  const out = ["0,0", "0,1"].filter((k) => targets.includes(k)).slice(0, extra);
+  if (out.length === extra) return out;
+  const rest = shuffle(s.rng, targets.filter((k) => !out.includes(k)));
+  return [...out, ...rest.slice(0, extra - out.length)];
+}
+
 // ---------------------------------------------------------------------------
 // 7.3 Allied Drop
 // ---------------------------------------------------------------------------
@@ -297,7 +314,7 @@ function* alliedDrop(c: RunCtx, lvl: number): Effect {
   // 1. Choose your Ally at the first Allied Drop of the campaign.
   if (!s.sheet.ally) {
     const others = c.data.companies.companies.filter((x) => x.id !== s.player.company);
-    const a = yield* ask(c, { kind: "option", prompt: "Allied Drop: choose your Ally for this campaign.", rule: "7.3", options: others.map((x) => ({ id: x.id, label: `${x.id}: ${x.name}` })) });
+    const a = yield* ask(c, { kind: "option", always: true, prompt: "Allied Drop: choose your Ally for this campaign.", rule: "7.3", options: others.map((x) => ({ id: x.id, label: `${x.id}: ${x.name}` })) });
     s.sheet.ally = a.value as string;
     log(c, `your Ally: ${a.value}`, "7.3");
   }

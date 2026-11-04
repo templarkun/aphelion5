@@ -140,6 +140,7 @@ export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, n
     }
     const a = yield* ask(c, {
       kind: "split",
+      pick: "modules",
       prompt: `Place ${n} ${col} energy on ready Modules.`,
       rule,
       total: n,

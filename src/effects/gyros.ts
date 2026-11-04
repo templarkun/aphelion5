@@ -140,7 +140,7 @@ function* threeModules(c: RunCtx, rule: string, options: number[], act: (m: numb
     pick = [];
     for (let i = 0; i < 3; i++) {
       const left = options.filter((m) => !pick.includes(m));
-      const a = yield* ask(c, { kind: "option", prompt: `${rule}: choose Module ${i + 1} of 3.`, rule, options: left.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) });
+      const a = yield* ask(c, { kind: "option", pick: "modules", prompt: `${rule}: choose Module ${i + 1} of 3.`, rule, options: left.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) });
       pick.push(Number(a.value));
     }
   }
@@ -358,7 +358,7 @@ gyro(
   function* (c) {
     const ready = readyIds(c);
     if (ready.length === 0) return log(c, "G_35: no ready Module", "G_35");
-    const id = ready.length === 1 ? ready[0]! : Number((yield* ask(c, { kind: "option", prompt: "G_35: exhaust which ready Module?", rule: "G_35", options: ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    const id = ready.length === 1 ? ready[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_35: exhaust which ready Module?", rule: "G_35", options: ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     const m = c.state.player.modules.find((x) => x.id === id)!;
     m.ready = false;
     for (const k of ENERGY_COLOURS) {
@@ -370,7 +370,7 @@ gyro(
   function* (c) {
     const ex = c.state.player.modules.filter((m) => !m.ready).map((m) => m.id);
     if (ex.length === 0) return log(c, "G_35: no exhausted Module", "G_35");
-    const id = ex.length === 1 ? ex[0]! : Number((yield* ask(c, { kind: "option", prompt: "G_35: make which Module ready?", rule: "G_35", options: ex.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    const id = ex.length === 1 ? ex[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_35: make which Module ready?", rule: "G_35", options: ex.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     c.state.player.modules.find((x) => x.id === id)!.ready = true;
     log(c, `G_35: ${moduleDef(c, id).name} is ready`, "G_35");
   },
@@ -404,7 +404,7 @@ const runFree = (max: number) =>
   function* (c: RunCtx) {
     const ids = readyIds(c).filter((m) => couldRunFree(c, m) && printedCost(c, m) <= max);
     if (ids.length === 0) return log(c, "G_38: no Module you could run now", "G_38");
-    const id = ids.length === 1 ? ids[0]! : Number((yield* ask(c, { kind: "option", prompt: "G_38: run which Module without paying its cost?", rule: "G_38", options: ids.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    const id = ids.length === 1 ? ids[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_38: run which Module without paying its cost?", rule: "G_38", options: ids.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     yield* runModule(c, id, true);
   };
 gyro("G_38", runFree(3), runFree(Number.MAX_SAFE_INTEGER));

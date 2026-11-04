@@ -17,7 +17,8 @@ import type { Answer } from "./questions.js";
 import { type AnswerResult, type SessionView, answerSession, startSession } from "./session.js";
 import { type GameState, type Profile, emptyProfile } from "./state.js";
 
-export const SAVE_FORMAT = 1;
+/** 2: setup asks the Campaign and an expansion list (2026-11-04); a format 1 game cannot be replayed. */
+export const SAVE_FORMAT = 2;
 
 export interface GameStart {
   seed: number;
@@ -31,6 +32,8 @@ export interface GameStart {
 
 export interface SaveFile {
   formatVersion: number;
+  /** Set when reading: something in the file could not be kept (shown to the player). */
+  note?: string;
   /** The profile now (updated at Game End). */
   profile: Profile;
   /** The game in progress, if any (one at a time in version 1). */
@@ -97,7 +100,8 @@ export function readSave(text: string): SaveFile {
   if (typeof f.formatVersion !== "number") throw new Error("not an Aphelion 5 save file");
   if (f.formatVersion > SAVE_FORMAT) throw new Error(`save format ${f.formatVersion} is newer than this program (${SAVE_FORMAT})`);
   const out: SaveFile = { formatVersion: SAVE_FORMAT, profile: f.profile ?? emptyProfile(), settings: f.settings ?? { autoAnswer: true } };
-  if (f.game) out.game = f.game;
+  if (f.game && f.formatVersion < 2) out.note = "The game in progress was saved by an older version of the program and cannot be continued. Your Company sheets and high scores are kept.";
+  else if (f.game) out.game = f.game;
   return out;
 }
 

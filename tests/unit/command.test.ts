@@ -401,3 +401,37 @@ describe("batch 3 - GAME END (10.3)", () => {
     expect(state.phase).toBe("gameEnd");
   });
 });
+
+describe("the screen's shortcuts (one click = the menu entry and its choices)", () => {
+  it("every action of T3_ACT_01 has its shortcuts, on the right things", () => {
+    const s = withModules(given("T3_ACT_01"), [[1, true]]);
+    const q = pending(s).question;
+    const sc = q.kind === "option" ? q.shortcuts ?? [] : [];
+    const kinds = new Set(sc.map((o) => o.id.split(":")[0]));
+    expect([...kinds]).toEqual(["mecha", "reveal", "module", "bay", "gyro", "bio", "order", "overhaul", "concede"]);
+    for (const o of sc) expect(o.on).toBeDefined();
+  });
+
+  it("a shortcut gives the same result as the menu path", () => {
+    const s = withModules(given("T3_ACT_01"), [[1, true]]);
+    const q = pending(s).question;
+    const sc = q.kind === "option" ? q.shortcuts ?? [] : [];
+    const mech = sc.find((o) => o.id.startsWith("mecha:") && o.id.endsWith(":scrap"))!;
+    const u = mech.id.split(":")[1]!;
+    const which = pending(s, [A.option("commandMecha")]).question.prompt.startsWith("Command which") ? [A.option(u)] : [];
+    const viaMenu = step(structuredClone(s), [A.option("commandMecha"), ...which, A.option("scrap"), A.split({ Yellow: 1, Red: 0, Blue: 0 })]).state;
+    const viaShortcut = step(structuredClone(s), [A.option(mech.id), A.split({ Yellow: 1, Red: 0, Blue: 0 })]).state;
+    expect(viaShortcut.player.reserve).toEqual(viaMenu.player.reserve);
+    expect(viaShortcut.field).toEqual(viaMenu.field);
+    const reveal = sc.find((o) => o.id.startsWith("reveal:"))!;
+    const k = reveal.id.slice("reveal:".length);
+    const r0 = runEffect(data(), structuredClone(s), (c) => commandStep(c), [A.option("reveal")]);
+    const many = r0.status === "question" && r0.question.kind === "sectors";
+    const a = runEffect(data(), structuredClone(s), (c) => commandStep(c), [A.option(reveal.id)]);
+    const b = runEffect(data(), structuredClone(s), (c) => commandStep(c), [A.option("reveal"), ...(many ? [A.sectors(k)] : [])]);
+    expect(a.status).toBe(b.status);
+    if (a.status === "illegal" || b.status === "illegal") throw new Error("illegal");
+    expect(JSON.stringify(a.state.field)).toBe(JSON.stringify(b.state.field));
+    expect(a.state.log.at(-1)).toEqual(b.state.log.at(-1));
+  });
+});

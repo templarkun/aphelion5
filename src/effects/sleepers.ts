@@ -184,7 +184,7 @@ sleeper("P_19", function* (c) {
   }
   const low = Math.min(...ids.map((m) => printedCost(c, m)));
   const lowest = ids.filter((m) => printedCost(c, m) === low);
-  const id = lowest.length === 1 ? lowest[0]! : Number((yield* ask(c, { kind: "option", prompt: "P_19: choose the lowest-cost Module to run free.", rule: "P_19", options: lowest.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+  const id = lowest.length === 1 ? lowest[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "P_19: choose the lowest-cost Module to run free.", rule: "P_19", options: lowest.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
   yield* runModule(c, id, true);
 });
 

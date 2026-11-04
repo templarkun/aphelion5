@@ -244,7 +244,7 @@ export function* placeEnergySplit(c: RunCtx, n: number, rule: string): Effect {
     return;
   }
   for (let i = 0; i < n; i++) {
-    const id = ready.length === 1 ? ready[0]! : Number((yield* ask(c, { kind: "option", prompt: `${rule}: place energy ${i + 1} of ${n} on which Module?`, rule, options: ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    const id = ready.length === 1 ? ready[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: `${rule}: place energy ${i + 1} of ${n} on which Module?`, rule, options: ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     if (!(yield* placeOneEnergy(c, id, rule))) return;
   }
 }
@@ -271,7 +271,7 @@ export function* removeEnergyAny(c: RunCtx, n: number, rule: string): Effect {
       log(c, `${rule}: no energy left on your Modules`, rule);
       return;
     }
-    const id = mods.length === 1 ? mods[0]! : Number((yield* ask(c, { kind: "option", prompt: `${rule}: remove energy ${i + 1} of ${n} from which Module?`, rule, options: mods.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    const id = mods.length === 1 ? mods[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: `${rule}: remove energy ${i + 1} of ${n} from which Module?`, rule, options: mods.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     yield* removeOneEnergy(c, id, rule);
   }
 }

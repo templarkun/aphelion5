@@ -75,6 +75,7 @@ export function* damageFlagship(c: RunCtx, n: number, rule = "5.2"): Effect {
   const total = Math.min(n, f.reduce((a, b) => a + b, 0));
   const a = yield* ask(c, {
     kind: "split",
+    pick: "bays",
     prompt: `Your Flagship takes ${total} damage. Assign it to Bays.`,
     rule,
     total,
@@ -105,6 +106,7 @@ export function* repairFlagship(c: RunCtx, n: number, rule = "5.2"): Effect {
   }
   const a = yield* ask(c, {
     kind: "split",
+    pick: "bays",
     prompt: `Remove ${total} damage from your Flagship. Choose Bays.`,
     rule,
     total,
@@ -133,6 +135,7 @@ export function* gainEnergy(c: RunCtx, n: number, colour?: EnergyColour, rule = 
   if (total === 0) return;
   const a = yield* ask(c, {
     kind: "split",
+    pick: "reserve",
     prompt: `Gain ${total} energy. Choose colours.`,
     rule,
     total,
@@ -160,6 +163,7 @@ export function* loseEnergy(c: RunCtx, n: number, colour?: EnergyColour, rule = 
   if (total === 0) return;
   const a = yield* ask(c, {
     kind: "split",
+    pick: "reserve",
     prompt: `Lose ${total} energy. Choose colours.`,
     rule,
     total,

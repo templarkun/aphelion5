@@ -1,7 +1,7 @@
 /** Stage 7: tests/batch7.txt (DRAFT, awaiting the designer) and batch 1 T_HEAT_01. */
 
 import { describe, expect, it } from "vitest";
-import { canMark, company, newGame, nextMissions, score } from "../../src/engine/campaign.js";
+import { canMark, company, extraTileSectors, newGame, nextMissions, score } from "../../src/engine/campaign.js";
 import { commandStep, legalActions } from "../../src/engine/command.js";
 import { startRoot, replay } from "../../src/engine/effect.js";
 import { sectorKeys } from "../../src/engine/field.js";
@@ -67,7 +67,8 @@ function go(state: GameState, steps: Step[], stopAt: Phase[] = ["command"]): Ses
 }
 
 const fresh = (profile: Profile = emptyProfile(), seed = 7) => newGame(data(), { seed, date: "2026-11-04", profile });
-const setupV1 = (heat = false): Step[] => [A.option("V1"), heat ? A.yes() : A.no()];
+// Campaign (always asked), Company, expansion modules (none, or the Heat module).
+const setupV1 = (heat = false): Step[] => [A.option("C1"), A.option("V1"), heat ? several("heat") : several()];
 const onField = (s: GameState) => sectorKeys(s).reduce((n, k) => n + s.field[k]!.length, 0);
 const first = (q: Question): Answer => plain(q);
 const several = (...ids: string[]): Answer => ({ kind: "several", value: ids });
@@ -89,11 +90,11 @@ describe("batch 7 - GAME SETUP (7.1)", () => {
 
   it("T7_SET_02 Veteran keeps the marks; Fresh erases only this Company's marks", () => {
     const profile: Profile = { sheets: { V1: { V1_M02_U1: 2, V1_M04_U2: 3 }, V2: { V2_P1: 2 } }, highScores: {} };
-    const vet = go(fresh(profile), [A.option("V1"), A.option("veteran"), A.no()], ["preparation"]).state;
+    const vet = go(fresh(profile), [A.option("C1"), A.option("V1"), A.option("veteran"), several()], ["preparation"]).state;
     expect(vet.sheet.filled).toEqual(["V1_M02_U1"]);
     expect(vet.sheet.marks.V1_M04_U2).toBe(3);
     expect(vet.sheet.overhaulUsed).toBe(0);
-    const fr = go(fresh(profile), [A.option("V1"), A.option("fresh"), A.no()], ["preparation"]).state;
+    const fr = go(fresh(profile), [A.option("C1"), A.option("V1"), A.option("fresh"), several()], ["preparation"]).state;
     expect(fr.sheet.filled).toEqual([]);
     expect(fr.profile.sheets.V1).toEqual({});
     expect(fr.profile.sheets.V2).toEqual({ V2_P1: 2 });
@@ -117,11 +118,39 @@ describe("batch 7 - MISSION PREPARATION (7.2) and ALLIED DROP (7.3)", () => {
     expect(allied.map((t) => s.tiles[t]!.unitId)).toEqual(["M_05"]);
   });
 
-  it("T7_PRP_02 uneven dealing: you choose the sectors that get an extra tile", () => {
-    let asked: Question | undefined;
-    const v = go(fresh(), [...setupV1(), several("A"), (q) => ((asked = q), plain(q))]);
-    expect(asked).toMatchObject({ kind: "sectors", min: 6, max: 6 });
-    expect(onField(v.state)).toBe(86 + 1);
+  it("T7_PRP_02 uneven dealing: extra tiles go to (0,0), (0,1), then to random sectors", () => {
+    const prompts: string[] = [];
+    const v = go(fresh(), [...setupV1(), several("A"), (q) => (prompts.push(q.prompt), plain(q))]);
+    expect(prompts.join(" ")).not.toMatch(/extra tile/);
+    const s = v.state;
+    const dealt = (k: string) => s.field[k]!.filter((t) => !s.tiles[t]!.faceUp).length;
+    expect(dealt("0,0")).toBe(9);
+    expect(dealt("0,1")).toBe(9);
+    expect(sectorKeys(s).filter((k) => dealt(k) === 9)).toHaveLength(6);
+    expect(sectorKeys(s).filter((k) => dealt(k) === 8)).toHaveLength(sectorKeys(s).length - 6);
+    expect(onField(s)).toBe(86 + 1);
+  });
+
+  it("T_SET_01 (batch 1, changed) M3: 84 tiles on 9 sectors: (0,0), (0,1) and one random sector get a 10th", () => {
+    const s = fresh();
+    const targets = ["0,0", "1,0", "0,1", "1,1", "-1,1", "-1,2", "1,-1", "-1,0", "0,2"];
+    const ex = extraTileSectors(s, targets, 84 - 9 * 9);
+    expect(ex.slice(0, 2)).toEqual(["0,0", "0,1"]);
+    expect(ex).toHaveLength(3);
+    expect(new Set(ex).size).toBe(3);
+    expect(targets).toContain(ex[2]);
+    // An Omega on (0,0): it gets no dealt tiles, so (0,1) comes first.
+    expect(extraTileSectors(fresh(), targets.filter((k) => k !== "0,0"), 2)[0]).toBe("0,1");
+  });
+
+  it("T7_PRP_02b the random extra sectors follow the seed", () => {
+    const pick = (seed: number) => {
+      const s = go(fresh(emptyProfile(), seed), [...setupV1(), several("A")]).state;
+      return sectorKeys(s).filter((k) => s.field[k]!.filter((t) => !s.tiles[t]!.faceUp).length === 9);
+    };
+    expect(pick(7)).toEqual(pick(7));
+    const seen = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((n) => pick(n).join(" ")));
+    expect(seen.size).toBeGreaterThan(1);
   });
 
   it("T7_PRP_03 a tile with no copy left adds nothing", () => {
@@ -163,7 +192,7 @@ describe("batch 7 - MISSION PREPARATION (7.2) and ALLIED DROP (7.3)", () => {
     s.run.completed = [{ mission: "C1_M1", threat: ["A"] }, { mission: "C1_M2X", threat: ["A"] }];
     s.sheet.ally = "V2";
     let offered: string[] = [];
-    const v = go(s, [several("A"), first, first, (q) => ((offered = q.kind === "option" ? q.options.map((o) => o.id) : []), A.option("M_07"))]);
+    const v = go(s, [several("A"), first, (q) => ((offered = q.kind === "option" ? q.options.map((o) => o.id) : []), A.option("M_07"))]);
     expect(offered).toEqual(["M_05", "M_03", "M_07"]);
     const m07 = sectorKeys(v.state).map((k) => v.state.field[k]!.at(-1)!).find((t) => v.state.tiles[t]!.unitId === "M_07" && v.state.tiles[t]!.faceUp)!;
     expect(mechaAbilities(ctx(v.state), m07).map((a) => a.id)).toContain("V2_M1A");

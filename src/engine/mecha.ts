@@ -173,14 +173,15 @@ export function commandOptions(c: Ctx, id: TileId, mode: CommandMode): { id: str
 }
 
 /** Command one Mecha (4.2): choose Attack, Scrap or an ability, and resolve it. */
-export function* commandMecha(c: RunCtx, id: TileId, mode: CommandMode): Effect {
+export function* commandMecha(c: RunCtx, id: TileId, mode: CommandMode, chosen?: string): Effect {
   const opts = commandOptions(c, id, mode);
   if (opts.length === 0) {
     log(c, `${describe(c, id)} has nothing it can do`, "4.2");
     return;
   }
-  const a = yield* ask(c, { kind: "option", prompt: `Command ${describe(c, id)}:`, rule: "4.2", options: opts });
-  const choice = a.value as string;
+  // `chosen`: already picked on the screen (a shortcut of the action menu).
+  if (chosen !== undefined && !opts.some((o) => o.id === chosen)) throw new Error(`${id} cannot ${chosen}`);
+  const choice = chosen ?? ((yield* ask(c, { kind: "option", prompt: `Command ${describe(c, id)}:`, rule: "4.2", options: opts })).value as string);
   const str = strength(c, id)!;
   if (choice === "attack") {
     const pre = preAttackSteps(c, id);

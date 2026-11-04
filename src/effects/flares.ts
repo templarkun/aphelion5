@@ -173,7 +173,7 @@ flare("F_18", function* (c) {
     log(c, "F_18: no ready red Module", "F_18");
     return;
   }
-  const a = yield* ask(c, { kind: "option", prompt: "F_18: you may run one ready red Module without paying its cost.", rule: "F_18", options: [...ids.map((m) => ({ id: String(m), label: moduleDef(c, m).name })), { id: "none", label: "Run none" }] });
+  const a = yield* ask(c, { kind: "option", pick: "modules", prompt: "F_18: you may run one ready red Module without paying its cost.", rule: "F_18", options: [...ids.map((m) => ({ id: String(m), label: moduleDef(c, m).name })), { id: "none", label: "Run none" }] });
   if (a.value !== "none") yield* runModule(c, Number(a.value), true);
 });
 
@@ -242,7 +242,7 @@ flare("F_25", function* (c) {
   }
   const low = Math.min(...ready.map((m) => printedCost(c, m)));
   const ids = ready.filter((m) => printedCost(c, m) === low);
-  const id = ids.length === 1 ? ids[0]! : Number((yield* ask(c, { kind: "option", prompt: "F_25: choose a ready Module with the lowest cost.", rule: "F_25", options: ids.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+  const id = ids.length === 1 ? ids[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "F_25: choose a ready Module with the lowest cost.", rule: "F_25", options: ids.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
   yield* placeEnergyOn(c, id, 3, "F_25", moduleDef(c, id).colour);
 });
 
@@ -261,7 +261,7 @@ flare("F_27", function* (c) {
     log(c, `F_27: total ${n}${ready.length === 0 ? ", no ready Module" : ""}`, "F_27");
     return;
   }
-  const a = yield* ask(c, { kind: "option", prompt: `F_27: you may place ${n} energy on one ready Module.`, rule: "F_27", options: [...ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })), { id: "none", label: "Place none" }] });
+  const a = yield* ask(c, { kind: "option", pick: "modules", prompt: `F_27: you may place ${n} energy on one ready Module.`, rule: "F_27", options: [...ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })), { id: "none", label: "Place none" }] });
   if (a.value !== "none") yield* placeEnergyOn(c, Number(a.value), n, "F_27");
 });
 

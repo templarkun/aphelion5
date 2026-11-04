@@ -11,6 +11,8 @@
   --yellow: #b88a00;
   --red: #c0392b;
   --blue: #2563eb;
+  --can: #e09a00;
+  --can-soft: rgb(224 154 0 / 0.14);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -27,6 +29,8 @@
     --yellow: #e8c24a;
     --red: #ff7b6e;
     --blue: #7aa7ff;
+    --can: #ffc23d;
+    --can-soft: rgb(255 194 61 / 0.14);
     color-scheme: dark;
   }
 }
@@ -40,6 +44,11 @@
   --accent-ink: #0b1512;
   --warn: #ff7b6e;
   --overload: #3a1f1f;
+  --yellow: #e8c24a;
+  --red: #ff7b6e;
+  --blue: #7aa7ff;
+  --can: #ffc23d;
+  --can-soft: rgb(255 194 61 / 0.14);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -118,3 +127,24 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 .textbox-back { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); display: grid; place-items: center; padding: 16px; z-index: 20; }
 .textbox { width: min(640px, 100%); margin: 0; }
 .textbox textarea { box-sizing: border-box; width: 100%; height: 12em; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+
+/* Things you can click now: the action menu lives on them (highlight = clickable). */
+.can { outline: 3px solid var(--can); outline-offset: 1px; background: var(--can-soft); cursor: pointer; }
+.can:hover { outline-width: 4px; }
+.dim { opacity: 0.4; }
+button.module { display: block; width: 100%; text-align: left; font: inherit; color: inherit; min-height: 0; }
+.bay { padding: 4px 6px; border-radius: 8px; }
+.bay .ability { display: block; width: 100%; text-align: left; margin: 4px 0; font-size: 12px; min-height: 0; padding: 4px 6px; }
+div.ability { padding: 0 6px; }
+.order { display: block; width: 100%; text-align: left; font-size: 12px; margin: 4px 0; min-height: 0; padding: 4px 6px; }
+.order:disabled { opacity: 0.5; }
+.overhaul { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.split-count { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; color: var(--can); }
+button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
+.popup-back { position: fixed; inset: 0; z-index: 15; }
+.popup { position: fixed; min-width: 200px; max-width: min(360px, calc(100vw - 16px)); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 28px rgb(0 0 0 / 0.25); padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+.popup-title { font-weight: 700; padding: 4px 6px; }
+.popup button { text-align: left; }
+.popup-note { margin: 4px 2px 2px; padding: 6px 8px; border-radius: 6px; background: var(--overload); color: var(--warn); font-size: 12px; font-weight: 600; }
+.reserve { display: flex; flex-wrap: wrap; gap: 6px; }
+.reserve > span { padding: 2px 6px; border-radius: 6px; }

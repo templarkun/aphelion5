@@ -274,9 +274,12 @@ title: Dealing the mission deck
 source: Core Rules 7.2 step 5 example
 map: M3
 given: O_02 face up on (0,-1), (1,2), (-1,3). Mission deck 84 tiles.
-when: Mission Preparation step 5, choose extra tiles for (0,0), (1,0), (0,1)
-then: the 3 Beta sectors hold only the Beta. (0,0), (1,0), (0,1) hold 10 face-down tiles;
-      the other 6 sectors hold 9. Total 84.
+when: Mission Preparation step 5 (the program places the 3 extra tiles)
+then: the 3 Beta sectors hold only the Beta. (0,0), (0,1) and one other sector chosen at
+      random hold 10 face-down tiles; the other 6 sectors hold 9. Total 84.
+note: CHANGED 2026-11-04 at the designer's request - the computer version does not ask:
+      extra tiles go to (0,0), then (0,1) (when they can take tiles), then to random sectors.
+      Was: "choose extra tiles for (0,0), (1,0), (0,1)".
 
 id: T_SET_02
 title: Copy limits on Threat columns

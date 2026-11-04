@@ -8,10 +8,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { objectiveText } from "../cli/objective.js";
 import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
+import { alertedUnits } from "../engine/alerts.js";
 import { bayAbilities, orders } from "../engine/command.js";
 import { describe, sectorKeys, tile, unitDef } from "../engine/field.js";
 import { moduleCost, moduleDef } from "../engine/modules.js";
-import type { Answer, Question } from "../engine/questions.js";
+import type { Answer, Option, Question } from "../engine/questions.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
@@ -54,6 +55,7 @@ export function App() {
 
   useEffect(() => {
     void loadSave().then((f) => {
+      if (f?.note) setError(f.note);
       if (f) {
         setProfile(f.profile);
         setAutoAnswer(f.settings.autoAnswer);
@@ -83,7 +85,7 @@ export function App() {
   }
 
   function loadFile(f: SaveFile): void {
-    setError(undefined);
+    setError(f.note);
     setProfile(f.profile);
     if (f.game) {
       update(replayGame(data, f.game.start, f.game.answers));
@@ -303,33 +305,174 @@ interface GameProps {
   onLeave: () => void;
 }
 
+/** State that starts afresh with every new question (no flash of the old value, no lost clicks). */
+function usePerQuestion<T>(q: Question | undefined, initial: T): [T, (x: T | ((old: T) => T)) => void] {
+  const [box, setBox] = useState<{ q: Question | undefined; v: T }>({ q, v: initial });
+  const value = box.q === q ? box.v : initial;
+  const set = (x: T | ((old: T) => T)) =>
+    setBox((b) => {
+      const old = b.q === q ? b.v : initial;
+      return { q, v: typeof x === "function" ? (x as (o: T) => T)(old) : x };
+    });
+  return [value, set];
+}
+
+/** The things on the screen a shortcut of the action menu can belong to. */
+interface Actors {
+  units: Map<string, Option[]>;
+  sectors: Map<string, Option[]>;
+  modules: Map<number, Option>;
+  bays: Map<string, Option>;
+  orders: Map<string, Option>;
+  game: Map<string, Option>;
+}
+
+function actorsOf(q: Question | undefined): Actors | undefined {
+  if (q?.kind !== "option" || !q.shortcuts) return undefined;
+  const a: Actors = { units: new Map(), sectors: new Map(), modules: new Map(), bays: new Map(), orders: new Map(), game: new Map() };
+  for (const o of q.shortcuts) {
+    const t = o.on;
+    if (!t) continue;
+    if (t.kind === "unit") a.units.set(t.id, [...(a.units.get(t.id) ?? []), o]);
+    else if (t.kind === "sector") a.sectors.set(t.key, [...(a.sectors.get(t.key) ?? []), o]);
+    else if (t.kind === "module") a.modules.set(t.id, o);
+    else if (t.kind === "bay") a.bays.set(t.ability, o);
+    else if (t.kind === "order") a.orders.set(t.id, o);
+    else a.game.set(o.id, o);
+  }
+  return a;
+}
+
+interface Popup {
+  x: number;
+  y: number;
+  title: string;
+  options: Option[];
+  note?: string | undefined;
+}
+
+interface Confirm {
+  title: string;
+  text: string;
+  yes: string;
+  danger?: boolean;
+  onYes: () => void;
+}
+
 function GameScreen(p: GameProps) {
   const { data, game } = p;
   const v = game.view;
   const s = v.state;
   const c = { data, state: s };
   const dark = useDark();
-  const [selected, setSelected] = useState<string[]>([]);
+  const q = v.status === "question" ? v.question : undefined;
+  // Selections, a pop-up or a split in progress belong to the question they were made for.
+  const [selected, setSelected] = usePerQuestion<string[]>(q, []);
   const [hover, setHover] = useState<string | undefined>();
   const [showLog, setShowLog] = useState(false);
-  const q = v.status === "question" ? v.question : undefined;
-  useEffect(() => setSelected([]), [q]);
+  const [popup, setPopup] = usePerQuestion<Popup | undefined>(q, undefined);
+  const [confirm, setConfirm] = usePerQuestion<Confirm | undefined>(q, undefined);
+  // A split answered by clicking things (energy on Modules, damage to Bays or units).
+  const [split, setSplit] = usePerQuestion<Record<string, number>>(q, {});
+  const pointer = useRef({ x: 0, y: 0 });
 
-  const choosable = {
-    sectors: q?.kind === "sectors" ? q.options : [],
-    units: q?.kind === "units" ? q.options : [],
+  const actors = actorsOf(q);
+  const answer = (id: string) => {
+    setPopup(undefined);
+    setConfirm(undefined);
+    p.onAnswer({ kind: "option", value: id });
   };
+  const inOverload = s.phase === "overload";
+
+  // What the Field offers: action menu targets, or the units / sectors a question asks for.
+  const pickIds = q && (q.kind === "option" || q.kind === "order") && q.pick === "units" ? q.options.map((o) => o.id) : [];
+  const splitOn = q?.kind === "split" ? q.pick : undefined;
+  const choosable = actors
+    ? { sectors: [...actors.sectors.keys()], units: [...actors.units.keys()] }
+    : {
+        sectors: q?.kind === "sectors" ? q.options : [],
+        units: q?.kind === "units" ? q.options : q?.kind === "split" && splitOn === "units" ? q.buckets.map((b) => b.id) : pickIds,
+      };
+  const splitSum = Object.values(split).reduce((a, b) => a + b, 0);
+  const addSplit = (id: string) => {
+    if (q?.kind !== "split") return;
+    const b = q.buckets.find((x) => x.id === id);
+    if (!b) return;
+    const n = split[id] ?? 0;
+    if (n >= b.max || splitSum >= q.total) return;
+    const next = { ...split, [id]: n + 1 };
+    setSplit(next);
+    // The last one placed answers at once (Undo takes it back).
+    if (splitSum + 1 === q.total) p.onAnswer({ kind: "split", value: next });
+  };
+  const subSplit = (id: string) => setSplit((x) => ({ ...x, [id]: Math.max(0, (x[id] ?? 0) - 1) }));
+
+  const openPopup = (title: string, options: Option[], note?: string) => setPopup({ x: pointer.current.x, y: pointer.current.y, title, options, note });
   const pick = (id: string) => {
-    if (!q || (q.kind !== "units" && q.kind !== "sectors")) return;
+    if (actors) {
+      const unitOpts = actors.units.get(id);
+      if (unitOpts) {
+        const alerts = alertedUnits(c);
+        const last = inOverload && alerts.length === 1 && alerts[0] === id;
+        return openPopup(describe(c, id), unitOpts, last ? "This is the last Alert on the Field. After it, you can end the Overload (9.2)." : undefined);
+      }
+      const secOpts = actors.sectors.get(id);
+      if (secOpts) return openPopup(`Dark sector (${id})`, secOpts);
+      return;
+    }
+    if (!q) return;
+    if (q.kind === "split") return addSplit(id);
+    if ((q.kind === "option" || q.kind === "order") && pickIds.includes(id)) return p.onAnswer({ kind: q.kind, value: id } as Answer);
+    if (q.kind !== "units" && q.kind !== "sectors") return;
     if (q.min === 1 && q.max === 1) return p.onAnswer({ kind: q.kind, value: [id] } as Answer);
     setSelected((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : xs.length < q.max ? [...xs, id] : xs));
   };
+
+  // Modules: run one (action menu), choose one (a question about Modules), or place energy on it (a split).
+  const moduleState = (id: number): { can: boolean; onClick?: () => void; count?: number } => {
+    if (actors) {
+      const o = actors.modules.get(id);
+      return o ? { can: true, onClick: () => answer(o.id) } : { can: false };
+    }
+    if (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules" && q.options.some((o) => o.id === String(id))) return { can: true, onClick: () => p.onAnswer({ kind: q.kind, value: String(id) } as Answer) };
+    if (q?.kind === "split" && splitOn === "modules" && q.buckets.some((b) => b.id === String(id))) return { can: true, onClick: () => addSplit(String(id)), count: split[String(id)] ?? 0 };
+    return { can: false };
+  };
+  const modulesWanted = (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules") || splitOn === "modules";
+  const baysWanted = splitOn === "bays";
+
   const co = data.companies.byId.get(s.player.company)!;
   // The Field shows once a mission is chosen (also while it is empty, to choose sectors at Mission Preparation).
   const hasField = s.phase !== "setup" && sectorKeys(s).length > 0 && (s.phase !== "preparation" || s.log.some((e) => /^Mission \d/.test(e.text)));
+  const crippled = s.flagship.every((x) => x === 0);
+
+  const overhaul = actors?.game.get("overhaul");
+  const askOverhaul = () => {
+    if (!overhaul) return;
+    if (crippled) return answer(overhaul.id);
+    const left = s.flagship.reduce((a, b) => a + b, 0);
+    const full = co.bays.reduce((a, b) => a + b.integrity, 0);
+    setConfirm({
+      title: "Overhaul now?",
+      text: `Your Flagship is not Crippled: ${left} of ${full} Integrity left (${co.bays.map((b, i) => `Bay ${i + 1} ${s.flagship[i]}/${b.integrity}`).join(", ")}). Overhaul uses one of your ${co.overhaulSlots - s.sheet.overhaulUsed} empty Overhaul slot${co.overhaulSlots - s.sheet.overhaulUsed === 1 ? "" : "s"} (8.8).`,
+      yes: "Overhaul",
+      onYes: () => answer(overhaul.id),
+    });
+  };
+  const concede = actors?.game.get("concede");
+  const askConcede = () =>
+    concede &&
+    setConfirm({ title: "Concede?", text: "The game ends at once and counts as a loss (10.3).", yes: "Concede", danger: true, onYes: () => answer(concede.id) });
+  const endOverload = actors?.game.get("endOverload");
+  const heatWave = actors?.game.get("heatWave");
 
   return (
-    <div className={`game ${s.phase === "overload" ? "is-overload" : ""}`}>
+    <div
+      className={`game ${inOverload ? "is-overload" : ""}`}
+      onPointerDownCapture={(e) => {
+        pointer.current = { x: e.clientX, y: e.clientY };
+      }}
+    >
       <header className="bar">
         <strong>{s.mission}</strong>
         <span className="phase">{PHASE[s.phase]}</span>
@@ -337,43 +480,83 @@ function GameScreen(p: GameProps) {
         <span>Threat: {s.run.threat.join(", ") || "—"}</span>
         <span>Command tokens {s.player.commandTokens}</span>
         {s.settings.heatModule && <span>Heat {s.player.heat}</span>}
+        {heatWave && (
+          <button className="can" onClick={() => answer(heatWave.id)} title="H5">
+            Heat Wave
+          </button>
+        )}
+        {endOverload && (
+          <button className="primary can" onClick={() => answer(endOverload.id)} title="No Alert tokens remain (9.2)">
+            End the Overload
+          </button>
+        )}
         <span className="spacer" />
         <button onClick={p.onUndo} disabled={!p.canUndo()} title="Take back your last answer (not past new hidden information)">
           Undo
         </button>
         <button onClick={() => setShowLog((x) => !x)}>Log</button>
-        <button onClick={p.onExport} title="Save the game and your Company sheets to a file">
+        <button onClick={p.onExport} title="Save the game and your Company sheets as text or a file">
           Export save
         </button>
         <button onClick={p.onExportLog}>Export log</button>
+        <button className="danger" onClick={askConcede} disabled={!concede} title={concede ? "Concede the game (10.3)" : "You can concede when it is your turn to act"}>
+          Concede
+        </button>
         <button onClick={p.onLeave}>Menu</button>
       </header>
 
       <aside className="left panel">
         <h3>Flagship — {co.name}</h3>
-        {bayAbilities(c).length > 0 &&
-          co.bays.map((b, i) => (
-            <div key={b.id} className={`bay ${s.flagship[i] === 0 ? "out" : ""}`}>
+        {co.bays.map((b, i) => {
+          const bucket = `bay${i + 1}`;
+          const inSplit = baysWanted && q?.kind === "split" && q.buckets.some((x) => x.id === bucket);
+          return (
+            <div key={b.id} className={`bay ${s.flagship[i] === 0 ? "out" : ""} ${inSplit ? "can" : ""} ${baysWanted && !inSplit ? "dim" : ""}`} onClick={inSplit ? () => addSplit(bucket) : undefined}>
               <b>
                 Bay {i + 1}: {s.flagship[i]}/{b.integrity}
               </b>
+              {inSplit && <SplitCount n={split[bucket] ?? 0} onMinus={() => subSplit(bucket)} />}
               {bayAbilities(c)
                 .filter((a) => a.bay === i + 1)
-                .map((a) => (
-                  <div key={a.id} className="small">
-                    {a.text}
-                  </div>
-                ))}
+                .map((a) => {
+                  const o = actors?.bays.get(a.id);
+                  return o ? (
+                    <button key={a.id} className="ability can" onClick={() => answer(o.id)} title="Use this Bay: 1 damage to the Bay, then its ability (8.7)">
+                      {a.text}
+                    </button>
+                  ) : (
+                    <div key={a.id} className="ability small">
+                      {a.text}
+                    </div>
+                  );
+                })}
             </div>
-          ))}
-        {s.flagship.every((x) => x === 0) && <p className="warn">CRIPPLED — you must Overhaul before your next action.</p>}
+          );
+        })}
+        {crippled && <p className="warn">CRIPPLED — you must Overhaul before your next action.</p>}
+        <div className="overhaul">
+          <button className={overhaul ? "can" : ""} disabled={!overhaul} onClick={askOverhaul} title="Repair the Flagship, refill energy, swap a Module (8.8)">
+            Overhaul
+          </button>
+          <span className="small">
+            slots used {s.sheet.overhaulUsed}/{co.overhaulSlots}
+          </span>
+        </div>
         <p className="small">
-          Overhaul slots used {s.sheet.overhaulUsed}/{co.overhaulSlots} · Upgrade points {s.sheet.upgradePoints}
+          Upgrade points {s.sheet.upgradePoints}
           {s.sheet.ally ? ` · Ally ${s.sheet.ally}` : ""}
         </p>
         <h3>Reserve</h3>
-        <p className="energy">
-          <span className="y">Yellow {s.player.reserve.Yellow}</span> <span className="r">Red {s.player.reserve.Red}</span> <span className="b">Blue {s.player.reserve.Blue}</span>
+        <p className="energy reserve">
+          {(["Yellow", "Red", "Blue"] as const).map((col) => {
+            const inSplit = splitOn === "reserve" && q?.kind === "split" && q.buckets.some((b) => b.id === col);
+            return (
+              <span key={col} className={`${col[0]!.toLowerCase()} ${inSplit ? "can" : ""} ${splitOn === "reserve" && !inSplit ? "dim" : ""}`} onClick={inSplit ? () => addSplit(col) : undefined} role={inSplit ? "button" : undefined}>
+                {col} {s.player.reserve[col]}
+                {inSplit && <SplitCount n={split[col] ?? 0} onMinus={() => subSplit(col)} />}
+              </span>
+            );
+          })}
         </p>
         <h3>Anomaly cards</h3>
         {s.player.anomalies.length === 0 && <p className="small">none</p>}
@@ -384,17 +567,20 @@ function GameScreen(p: GameProps) {
         ))}
         <h3>Orders</h3>
         {s.mission &&
-          orders(c).map((o) => (
-            <p key={o.id} className="small">
-              {o.overloadOnly ? "[Overload] " : ""}
-              {o.tokens} token{o.tokens === 1 ? "" : "s"}: {o.effect}
-            </p>
-          ))}
+          orders(c).map((o) => {
+            const sc = actors?.orders.get(o.id);
+            const text = `${o.overloadOnly ? "[Overload] " : ""}${o.tokens} token${o.tokens === 1 ? "" : "s"}: ${o.effect}`;
+            return (
+              <button key={o.id} className={`order ${sc ? "can" : ""}`} disabled={!sc} onClick={sc ? () => answer(sc.id) : undefined} title={sc ? "Issue this Order (5.6)" : o.overloadOnly !== inOverload ? (o.overloadOnly ? "Only during an Overload" : "Not during an Overload") : "Not available now"}>
+                {text}
+              </button>
+            );
+          })}
       </aside>
 
       <section className="center">
         {hasField ? (
-          <FieldView data={data} state={s} choosable={choosable} selected={selected} onPick={pick} onHover={setHover} showHidden={s.settings.developerMode} dark={dark} />
+          <FieldView data={data} state={s} choosable={choosable} selected={[...selected, ...Object.keys(split).filter((k) => (split[k] ?? 0) > 0)]} onPick={pick} onHover={setHover} showHidden={s.settings.developerMode} dark={dark} />
         ) : (
           <div className="empty-field">{PHASE[s.phase]}</div>
         )}
@@ -406,15 +592,19 @@ function GameScreen(p: GameProps) {
         {s.player.modules.map((m) => {
           const d = moduleDef(c, m.id);
           const e = (["Yellow", "Red", "Blue"] as const).filter((k) => m.energy[k] > 0).map((k) => `${m.energy[k]} ${k}`);
+          const st = moduleState(m.id);
+          const dim = modulesWanted && !st.can;
+          const Tag = st.can ? "button" : "div";
           return (
-            <div key={m.id} className={`module ${d.background} ${m.ready ? "" : "exhausted"}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")}>
+            <Tag key={m.id} className={`module ${d.background} ${m.ready ? "" : "exhausted"} ${st.can ? "can" : ""} ${dim ? "dim" : ""}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")} onClick={st.onClick}>
               <b>{d.name}</b>{" "}
               <span className="small">
                 {d.cost === "X" ? "X" : moduleCost(c, m.id)} {d.colour} · {d.background === "red" ? "Overload" : "Command phase"} · {m.ready ? "ready" : "exhausted"}
                 {e.length ? ` · holds ${e.join(", ")}` : ""}
               </span>
               <div className="small">{d.effect}</div>
-            </div>
+              {st.count !== undefined && <SplitCount n={st.count} onMinus={() => subSplit(String(m.id))} />}
+            </Tag>
           );
         })}
         <h3>Trophy pile</h3>
@@ -429,8 +619,19 @@ function GameScreen(p: GameProps) {
 
       <section className="question panel" aria-live="polite">
         {p.notice && <p className="notice">{p.notice}</p>}
-        {q ? <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={p.onAnswer} /> : <GameOver state={s} onLeave={p.onLeave} />}
+        {q ? (
+          actors ? (
+            <ActionPrompt state={s} q={q} actors={actors} />
+          ) : (
+            <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={p.onAnswer} split={split} onResetSplit={() => setSplit({})} />
+          )
+        ) : (
+          <GameOver state={s} onLeave={p.onLeave} />
+        )}
       </section>
+
+      {popup && <PopupMenu popup={popup} onPick={answer} onClose={() => setPopup(undefined)} />}
+      {confirm && <ConfirmBox confirm={confirm} onClose={() => setConfirm(undefined)} />}
 
       {showLog && (
         <section className="log panel">
@@ -447,6 +648,103 @@ function GameScreen(p: GameProps) {
           </ol>
         </section>
       )}
+    </div>
+  );
+}
+
+function SplitCount({ n, onMinus }: { n: number; onMinus: () => void }) {
+  return (
+    <span className="split-count">
+      <b>+{n}</b>
+      {n > 0 && (
+        <button
+          className="mini"
+          aria-label="Take one back"
+          onClick={(e) => {
+            e.stopPropagation();
+            onMinus();
+          }}
+        >
+          −
+        </button>
+      )}
+    </span>
+  );
+}
+
+/** What to do when the action menu is the question: the things themselves are the menu. */
+function ActionPrompt({ state, q, actors }: { state: GameState; q: Question; actors: Actors }) {
+  const alerts = actors.units.size > 0 && [...actors.units.values()].some((os) => os.some((o) => o.id.startsWith("alert:")));
+  const where: string[] = [];
+  if (actors.units.size) where.push("a unit");
+  if (actors.sectors.size) where.push("a Dark sector");
+  if (actors.modules.size) where.push("a Module");
+  if (actors.bays.size) where.push("a Bay");
+  if (actors.orders.size) where.push("an Order");
+  const lead =
+    state.phase === "overload"
+      ? alerts
+        ? "Overload: resolve the Alerts (click an alerted unit), or take another Overload action."
+        : "Overload: no Alerts remain. End the Overload, or take more Overload actions first."
+      : state.flagship.every((x) => x === 0)
+        ? "Your Flagship is Crippled: you must Overhaul."
+        : alerts
+          ? "Alerts first: click an alerted unit to resolve its Alert (or Overhaul)."
+          : "Your action.";
+  return (
+    <div>
+      <p className="prompt">
+        {lead} <span className="rule">rule {q.rule}</span>
+      </p>
+      {where.length > 0 && <p className="small">Click a highlighted thing: {where.join(", ")}.</p>}
+    </div>
+  );
+}
+
+function PopupMenu({ popup, onPick, onClose }: { popup: Popup; onPick: (id: string) => void; onClose: () => void }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ left: popup.x, top: popup.y });
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    setPos({ left: Math.max(8, Math.min(popup.x, window.innerWidth - w - 8)), top: Math.max(8, Math.min(popup.y + 8, window.innerHeight - h - 8)) });
+    el.querySelector("button")?.focus();
+  }, [popup]);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose]);
+  return (
+    <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={box} className="popup" role="menu" aria-label={popup.title} style={pos}>
+        <div className="popup-title">{popup.title}</div>
+        {popup.options.map((o) => (
+          <button key={o.id} role="menuitem" onClick={() => onPick(o.id)}>
+            {o.label}
+          </button>
+        ))}
+        {popup.note && <p className="popup-note">{popup.note}</p>}
+      </div>
+    </div>
+  );
+}
+
+function ConfirmBox({ confirm, onClose }: { confirm: Confirm; onClose: () => void }) {
+  return (
+    <div className="textbox-back" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+      <section className="textbox card" role="dialog" aria-label={confirm.title}>
+        <h2>{confirm.title}</h2>
+        <p>{confirm.text}</p>
+        <div className="row">
+          <button className={confirm.danger ? "danger" : "primary"} onClick={confirm.onYes}>
+            {confirm.yes}
+          </button>
+          <button onClick={onClose}>Cancel</button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -495,15 +793,10 @@ function GameOver({ state, onLeave }: { state: GameState; onLeave: () => void })
 
 // ---------------------------------------------------------------------------
 
-function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selected: string[]; setSelected: (x: string[]) => void; onAnswer: (a: Answer) => void }) {
-  const { q, state, data } = p;
-  const c = { data, state };
-  const [amount, setAmount] = useState(q.kind === "amount" ? q.min : 0);
-  const [split, setSplit] = useState<Record<string, number>>({});
-  useEffect(() => {
-    if (q.kind === "amount") setAmount(q.min);
-    setSplit({});
-  }, [q]);
+function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selected: string[]; setSelected: (x: string[]) => void; onAnswer: (a: Answer) => void; split: Record<string, number>; onResetSplit: () => void }) {
+  const { q, state } = p;
+  const [amount, setAmount] = usePerQuestion(q, q.kind === "amount" ? q.min : 0);
+  const [split, setSplit] = usePerQuestion<Record<string, number>>(q, {});
   const head = (
     <p className="prompt">
       {q.prompt} <span className="rule">rule {q.rule}</span>
@@ -511,12 +804,18 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
   );
   switch (q.kind) {
     case "option":
-    case "order":
+    case "order": {
+      // Options naming things on the screen are answered there; the rest stay buttons here.
+      const onScreen = (id: string) =>
+        q.pick === "modules" ? state.player.modules.some((m) => String(m.id) === id) : q.pick === "units" ? state.tiles[id] !== undefined : false;
+      const rest = q.options.filter((o) => !onScreen(o.id));
+      const there = q.options.length - rest.length;
       return (
         <div>
           {head}
+          {there > 0 && <p className="small">Click {q.pick === "modules" ? "one of the highlighted Modules" : "one of the highlighted units on the Field"}.</p>}
           <div className="choices">
-            {q.options.map((o) => (
+            {rest.map((o) => (
               <button key={o.id} className={o.id === "concede" ? "danger" : ""} onClick={() => p.onAnswer({ kind: q.kind, value: o.id } as Answer)}>
                 {o.label}
               </button>
@@ -524,6 +823,7 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
           </div>
         </div>
       );
+    }
     case "yesno":
       return (
         <div>
@@ -539,24 +839,14 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
     case "units":
     case "sectors": {
       const single = q.min === 1 && q.max === 1;
-      const label = (id: string) => (q.kind === "units" ? describe(c, id) : sectorLine(data, state, id));
-      const toggle = (id: string) => {
-        if (single) return p.onAnswer({ kind: q.kind, value: [id] } as Answer);
-        p.setSelected(p.selected.includes(id) ? p.selected.filter((x) => x !== id) : p.selected.length < q.max ? [...p.selected, id] : p.selected);
-      };
       const ok = p.selected.length >= q.min && p.selected.length <= q.max;
+      const what = q.kind === "units" ? "unit" : "sector";
       return (
         <div>
           {head}
-          <p className="small">{single ? "Click one on the Field or below." : `Choose ${q.min === q.max ? q.min : `${q.min} to ${q.max}`} (on the Field or below), then Confirm.`}</p>
-          <div className="choices">
-            {q.options.map((id) => (
-              <button key={id} className={p.selected.includes(id) ? "on" : ""} onClick={() => toggle(id)}>
-                {label(id)}
-                {q.kind === "units" && tokenText(tile(state, id).tokens) ? ` ${tokenText(tile(state, id).tokens)}` : ""}
-              </button>
-            ))}
-          </div>
+          <p className="small">
+            {single ? `Click a highlighted ${what} on the Field.` : `Click ${q.min === q.max ? q.min : `${q.min} to ${q.max}`} highlighted ${what}s on the Field (click again to unselect), then Confirm.`}
+          </p>
           {!single && (
             <button className="primary" disabled={!ok} onClick={() => p.onAnswer({ kind: q.kind, value: p.selected } as Answer)}>
               Confirm ({p.selected.length})
@@ -601,6 +891,19 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
         </div>
       );
     case "split": {
+      if (q.pick) {
+        const sum = Object.values(p.split).reduce((a, b) => a + b, 0);
+        const things = q.pick === "modules" ? "highlighted Modules" : q.pick === "bays" ? "highlighted Bays" : q.pick === "reserve" ? "highlighted colours in your Reserve" : "highlighted units on the Field";
+        return (
+          <div>
+            {head}
+            <p className="small">
+              Click the {things}: each click adds 1. {sum} of {q.total} placed; the last one confirms.
+            </p>
+            {sum > 0 && <button onClick={p.onResetSplit}>Start again</button>}
+          </div>
+        );
+      }
       const sum = Object.values(split).reduce((a, b) => a + b, 0);
       return (
         <div>

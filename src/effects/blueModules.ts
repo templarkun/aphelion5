@@ -31,7 +31,7 @@ function* chooseModule(c: RunCtx, prompt: string, rule: string, ids: number[]): 
     return undefined;
   }
   if (ids.length === 1) return ids[0];
-  return Number((yield* ask(c, { kind: "option", prompt, rule, options: ids.map((m) => ({ id: String(m), label: name(c, m) })) })).value);
+  return Number((yield* ask(c, { kind: "option", pick: "modules", prompt, rule, options: ids.map((m) => ({ id: String(m), label: name(c, m) })) })).value);
 }
 
 const names = (c: Ctx, ids: TileId[]) => ids.map((t) => tile(c.state, t).unitId).join(", ");

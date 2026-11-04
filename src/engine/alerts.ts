@@ -76,6 +76,7 @@ export function* chooseAlert(c: RunCtx): Effect<TileId | undefined> {
   if (list.length === 1) return list[0]!;
   const a = yield* ask(c, {
     kind: "order",
+    pick: "units",
     prompt: "Which Alert do you resolve next?",
     rule: "8.3",
     options: list.map((u) => ({ id: u, label: describe(c, u) })),

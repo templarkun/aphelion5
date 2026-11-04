@@ -55,6 +55,7 @@ when: point at its sector
 then: the line under the Field shows the sector, the unit's Strength and Level, its tokens,
       what lies beneath and its full card text. The question panel lists every legal answer as
       a button, so a phone needs no hover.
+note: CHANGED 2026-11-04 (designer's interface requests): replaced by batch 9 (DRAFT).
 
 id: T8_SCR_05
 title: An Overload looks different
@@ -63,6 +64,7 @@ given: an Overload starts.
 when: look at the screen
 then: the screen turns red-tinted and the phase reads OVERLOAD; every Alert is listed in the
       question panel in a fixed order, to pick from.
+note: CHANGED 2026-11-04 (designer's interface requests): replaced by batch 9 (DRAFT).
 
 ################################################################################
 === SECTION: ANSWERING ===
@@ -74,6 +76,7 @@ given: "Reveal which Dark sector?"
 when: click an Occupied sector; then click a Dark sector
 then: the Occupied sector is not highlighted and the click does nothing. Legal sectors are
       outlined; clicking one answers at once.
+note: CHANGED 2026-11-04 (designer's interface requests): replaced by batch 9 (DRAFT).
 
 id: T8_ANS_02
 title: Choosing several: select, then Confirm
@@ -82,6 +85,7 @@ given: "Choose the 6 sectors that get one extra tile", or the Threat columns.
 when: select items on the Field or in the list
 then: selected items are marked; Confirm shows the count and is enabled only between the
       minimum and the maximum.
+note: CHANGED 2026-11-04 (designer's interface requests): replaced by batch 9 (DRAFT).
 
 id: T8_ANS_03
 title: Amounts and splits
@@ -89,6 +93,7 @@ source: spec "Player choices"
 given: "Your Flagship takes 2 damage. Assign it to Bays."
 when: use the + and - buttons
 then: each Bay stays between 0 and its limit; Confirm is enabled only when the total is assigned.
+note: CHANGED 2026-11-04 (designer's interface requests): replaced by batch 9 (DRAFT).
 
 id: T8_ANS_04
 title: Every refusal and log line names its rule

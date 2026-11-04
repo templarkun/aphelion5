@@ -271,7 +271,7 @@ mod(14, {
   run: function* (c) {
     const us = choosableUnits(c);
     if (us.length === 0) return log(c, "Splitter Missiles: no unit", M(14));
-    const a = yield* ask(c, { kind: "split", prompt: "Splitter Missiles: divide 3 damage among units.", rule: M(14), total: 3, buckets: us.map((u) => ({ id: u, label: describe(c, u), max: 3 })) });
+    const a = yield* ask(c, { kind: "split", pick: "units", prompt: "Splitter Missiles: divide 3 damage among units.", rule: M(14), total: 3, buckets: us.map((u) => ({ id: u, label: describe(c, u), max: 3 })) });
     for (const [u, n] of Object.entries(a.value as Record<string, number>)) if (n > 0) yield* dealHit(c, u, n, M(14));
   },
 });

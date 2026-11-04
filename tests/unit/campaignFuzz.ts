@@ -32,8 +32,11 @@ export function randomAnswer(r: RngState, q: Question): Answer {
       const n = q.min + nextInt(r, Math.min(q.max, q.options.length) - q.min + 1);
       return { kind: "several", value: shuffle(r, q.options.map((o) => o.id)).slice(0, n) };
     }
-    case "option":
-      return { kind: "option", value: q.options[nextInt(r, q.options.length)]!.id };
+    case "option": {
+      // Action menus: half the time take a shortcut (the screen's one-click answers).
+      const all = q.shortcuts && nextInt(r, 2) === 0 ? q.shortcuts : q.options;
+      return { kind: "option", value: all[nextInt(r, all.length)]!.id };
+    }
     case "order":
       return { kind: "order", value: q.options[nextInt(r, q.options.length)]!.id };
     case "amount":

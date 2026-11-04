@@ -12,11 +12,38 @@ interface Base {
   prompt: string;
   /** Rule section that asks, e.g. "6.3". */
   rule: string;
+  /** Always ask, even when only one answer is legal (choices the designer wants shown, e.g. the Campaign). */
+  always?: boolean;
+  /**
+   * What the option ids (or split buckets) name, so the screen can let the
+   * player click those things: "modules" = ids are Module numbers, "bays" =
+   * "bay1".."bayN", "units" = tile ids, "reserve" = energy colours of your
+   * Reserve. Ids that name nothing stay buttons.
+   */
+  pick?: "modules" | "bays" | "units" | "reserve";
+  /**
+   * Action menus only (8.1, 9.2): every action spelled out to its target in
+   * one answer ("this Mecha: Attack", "Reveal this sector", "run this
+   * Module"). Answering with a shortcut id is the same as the menu entry
+   * followed by the choices it names.
+   */
+  shortcuts?: Option[];
 }
+
+/** A thing on the screen an option belongs to. */
+export type Target =
+  | { kind: "unit"; id: TileId }
+  | { kind: "sector"; key: SectorKey }
+  | { kind: "module"; id: number }
+  | { kind: "bay"; bay: number; ability: string }
+  | { kind: "order"; id: string }
+  /** Buttons of the game itself (Overhaul, Concede, End the Overload, Heat Wave). */
+  | { kind: "game" };
 
 export interface Option {
   id: string;
   label: string;
+  on?: Target;
 }
 
 export type Question =
@@ -60,7 +87,7 @@ export function invalidReason(q: Question, a: Answer): string | undefined {
     }
     case "option":
     case "order":
-      return q.options.some((o) => o.id === a.value) ? undefined : `${String(a.value)} is not a legal choice`;
+      return q.options.some((o) => o.id === a.value) || (q.shortcuts ?? []).some((o) => o.id === a.value) ? undefined : `${String(a.value)} is not a legal choice`;
     case "several": {
       const v = a.value as string[];
       if (new Set(v).size !== v.length) return "the same choice is listed twice";
@@ -129,7 +156,7 @@ export function legalAnswerCount(q: Question): number {
 
 /** The answer when there is exactly one legal answer; otherwise undefined. */
 export function onlyAnswer(q: Question): Answer | undefined {
-  if (legalAnswerCount(q) !== 1) return undefined;
+  if (q.always || legalAnswerCount(q) !== 1) return undefined;
   switch (q.kind) {
     case "units":
     case "sectors": {

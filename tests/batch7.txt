@@ -22,13 +22,17 @@ title: A new game: choose a Company; Fresh is automatic with an unmarked sheet
 source: Core Rules 7.1 steps 1-9; spec "Scope" (Heat module chosen at setup)
 map: M1
 given: new game.
-when: choose V1; no Heat module
-then: no Fresh/Veteran question (the sheet has no marks): Fresh. Reserve Yellow 6, Red 6,
+when: choose Campaign 1; choose V1; select no expansion module
+then: the Campaign is asked even though there is only one. No Fresh/Veteran question (the
+      sheet has no marks): Fresh. Reserve Yellow 6, Red 6,
       Blue 6. Mission deck: 30 Bots + V1's 27 starting Mecha. Energy deck: all 42 Energy
       Gyros, shuffled. 3 Anomaly cards. Starting Modules: the first two of each colour from
       the shuffled Module deck (6 Modules); every other Module is in the Module deck.
       Next: Mission Preparation for Mission 1.
 assumption: the Heat module is chosen once per game, at setup (spec "Scope").
+note: CHANGED 2026-11-04 at the designer's request - the Campaign is always asked; the Heat
+      module is one entry in a list of expansion modules to select (any, all or none), not a
+      yes/no question.
 
 id: T7_SET_02
 title: Veteran keeps the marks; Fresh erases only this Company's marks
@@ -49,7 +53,8 @@ title: Mission 1 preparation: Threat columns, dealing, a Module, an Allied Drop
 source: Core Rules 7.2 steps 2-9, 7.3; Campaign1.txt C1_M1
 map: M1
 given: new game, V1, no Heat module, Mission Preparation.
-when: Threat columns A and C; keep the first Module offered; Ally V2; Allied Mecha M_05
+when: Threat columns A and C; keep the first Module offered; Ally V2 (asked even though V2 is
+      the only other Company); Allied Mecha M_05
 then: Threat Level Assault. Mission deck: 57 + Deployment 25 + 8 = 90 tiles: 9 to each of the
       10 sectors (no extra tile to place). You keep 1 of the top 3 Modules; the other 2 go
       to the bottom of the Module deck in random order. 6 Command tokens; 1 more
@@ -59,13 +64,16 @@ note: CHANGED 2026-11-04 - the draft had you choose the order of the 2 Modules t
       the bottom. The designer decided: no choice, they go to the bottom in random order.
 
 id: T7_PRP_02
-title: Uneven dealing: you choose the sectors that get one extra tile
-source: Core Rules 7.2 step 5 and its example
+title: Uneven dealing: extra tiles go to (0,0), (0,1), then random sectors
+source: Core Rules 7.2 step 5 and its example; designer 2026-11-04 (computer version)
 map: M1
 given: new game, V1, no Heat module, Mission Preparation.
 when: Threat column A only
-then: 57 + 25 + 4 = 86 tiles: 8 to each sector and 6 extra: you choose 6 different sectors,
-      each gets a 9th tile.
+then: 57 + 25 + 4 = 86 tiles: 8 to each sector and 6 extra, with no question: (0,0) and
+      (0,1) get a 9th tile, and 4 other sectors chosen at random (from the game's seed) get a
+      9th tile too.
+note: CHANGED 2026-11-04 at the designer's request. Was: "you choose 6 different sectors".
+      If (0,0) or (0,1) holds an Omega unit (no dealt tiles), it is skipped.
 
 id: T7_PRP_03
 title: A tile with no copy left adds nothing

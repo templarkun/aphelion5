@@ -15,7 +15,7 @@ import { type Ctx, adjacentUnits, canBeChosen, darkSectors, describe, isWreck, s
 import { commandMecha, commandOptions } from "./mecha.js";
 import { canRunModule, moduleDef, runModule } from "./modules.js";
 import { putAtBottom, reveal } from "./moves.js";
-import type { Option } from "./questions.js";
+import type { Option, Target } from "./questions.js";
 import type { TileId } from "./state.js";
 import { boost, isCrippled, printedIntegrity, returnTokens } from "./tokens.js";
 import { heatWave } from "./heat.js";
@@ -157,6 +157,7 @@ export function* overhaul(c: RunCtx): Effect {
     if (mods.length > 1) {
       const a = yield* ask(c, {
         kind: "option",
+        pick: "modules",
         prompt: "Overhaul: put one of your Modules on the bottom of the Module deck.",
         rule: "8.8",
         options: mods.map((m) => ({ id: String(m.id), label: moduleDef(c, m.id).name })),
@@ -382,14 +383,117 @@ export function* commandStep(c: RunCtx): Effect {
     }
   }
   const options: Option[] = [...legal, "concede" as const].map((id) => ({ id, label: ACTION_LABEL[id] }));
-  const a = yield* ask(c, { kind: "option", prompt: isCrippled(c) ? "Your Flagship is Crippled: you must Overhaul." : "Choose an action.", rule: "8.1", options });
+  const a = yield* ask(c, {
+    kind: "option",
+    prompt: isCrippled(c) ? "Your Flagship is Crippled: you must Overhaul." : "Choose an action.",
+    rule: "8.1",
+    options,
+    shortcuts: commandShortcuts(c, legal),
+  });
   if (a.value === "concede") {
     concede(c);
     return;
   }
-  yield* asEffect(c, doAction(c, a.value as ActionId));
+  const id = a.value as string;
+  yield* asEffect(c, (legal as string[]).includes(id) ? doAction(c, id as ActionId) : doShortcut(c, id));
   // An Overload starts once the current effect has finished (9.1).
   if (c.state.overloadPending && c.state.phase === "command") startOverload(c);
+}
+
+const GAME: Target = { kind: "game" };
+
+/**
+ * Every legal action of the menu spelled out to its target (8.1), for the
+ * screen: click a unit, a sector, a Module, a Bay or an Order. Built from the
+ * same checks as the menu, so a shortcut is legal exactly when the menu entry
+ * and the choices it names are.
+ */
+export function commandShortcuts(c: Ctx, legal: ActionId[]): Option[] {
+  const out: Option[] = [];
+  for (const act of legal) {
+    switch (act) {
+      case "resolveAlerts":
+        for (const u of alertedUnits(c)) out.push({ id: `alert:${u}`, label: "Resolve the Alert", on: { kind: "unit", id: u } });
+        break;
+      case "commandMecha":
+        for (const u of mechaUnits(c)) for (const o of commandOptions(c, u, "command")) out.push({ id: `mecha:${u}:${o.id}`, label: o.label, on: { kind: "unit", id: u } });
+        break;
+      case "reveal":
+        for (const k of darkSectors(c.state)) out.push({ id: `reveal:${k}`, label: "Reveal", on: { kind: "sector", key: k } });
+        break;
+      case "runModule":
+        for (const m of c.state.player.modules) if (canRunModule(c, m.id)) out.push({ id: `module:${m.id}`, label: `Run ${moduleDef(c, m.id).name}`, on: { kind: "module", id: m.id } });
+        break;
+      case "useBay":
+        for (const b of usableBayAbilities(c)) out.push({ id: `bay:${b.id}`, label: `Bay ${b.bay}: ${b.text}`, on: { kind: "bay", bay: b.bay, ability: b.id } });
+        break;
+      case "drainGyro":
+        for (const u of drainableGyros(c)) out.push({ id: `gyro:${u}`, label: "Drain", on: { kind: "unit", id: u } });
+        break;
+      case "drainBioShield":
+        for (const u of bioShieldCarriers(c)) out.push({ id: `bio:${u}`, label: "Drain the Bio-shield", on: { kind: "unit", id: u } });
+        break;
+      case "issueOrder":
+        for (const o of usableOrders(c)) out.push({ id: `order:${o.id}`, label: o.effect, on: { kind: "order", id: o.id } });
+        break;
+      case "heatWave":
+        out.push({ id: "heatWave", label: ACTION_LABEL.heatWave, on: GAME });
+        break;
+      case "overhaul":
+        out.push({ id: "overhaul", label: ACTION_LABEL.overhaul, on: GAME });
+        break;
+    }
+  }
+  out.push({ id: "concede", label: ACTION_LABEL.concede, on: GAME });
+  return out;
+}
+
+/** Split "mecha:<tile>:<choice>" (a tile id may itself hold no colon). */
+export function splitShortcut(id: string): [string, string, string] {
+  const i = id.indexOf(":");
+  const kind = id.slice(0, i);
+  const rest = id.slice(i + 1);
+  if (kind !== "mecha") return [kind, rest, ""];
+  const j = rest.indexOf(":");
+  return [kind, rest.slice(0, j), rest.slice(j + 1)];
+}
+
+function* doShortcut(c: RunCtx, id: string): Effect {
+  const [kind, x, choice] = splitShortcut(id);
+  switch (kind) {
+    case "alert": {
+      // Resolve Alerts (8.3), starting with the one chosen; then the rest in your order.
+      let u: TileId | undefined = x;
+      while (u !== undefined) {
+        yield* resolveAlert(c, u);
+        if (c.state.overloadPending) return;
+        u = yield* chooseAlert(c);
+      }
+      return;
+    }
+    case "mecha":
+      yield* commandMecha(c, x, "command", choice);
+      return;
+    case "reveal":
+      yield* reveal(c, x);
+      return;
+    case "module":
+      yield* runModule(c, Number(x));
+      return;
+    case "bay":
+      yield* useBay(c, usableBayAbilities(c).find((b) => b.id === x)!);
+      return;
+    case "gyro":
+      yield* drainGyro(c, x);
+      return;
+    case "bio":
+      yield* drainBioShield(c, x);
+      return;
+    case "order":
+      yield* issueOrder(c, usableOrders(c).find((o) => o.id === x)!);
+      return;
+  }
+  throw new Error(`unknown shortcut ${id}`);
 }
 
 registerRoot("commandStep", (c) => commandStep(c));

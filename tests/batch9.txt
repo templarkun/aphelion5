@@ -1,0 +1,161 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 9: ACTIONS ON THE THINGS THEMSELVES (structured)
+# Written 2026-11-04 by Claude from the designer's interface requests of 2026-11-04
+# (17 points). DRAFT, awaiting the designer. When agreed, copy it into the Project as
+# "claude/Test scenarios batch 9.txt".
+#
+# It replaces batch 8 records T8_SCR_04 (last sentence), T8_SCR_05 (last part), T8_ANS_01,
+# T8_ANS_02 (first example) and T8_ANS_03 (example). Checked in a real browser by
+# scripts/ui-smoke.mjs and by hand; the rules engine checks that every one-click action is
+# legal exactly when the menu entry and its choices are (tests/unit/command.test.ts and the
+# random play-throughs).
+################################################################################
+
+=== FORMAT SPEC ===
+Same layout as batch 8: "given" describes the screen, "when" what the player does, "then"
+what the screen must show. No map.
+
+################################################################################
+=== SECTION: GAME SETUP ===
+
+id: T9_SET_01
+title: Campaign, Company, expansion modules
+source: designer 2026-11-04 (points 1, 2); Core Rules 7.1 steps 1-3
+given: Start on the start screen.
+when: look at the questions in turn
+then: "Choose a Campaign." with "Campaign 1" (asked even though it is the only one); then
+      "Choose your Company."; then Fresh or Veteran if the sheet has marks; then "Choose the
+      expansion modules to play with": a list to select or unselect ("Heat module
+      (Expansion1)"), Confirm with any, all or none selected.
+
+id: T9_SET_02
+title: Extra tiles are placed by the program
+source: designer 2026-11-04 (point 3); Core Rules 7.2 step 5
+given: Mission Preparation; the deal does not divide evenly.
+when: the mission deck is dealt
+then: no question. (0,0) gets the first extra tile and (0,1) the second, if they are dealt to;
+      the other extra tiles go to sectors chosen at random. Same seed, same sectors.
+
+id: T9_SET_03
+title: The Ally is always asked
+source: designer 2026-11-04 (point 4); Core Rules 7.3 step 1
+given: the first Allied Drop of a campaign; one other Company exists.
+when: look at the question
+then: "Allied Drop: choose your Ally for this campaign." lists every other Company, even one.
+
+################################################################################
+=== SECTION: ACTIONS (Command phase 8.1, Overload 9.2) ===
+
+id: T9_ACT_01
+title: No action menu
+source: designer 2026-11-04 (points 5, 14)
+given: the Command phase, or an Overload, waiting for your action.
+when: look at the question panel
+then: no list of actions. It says what to do ("Your action.", "Alerts first: ...",
+      "Overload: ...") and which kinds of things are highlighted. Everything you can act on is
+      highlighted: units and Dark sectors on the Field, Modules, Bay abilities, Orders, the
+      Overhaul button.
+
+id: T9_ACT_02
+title: A unit opens a pop-up with its commands
+source: designer 2026-11-04 (point 6); Core Rules 4.2, 8.4
+given: the Command phase; a Mecha that can Attack.
+when: click the Mecha; then click anywhere outside the pop-up
+then: a pop-up next to the click, titled with the Mecha, lists "Attack (one hit of N)",
+      "Scrap (gain N energy)" and its abilities that can be used now. Clicking outside (or
+      Escape) closes it and nothing happens. Clicking an entry does it at once (Attack then
+      asks for its target on the Field). A Gyro shows "Drain"; a unit with a Bio-shield also
+      shows "Drain the Bio-shield".
+
+id: T9_ACT_03
+title: A Dark sector opens a pop-up with Reveal
+source: designer 2026-11-04 (point 7); Core Rules 8.5
+given: the Command phase, no Alert on the Field.
+when: click a Dark sector; click "Reveal"
+then: the pop-up is titled "Dark sector (q,r)" and offers "Reveal"; that sector is revealed.
+
+id: T9_ACT_04
+title: Modules, Bays and Orders are clicked directly
+source: designer 2026-11-04 (points 8, 9, 10); Core Rules 8.6, 8.7, 5.6
+given: the Command phase; a ready Module you can pay for, a Bay with Integrity, 6 Command tokens.
+when: click the Module; (another time) click a Bay ability; (another time) click an Order
+then: the Module runs; the Bay takes 1 damage and its ability resolves; the Order is issued.
+      A Module you cannot run, a Bay ability of the wrong timing (or a Bay at 0) and an Order
+      you cannot pay for or of the other phase are not highlighted and do nothing; an Order of
+      the other phase says why when pointed at.
+
+id: T9_ACT_05
+title: Overhaul asks to confirm unless the Flagship is Crippled
+source: designer 2026-11-04 (point 11); Core Rules 8.8, 5.2
+given: the Command phase; Bays at 4/6, 6/6, 2/6; one empty Overhaul slot.
+when: click Overhaul (next to the Bays)
+then: "Overhaul now?": "Your Flagship is not Crippled: 12 of 18 Integrity left (Bay 1 4/6,
+      Bay 2 6/6, Bay 3 2/6). Overhaul uses one of your 1 empty Overhaul slot (8.8)."
+      Overhaul or Cancel. With a Crippled Flagship the Overhaul happens at once.
+
+id: T9_ACT_06
+title: Concede sits by the Menu button
+source: designer 2026-11-04 (point 12); Core Rules 10.3
+given: waiting for your action.
+when: click Concede (top bar, next to Menu)
+then: "Concede?" with "The game ends at once and counts as a loss (10.3)." Concede or Cancel.
+      While another question is open, Concede is greyed out.
+
+id: T9_ACT_07
+title: Alerts are resolved on the units
+source: designer 2026-11-04 (point 16); Core Rules 8.3, 9.2
+given: an Overload with two Alert tokens on the Field.
+when: click an alerted unit; click "Resolve the Alert"; click the other alerted unit
+then: the first is resolved. The pop-up of the last Alert on the Field also shows, in red:
+      "This is the last Alert on the Field. After it, you can end the Overload (9.2)." No extra
+      pop-up. Once no Alert remains, "End the Overload" appears in the top bar (highlighted)
+      and the other Overload actions stay highlighted.
+note: see open question Q8 (does resolving the last Alert end the Overload by itself?).
+
+id: T9_ACT_08
+title: In an Overload, everything clickable is highlighted
+source: designer 2026-11-04 (point 15)
+given: an Overload: an alerted Sentinel, a ready red Module you can pay for, 1 Command token.
+when: look at the screen
+then: the Sentinel, the red Module, the [Overload] Orders you can pay for and any [Overload]
+      Bay ability are highlighted; Command phase Modules and Orders are not.
+
+################################################################################
+=== SECTION: OTHER CHOICES ON THE THINGS ===
+
+id: T9_CHO_01
+title: Flare energy: click the Modules
+source: designer 2026-11-04 (point 13); Core Rules 4.6
+given: a Flare showing 1 Blue energy is revealed; three ready Modules.
+when: look; click a Module
+then: "Place 1 Blue energy on ready Modules." The ready Modules are highlighted; others are
+      greyed out. Each click adds 1 (shown as "+1" with a "-" to take it back); the last one
+      placed answers at once (Undo takes it back).
+note: the designer asked that Modules of other colours be greyed out too. That changes Core
+      Rules 4.6 / 5.3 (energy may go on any ready Module) - open question Q9.
+
+id: T9_CHO_02
+title: Damage and repairs to Bays, energy colours: click them
+source: designer 2026-11-04 (point 17); Core Rules 5.2, 5.3
+given: "Your Flagship takes 2 damage. Assign it to Bays." (another time: "Gain 2 energy. Choose
+       colours.")
+when: click the Bays (or the colours in the Reserve)
+then: the Bays (colours) that can take it are highlighted, each click adds 1, the last one
+      answers. "Start again" clears the clicks.
+
+id: T9_CHO_03
+title: Other questions about Modules or units are answered on them
+source: designer 2026-11-04 (point 17)
+given: "Overhaul: put one of your Modules on the bottom of the Module deck." (or G_35, F_25,
+       S_13 ...); "Which Alert do you resolve next?"; Splitter Missiles' 3 damage.
+when: click a highlighted Module / unit
+then: that answers. Choices that are not things on the screen ("Run none", "Place none")
+      stay as buttons in the question panel.
+
+id: T9_CHO_04
+title: Questions about units or sectors have no list
+source: designer 2026-11-04 (point 17)
+given: "Reveal which Dark sector?" from an effect, or an Attack's target.
+when: look at the question panel
+then: only the prompt and "Click a highlighted unit (sector) on the Field."; for several, a
+      Confirm button with the count. The answers are on the Field.

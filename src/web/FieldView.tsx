@@ -116,6 +116,8 @@ export function FieldView(p: FieldProps) {
     const root = new Container();
     a.stage.addChild(root);
 
+    // Where the clickable sectors are, in CSS pixels of the Field (for the browser check).
+    const hits: { k: string; x: number; y: number }[] = [];
     for (const p of pos) {
       const cx = ox + p.x * size;
       const cy = oy + p.y * size;
@@ -125,8 +127,11 @@ export function FieldView(p: FieldProps) {
       const unit = st === "occupied" ? top : undefined;
       const fill = st === "cleared" ? plate : st === "dark" ? back : TYPE_COLOUR[unitDef(c, top!).type] ?? 0xcccccc;
       const isChoice = choosable.sectors.includes(p.k) || (unit !== undefined && choosable.units.includes(unit));
+      if (isChoice) hits.push({ k: p.k, x: Math.round(cx), y: Math.round(cy) });
       const isSel = selected.includes(p.k) || (unit !== undefined && selected.includes(unit));
-      g.poly(hexPoints(cx, cy, size * 0.94)).fill({ color: fill }).stroke({ width: isSel ? 5 : isChoice ? 3 : 1.5, color: isSel ? 0x00a37a : isChoice ? 0xffb000 : dark ? 0x111111 : 0x77736b });
+      // Clickable now: a wide amber halo around the plate (selected: green).
+      if (isChoice || isSel) g.poly(hexPoints(cx, cy, size * 0.97)).stroke({ width: size * 0.12, color: isSel ? 0x00a37a : 0xffb000, alpha: 0.55 });
+      g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 4 : isChoice ? 3 : 1.5, color: isSel ? 0x00a37a : isChoice ? 0xffb000 : dark ? 0x111111 : 0x77736b });
       g.eventMode = "static";
       g.cursor = isChoice ? "pointer" : "default";
       g.on("pointerover", () => onHover(p.k));
@@ -176,6 +181,7 @@ export function FieldView(p: FieldProps) {
         }
       }
     }
+    host.current.dataset.choosable = JSON.stringify(hits);
   }
 
   return <div ref={host} className="field" aria-label="The Field" />;
