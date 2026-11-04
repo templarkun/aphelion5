@@ -1,0 +1,158 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 8: THE INTERFACE (structured)
+# DRAFT 2026-11-04, written by Claude from the program spec ("Screen and controls",
+# "Player choices", "Saving", "Randomness, log and undo", "Developer mode"), at the
+# designer's request. Awaiting the designer's agreement; once agreed, copy it into the
+# Project as "claude/Test scenarios batch 8.txt".
+#
+# These are checked in a real browser by scripts/ui-smoke.mjs (and by hand), not by the
+# rules tests: the rules engine is the same one the earlier batches test.
+################################################################################
+
+=== FORMAT SPEC ===
+Same record layout as the earlier batches. "given" describes the screen; "when" what the
+player does; "then" what the screen must show. No map: these are not board states.
+
+################################################################################
+=== SECTION: SCREEN ===
+
+id: T8_SCR_01
+title: One screen shows the whole game state
+source: spec "Screen and controls"
+given: a Command phase of Mission 1.
+when: look at the screen
+then: the Field in the centre; the phase bar on top (mission, phase, objective progress,
+      Threat columns, Command tokens, Heat when in play); the Flagship (Bays, Integrity and
+      abilities, Overhaul slots, Crippled warning) and the Reserve, Anomaly cards and Orders on
+      the left; the Modules (ready or exhausted, cost, energy on each, background) and the
+      Trophy pile on the right; the question panel under the Field. No menu needs opening.
+
+id: T8_SCR_02
+title: The Field shows each sector's top tile, tokens, stack height and arrows
+source: spec "Screen and controls"; Core Rules 3.1, 3.7, 3.8
+given: a Field with a unit with arrows, a damaged unit with a Barrier, a Dark sector of 5 tiles,
+       a Cleared sector.
+when: look at the Field
+then: pointy-top hexes laid out as Core Rules 3.8; units coloured by type with their id,
+      Strength and token badges (D, S, BS, BAR, ALERT, WRECK, TICK, MOR, FB); arrows drawn on
+      their sides as turned by the facing; a Dark sector shows "?" and its tile count; a Cleared
+      sector shows the plate.
+
+id: T8_SCR_03
+title: Face-down tiles look identical; known tiles are remembered
+source: spec "Player choices" (hidden information), "Decisions" (remember tiles looked at)
+given: two Dark sectors, one whose top tile you looked at with V1 Bay 3.
+when: look at the Field
+then: an unseen Dark sector shows only "?"; the one you looked at shows "? <its id>" until its
+      stack changes. In Developer mode every face-down top tile shows its id.
+
+id: T8_SCR_04
+title: Hover (or tap) shows the full card text and the stack
+source: spec "Screen and controls" (hover for full card text and Strength); touch: nothing
+      depends on hover alone
+given: a unit on the Field.
+when: point at its sector
+then: the line under the Field shows the sector, the unit's Strength and Level, its tokens,
+      what lies beneath and its full card text. The question panel lists every legal answer as
+      a button, so a phone needs no hover.
+
+id: T8_SCR_05
+title: An Overload looks different
+source: spec "Screen and controls"
+given: an Overload starts.
+when: look at the screen
+then: the screen turns red-tinted and the phase reads OVERLOAD; every Alert is listed in the
+      question panel in a fixed order, to pick from.
+
+################################################################################
+=== SECTION: ANSWERING ===
+
+id: T8_ANS_01
+title: Only legal answers are clickable
+source: spec "Interaction rules"
+given: "Reveal which Dark sector?"
+when: click an Occupied sector; then click a Dark sector
+then: the Occupied sector is not highlighted and the click does nothing. Legal sectors are
+      outlined; clicking one answers at once.
+
+id: T8_ANS_02
+title: Choosing several: select, then Confirm
+source: spec "Player choices"
+given: "Choose the 6 sectors that get one extra tile", or the Threat columns.
+when: select items on the Field or in the list
+then: selected items are marked; Confirm shows the count and is enabled only between the
+      minimum and the maximum.
+
+id: T8_ANS_03
+title: Amounts and splits
+source: spec "Player choices"
+given: "Your Flagship takes 2 damage. Assign it to Bays."
+when: use the + and - buttons
+then: each Bay stays between 0 and its limit; Confirm is enabled only when the total is assigned.
+
+id: T8_ANS_04
+title: Every refusal and log line names its rule
+source: spec "Interaction rules", "Log"
+given: any question; the log open.
+when: look at the question; read the log
+then: each question shows "rule <section>"; each log line ends with its rule in brackets. A
+      refused answer shows a one-line reason.
+
+################################################################################
+=== SECTION: SAVING, UNDO, LOG ===
+
+id: T8_SAV_01
+title: The game saves itself after every answer and resumes
+source: spec "Saving"
+given: a game in progress.
+when: close the browser tab and open the game again
+then: the game continues at the same question. Menu then Continue does the same.
+
+id: T8_SAV_02
+title: Export and import
+source: spec "Saving"
+given: a game in progress.
+when: Export save; on another computer, Import a save file
+then: the same game, the same Company sheets and high scores.
+
+id: T8_UND_01
+title: Undo stops at new hidden information
+source: spec "Randomness, log and undo"
+given: you used a Bay, then revealed a sector.
+when: look at Undo
+then: Undo is disabled after the Reveal. After the Bay use (before any Reveal) it undoes it.
+      In Developer mode it is never disabled while an answer exists.
+
+id: T8_LOG_01
+title: The log can be exported
+source: spec "Log"
+when: Export log
+then: a text file with every log line and its rule.
+
+################################################################################
+=== SECTION: START, END, SETTINGS ===
+
+id: T8_SET_01
+title: The start screen
+source: spec "Other screens", "Settings", "Developer mode"
+when: open the game
+then: New campaign (auto-answer on or off; Developer mode; an optional seed), Import a save
+      file, the Campaign 1 high scores (Fresh and Veteran), and Continue when a game is in
+      progress. Company, Fresh or Veteran and the Heat module are asked by the game itself.
+
+id: T8_END_01
+title: Game End shows the score
+source: Core Rules 10.3
+when: the game ends (won, lost or conceded)
+then: the score with each part (Threat columns per mission, +5, -2 for Heat) and "New high
+      score" when one was written. Back to the menu: the high scores show the new value.
+
+id: T8_PHN_01
+title: Phones
+source: spec "Technology" (touch, no hover), artifact layout rules
+given: a phone-sized screen (390 px wide), dark or light.
+when: play
+then: no sideways scrolling; the Field, then the question panel, then the panels, one under
+      the other; buttons at least 36 px high.
+
+=== END OF FILE ===

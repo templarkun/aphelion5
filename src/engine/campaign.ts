@@ -41,6 +41,8 @@ export interface NewGameOptions {
   date: string;
   profile?: Profile;
   developerMode?: boolean;
+  /** Answer questions with one legal answer automatically (spec "Player choices"); fixed for the whole game. */
+  autoAnswer?: boolean;
 }
 
 /** A game before setup: every tile of the game in the box (the Supply), awaiting the setup choices. */
@@ -52,6 +54,7 @@ export function newGame(data: GameData, o: NewGameOptions): GameState {
   s.profile = structuredClone(o.profile ?? emptyProfile());
   s.run.date = o.date;
   s.settings.developerMode = o.developerMode ?? false;
+  s.settings.autoAnswer = o.autoAnswer ?? true;
   s.player.commandTokens = 0;
   // Every tile copy (unit file "copies"): Energy Gyros form the Energy deck, the rest wait in the box.
   for (const u of data.units.units) {

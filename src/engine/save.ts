@@ -23,6 +23,8 @@ export interface GameStart {
   seed: number;
   date: string;
   developerMode: boolean;
+  /** Fixed for the whole game, so replays ask the same questions (default on). */
+  autoAnswer?: boolean;
   /** The profile as it was when the game started. */
   profile: Profile;
 }
@@ -43,7 +45,7 @@ export interface Game {
 }
 
 function initial(data: GameData, start: GameStart): GameState {
-  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode });
+  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true });
 }
 
 export function startGame(data: GameData, start: GameStart): Game {

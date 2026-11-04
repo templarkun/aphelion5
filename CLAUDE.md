@@ -50,6 +50,8 @@ Each stage ends with all its tests passing and a short report to the designer. R
 
 - 2026-11-04: Stage 7 (Campaign, saving, Heat) built. `src/engine/campaign.ts` (roots `gameSetup`, `missionPreparation`, `missionEnd`, `gameEnd`; Allied Drop, upgrades, scoring, high scores), `heat.ts` (H1-H8), `save.ts` (a game = start + answers; replay, undo to the last hidden information), `src/storage/` (memory and file stores; IndexedDB comes with the web app in stage 8). Profile (every Company sheet's marks, high scores) lives in the state and the save file. New question kind "several" (Threat columns). `npm run play` plays the full Campaign with autosave to `saves/aphelion5.json` (`--new`, `--seed N`, `--fixed`). `tests/batch7.txt` AGREED 2026-11-04 with the three changes above. 447 tests passing, incl. random full-campaign play-throughs (`tests/unit/campaignFuzz.ts`).
 
+- 2026-11-04: Core Rules master rev 133 (7.2 step 6, 10.1 step 4: "in random order"), snapshot rebuilt. Stage 8 (full interface) built: web app in `src/web/` (Vite + React panels + PixiJS Field; `npm run dev`, `npm run build`), IndexedDB saves with export/import, undo, log export, start screen (auto-answer, Developer mode, seed), Game End score. Browser check: `npm run test:ui` (Playwright, screenshots in `dist/ui-check/`). `tests/batch8.txt` is Claude's DRAFT, awaiting the designer. Not built yet: designer art loading (`art/`), language files, animation speed, colour-blind token shapes, Developer tools "Load scenario", "Edit state", "Rule trace".
+
 ## Working with the designer
 
 The designer is not a programmer. Explain in plain words, cite rule sections, keep reports short. Commit messages end with the session's attribution lines.
