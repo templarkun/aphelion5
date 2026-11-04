@@ -1,0 +1,235 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 7: CAMPAIGN, SAVING, HEAT (structured)
+# DRAFT 2026-11-04, written by Claude from Core Rules 5.1, 7.1-7.3, 8.2, 10.1-10.3,
+# Campaign1.txt, company_vessels_structured.txt, Expansion1.txt (H1-H8) and the
+# program spec ("Saving", "Randomness, log and undo"), at the designer's request.
+# Awaiting the designer's agreement; once agreed, copy it into the Project as
+# "claude/Test scenarios batch 7.txt".
+#
+# Batch 1 T_HEAT_01 (Meltdown) is reused, not repeated.
+################################################################################
+
+=== FORMAT SPEC ===
+Same as "Test scenarios batch 4.txt". Scenarios marked "new game" start from an empty
+profile (no Company sheet has marks) unless stated, and play through the choices listed in
+"when". "Mission ending" = the objective was met and Mission End (10.1) starts.
+
+################################################################################
+=== SECTION: GAME SETUP (7.1) ===
+
+id: T7_SET_01
+title: A new game: choose a Company; Fresh is automatic with an unmarked sheet
+source: Core Rules 7.1 steps 1-9; spec "Scope" (Heat module chosen at setup)
+map: M1
+given: new game.
+when: choose V1; no Heat module
+then: no Fresh/Veteran question (the sheet has no marks): Fresh. Reserve Yellow 6, Red 6,
+      Blue 6. Mission deck: 30 Bots + V1's 27 starting Mecha. Energy deck: all 42 Energy
+      Gyros, shuffled. 3 Anomaly cards. Starting Modules: the first two of each colour from
+      the shuffled Module deck (6 Modules); every other Module is in the Module deck.
+      Next: Mission Preparation for Mission 1.
+assumption: the Heat module is chosen once per game, at setup (spec "Scope").
+
+id: T7_SET_02
+title: Veteran keeps the marks; Fresh erases only this Company's marks
+source: Core Rules 7.1 step 3; spec "Saving" (Fresh erases only the chosen Company's marks)
+map: M1
+given: new game. Profile: V1 sheet V1_M02_U1 2 of 2 slots, V1_M04_U2 3 of 5 slots; V2 sheet
+       V2_P1 2 of 2 slots.
+when: choose V1, then Veteran; again (another game) choose V1, then Fresh
+then: Veteran: V1_M02_U1 is filled (M_02 has "Command: Turn this Mecha to face any
+      direction"); V1_M04_U2 keeps its 3 marks. Fresh: V1's marks are erased; V2's sheet keeps
+      V2_P1. In both, no Overhaul slot is marked.
+
+################################################################################
+=== SECTION: MISSION PREPARATION (7.2) ===
+
+id: T7_PRP_01
+title: Mission 1 preparation: Threat columns, dealing, a Module, an Allied Drop
+source: Core Rules 7.2 steps 2-9, 7.3; Campaign1.txt C1_M1
+map: M1
+given: new game, V1, no Heat module, Mission Preparation.
+when: Threat columns A and C; keep the first Module offered; Ally V2; Allied Mecha M_05
+then: Threat Level Assault. Mission deck: 57 + Deployment 25 + 8 = 90 tiles: 9 to each of the
+      10 sectors (no extra tile to place). You keep 1 of the top 3 Modules; the other 2 go
+      to the bottom of the Module deck in the order you choose. 6 Command tokens; 1 more
+      Anomaly card (4). Allied Drop - Level 1: your Ally is V2; the only V2 Mecha of Level 1
+      or lower is M_05; it is placed face up on a Dark sector of your choice.
+assumption: you choose the order of the 2 Modules that go to the bottom (Core Rules 11.1
+      rule 2: you make every choice).
+
+id: T7_PRP_02
+title: Uneven dealing: you choose the sectors that get one extra tile
+source: Core Rules 7.2 step 5 and its example
+map: M1
+given: new game, V1, no Heat module, Mission Preparation.
+when: Threat column A only
+then: 57 + 25 + 4 = 86 tiles: 8 to each sector and 6 extra: you choose 6 different sectors,
+      each gets a 9th tile.
+
+id: T7_PRP_03
+title: A tile with no copy left adds nothing
+source: Core Rules 6.7, 7.2 step 3, 10.1 example (copy limits)
+map: M1
+given: new game, V1, Mission Preparation. All four S_12 tiles are already in use (none in the
+       box).
+when: Threat columns A and C (both list S_12 twice)
+then: the four S_12 entries add nothing; the other Threat tiles are added (8 - 4 = 4). Both
+      columns still score at Game End if the mission is completed.
+
+id: T7_PRP_04
+title: Mission 2 offers both routes; the other is skipped
+source: Core Rules 7.2 step 1
+map: M2X
+given: Mission 1 completed.
+when: Mission Preparation; choose C1_M2Y
+then: you are offered C1_M2X and C1_M2Y. C1_M2X is skipped for this campaign: Mission 3 comes
+      next.
+
+id: T7_PRP_05
+title: Omega units placed by the mission card hold no dealt tiles
+source: Core Rules 7.2 steps 2 and 5; Campaign1.txt C1_M3
+map: M3
+given: Missions 1 and 2 completed.
+when: Mission Preparation for C1_M3
+then: one O_02 face up on each of (0,-1), (1,2), (-1,3); those sectors get no tiles. The mission
+      deck is dealt onto the other 9 sectors.
+
+################################################################################
+=== SECTION: ALLIED DROP (7.3) ===
+
+id: T7_ALD_01
+title: Your Ally is chosen once; a Mecha you do not list uses the Ally's sheet
+source: Core Rules 4.2, 7.3
+map: M3
+given: Ally V2 (chosen at Mission 1). Profile: V2 sheet V2_M1 and V2_M1A fully filled (earlier games).
+when: Mission 3 preparation (Allied Drop - Level 2); choose M_07
+then: no Ally question. Offered: V2's Mecha of Level 2 or lower with a copy left: M_05 (1),
+      M_03 (2), M_07 (2). V1 does not list M_07, so the Allied M_07 uses V2's sheet: it has
+      "Command: Bury this Mecha" (V2_M1A). An Allied M_03 would use V1's sheet instead, since
+      V1 lists M_03.
+
+################################################################################
+=== SECTION: MISSION END (10.1) ===
+
+id: T7_END_01
+title: Mission End sorts every pile
+source: Core Rules 10.1 steps 1-9, 5.1 (V1 Trait)
+map: M1
+given: Mission ending. Flagship 4/6/5. Trophy pile: 2 F_01, 6 O_01. Discard: B_01, M_01, G_05,
+       S_12, F_04. (0,0): B_02[D1] > fd. (0,1): S_01[BAR] > fd. 3 Command tokens. Charged Beam
+       with 2 Red on it, exhausted.
+when: Mission End (no upgrade bought)
+then: V1 Trait: Flagship 5/6/6. 2 Upgrade points (Power Nodes), then erased (unspent). Trophy
+      pile to the Supply. Discard: B_01 and M_01 to the mission deck; G_05 to the bottom of the
+      Energy deck; S_12 and F_04 to the Supply. Every token returns; every tile on the Field goes
+      face down into the mission deck. Command tokens returned. Charged Beam ready, empty.
+      Mission 1 is completed with its Threat columns; next: Mission 2's preparation.
+
+id: T7_UPG_01
+title: Upgrades - partial marks, locked, exclusive, Requisitions
+source: Core Rules 10.2; company_vessels_structured.txt
+map: M1
+given: Mission ending. Trophy pile: 9 F_01.
+when: mark V1_M04_U2 5 slots; mark V1_M04_U2A 3 slots; mark V1_T1 1 slot
+then: 9 Upgrade points. V1_M04_U2 is filled: V1_M04_U2A and V1_M04_U2B become available.
+      Once U2A has a mark, U2B is no longer offered (exclusive). V1_T1 keeps 1 of 2 marks
+      (partial progress is kept for a later mission). No point is left.
+      Variant: Trophy pile 10 F_01 and V1_T1 marked 2/2 -> gain 1 Yellow at once, and V1_T1's
+      marks are erased (Repeatable).
+assumption: you mark one upgrade at a time, as many of its slots as you like, until you choose
+      Done or have no point left.
+
+################################################################################
+=== SECTION: GAME END AND SCORING (10.3) ===
+
+id: T7_SCO_01
+title: Score: Threat columns of completed missions, +5 for the whole campaign, Heat -2
+source: Core Rules 10.3; Expansion1 H8
+map: M1
+given: completed: Mission 1 (A, C), Mission 2y (A), Mission 3 (A, B, C, D), 4x (B), 5 (A), 6 (A),
+       7 (A, B). Heat module on.
+when: Game End after Mission 7
+then: 2 + 1 + 4 + 1 + 1 + 1 + 2 = 12, +5 (whole campaign), -2 (Heat) = 15.
+      Variant: lost during Mission 4: 2 + 1 + 4 = 7, -2 = 5; Mission 4 does not count.
+
+id: T7_SCO_02
+title: High score fields: Fresh and Veteran; equal or better writes; never in Developer mode
+source: Core Rules 10.3; spec "Developer mode"
+map: M1
+given: Campaign board high scores: Fresh 10.
+when: a Fresh game ends with 10; a Veteran game ends with 3; a Developer-mode game ends with 20
+then: Fresh field: 10 with the new date (equal writes). Veteran field: 3. The Developer-mode
+      game writes nothing. Your Company sheet keeps its upgrade marks; the Upgrade track,
+      Overhaul slots and the Ally's name are erased.
+
+################################################################################
+=== SECTION: SAVING AND UNDO (spec) ===
+
+id: T7_SAV_01
+title: A saved game replays to the same state
+source: spec "Saving", "Testing: Replay"
+map: M1
+given: a game started with seed 7 and 40 answers.
+when: save; load
+then: the loaded game is in exactly the same state and asks the same question.
+
+id: T7_SAV_02
+title: Undo stops at new hidden information
+source: spec "Randomness, log and undo"
+map: M1
+given: Mission 1 under way.
+when: Use Bay 1 (1 damage), then undo; Reveal a sector, then undo
+then: the Bay is undone. The Reveal cannot be undone (new hidden information). In Developer
+      mode it can.
+
+################################################################################
+=== SECTION: HEAT MODULE (Expansion1) ===
+
+id: T7_HEAT_01
+title: Take 10 Heat at Mission Preparation; return it all at Mission End
+source: Expansion1 H1-H3
+map: M1
+given: new game with the Heat module.
+when: Mission 1 preparation; later, Mission End
+then: Heat 10 after step 7. At Mission End, Heat 0 (all returned); the next mission starts at
+      10 again.
+
+id: T7_HEAT_02
+title: A revealed Power Node: its energy, or 3 Heat
+source: Expansion1 H4
+map: M1
+given: Command phase, Heat module, Heat 8. (0,1): fd:F_01 > fd. Charged Beam ready. Every other
+       sector cleared.
+when: Reveal (0,1); choose 3 Heat
+then: Heat 10 (8 + 3, at most 10: 1 is lost). No energy is placed. The Overload starts as usual.
+
+id: T7_HEAT_03
+title: Heat Wave - pay 1 Heat, 1 damage to a Bot; not with Alerts, not in an Overload
+source: Expansion1 H5
+map: M1
+given: Command phase, Heat module, Heat 2. (0,1): B_01[BAR] > fd. Every other sector cleared.
+when: Heat Wave on B_01
+then: Heat 1; the Barrier cancels the hit. With an Alert on the Field, or during an Overload,
+      Heat Wave is not offered.
+
+id: T7_HEAT_04
+title: Overclock - 2 extra energy for 1 Heat, then 1 Yellow for 1 more; free runs too
+source: Expansion1 H6
+map: M1
+given: Command phase, Heat module, Heat 5. Demolition Blast ready with 1 Yellow on it. Reserve
+       Yellow 6. (0,1): B_03 > fd. Every other sector cleared.
+when: run Demolition Blast (pay 3); Overclock yes (2 Yellow), and yes (1 more Yellow)
+then: Heat 7. Yellow spent: 3 + 2 + 1 = 6 (the 1 on the Module may pay part of it).
+assumption: Overclock is decided after paying the cost and before the effect resolves.
+
+id: T7_HEAT_05
+title: Meltdown - pay 1 Heat to avoid it
+source: Expansion1 H7; batch 1 T_HEAT_01 (Meltdown when you cannot pay)
+map: M1
+given: Overload ending. Heat module, Heat 1. (0,0): B_01 > fd. Every other sector cleared.
+when: Overload End: pay 1 Heat
+then: Heat 0; no Meltdown. Variant: do not pay -> Meltdown: B_01 destroyed, N = 1, Heat 2
+      (1 + 1), Flagship takes 2.
+
+=== END OF FILE ===

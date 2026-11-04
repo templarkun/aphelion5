@@ -120,6 +120,10 @@ export function renderQuestion(data: GameData, state: GameState, q: Question): s
       q.options.forEach((o, i) => out.push(`  ${i + 1}. ${o.label}`));
       out.push("Type a number.");
       break;
+    case "several":
+      q.options.forEach((o, i) => out.push(`  ${i + 1}. ${o.label}`));
+      out.push(chooseHint(q.min, q.max));
+      break;
     case "units":
       q.options.forEach((u, i) => out.push(`  ${i + 1}. ${describe(c, u)}${strength(c, u) !== undefined ? ` (Strength ${strength(c, u)})` : ""} ${tokenText(tile(state, u).tokens)}`.trimEnd()));
       out.push(chooseHint(q.min, q.max));
@@ -184,6 +188,10 @@ export function parseAnswer(q: Question, line: string): Answer | { error: string
     case "sectors": {
       const p = pick(q.options);
       return "error" in p ? p : { kind: "sectors", value: p };
+    }
+    case "several": {
+      const p = pick(q.options);
+      return "error" in p ? p : { kind: "several", value: p.map((o) => o.id) };
     }
     case "amount":
       if (nums.length !== 1) return { error: "type one number" };

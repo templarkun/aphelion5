@@ -26,6 +26,8 @@ export type Question =
   | (Base & { kind: "sectors"; options: SectorKey[]; min: number; max: number })
   /** Pick one listed option ("Choose one:", ties, a Level, a row...). */
   | (Base & { kind: "option"; options: Option[] })
+  /** Pick between `min` and `max` different listed options (Threat columns). */
+  | (Base & { kind: "several"; options: Option[]; min: number; max: number })
   /** Pick which waiting item goes next (simultaneous triggers, Fuse tokens). */
   | (Base & { kind: "order"; options: Option[] })
   /** A whole number within limits. */
@@ -39,6 +41,7 @@ export type Answer =
   | { kind: "sectors"; value: SectorKey[] }
   | { kind: "option"; value: string }
   | { kind: "order"; value: string }
+  | { kind: "several"; value: string[] }
   | { kind: "amount"; value: number }
   | { kind: "split"; value: Record<string, number> }
   | { kind: "yesno"; value: boolean };
@@ -58,6 +61,13 @@ export function invalidReason(q: Question, a: Answer): string | undefined {
     case "option":
     case "order":
       return q.options.some((o) => o.id === a.value) ? undefined : `${String(a.value)} is not a legal choice`;
+    case "several": {
+      const v = a.value as string[];
+      if (new Set(v).size !== v.length) return "the same choice is listed twice";
+      if (v.length < q.min || v.length > q.max) return `choose ${q.min === q.max ? q.min : `${q.min} to ${q.max}`}, got ${v.length}`;
+      const bad = v.find((x) => !q.options.some((o) => o.id === x));
+      return bad === undefined ? undefined : `${bad} is not a legal choice`;
+    }
     case "amount": {
       const n = a.value as number;
       return Number.isInteger(n) && n >= q.min && n <= q.max ? undefined : `choose a whole number from ${q.min} to ${q.max}`;
@@ -89,7 +99,8 @@ function binom(n: number, k: number): number {
 export function legalAnswerCount(q: Question): number {
   switch (q.kind) {
     case "units":
-    case "sectors": {
+    case "sectors":
+    case "several": {
       let n = 0;
       for (let k = q.min; k <= Math.min(q.max, q.options.length); k++) n += binom(q.options.length, k);
       return n;
@@ -126,6 +137,8 @@ export function onlyAnswer(q: Question): Answer | undefined {
       const value = q.min === 0 && q.max === 0 ? [] : [...q.options];
       return q.kind === "units" ? { kind: "units", value } : { kind: "sectors", value };
     }
+    case "several":
+      return { kind: "several", value: q.min === 0 && q.max === 0 ? [] : q.options.map((o) => o.id) };
     case "option":
       return { kind: "option", value: q.options[0]!.id };
     case "order":

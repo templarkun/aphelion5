@@ -12,6 +12,7 @@ import { type Effect, type RunCtx, ask, log } from "./effect.js";
 import { type Ctx, describe, fieldMap, isUnit, isWreck, sectorOf, sectorState, stack, tile, topTileId, unitDef, unitType } from "./field.js";
 import type { SectorKey, TileId } from "./state.js";
 import { afterTopTileLeaves, checkSleepers, placeAlert, placeBarrier, returnTokens } from "./tokens.js";
+import { powerNodeChoice } from "./heat.js";
 
 /** Dark or Cleared: where Move, Teleport and Place may go (glossary "Dark sector"). */
 export function isOpenSector(c: Ctx, k: SectorKey): boolean {
@@ -166,7 +167,9 @@ export function requestOverload(c: Ctx, why: string): void {
 /** A Flare fires when revealed (4.6). */
 function* flareFires(c: RunCtx, id: TileId): Effect {
   const d = unitDef(c, id);
-  if (d.energyOnReveal) yield* placeEnergyOnModules(c, d.energyOnReveal, "4.6");
+  // H4: a revealed Power Node may give 3 Heat instead of its energy.
+  const heat = c.state.settings.heatModule && d.id === "F_01" ? yield* powerNodeChoice(c) : false;
+  if (d.energyOnReveal && !heat) yield* placeEnergyOnModules(c, d.energyOnReveal, "4.6");
   if (c.state.phase === "command") requestOverload(c, `${d.id} is revealed`);
   else if (c.state.phase === "overload") placeAlert(c, id, "4.6");
 }

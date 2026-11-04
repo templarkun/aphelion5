@@ -54,6 +54,55 @@ export interface LogEntry {
   rule?: string;
 }
 
+/** One mission you completed (Core Rules 10.3: each of its Threat columns scores 1). */
+export interface MissionResult {
+  mission: string;
+  threat: string[];
+}
+
+/** A high score field on the Campaign board (10.3): the score and the date written in. */
+export interface HighScore {
+  score: number;
+  date: string;
+}
+
+/**
+ * What outlives a game (spec "Saving"): every Company sheet's upgrade marks
+ * (Veteran campaigns, Allied Drops) and the high scores per Campaign.
+ */
+export interface Profile {
+  /** Slots marked per upgrade, per Company. */
+  sheets: Record<string, Record<string, number>>;
+  /** Per Campaign: the plain field (Fresh) and the starred field (Veteran). */
+  highScores: Record<string, { fresh?: HighScore; veteran?: HighScore }>;
+}
+
+export function emptyProfile(): Profile {
+  return { sheets: {}, highScores: {} };
+}
+
+/** The Campaign under way (7.1, 7.2, 10.1, 10.3). */
+export interface CampaignRun {
+  freshness: "fresh" | "veteran";
+  /** Missions completed, in order. */
+  completed: MissionResult[];
+  /** Alternative routes not taken (7.2 step 1). */
+  skipped: string[];
+  /** This mission's Threat columns (7.2 step 3). */
+  threat: string[];
+  /** Written into a high score field (the engine never reads the clock). */
+  date: string;
+}
+
+/** Game End (10.3). */
+export interface Ending {
+  score: number;
+  /** Plain-words lines adding up to the score. */
+  parts: string[];
+  /** Which high score field was written, if any. */
+  highScore?: "fresh" | "veteran";
+}
+
 export interface GameState {
   formatVersion: 1;
   rng: RngState;
@@ -89,6 +138,8 @@ export interface GameState {
   sheet: {
     /** Upgrades fully filled. */
     filled: string[];
+    /** Slots marked per upgrade, including partly filled ones (10.2). */
+    marks: Record<string, number>;
     overhaulUsed: number;
     /** Upgrade points written on the Upgrade track, spent at Mission End (10.2). */
     upgradePoints: number;
@@ -104,7 +155,13 @@ export interface GameState {
   /** A Flare was revealed (or an effect said so) in the Command phase: the Overload starts when the current effect finishes (9.1). */
   overloadPending: boolean;
   /** Set when the game is over. */
-  outcome?: { result: "lost" | "conceded"; reason: string };
+  outcome?: { result: "lost" | "conceded" | "won"; reason: string };
+  /** The Campaign under way. */
+  run: CampaignRun;
+  /** Company sheets and high scores (copied in at the start, updated at Game End). */
+  profile: Profile;
+  /** Set once Game End has been scored. */
+  ending?: Ending;
   /** Face-down tiles the player has looked at (spec: "remember tiles the player has looked at"). */
   seen: TileId[];
   /** Goes up whenever new hidden information appears (Reveal, look, draw, shuffle): the undo limit. */
@@ -113,6 +170,8 @@ export interface GameState {
     /** Answer questions that have exactly one legal answer automatically (spec "Player choices"). */
     autoAnswer: boolean;
     heatModule: boolean;
+    /** Developer mode: a game played with it never records a high score (spec "Developer mode"). */
+    developerMode: boolean;
   };
   log: LogEntry[];
 }

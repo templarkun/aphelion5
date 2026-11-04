@@ -9,6 +9,7 @@ import { type ModuleRun, hasModuleEffect, moduleEffect } from "../effects/regist
 import { type Effect, type RunCtx, ask, log } from "./effect.js";
 import type { Ctx } from "./field.js";
 import type { ModuleState } from "./state.js";
+import { overclock } from "./heat.js";
 
 export function moduleDef(c: Ctx, id: number): ModuleDef {
   const m = c.data.modules.byId.get(id);
@@ -92,6 +93,8 @@ export function* runModule(c: RunCtx, id: number, free = false): Effect {
     c.state.supply.energy[col] += cost;
     log(c, `run ${d.name}: pay ${cost} ${col} (${fromModule} from the Module, ${fromReserve} from the Reserve)`, "8.6");
   }
+  // H6 Overclock: once per run, paid or free.
+  if (c.state.settings.heatModule) yield* overclock(c, id);
   yield* fx.run(c, run);
   // Steps 4-5: exhaust; energy still on it returns to the Supply.
   m.ready = false;

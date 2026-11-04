@@ -4,7 +4,7 @@ import { type RunCtx, ask, log } from "../engine/effect.js";
 import { choosableUnits, fieldMap, level, sectorKeys, sectorOf, tile, unitAt, unitType } from "../engine/field.js";
 import { isOpenSector, swap, teleport } from "../engine/moves.js";
 import type { TileId } from "../engine/state.js";
-import { dealHit, destroy, placeFuse } from "../engine/tokens.js";
+import { dealHit, destroy, gainEnergy, placeFuse } from "../engine/tokens.js";
 import { fromKey, key } from "../geometry/hex.js";
 import { chooseSector, chooseUnit } from "./helpers.js";
 import { registerAbility } from "./registry.js";
@@ -87,3 +87,20 @@ registerAbility("C1_M7_ORDER", function* (c) {
     .filter((u): u is TileId => u !== undefined && choosableUnits(c).includes(u));
   for (const u of around) placeFuse(c, u, "tick", "C1_M7_ORDER");
 });
+
+// ---------------------------------------------------------------------------
+// Requisitions (Company sheets; Core Rules 10.2): one-time effects when fully filled.
+// ---------------------------------------------------------------------------
+
+for (const co of ["V1", "V2"]) {
+  registerAbility(`${co}_T1`, (c) => gainEnergy(c, 1, "Yellow", `${co}_T1`));
+  registerAbility(`${co}_T2`, (c) => gainEnergy(c, 2, "Red", `${co}_T2`));
+  registerAbility(`${co}_T3`, (c) => gainEnergy(c, 3, "Blue", `${co}_T3`));
+  registerAbility(`${co}_T4`, function* (c) {
+    const id = c.state.decks.modules.shift();
+    if (id === undefined) return log(c, "the Module deck is empty", "6.7");
+    c.state.player.modules.push({ id, ready: true, energy: { Yellow: 0, Red: 0, Blue: 0 } });
+    c.state.hiddenInfo += 1;
+    log(c, `${co}_T4: take ${c.data.modules.byId.get(id)!.name} from the top of the Module deck`, `${co}_T4`);
+  });
+}

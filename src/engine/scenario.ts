@@ -57,12 +57,14 @@ export function newMissionState(data: GameData, o: NewStateOptions): GameState {
     },
     player: { company: companyId, reserve: zero(), modules: [], anomalies: [], commandTokens: 0, heat: 0 },
     flagship: company.bays.map((b) => b.integrity),
-    sheet: { filled: [], overhaulUsed: 0, upgradePoints: 0 },
+    sheet: { filled: [], marks: {}, overhaulUsed: 0, upgradePoints: 0 },
     decks: { modules: [], anomalies: [] },
     overloadPending: false,
     seen: [],
     hiddenInfo: 0,
-    settings: { autoAnswer: true, heatModule: false },
+    settings: { autoAnswer: true, heatModule: false, developerMode: false },
+    run: { freshness: "fresh", completed: [], skipped: [], threat: [], date: "" },
+    profile: { sheets: {}, highScores: {} },
     log: [],
   };
 }

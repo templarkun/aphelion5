@@ -28,6 +28,10 @@ export function randomAnswer(r: RngState, q: Question): Answer {
       const value = shuffle(r, [...q.options]).slice(0, n);
       return q.kind === "units" ? { kind: "units", value } : { kind: "sectors", value };
     }
+    case "several": {
+      const n = q.min + nextInt(r, Math.min(q.max, q.options.length) - q.min + 1);
+      return { kind: "several", value: shuffle(r, q.options.map((o) => o.id)).slice(0, n) };
+    }
     case "option":
       return { kind: "option", value: q.options[nextInt(r, q.options.length)]!.id };
     case "order":

@@ -18,6 +18,7 @@ import { putAtBottom, reveal } from "./moves.js";
 import type { Option } from "./questions.js";
 import type { TileId } from "./state.js";
 import { boost, isCrippled, printedIntegrity, returnTokens } from "./tokens.js";
+import { heatWave } from "./heat.js";
 
 // ---------------------------------------------------------------------------
 // Bays (5.2, 8.7)
@@ -217,7 +218,7 @@ export function concede(c: Ctx): void {
 }
 
 /** Mission won (8.2): leftover Alert tokens are simply cleared; Mission End follows (stage 7). */
-function missionWon(c: Ctx): void {
+export function missionWon(c: Ctx): void {
   for (const u of alertedUnits(c)) tile(c.state, u).tokens.alert = false;
   c.state.phase = "missionEnd";
   log(c, "the mission objective is met: Mission End", "8.2");
@@ -253,7 +254,7 @@ export function startOverload(c: Ctx): void {
 // The action menu (8.1)
 // ---------------------------------------------------------------------------
 
-export type ActionId = "resolveAlerts" | "commandMecha" | "reveal" | "runModule" | "useBay" | "drainGyro" | "drainBioShield" | "issueOrder" | "overhaul";
+export type ActionId = "resolveAlerts" | "commandMecha" | "reveal" | "runModule" | "useBay" | "drainGyro" | "drainBioShield" | "issueOrder" | "heatWave" | "overhaul";
 
 export const ACTION_LABEL: Record<ActionId | "concede", string> = {
   resolveAlerts: "Resolve Alerts",
@@ -264,6 +265,7 @@ export const ACTION_LABEL: Record<ActionId | "concede", string> = {
   drainGyro: "Drain a Gyro",
   drainBioShield: "Drain a Bio-shield",
   issueOrder: "Issue an Order",
+  heatWave: "Heat Wave (pay 1 Heat: 1 damage to a Bot)",
   overhaul: "Overhaul",
   concede: "Concede",
 };
@@ -286,6 +288,8 @@ export function legalActions(c: Ctx): ActionId[] {
     if (drainableGyros(c).length > 0) out.push("drainGyro");
     if (bioShieldCarriers(c).length > 0) out.push("drainBioShield");
     if (usableOrders(c).length > 0) out.push("issueOrder");
+    // H5: a Command phase action, never with an Alert on the Field.
+    if (c.state.settings.heatModule && c.state.player.heat >= 1) out.push("heatWave");
   }
   if (hasOverhaulSlot(c)) out.push("overhaul");
   return out;
@@ -345,6 +349,9 @@ function* doAction(c: RunCtx, action: ActionId): Effect {
       yield* issueOrder(c, o);
       return;
     }
+    case "heatWave":
+      yield* heatWave(c);
+      return;
     case "overhaul":
       yield* overhaul(c);
       return;

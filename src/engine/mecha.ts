@@ -35,8 +35,11 @@ export function sheetFor(c: Ctx, unitId: string): { company: CompanyDef; filled:
   if (own.startingMecha.some((m) => m.id === unitId)) return { company: own, filled: c.state.sheet.filled };
   if (c.state.sheet.ally) {
     const ally = c.data.companies.byId.get(c.state.sheet.ally);
-    // The Ally's own upgrade marks are saved with that Company's sheet (stage 7); none yet.
-    if (ally) return { company: ally, filled: [] };
+    // The Ally's own sheet, with upgrades filled on it in earlier games (7.3), from the profile.
+    if (ally) {
+      const marks = c.state.profile.sheets[ally.id] ?? {};
+      return { company: ally, filled: ally.upgrades.filter((u) => (marks[u.id] ?? 0) >= u.cost).map((u) => u.id) };
+    }
   }
   return undefined;
 }

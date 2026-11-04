@@ -32,7 +32,7 @@ function pendingCommand(s: GameState): Question {
 
 /** Play through the session driver: answers in order, across steps and phases. */
 function drive(s: GameState, answers: Answer[]): SessionView {
-  let v = startSession(data(), s);
+  let v = startSession(data(), s, { stopAt: ["missionEnd"] });
   for (const a of answers) {
     if (v.status !== "question") throw new Error(`no question left for answer ${JSON.stringify(a)}`);
     const r = answerSession(data(), v, a);

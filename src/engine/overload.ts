@@ -29,6 +29,7 @@ import { canRunModule, moduleDef, runModule } from "./modules.js";
 import type { Option } from "./questions.js";
 import type { TileId } from "./state.js";
 import { afterTopTileLeaves, dealHit, gainEnergy, removeFromField, repairFlagship, setOffFuses } from "./tokens.js";
+import { meltdown } from "./heat.js";
 
 // ---------------------------------------------------------------------------
 // During an Overload (9.2)
@@ -247,6 +248,8 @@ export function* overloadEnd(c: RunCtx): Effect {
   yield* asEffect(c, anomalyStep(c));
   log(c, "Overload End, step 4: clear Flares", "9.3");
   clearFlares(c);
+  // H7 Meltdown: after step 4, before step 5.
+  if (c.state.settings.heatModule) yield* asEffect(c, meltdown(c));
   // Step 5: back to the Command phase. Alerts made during these steps are resolved there.
   c.state.phase = "command";
   log(c, "Overload End, step 5: return to the Command phase", "9.3");
