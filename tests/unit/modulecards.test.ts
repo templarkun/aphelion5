@@ -7,7 +7,6 @@
 
 import { describe, expect, it } from "vitest";
 import { commandStep } from "../../src/engine/command.js";
-import { OpenQuestion } from "../../src/engine/effect.js";
 import { sectorState, tile } from "../../src/engine/field.js";
 import { moduleCost, moduleDef } from "../../src/engine/modules.js";
 import { overloadStep } from "../../src/engine/overload.js";
@@ -374,9 +373,10 @@ describe("Blue Modules", () => {
     const s = run(64, "", [A.option("Red"), A.option("Yellow")], { others: [[26, true], [21, false], [1, true]] });
     expect(s.player.modules.map((x) => x.energy.Red + x.energy.Yellow)).toEqual([0, 1, 0, 1]);
   });
-  m(65, "Salvage Siphon: open question Q6", () => {
-    tested.add(65);
-    expect(() => run(65, "(0,1): B_01 > fd.", [], { others: [[26, true]] })).toThrow(OpenQuestion);
+  m(65, "Salvage Siphon: energy per Bot on the chosen Module; other Modules lose theirs (Q6)", () => {
+    const s = run(65, "(0,1): B_01 > fd.", [A.option("Red")], { others: [[26, true], [21, false, { Yellow: 1 }]] });
+    expect(s.player.modules[1]!.energy.Red).toBe(1);
+    expect(s.player.modules[2]!.energy.Yellow).toBe(0);
   });
   m(66, "Deep Scan Probe: may put the top tile at the bottom", () => {
     const s = run(66, "(0,1): fd:B_01 > fd:G_05.", [A.yes()]);

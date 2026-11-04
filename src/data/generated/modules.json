@@ -1185,14 +1185,14 @@
     "colour": "Blue",
     "background": "light",
     "cost": 5,
-    "effect": "[1] Take the top tile from each of up to five different Dark sectors and look at them. [2] Put them face down on top of one Dark sector, in any order. [3] Remove 1 damage from your Flagship.",
+    "effect": "[1] Take the top tile from each of up to five different Dark sectors and look at them. [2] Put them face down on top of one Dark sector or Cleared sector, in any order. [3] Remove 1 damage from your Flagship.",
     "fields": {
       "energy_color": "Blue",
       "background": "light",
       "id": "71",
       "name": "Gravity Well",
       "cost": "5",
-      "effect": "[1] Take the top tile from each of up to five different Dark sectors and look at them. [2] Put them face down on top of one Dark sector, in any order. [3] Remove 1 damage from your Flagship."
+      "effect": "[1] Take the top tile from each of up to five different Dark sectors and look at them. [2] Put them face down on top of one Dark sector or Cleared sector, in any order. [3] Remove 1 damage from your Flagship."
     }
   },
   {

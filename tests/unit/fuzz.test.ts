@@ -139,7 +139,8 @@ describe("random play-throughs of the fixed text-play board", () => {
       endings.set(end, (endings.get(end) ?? 0) + 1);
     }
     expect(endings.get("not built yet") ?? 0).toBe(0);
-    // Open questions Q6 and Q7 may stop a run; nothing else may.
+    // No open question is left that a run could reach.
+    expect(endings.get("open question") ?? 0).toBe(0);
     expect(stats.overloadEnds).toBeGreaterThan(25);
     // Every run reaches a real ending (won, lost or conceded) or plays all its steps.
     for (const k of endings.keys()) expect(["phase missionEnd", "phase gameEnd", "steps done", "open question"]).toContain(k);

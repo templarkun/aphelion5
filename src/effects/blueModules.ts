@@ -1,6 +1,6 @@
 /** Blue Modules 51-76 (light background: Command phase). Many look at or move face-down tiles. */
 
-import { type Effect, OpenQuestion, type RunCtx, ask, log } from "../engine/effect.js";
+import { type Effect, type RunCtx, ask, log } from "../engine/effect.js";
 import { type Ctx, choosableUnits, darkSectors, describe, fieldMap, level, sectorKeys, sectorState, stack, tile, topTileId, unitType } from "../engine/field.js";
 import { moduleDef } from "../engine/modules.js";
 import { markSeen, requestOverload, reveal, swap } from "../engine/moves.js";
@@ -9,7 +9,7 @@ import { afterTopTileLeaves, checkSleepers, damageFlagship, destroy, placeFuse, 
 import { fromKey, key } from "../geometry/hex.js";
 import { chooseUnit } from "./helpers.js";
 import { boostEach, chooseOneOf, chooseRow, chooseUnits, countType, hitEach, horizontalRows, placeOneEnergy, readyIds, revealUnits, unitsIn } from "./kit.js";
-import { cleared, fewestType, mod, otherExhausted, revealAsMany } from "./modules.js";
+import { cleared, fewestType, mod, otherExhausted, returnEnergy, revealAsMany } from "./modules.js";
 
 const M = (id: number) => `Module ${id}`;
 const is = (c: Ctx, ...types: string[]) => (u: TileId) => types.includes(unitType(c, u));
@@ -224,11 +224,16 @@ mod(64, {
 
 /**
  * 65 Salvage Siphon - [1] Choose one ready Module other than this one. [2] Place 1 energy on it for each Bot.
- * [3] Return all energy on your other Modules to the Supply. Open question Q6: "other" than which Module?
+ * [3] Return all energy on your other Modules to the Supply. Designer, Q6: "other" = other than the Module
+ * chosen in [1], which keeps its energy.
  */
 mod(65, {
-  run: function* () {
-    throw new OpenQuestion("Q6", 'Salvage Siphon step [3] "Return all energy on your other Modules": other than Salvage Siphon (which also empties the Module just filled in [2]), or other than the Module chosen in [1]?');
+  run: function* (c, run) {
+    const chosen = yield* chooseModule(c, "Salvage Siphon: choose a ready Module other than this one.", M(65), readyIds(c).filter((x) => x !== run.id));
+    if (chosen === undefined) return;
+    const n = countType(c, "Bot");
+    for (let i = 0; i < n; i++) if (!(yield* placeOneEnergy(c, chosen, M(65)))) break;
+    returnEnergy(c, c.state.player.modules.map((m) => m.id).filter((m) => m !== chosen), M(65));
   },
 });
 
@@ -324,7 +329,7 @@ mod(70, {
   },
 });
 
-/** 71 Gravity Well - [1] The top tile of each of up to five different Dark sectors: look at them. [2] Face down on top of one Dark sector, in any order. [3] Remove 1 damage from your Flagship. */
+/** 71 Gravity Well - [1] The top tile of each of up to five different Dark sectors: look at them. [2] Face down on top of one Dark or Cleared sector, in any order. [3] Remove 1 damage from your Flagship. */
 mod(71, {
   run: function* (c) {
     const ds = darkSectors(c.state);
@@ -338,9 +343,9 @@ mod(71, {
     if (taken.length > 0) {
       markSeen(c, taken);
       log(c, `Gravity Well: you take ${names(c, taken)}`, M(71));
-      const to = yield* chooseSectorFrom(c, "Gravity Well: put them on top of which Dark sector?", M(71), darkSectors(c.state));
-      if (to === undefined) throw new OpenQuestion("Q7", "Gravity Well took the top tile of every Dark sector and none is Dark any more. Where do the taken tiles go?");
-      const target = to;
+      // Designer, Q7 (card text changed): "one Dark sector or Cleared sector".
+      const options = sectorKeys(c.state).filter((k) => ["dark", "cleared"].includes(sectorState(c.state, k)));
+      const target = (yield* chooseSectorFrom(c, "Gravity Well: put them on top of which Dark or Cleared sector?", M(71), options))!;
       // Order: choose the tile for each place, bottom first.
       let left = [...taken];
       while (left.length > 0) {

@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import { commandStep, legalActions } from "../../src/engine/command.js";
-import { OpenQuestion, runEffect } from "../../src/engine/effect.js";
+import { runEffect } from "../../src/engine/effect.js";
 import { sectorState, tile } from "../../src/engine/field.js";
 import { moduleDef } from "../../src/engine/modules.js";
 import { overloadStep } from "../../src/engine/overload.js";
@@ -148,8 +148,15 @@ describe("batch 6 - BLUE", () => {
     expect(tokensAt(after, "0,1")).toBe("[BAR]");
   });
 
-  it("T6_BLU_05 Salvage Siphon: open question Q6", () => {
-    expect(() => act(board("T6_BLU_05", [[65, true], [26, true]]), [A.option("runModule")])).toThrow(OpenQuestion);
+  it("T6_BLU_05 Salvage Siphon: the chosen Module keeps its energy (Q6)", () => {
+    const s = board("T6_BLU_05", [[65, true], [26, true], [1, true, { Yellow: 2 }]]);
+    s.player.reserve.Yellow = 0; // Demolition Blast cannot be run, so Salvage Siphon is the only choice
+    s.supply.energy.Yellow = 8;
+    s.player.reserve.Red = 0; // Red in the Supply, so it can be placed
+    s.supply.energy.Red = 10;
+    const after = act(s, [A.option("runModule"), A.option("26"), A.option("Red"), A.option("Red")]);
+    expect(after.player.modules[1]!.energy).toEqual({ Yellow: 0, Red: 2, Blue: 0 });
+    expect(after.player.modules[2]!.energy.Yellow).toBe(0);
   });
 
   it("T6_BLU_06 Gravity Well: the tiles go in the order you choose", () => {
@@ -161,8 +168,13 @@ describe("batch 6 - BLUE", () => {
     expect(after.flagship).toEqual([6, 6, 6]);
   });
 
-  it("T6_BLU_07 Gravity Well leaves no Dark sector: open question Q7", () => {
-    expect(() => act(board("T6_BLU_07", [[71, true]]), [A.option("runModule"), A.sectors("0,1")])).toThrow(OpenQuestion);
+  it("T6_BLU_07 Gravity Well may put the tiles on a Cleared sector (Q7)", () => {
+    const s = board("T6_BLU_07", [[71, true]]);
+    const t = s.field["0,1"]![0]!;
+    const after = act(s, [A.option("runModule"), A.sectors("0,1"), A.sectors("0,2")]);
+    expect(sectorState(after, "0,1")).toBe("cleared");
+    expect(after.field["0,2"]).toEqual([t]);
+    expect(sectorState(after, "0,2")).toBe("dark");
   });
 
   it("T6_BLU_08 Seismic Sonar: one look per other exhausted Module, then an Overload", () => {
