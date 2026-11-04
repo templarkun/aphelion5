@@ -1,8 +1,8 @@
 ################################################################################
 # APHELION 5 - TEST SCENARIOS, BATCH 6: MODULES (structured, machine-oriented)
-# DRAFT 2026-11-03, written by Claude from "Modules.txt" (its conventions 1-9),
-# Core Rules 5.3, 8.6, 9.1 and 11.1, and the CLAUDE.md decisions, at the designer's
-# request. Awaiting the designer's agreement; once agreed, copy it into the Project as
+# Written 2026-11-03 by Claude from "Modules.txt" (its conventions 1-9), Core Rules 5.3,
+# 8.6, 9.1 and 11.1, and the CLAUDE.md decisions, at the designer's request. AGREED by the
+# designer 2026-11-04; Q6 and Q7 answered. Copy it into the Project as
 # "claude/Test scenarios batch 6.txt".
 #
 # Every Module also has its own card test in the program. This batch holds the cases
