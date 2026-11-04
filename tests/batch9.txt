@@ -110,7 +110,7 @@ then: the first is resolved. The pop-up of the last Alert on the Field also show
       "This is the last Alert on the Field. After it, you can end the Overload (9.2)." No extra
       pop-up. Once no Alert remains, "End the Overload" appears in the top bar (highlighted)
       and the other Overload actions stay highlighted.
-note: see open question Q8 (does resolving the last Alert end the Overload by itself?).
+note: Q8 answered 2026-11-04: as 9.2 says, you choose when to end the Overload.
 
 id: T9_ACT_08
 title: In an Overload, everything clickable is highlighted
@@ -128,11 +128,10 @@ title: Flare energy: click the Modules
 source: designer 2026-11-04 (point 13); Core Rules 4.6
 given: a Flare showing 1 Blue energy is revealed; three ready Modules.
 when: look; click a Module
-then: "Place 1 Blue energy on ready Modules." The ready Modules are highlighted; others are
-      greyed out. Each click adds 1 (shown as "+1" with a "-" to take it back); the last one
-      placed answers at once (Undo takes it back).
-note: the designer asked that Modules of other colours be greyed out too. That changes Core
-      Rules 4.6 / 5.3 (energy may go on any ready Module) - open question Q9.
+then: "Place 1 Blue energy on ready Blue Modules." The ready Blue Modules are highlighted;
+      every other Module is greyed out. Each click adds 1 (shown as "+1" with a "-" to take it
+      back); the last one placed answers at once (Undo takes it back). With no ready Blue Module
+      there is no question: the Blue stays in the Supply (Core Rules 5.3, Q9).
 
 id: T9_CHO_02
 title: Damage and repairs to Bays, energy colours: click them
@@ -159,3 +158,27 @@ given: "Reveal which Dark sector?" from an effect, or an Attack's target.
 when: look at the question panel
 then: only the prompt and "Click a highlighted unit (sector) on the Field."; for several, a
       Confirm button with the count. The answers are on the Field.
+
+id: T9_CHO_05
+title: M_03 and M_06: no Passive menu before the Attack
+source: designer 2026-11-04; Core Rules 4.2; unit file M_03, M_06
+given: the Command phase; M_03 next to a Bot and next to a Dark sector.
+when: click M_03; click "Attack"
+then: "M_03 ... Attacks: click a unit to Attack it, or a sector to Move there first." The Bot
+      and every sector M_03 may Move to (adjacent Dark or Cleared; with V1_M03_U1 through
+      several Dark sectors) are highlighted. Clicking the Bot Attacks it at once. Clicking a
+      sector Moves M_03 there, then asks for the target of the Attack. M_06 alike: a unit with
+      no tokens to Swap with first; a unit that is both a target and a Swap partner opens a
+      pop-up with both.
+
+id: T9_CHO_06
+title: Facing: rotate buttons on the unit
+source: designer 2026-11-04; Core Rules 3.7
+given: Reveal a Dark sector whose top tile has arrows (also: an Allied Drop placement, S_25,
+       V1_M02_U1).
+when: look; click the clockwise button twice; then take your next action
+then: no list. The unit shows two round buttons: anticlockwise (left) and clockwise (right);
+      its arrows turn with each click. The rest of the screen already offers what comes next,
+      and the panel says "Your next click keeps this facing." The next action keeps facing 2
+      (the log says so) and the buttons are gone. If what comes next would show new hidden
+      information, a "Done" button keeps the facing first.

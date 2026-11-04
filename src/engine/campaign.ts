@@ -336,7 +336,7 @@ function* alliedDrop(c: RunCtx, lvl: number): Effect {
   const ts = tile(s, t);
   ts.faceUp = true;
   ts.tokens = noTokens();
-  if (unitDef(c, t).arrows.length > 0) ts.facing = Number((yield* ask(c, { kind: "option", prompt: `${pick}: choose its facing.`, rule: "3.7", options: [0, 1, 2, 3, 4, 5].map((f) => ({ id: String(f), label: f === 0 ? "as printed" : `turned ${f} clockwise` })) })).value) as 0;
+  if (unitDef(c, t).arrows.length > 0) ts.facing = Number((yield* ask(c, { kind: "option", prompt: `${pick}: choose its facing.`, rule: "3.7", facing: { tile: t, start: 0 }, options: [0, 1, 2, 3, 4, 5].map((f) => ({ id: String(f), label: f === 0 ? "as printed" : `turned ${f} clockwise` })) })).value) as 0;
   s.field[k]!.push(t);
   log(c, `Allied Drop: ${pick} on (${k})`, "7.3");
 }

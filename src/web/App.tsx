@@ -145,10 +145,17 @@ export function App() {
       data={data}
       game={game}
       notice={notice}
-      onAnswer={(a) => {
-        const { game: g, result } = playAnswer(data, game, a);
-        if (result.status === "illegal") return setNotice(`Not allowed: ${result.reason}`);
-        if (result.status === "blocked") return setNotice(`Not available: ${result.reason}`);
+      onAnswer={(answers) => {
+        // Several answers in a row (a facing kept by the next click, then that click).
+        let g = game;
+        for (const a of answers) {
+          const r = playAnswer(data, g, a);
+          if (r.result.status === "illegal" || r.result.status === "blocked") {
+            if (g !== game) update(g);
+            return setNotice(`${r.result.status === "illegal" ? "Not allowed" : "Not available"}: ${r.result.reason}`);
+          }
+          g = r.game;
+        }
         setNotice(undefined);
         update(g);
       }}
@@ -297,7 +304,7 @@ interface GameProps {
   data: GameData;
   game: Game;
   notice?: string | undefined;
-  onAnswer: (a: Answer) => void;
+  onAnswer: (answers: Answer[]) => void;
   onUndo: () => void;
   canUndo: () => boolean;
   onExport: () => void;
@@ -361,7 +368,38 @@ interface Confirm {
 
 function GameScreen(p: GameProps) {
   const { data, game } = p;
-  const v = game.view;
+  const real = game.view;
+  const realQ = real.status === "question" ? real.question : undefined;
+  // A facing question (3.7) has no list: rotate buttons sit on the unit. The screen already shows
+  // what comes next with the facing shown; the next click keeps that facing and then counts.
+  // If keeping it would show new hidden information, a Done button keeps it instead.
+  const faceQ = realQ?.kind === "option" && realQ.facing ? realQ : undefined;
+  const [turn, setTurn] = usePerQuestion<number>(realQ, faceQ?.facing?.start ?? 0);
+  const faceAnswer: Answer | undefined = faceQ ? { kind: "option", value: String(turn) } : undefined;
+  const ahead = useMemo(() => (faceAnswer ? playAnswer(data, game, faceAnswer) : undefined), [data, game, turn]); // eslint-disable-line react-hooks/exhaustive-deps
+  const aheadOk =
+    ahead !== undefined &&
+    ahead.result.status !== "illegal" &&
+    ahead.result.status !== "blocked" &&
+    ahead.game.view.status === "question" &&
+    !ahead.game.view.question.facing &&
+    ahead.game.view.state.hiddenInfo === real.state.hiddenInfo;
+  const v = aheadOk ? ahead.game.view : real;
+  const send = (a: Answer) => p.onAnswer(aheadOk && faceAnswer ? [faceAnswer, a] : [a]);
+  const rotate = faceQ
+    ? {
+        tile: faceQ.facing!.tile,
+        facing: turn,
+        onTurn: (dir: 1 | -1) => {
+          const ids = faceQ.options.map((o) => Number(o.id));
+          let f = turn;
+          do f = (f + dir + 6) % 6;
+          while (!ids.includes(f));
+          setTurn(f);
+        },
+        done: aheadOk ? undefined : () => faceAnswer && p.onAnswer([faceAnswer]),
+      }
+    : undefined;
   const s = v.state;
   const c = { data, state: s };
   const dark = useDark();
@@ -380,19 +418,29 @@ function GameScreen(p: GameProps) {
   const answer = (id: string) => {
     setPopup(undefined);
     setConfirm(undefined);
-    p.onAnswer({ kind: "option", value: id });
+    send({ kind: "option", value: id });
   };
   const inOverload = s.phase === "overload";
 
   // What the Field offers: action menu targets, or the units / sectors a question asks for.
   const pickIds = q && (q.kind === "option" || q.kind === "order") && q.pick === "units" ? q.options.map((o) => o.id) : [];
+  // Options that name a unit or a sector (e.g. M_03: Attack this unit, or Move to this sector first).
+  const onField = new Map<string, Option[]>();
+  if (!actors && q && (q.kind === "option" || q.kind === "order"))
+    for (const o of q.options) {
+      const k = o.on?.kind === "unit" ? o.on.id : o.on?.kind === "sector" ? o.on.key : undefined;
+      if (k !== undefined) onField.set(k, [...(onField.get(k) ?? []), o]);
+    }
+  const onFieldUnits = [...onField.keys()].filter((k) => s.tiles[k] !== undefined);
+  const onFieldSectors = [...onField.keys()].filter((k) => s.field[k] !== undefined);
   const splitOn = q?.kind === "split" ? q.pick : undefined;
   const choosable = actors
     ? { sectors: [...actors.sectors.keys()], units: [...actors.units.keys()] }
     : {
         sectors: q?.kind === "sectors" ? q.options : [],
-        units: q?.kind === "units" ? q.options : q?.kind === "split" && splitOn === "units" ? q.buckets.map((b) => b.id) : pickIds,
+        units: q?.kind === "units" ? q.options : q?.kind === "split" && splitOn === "units" ? q.buckets.map((b) => b.id) : [...pickIds, ...onFieldUnits],
       };
+  if (!actors && onFieldSectors.length) choosable.sectors = [...choosable.sectors, ...onFieldSectors];
   const splitSum = Object.values(split).reduce((a, b) => a + b, 0);
   const addSplit = (id: string) => {
     if (q?.kind !== "split") return;
@@ -403,7 +451,7 @@ function GameScreen(p: GameProps) {
     const next = { ...split, [id]: n + 1 };
     setSplit(next);
     // The last one placed answers at once (Undo takes it back).
-    if (splitSum + 1 === q.total) p.onAnswer({ kind: "split", value: next });
+    if (splitSum + 1 === q.total) send({ kind: "split", value: next });
   };
   const subSplit = (id: string) => setSplit((x) => ({ ...x, [id]: Math.max(0, (x[id] ?? 0) - 1) }));
 
@@ -421,10 +469,15 @@ function GameScreen(p: GameProps) {
       return;
     }
     if (!q) return;
+    const here = onField.get(id);
+    if (here && (q.kind === "option" || q.kind === "order")) {
+      if (here.length === 1) return send({ kind: q.kind, value: here[0]!.id } as Answer);
+      return openPopup(s.tiles[id] ? describe(c, id) : `Sector (${id})`, here);
+    }
     if (q.kind === "split") return addSplit(id);
-    if ((q.kind === "option" || q.kind === "order") && pickIds.includes(id)) return p.onAnswer({ kind: q.kind, value: id } as Answer);
+    if ((q.kind === "option" || q.kind === "order") && pickIds.includes(id)) return send({ kind: q.kind, value: id } as Answer);
     if (q.kind !== "units" && q.kind !== "sectors") return;
-    if (q.min === 1 && q.max === 1) return p.onAnswer({ kind: q.kind, value: [id] } as Answer);
+    if (q.min === 1 && q.max === 1) return send({ kind: q.kind, value: [id] } as Answer);
     setSelected((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : xs.length < q.max ? [...xs, id] : xs));
   };
 
@@ -434,7 +487,7 @@ function GameScreen(p: GameProps) {
       const o = actors.modules.get(id);
       return o ? { can: true, onClick: () => answer(o.id) } : { can: false };
     }
-    if (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules" && q.options.some((o) => o.id === String(id))) return { can: true, onClick: () => p.onAnswer({ kind: q.kind, value: String(id) } as Answer) };
+    if (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules" && q.options.some((o) => o.id === String(id))) return { can: true, onClick: () => send({ kind: q.kind, value: String(id) } as Answer) };
     if (q?.kind === "split" && splitOn === "modules" && q.buckets.some((b) => b.id === String(id))) return { can: true, onClick: () => addSplit(String(id)), count: split[String(id)] ?? 0 };
     return { can: false };
   };
@@ -580,7 +633,7 @@ function GameScreen(p: GameProps) {
 
       <section className="center">
         {hasField ? (
-          <FieldView data={data} state={s} choosable={choosable} selected={[...selected, ...Object.keys(split).filter((k) => (split[k] ?? 0) > 0)]} onPick={pick} onHover={setHover} showHidden={s.settings.developerMode} dark={dark} />
+          <FieldView data={data} state={s} rotate={rotate} choosable={choosable} selected={[...selected, ...Object.keys(split).filter((k) => (split[k] ?? 0) > 0)]} onPick={pick} onHover={setHover} showHidden={s.settings.developerMode} dark={dark} />
         ) : (
           <div className="empty-field">{PHASE[s.phase]}</div>
         )}
@@ -619,11 +672,25 @@ function GameScreen(p: GameProps) {
 
       <section className="question panel" aria-live="polite">
         {p.notice && <p className="notice">{p.notice}</p>}
-        {q ? (
+        {rotate && (
+          <div className="facing-note">
+            <p className="prompt">
+              {describe({ data, state: real.state }, rotate.tile)}: turn it with the ⟲ ⟳ buttons on the unit. <span className="rule">rule 3.7</span>
+            </p>
+            {rotate.done ? (
+              <button className="primary" onClick={rotate.done}>
+                Done
+              </button>
+            ) : (
+              <p className="small">Your next click keeps this facing.</p>
+            )}
+          </div>
+        )}
+        {rotate?.done ? null : q ? (
           actors ? (
             <ActionPrompt state={s} q={q} actors={actors} />
           ) : (
-            <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={p.onAnswer} split={split} onResetSplit={() => setSplit({})} />
+            <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
           )
         ) : (
           <GameOver state={s} onLeave={p.onLeave} />
@@ -807,13 +874,14 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
     case "order": {
       // Options naming things on the screen are answered there; the rest stay buttons here.
       const onScreen = (id: string) =>
-        q.pick === "modules" ? state.player.modules.some((m) => String(m.id) === id) : q.pick === "units" ? state.tiles[id] !== undefined : false;
+        q.options.find((o) => o.id === id)?.on !== undefined ||
+        (q.pick === "modules" ? state.player.modules.some((m) => String(m.id) === id) : q.pick === "units" ? state.tiles[id] !== undefined : false);
       const rest = q.options.filter((o) => !onScreen(o.id));
       const there = q.options.length - rest.length;
       return (
         <div>
           {head}
-          {there > 0 && <p className="small">Click {q.pick === "modules" ? "one of the highlighted Modules" : "one of the highlighted units on the Field"}.</p>}
+          {there > 0 && <p className="small">Click {q.pick === "modules" ? "one of the highlighted Modules" : "a highlighted unit or sector on the Field"}.</p>}
           <div className="choices">
             {rest.map((o) => (
               <button key={o.id} className={o.id === "concede" ? "danger" : ""} onClick={() => p.onAnswer({ kind: q.kind, value: o.id } as Answer)}>

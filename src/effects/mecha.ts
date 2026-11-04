@@ -99,7 +99,7 @@ registerAbility("M_07", function* (c, self) {
 /** V1_M02_U1 - Command: Turn this Mecha to face any direction. */
 registerAbility("V1_M02_U1", function* (c, self) {
   const t = tile(c.state, self!);
-  const a = yield* ask(c, { kind: "option", prompt: "V1_M02_U1: turn M_02 to which facing?", rule: "V1_M02_U1", options: [0, 1, 2, 3, 4, 5].map((f) => ({ id: String(f), label: f === t.facing ? `${f} (as now)` : String(f) })) });
+  const a = yield* ask(c, { kind: "option", prompt: "V1_M02_U1: turn M_02 to which facing?", rule: "V1_M02_U1", facing: { tile: self!, start: t.facing }, options: [0, 1, 2, 3, 4, 5].map((f) => ({ id: String(f), label: f === t.facing ? `${f} (as now)` : String(f) })) });
   t.facing = Number(a.value) as 0;
   log(c, `M_02 now faces ${t.facing}`, "V1_M02_U1");
 });

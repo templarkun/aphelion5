@@ -38,7 +38,7 @@ async function setup(pg) {
 async function untilAction(pg) {
   const q = pg.locator(".question");
   for (let i = 0; i < 30; i++) {
-    const prompt = (await q.locator(".prompt").textContent()) ?? "";
+    const prompt = (await q.locator(".prompt").last().textContent()) ?? "";
     if (/^Your action/.test(prompt)) return prompt;
     const buttons = q.locator(".choices button");
     if (await buttons.count()) {
@@ -78,7 +78,7 @@ await page.locator(".popup").getByRole("menuitem", { name: "Reveal" }).click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: `${out}/ui-after-reveal.png` });
 // Run a Module by clicking it, if one can run (it may then ask for targets).
-const afterReveal = (await panel.locator(".prompt").textContent()) ?? "";
+const afterReveal = (await panel.locator(".prompt").last().textContent()) ?? "";
 const canModules = await page.locator(".module.can").count();
 // Overhaul asks to confirm while the Flagship is not Crippled.
 let overhaulConfirm = false;
@@ -86,6 +86,46 @@ if (/^Your action/.test(afterReveal)) {
   await page.locator(".overhaul button").click();
   overhaulConfirm = (await page.getByRole("dialog", { name: "Overhaul now?" }).count()) === 1;
   await page.getByRole("button", { name: "Cancel" }).click();
+}
+async function revealSomething(pg) {
+  const hits = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]");
+  for (let n = hits.length - 1; n >= 0; n--) {
+    await clickField(pg, n);
+    const rev = pg.locator(".popup [role=menuitem]", { hasText: "Reveal" });
+    if (await rev.count()) return rev.click();
+    await pg.keyboard.press("Escape");
+  }
+}
+// Facing (3.7): reveal on fresh games until a unit with arrows shows the rotate buttons.
+let rotateShown = false;
+let facingKept = "";
+for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
+  if (rotateShown) break;
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(url);
+  await pg.locator("input[placeholder=random]").fill(String(seed));
+  await pg.getByRole("button", { name: "Start" }).click();
+  await setup(pg);
+  await untilAction(pg);
+  for (let i = 0; i < 4 && !rotateShown; i++) {
+    if (!/^Your action/.test((await pg.locator(".question .prompt").last().textContent()) ?? "")) break;
+    await revealSomething(pg);
+    await pg.waitForTimeout(200);
+    const rot = JSON.parse((await pg.locator(".field").getAttribute("data-rotate")) ?? "[]");
+    if (!rot.length) continue;
+    rotateShown = true;
+    const box = await pg.locator(".field").boundingBox();
+    await pg.mouse.click(box.x + rot[1].x, box.y + rot[1].y); // turn clockwise once
+    await pg.waitForTimeout(150);
+    await pg.screenshot({ path: `${out}/ui-facing.png` });
+    if (await pg.getByRole("button", { name: "Done" }).count()) await pg.getByRole("button", { name: "Done" }).click();
+    else await revealSomething(pg); // the next action keeps the facing
+    await pg.waitForTimeout(200);
+    await pg.getByRole("button", { name: "Log", exact: true }).click();
+    facingKept = (await pg.locator(".log li").allTextContents()).find((l) => / facing 1 /.test(l)) ?? "";
+  }
+  await pg.close();
 }
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
 mobile.on("pageerror", (e) => errors.push(e.message));
@@ -96,7 +136,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || !noMenu || !closedByOutside || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || !noMenu || !rotateShown || !facingKept || !closedByOutside || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

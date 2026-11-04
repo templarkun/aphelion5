@@ -204,6 +204,7 @@ export function* reveal(c: RunCtx, k: SectorKey, rule = "8.5"): Effect<TileId> {
       kind: "option",
       prompt: `${t.unitId} is revealed in (${k}). Choose its facing.`,
       rule: "3.7",
+      facing: { tile: id, start: 0 },
       options: choices.map((x) => ({ id: String(x), label: x === 0 ? "as printed" : `turned ${x} side${x === 1 ? "" : "s"} clockwise` })),
     });
     f = Number(a.value);

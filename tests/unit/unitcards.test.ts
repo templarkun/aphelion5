@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { commandStep } from "../../src/engine/command.js";
+import { runEffect } from "../../src/engine/effect.js";
 import type { Answer } from "../../src/engine/questions.js";
 import { sectorState, tile, unitAt } from "../../src/engine/field.js";
 import { overloadStep } from "../../src/engine/overload.js";
@@ -451,6 +452,16 @@ describe("Mecha upgrades", () => {
     const s0 = board(CMD + "V1_M03_U1 filled. (0,-1): M_03 > fd. (0,0): fd. (0,1): fd. (0,2): B_01 > fd.");
     const s = play(s0, (c) => commandStep(c), [A.option("commandMecha"), A.option("attack"), A.option("move:0,1")]).state;
     gone(s, "0,2");
+  });
+  card("M_03", "one question: click a unit to Attack it, or a sector to Move there first", () => {
+    const s0 = board(CMD + "(0,0): M_03 > fd. (0,1): B_01 > fd. (1,0): fd.");
+    const r = runEffect(data(), s0, (c) => commandStep(c), [A.option("commandMecha"), A.option("attack")]);
+    if (r.status !== "question" || r.question.kind !== "option") throw new Error("expected the Attack question");
+    const b = at(s0, "0,1");
+    expect(r.question.options.find((o) => o.id === `attack:${b}`)?.on).toEqual({ kind: "unit", id: b });
+    expect(r.question.options.some((o) => o.id === "move:1,0" && o.on?.kind === "sector")).toBe(true);
+    const s = play(s0, (c) => commandStep(c), [A.option("commandMecha"), A.option("attack"), A.option(`attack:${b}`)]).state;
+    gone(s, "0,1");
   });
   card("V1_M03_U2", "[Overload] Expend: 1 damage to one adjacent unit; V1_M03_U3: and one other", () => {
     const g = "V1_M03_U2 filled. (0,0): M_03 > fd. (0,1): B_01 > fd. (1,0): B_01 > fd.";

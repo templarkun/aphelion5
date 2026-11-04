@@ -232,6 +232,7 @@ sentinel("S_25", function* (c, self) {
     kind: "option",
     prompt: "S_25: you may rotate it. Choose its facing.",
     rule: "S_25",
+    facing: { tile: self, start: tile(c.state, self).facing },
     options: [0, 1, 2, 3, 4, 5].map((f) => ({ id: String(f), label: f === tile(c.state, self).facing ? `${f} (keep)` : String(f) })),
   });
   tile(c.state, self).facing = Number(a.value) as 0;

@@ -24,6 +24,8 @@ export interface FieldProps {
   onHover: (sector: string | undefined) => void;
   showHidden: boolean;
   dark: boolean;
+  /** A facing being chosen (3.7): rotate buttons on that unit, drawn at `facing`. */
+  rotate?: { tile: TileId; facing: number; onTurn: (dir: 1 | -1) => void } | undefined;
 }
 
 const TYPE_COLOUR: Record<string, number> = {
@@ -92,7 +94,7 @@ export function FieldView(p: FieldProps) {
   function draw(): void {
     const a = app.current;
     if (!a || !ready.current || !host.current) return;
-    const { data, state, choosable, selected, onPick, onHover, showHidden, dark } = props.current;
+    const { data, state, choosable, selected, onPick, onHover, showHidden, dark, rotate } = props.current;
     const c: Ctx = { data, state };
     a.stage.removeChildren().forEach((x) => x.destroy({ children: true }));
     const keys = sectorKeys(state);
@@ -118,6 +120,7 @@ export function FieldView(p: FieldProps) {
 
     // Where the clickable sectors are, in CSS pixels of the Field (for the browser check).
     const hits: { k: string; x: number; y: number }[] = [];
+    const rotHits: { dir: number; x: number; y: number }[] = [];
     for (const p of pos) {
       const cx = ox + p.x * size;
       const cy = oy + p.y * size;
@@ -165,7 +168,8 @@ export function FieldView(p: FieldProps) {
         if (b.length) label(b.join(" "), size * 0.26, size * 0.16, t.tokens.alert || t.tokens.wreck ? 0x9b1c1c : 0x1d1d1f, true);
         label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.14);
         // Arrows on their sides, turned by the tile's facing (3.8).
-        const sides = arrowSides(unitDef(c, unit!).arrows, t.facing);
+        const turning = rotate?.tile === unit;
+        const sides = arrowSides(unitDef(c, unit!).arrows, turning ? (rotate!.facing as typeof t.facing) : t.facing);
         for (const s of sides) {
           const ang = SIDE_ANGLE[s]!;
           const ex = cx + Math.cos(ang) * size * 0.82;
@@ -179,9 +183,33 @@ export function FieldView(p: FieldProps) {
           arr.eventMode = "none";
           root.addChild(arr);
         }
+        if (turning) {
+          // Two round buttons inside the hex: anticlockwise (left), clockwise (right).
+          for (const [dir, dx, glyph] of [[-1, -0.47, "⟲"], [1, 0.47, "⟳"]] as const) {
+            const bx = cx + dx * size;
+            const by = cy + size * 0.29; // lower corners: arrows sit on the sides, never on corners
+            const btn = new Graphics();
+            btn.circle(bx, by, size * 0.15).fill({ color: 0xffffff }).stroke({ width: 3, color: 0xffb000 });
+            btn.eventMode = "static";
+            btn.cursor = "pointer";
+            btn.on("pointertap", (e) => {
+              e.stopPropagation();
+              rotate!.onTurn(dir);
+            });
+            root.addChild(btn);
+            const tx = new Text({ text: glyph, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(12, size * 0.26), fill: 0x1d1d1f, fontWeight: "700" } });
+            tx.anchor.set(0.5);
+            tx.x = bx;
+            tx.y = by;
+            tx.eventMode = "none";
+            root.addChild(tx);
+            rotHits.push({ dir, x: Math.round(bx), y: Math.round(by) });
+          }
+        }
       }
     }
     host.current.dataset.choosable = JSON.stringify(hits);
+    host.current.dataset.rotate = JSON.stringify(rotHits);
   }
 
   return <div ref={host} className="field" aria-label="The Field" />;

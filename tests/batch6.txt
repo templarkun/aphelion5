@@ -191,7 +191,7 @@ then: Charged Beam holds 2 Red (2 Bots). Every other Module's energy returns to 
       Demolition Blast holds none.
 note: RESOLVED 2026-11-04 (open question Q6) - step [3] means the Modules other than the one
       chosen in [1].
-note: CHANGED 2026-11-04 (designer, Q9) - energy you choose to place goes only on ready Modules of
+      CHANGED 2026-11-04 (designer, Q9) - energy you choose to place goes only on ready Modules of
       its colour; with none, it stays in the Supply (Core Rules 4.6, 5.3).
 
 id: T6_BLU_06

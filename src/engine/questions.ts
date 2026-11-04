@@ -28,6 +28,12 @@ interface Base {
    * followed by the choices it names.
    */
   shortcuts?: Option[];
+  /**
+   * A facing question (3.7): option ids are facings "0".."5" for this tile.
+   * The screen shows rotate buttons on the unit instead of a list; `start` is
+   * the facing it shows first.
+   */
+  facing?: { tile: TileId; start: number };
 }
 
 /** A thing on the screen an option belongs to. */

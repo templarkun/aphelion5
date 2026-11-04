@@ -148,3 +148,5 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .popup-note { margin: 4px 2px 2px; padding: 6px 8px; border-radius: 6px; background: var(--overload); color: var(--warn); font-size: 12px; font-weight: 600; }
 .reserve { display: flex; flex-wrap: wrap; gap: 6px; }
 .reserve > span { padding: 2px 6px; border-radius: 6px; }
+.facing-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+.facing-note .prompt { margin: 0; }

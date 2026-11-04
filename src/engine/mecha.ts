@@ -10,6 +10,7 @@ import { ability } from "../effects/registry.js";
 import { type Effect, type RunCtx, ask, log } from "./effect.js";
 import { type Ctx, adjacentUnits, canBeChosen, describe, fieldMap, isUnit, sectorOf, strength, tile, unitAt, unitDef, units } from "./field.js";
 import { isOpenSector, move, swap } from "./moves.js";
+import type { Target } from "./questions.js";
 import { type SectorKey, type TileId, hasAnyToken } from "./state.js";
 import { type HitResult, dealHit, destroy, gainEnergy } from "./tokens.js";
 import { fromKey, key } from "../geometry/hex.js";
@@ -97,6 +98,8 @@ export function attackTargets(c: Ctx, id: TileId): TileId[] {
 export interface PreAttack {
   id: string;
   label: string;
+  /** Where the player clicks for it: the sector to Move to, or the unit to Swap with. */
+  on: Target;
   apply: (c: Ctx) => void;
 }
 
@@ -107,13 +110,13 @@ function preAttackSteps(c: Ctx, id: TileId): PreAttack[] {
   if (d === "M_03") {
     for (const path of openPaths(c, from, hasUpgrade(c, id, "V1_M03_U1"))) {
       const to = path[path.length - 1]!;
-      out.push({ id: `move:${to}`, label: `Move to (${to}) first`, apply: (cc) => path.forEach((k) => move(cc, id, k, "M_03")) });
+      out.push({ id: `move:${to}`, label: `Move to (${to}) first`, on: { kind: "sector", key: to }, apply: (cc) => path.forEach((k) => move(cc, id, k, "M_03")) });
     }
   }
   if (d === "M_06") {
     for (const u of units(c.state)) {
       if (u === id || !canBeChosen(c, u) || hasAnyToken(tile(c.state, u).tokens)) continue;
-      out.push({ id: `swap:${u}`, label: `Swap with ${describe(c, u)} first`, apply: (cc) => swap(cc, id, u, "M_06") });
+      out.push({ id: `swap:${u}`, label: `Swap with ${describe(c, u)} first`, on: { kind: "unit", id: u }, apply: (cc) => swap(cc, id, u, "M_06") });
     }
   }
   // Keep only steps that leave something to Attack.
@@ -185,13 +188,26 @@ export function* commandMecha(c: RunCtx, id: TileId, mode: CommandMode, chosen?:
   const str = strength(c, id)!;
   if (choice === "attack") {
     const pre = preAttackSteps(c, id);
+    let target: TileId | undefined;
     if (pre.length > 0) {
-      const stay = attackTargets(c, id).length > 0 ? [{ id: "stay", label: "Attack from here" }] : [];
-      const a2 = yield* ask(c, { kind: "option", prompt: `${describe(c, id)}: its Passive acts before the Attack.`, rule: unitDef(c, id).id, options: [...stay, ...pre.map(({ id: i, label }) => ({ id: i, label }))] });
-      pre.find((p) => p.id === a2.value)?.apply(c);
+      // One question (designer 2026-11-04): click a unit to Attack it now, or the Passive's
+      // sector (M_03: Move) or unit (M_06: Swap) to do that first and then choose the target.
+      const now = attackTargets(c, id).map((u) => ({ id: `attack:${u}`, label: `Attack ${describe(c, u)}`, on: { kind: "unit", id: u } as Target }));
+      const how = unitDef(c, id).id === "M_03" ? "a sector to Move there first" : "a unit with no tokens to Swap with it first";
+      const a2 = yield* ask(c, {
+        kind: "option",
+        prompt: `${describe(c, id)} Attacks: click a unit to Attack it, or ${how}.`,
+        rule: `4.2, ${unitDef(c, id).id}`,
+        options: [...now, ...pre.map(({ id: i, label, on }) => ({ id: i, label, on }))],
+      });
+      const v = a2.value as string;
+      if (v.startsWith("attack:")) target = v.slice("attack:".length);
+      else pre.find((p) => p.id === v)!.apply(c);
     }
-    const t = yield* ask(c, { kind: "units", prompt: `${describe(c, id)} Attacks: choose a unit.`, rule: "4.2", options: attackTargets(c, id), min: 1, max: 1 });
-    const target = (t.value as TileId[])[0]!;
+    if (target === undefined) {
+      const t = yield* ask(c, { kind: "units", prompt: `${describe(c, id)} Attacks: choose a unit.`, rule: "4.2", options: attackTargets(c, id), min: 1, max: 1 });
+      target = (t.value as TileId[])[0]!;
+    }
     log(c, `${describe(c, id)} Attacks ${describe(c, target)}`, "4.2");
     const hit = yield* dealHit(c, target, str, "4.2");
     destroy(c, id, "4.2");
