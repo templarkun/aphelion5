@@ -24,7 +24,7 @@ A solo campaign board game, being built as a TypeScript web app. The designer is
 - Undo back to the last new hidden information; unlimited in Developer mode. Remember tiles the player has looked at.
 - Placeholders first; designer's art added later in the spec's Art format. English first, language files later.
 - Flares may be flipped and moved by effects that do not choose them. Module with X cost run free uses X = 1. An effect finishes even if its own unit is destroyed. A hit is at least 1 damage: "deal 0 damage" does nothing at all (Q1). A face-up tile put on top by V1 Bay 3 / V2_P3 / V2_P3A is uncovered, not revealed; V1 Bay 3's "Then Reveal" is skipped as the sector is no longer Dark (Q2).
-- Mission Preparation step 6: the 2 Modules not kept go to the bottom of the Module deck in random order. Mission End step 4: Energy Gyros go to the bottom of the Energy deck in random order (Core Rules says "in any order"; designer 2026-11-04). Choosing Done with Upgrade points left warns that they are lost and asks the player to agree.
+- Mission Preparation step 6: the 2 Modules not kept go to the bottom of the Module deck in random order. Mission End step 4: Energy Gyros go to the bottom of the Energy deck in random order (designer 2026-11-04; Core Rules master rev 133 now says "in random order" in both places). Choosing Done with Upgrade points left warns that they are lost and asks the player to agree.
 
 ## Build stages (spec "Build stages")
 
