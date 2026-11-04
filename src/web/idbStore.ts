@@ -52,14 +52,34 @@ export async function writeSave(f: SaveFile): Promise<void> {
   }
 }
 
-/** Give the viewer a file to save. */
-export function download(name: string, text: string, type = "application/json"): void {
+type Downloads = { save(r: { filename: string; data: string }): Promise<unknown> };
+type Host = { use?: (name: string) => Promise<unknown> };
+
+/**
+ * Give the viewer a file to save. On the published claude.ai page plain
+ * downloads are blocked, so the page asks the viewer's "downloads"
+ * capability instead (the viewer confirms the save). Resolves with a short
+ * message for the player, or nothing.
+ */
+export async function download(name: string, text: string, type = "application/json"): Promise<string | undefined> {
+  const host = (window as unknown as { claude?: Host }).claude;
+  if (host?.use) {
+    const d = (await host.use("downloads")) as Downloads | null;
+    if (!d) return "Saving files is not available here: use Copy instead.";
+    try {
+      await d.save({ filename: name, data: text });
+      return undefined;
+    } catch (e) {
+      return (e as { code?: string }).code === "declined" ? "Not saved." : "The file could not be saved: use Copy instead.";
+    }
+  }
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement("a");
   a.href = url;
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return undefined;
 }
 
 /** Let the viewer pick a save file; resolves with its parsed contents. */

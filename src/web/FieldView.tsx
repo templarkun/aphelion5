@@ -5,6 +5,8 @@
  * Legal answers to the current question are highlighted and clickable.
  */
 
+// PixiJS without eval(): the published page (and app wrappers) may forbid it.
+import "pixi.js/unsafe-eval";
 import { Application, Container, Graphics, Text } from "pixi.js";
 import { useEffect, useRef } from "react";
 import type { GameData } from "../data/index.js";

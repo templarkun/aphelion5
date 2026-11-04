@@ -13,7 +13,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:ui": "vite build && node scripts/ui-check.mjs"
+    "test:ui": "vite build && node scripts/ui-check.mjs",
+    "build:artifact": "node scripts/build-artifact.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

@@ -4,7 +4,7 @@
  * question, and turns clicks and taps into answers.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { objectiveText } from "../cli/objective.js";
 import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
@@ -12,7 +12,7 @@ import { bayAbilities, orders } from "../engine/command.js";
 import { describe, sectorKeys, tile, unitDef } from "../engine/field.js";
 import { moduleCost, moduleDef } from "../engine/modules.js";
 import type { Answer, Question } from "../engine/questions.js";
-import { type Game, canUndo, playAnswer, replayGame, startGame, toSave, undo } from "../engine/save.js";
+import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
 import { FieldView } from "./FieldView.js";
@@ -50,6 +50,7 @@ export function App() {
   const [notice, setNotice] = useState<string | undefined>();
   const [autoAnswer, setAutoAnswer] = useState(true);
   const [inMenu, setInMenu] = useState(true);
+  const [box, setBox] = useState<TextBoxProps | undefined>();
 
   useEffect(() => {
     void loadSave().then((f) => {
@@ -81,7 +82,24 @@ export function App() {
     persist(g, p);
   }
 
+  function loadFile(f: SaveFile): void {
+    setError(undefined);
+    setProfile(f.profile);
+    if (f.game) {
+      update(replayGame(data, f.game.start, f.game.answers));
+      setInMenu(false);
+    } else persist(undefined, f.profile);
+  }
+
   if (!loaded) return <div className="splash">Loading…</div>;
+  return (
+    <>
+      {screen()}
+      {box && <TextBox {...box} onClose={() => setBox(undefined)} />}
+    </>
+  );
+
+  function screen() {
   const resumable = game !== undefined && game.view.state.ending === undefined;
   if (!game || inMenu)
     return (
@@ -99,16 +117,25 @@ export function App() {
         onImport={async () => {
           try {
             const f = await pickFile();
-            if (!f) return;
-            setProfile(f.profile);
-            if (f.game) {
-              update(replayGame(data, f.game.start, f.game.answers));
-              setInMenu(false);
-            } else persist(undefined, f.profile);
+            if (f) loadFile(f);
           } catch (e) {
             setError(`That file could not be loaded: ${(e as Error).message}`);
           }
         }}
+        onPaste={() =>
+          setBox({
+            title: "Paste a save",
+            hint: "Paste the text of a save (from Export save → Copy) and press Load.",
+            onLoad: (text) => {
+              try {
+                loadFile(readSave(text));
+                setBox(undefined);
+              } catch (e) {
+                return `That text could not be loaded: ${(e as Error).message}`;
+              }
+            },
+          })
+        }
       />
     );
   return (
@@ -130,8 +157,23 @@ export function App() {
         update(g);
       }}
       canUndo={() => canUndo(data, game)}
-      onExport={() => download(`aphelion5-save-${today()}.json`, JSON.stringify(toSave(game, profile, autoAnswer), null, 1))}
-      onExportLog={() => download(`aphelion5-log-${today()}.txt`, game.view.state.log.map((e) => `${e.text}${e.rule ? `  [${e.rule}]` : ""}`).join("\n"), "text/plain")}
+      onExport={() =>
+        setBox({
+          title: "Export save",
+          hint: "The whole game and your Company sheets. Copy the text and keep it (or send it with a bug report); Paste a save on the start screen loads it again.",
+          text: JSON.stringify(toSave(game, profile, autoAnswer)),
+          fileName: `aphelion5-save-${today()}.json`,
+        })
+      }
+      onExportLog={() =>
+        setBox({
+          title: "Export log",
+          hint: "Everything that happened this game, with rule sections.",
+          text: game.view.state.log.map((e) => `${e.text}${e.rule ? `  [${e.rule}]` : ""}`).join("\n"),
+          fileName: `aphelion5-log-${today()}.txt`,
+          type: "text/plain",
+        })
+      }
       onLeave={() => {
         // A finished game leaves nothing to continue; one in progress stays saved.
         if (game.view.state.ending) {
@@ -142,11 +184,66 @@ export function App() {
       }}
     />
   );
+  }
 }
 
 // ---------------------------------------------------------------------------
 
-function StartScreen(p: { profile: Profile; onContinue?: (() => void) | undefined; autoAnswer: boolean; setAutoAnswer: (b: boolean) => void; error?: string | undefined; onNew: (dev: boolean, seed: number) => void; onImport: () => void }) {
+interface TextBoxProps {
+  title: string;
+  hint: string;
+  /** Text to show and copy; absent = an empty box to paste into. */
+  text?: string;
+  fileName?: string;
+  type?: string;
+  /** Paste mode: returns an error message, or nothing when it worked. */
+  onLoad?: (text: string) => string | void;
+}
+
+/** Copy or paste a save or log as text: the published page cannot start downloads. */
+function TextBox(p: TextBoxProps & { onClose: () => void }) {
+  const [value, setValue] = useState(p.text ?? "");
+  const [msg, setMsg] = useState<string | undefined>();
+  const area = useRef<HTMLTextAreaElement>(null);
+  const copy = () => {
+    const select = () => {
+      area.current?.select();
+      setMsg("Selected: press Ctrl+C (or Cmd+C) to copy.");
+    };
+    try {
+      navigator.clipboard.writeText(value).then(() => setMsg("Copied."), select);
+    } catch {
+      select();
+    }
+  };
+  return (
+    <div className="textbox-back" onClick={(e) => e.target === e.currentTarget && p.onClose()}>
+      <section className="textbox card" role="dialog" aria-label={p.title}>
+        <h2>{p.title}</h2>
+        <p className="small">{p.hint}</p>
+        <textarea id="textbox-text" ref={area} value={value} readOnly={!p.onLoad} onChange={(e) => setValue(e.target.value)} spellCheck={false} />
+        {msg && <p className="small">{msg}</p>}
+        <div className="row">
+          {p.onLoad ? (
+            <button className="primary" disabled={!value.trim()} onClick={() => setMsg(p.onLoad!(value) ?? undefined)}>
+              Load
+            </button>
+          ) : (
+            <>
+              <button className="primary" onClick={copy}>
+                Copy
+              </button>
+              {p.fileName && <button onClick={() => void download(p.fileName!, value, p.type).then(setMsg)}>Download file</button>}
+            </>
+          )}
+          <button onClick={p.onClose}>Close</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function StartScreen(p: { profile: Profile; onContinue?: (() => void) | undefined; autoAnswer: boolean; setAutoAnswer: (b: boolean) => void; error?: string | undefined; onNew: (dev: boolean, seed: number) => void; onImport: () => void; onPaste: () => void }) {
   const [dev, setDev] = useState(false);
   const [seed, setSeed] = useState("");
   const hs = p.profile.highScores.C1;
@@ -180,6 +277,7 @@ function StartScreen(p: { profile: Profile; onContinue?: (() => void) | undefine
             Start
           </button>
           <button onClick={p.onImport}>Import a save file…</button>
+          <button onClick={p.onPaste}>Paste a save…</button>
         </div>
       </section>
       <section className="card">
