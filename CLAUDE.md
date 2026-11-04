@@ -9,7 +9,7 @@ A solo campaign board game, being built as a TypeScript web app. The designer is
 | Core Rules | Docs artifact https://claude.ai/artifact/9wWDQ9mD2CxCGiDEBEMs3C | `docs/core-rules.md` (snapshot) |
 | Program spec | Docs artifact https://claude.ai/artifact/1SuXBNhYWUxJofhueKTKzY | `docs/program-spec.md` (snapshot) |
 | Component data | claude.ai Project "Aphelion rules": `unit_list_structured.txt`, `Modules.txt`, `company_vessels_structured.txt`, `Campaign1.txt`, `Anomaly list.txt`, `Expansion1.txt` | `data/` |
-| Test scenarios | Project: `claude/Test scenarios batch 1.txt`, `batch 2.txt` | `tests/batch1.txt`, `tests/batch2.txt` |
+| Test scenarios | Project: `claude/Test scenarios batch 1.txt` ... `batch 8.txt` (batches 3-8 written by Claude, all agreed; the designer copies them into the Project) | `tests/batch1.txt` ... `tests/batch8.txt` |
 
 - Never edit snapshots by hand. Rebuild them from the master (Docs read/export for the docs, `project_read` for project files) and commit.
 - Precedence when sources disagree: component data > Core Rules > Expansion1 > tests > spec (spec "Sources" section).
@@ -50,7 +50,7 @@ Each stage ends with all its tests passing and a short report to the designer. R
 
 - 2026-11-04: Stage 7 (Campaign, saving, Heat) built. `src/engine/campaign.ts` (roots `gameSetup`, `missionPreparation`, `missionEnd`, `gameEnd`; Allied Drop, upgrades, scoring, high scores), `heat.ts` (H1-H8), `save.ts` (a game = start + answers; replay, undo to the last hidden information), `src/storage/` (memory and file stores; IndexedDB comes with the web app in stage 8). Profile (every Company sheet's marks, high scores) lives in the state and the save file. New question kind "several" (Threat columns). `npm run play` plays the full Campaign with autosave to `saves/aphelion5.json` (`--new`, `--seed N`, `--fixed`). `tests/batch7.txt` AGREED 2026-11-04 with the three changes above. 447 tests passing, incl. random full-campaign play-throughs (`tests/unit/campaignFuzz.ts`).
 
-- 2026-11-04: Core Rules master rev 133 (7.2 step 6, 10.1 step 4: "in random order"), snapshot rebuilt. Stage 8 (full interface) built: web app in `src/web/` (Vite + React panels + PixiJS Field; `npm run dev`, `npm run build`), IndexedDB saves with export/import, undo, log export, start screen (auto-answer, Developer mode, seed), Game End score. Browser check: `npm run test:ui` (Playwright, screenshots in `dist/ui-check/`). `tests/batch8.txt` is Claude's DRAFT, awaiting the designer. Not built yet: designer art loading (`art/`), language files, animation speed, colour-blind token shapes, Developer tools "Load scenario", "Edit state", "Rule trace".
+- 2026-11-04: Core Rules master rev 133 (7.2 step 6, 10.1 step 4: "in random order"), snapshot rebuilt. Stage 8 (full interface) built: web app in `src/web/` (Vite + React panels + PixiJS Field; `npm run dev`, `npm run build`), IndexedDB saves with export/import, undo, log export, start screen (auto-answer, Developer mode, seed), Game End score. Browser check: `npm run test:ui` (Playwright, screenshots in `dist/ui-check/`). `tests/batch8.txt` AGREED 2026-11-04. Not built yet: designer art loading (`art/`), language files, animation speed, colour-blind token shapes, Developer tools "Load scenario", "Edit state", "Rule trace".
 
 ## Working with the designer
 

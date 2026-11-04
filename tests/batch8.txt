@@ -1,9 +1,9 @@
 ################################################################################
 # APHELION 5 - TEST SCENARIOS, BATCH 8: THE INTERFACE (structured)
-# DRAFT 2026-11-04, written by Claude from the program spec ("Screen and controls",
-# "Player choices", "Saving", "Randomness, log and undo", "Developer mode"), at the
-# designer's request. Awaiting the designer's agreement; once agreed, copy it into the
-# Project as "claude/Test scenarios batch 8.txt".
+# Written 2026-11-04 by Claude from the program spec ("Screen and controls", "Player
+# choices", "Saving", "Randomness, log and undo", "Developer mode"), at the designer's
+# request. AGREED by the designer 2026-11-04. Copy it into the Project as
+# "claude/Test scenarios batch 8.txt".
 #
 # These are checked in a real browser by scripts/ui-smoke.mjs (and by hand), not by the
 # rules tests: the rules engine is the same one the earlier batches test.
