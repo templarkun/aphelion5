@@ -210,18 +210,16 @@ export function strengthOf(c: Ctx, u: TileId): number | undefined {
 /** Ready Modules (the Module being run is not ready, 8.6). */
 export const readyIds = (c: Ctx) => c.state.player.modules.filter((m) => m.ready).map((m) => m.id);
 
-/** Place 1 energy (colour of your choice, from the Supply) on one Module. Returns false if the Supply is empty. */
+/**
+ * Place 1 energy from the Supply on one Module. With no colour given (the
+ * card leaves the colour to you), it is the Module's own colour (5.3, Q9:
+ * energy you choose to place matches the Module). A colour given by the card
+ * is placed as it is. Returns false if the Supply has none of that colour.
+ */
 export function* placeOneEnergy(c: RunCtx, moduleId: number, rule: string, colour?: EnergyColour): Effect<boolean> {
   const s = c.state.supply.energy;
-  let col = colour;
-  if (col === undefined) {
-    const have = ENERGY_COLOURS.filter((k) => s[k] > 0);
-    if (have.length === 0) {
-      log(c, "no energy left in the Supply", "6.7");
-      return false;
-    }
-    col = have.length === 1 ? have[0]! : ((yield* ask(c, { kind: "option", prompt: `${rule}: which colour on ${moduleDef(c, moduleId).name}?`, rule, options: have.map((k) => ({ id: k, label: k })) })).value as EnergyColour);
-  } else if (s[col] === 0) {
+  const col = colour ?? moduleDef(c, moduleId).colour;
+  if (s[col] === 0) {
     log(c, `no ${col} energy left in the Supply`, "6.7");
     return false;
   }
@@ -231,12 +229,12 @@ export function* placeOneEnergy(c: RunCtx, moduleId: number, rule: string, colou
   return true;
 }
 
-/** Place `n` energy on one ready Module (colours of your choice), limited by the Supply (6.7). */
+/** Place `n` energy on one ready Module (its own colour unless the card names one), limited by the Supply (6.7). */
 export function* placeEnergyOn(c: RunCtx, moduleId: number, n: number, rule: string, colour?: EnergyColour): Effect {
   for (let i = 0; i < n; i++) if (!(yield* placeOneEnergy(c, moduleId, rule, colour))) return;
 }
 
-/** Place `n` energy on your ready Modules, split as you choose (colours your choice). */
+/** Place `n` energy on your ready Modules, split as you choose (each in its Module's colour, 5.3). */
 export function* placeEnergySplit(c: RunCtx, n: number, rule: string): Effect {
   const ready = readyIds(c);
   if (ready.length === 0) {

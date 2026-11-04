@@ -156,10 +156,14 @@ title: Power Node energy is split among ready Modules
 source: Core Rules 4.6
 map: M1
 given: (0,1): fd:F_01 > fd. Demolition Blast (Yellow) and Charged Beam (Red, Module 26) ready.
-when: Reveal (0,1); choose: Yellow and Blue on Demolition Blast, Red on Charged Beam
-then: Demolition Blast holds 1 Yellow, 1 Blue; Charged Beam holds 1 Red. Overload starts.
-rule: energy can go on any ready Module; it only pays for that Module, in its own colour
-      (Core Rules 5.3).
+when: Reveal (0,1)
+then: Yellow goes on Demolition Blast and Red on Charged Beam (each is the only ready Module of
+      its colour: no question). No ready Blue Module: the Blue stays in the Supply. Overload
+      starts.
+rule: energy you choose to place goes only on a ready Module of its own colour (Core Rules 5.3).
+note: CHANGED 2026-11-04 (designer, Q9) - energy you choose to place goes only on ready Modules of
+      its colour; with none, it stays in the Supply (Core Rules 4.6, 5.3).
+      Was: Yellow and Blue on Demolition Blast, Red on Charged Beam.
 
 id: T3_REV_06
 title: Reveal the last Dark sector: Sleepers wake

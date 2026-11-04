@@ -370,11 +370,11 @@ describe("Blue Modules", () => {
     expect(tokensAt(s, "1,1")).toBe("");
   });
   m(64, "Power Relay: 1 energy on each of five other ready Modules", () => {
-    const s = run(64, "", [A.option("Red"), A.option("Yellow")], { others: [[26, true], [21, false], [1, true]] });
+    const s = run(64, "", [], { others: [[26, true], [21, false], [1, true]] });
     expect(s.player.modules.map((x) => x.energy.Red + x.energy.Yellow)).toEqual([0, 1, 0, 1]);
   });
   m(65, "Salvage Siphon: energy per Bot on the chosen Module; other Modules lose theirs (Q6)", () => {
-    const s = run(65, "(0,1): B_01 > fd.", [A.option("Red")], { others: [[26, true], [21, false, { Yellow: 1 }]] });
+    const s = run(65, "(0,1): B_01 > fd.", [], { others: [[26, true], [21, false, { Yellow: 1 }]] });
     expect(s.player.modules[1]!.energy.Red).toBe(1);
     expect(s.player.modules[2]!.energy.Yellow).toBe(0);
   });
@@ -384,7 +384,7 @@ describe("Blue Modules", () => {
     expect(sectorState(s, "0,1")).toBe("dark");
   });
   m(67, "Harvest Beacon: energy per Sentinel on another Module, then an Overload", () => {
-    const s = run(67, "(0,1): S_01 > fd.", [A.option("Red")], { others: [[26, true]] });
+    const s = run(67, "(0,1): S_01 > fd.", [], { others: [[26, true]] });
     expect(s.player.modules[1]!.energy.Red).toBe(1);
     expect(s.phase).toBe("overload");
   });

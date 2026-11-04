@@ -145,9 +145,11 @@ map: M1
 given: Command phase. Satellite Ion Scan ready. Charged Beam ready. (0,1): fd:F_04 > fd.
        (1,0): fd:B_01 > fd. Every other sector cleared.
 when: run Satellite Ion Scan; reveal (0,1), then (1,0); stop
-then: F_04 places 1 Yellow on Charged Beam at once (Satellite Ion Scan is not ready while it
-      runs). The Scan goes on; the last unit is a Bot: B_01 destroyed. Then the Overload starts:
+then: F_04's 1 Yellow stays in the Supply: no ready Yellow Module (Charged Beam is Red; Satellite
+      Ion Scan is not ready while it runs; Q9). The Scan goes on; the last unit is a Bot: B_01 destroyed. Then the Overload starts:
       F_04 [AL].
+note: CHANGED 2026-11-04 (designer, Q9) - energy you choose to place goes only on ready Modules of
+      its colour; with none, it stays in the Supply (Core Rules 4.6, 5.3).
 
 id: T6_BLU_02
 title: Tactical Scan - the tiles that are not Bots stay face down, and you remember them
@@ -184,11 +186,13 @@ source: Salvage Siphon (65); designer's answer to Q6
 map: M1
 given: Salvage Siphon ready. Charged Beam ready. Demolition Blast ready with 2 Yellow on it.
        (0,1): B_01 > fd. (1,0): B_02 > fd. Every other sector cleared.
-when: run Salvage Siphon; choose Charged Beam; place 2 Red on it
+when: run Salvage Siphon; choose Charged Beam (the 2 energy are Red, its colour; Q9)
 then: Charged Beam holds 2 Red (2 Bots). Every other Module's energy returns to the Supply:
       Demolition Blast holds none.
 note: RESOLVED 2026-11-04 (open question Q6) - step [3] means the Modules other than the one
       chosen in [1].
+note: CHANGED 2026-11-04 (designer, Q9) - energy you choose to place goes only on ready Modules of
+      its colour; with none, it stays in the Supply (Core Rules 4.6, 5.3).
 
 id: T6_BLU_06
 title: Gravity Well - the tiles go in the order you choose

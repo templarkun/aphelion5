@@ -147,14 +147,12 @@ describe("batch 3 - REVEAL (8.5)", () => {
       [1, true],
       [26, true],
     ]);
-    const { state, asked } = step(s, [A.option("reveal"), A.split({ "1": 1 }), A.split({ "26": 1 }), A.split({ "1": 1 })]);
-    expect(asked.slice(1).map((q) => q.prompt)).toEqual([
-      "Place 1 Yellow energy on ready Modules.",
-      "Place 1 Red energy on ready Modules.",
-      "Place 1 Blue energy on ready Modules.",
-    ]);
-    expect(state.player.modules[0]!.energy).toEqual({ Yellow: 1, Red: 0, Blue: 1 });
+    // Q9: each colour only on a ready Module of that colour: one each, so no question; no Blue Module, so Blue stays in the Supply.
+    const { state, asked } = step(s, [A.option("reveal")]);
+    expect(asked).toHaveLength(1);
+    expect(state.player.modules[0]!.energy).toEqual({ Yellow: 1, Red: 0, Blue: 0 });
     expect(state.player.modules[1]!.energy).toEqual({ Yellow: 0, Red: 1, Blue: 0 });
+    expect(state.log.some((e) => /no ready Blue Module/.test(e.text))).toBe(true);
     expect(state.phase).toBe("overload");
   });
 

@@ -41,8 +41,9 @@ map: M1
 given: Command phase. (0,1): fd:F_01 > fd. (0,0): S_01 > fd. (1,0): M_01 > fd.
        (1,1): O_03 > fd. (1,-1): O_01 > fd. (-1,0): F_04 > fd. (-1,1): G_05 > fd.
        Charged Beam ready.
-when: Reveal (0,1); place the Power Node's 1 Yellow, 1 Red, 1 Blue on Charged Beam
-then: Charged Beam holds 1 Yellow, 1 Red, 1 Blue. Once the Reveal has finished, an Overload
+when: Reveal (0,1)
+then: Charged Beam (Red) holds the Power Node's 1 Red; its Yellow and Blue stay in the Supply
+      (no ready Module of those colours; Q9). Once the Reveal has finished, an Overload
       starts. Alerted: F_01 (just revealed), F_04 (a Flare already on the Field), S_01
       (Sentinel), O_03 (Gamma, "At Overload:" on the Campaign board). Not alerted: M_01,
       O_01 (Alpha has no At Overload trigger), G_05, every B_03.
@@ -50,6 +51,8 @@ then: Charged Beam holds 1 Yellow, 1 Red, 1 Blue. Once the Reveal has finished, 
       [Overload] Orders, 1 Command token each); Concede. Charged Beam cannot be run (no Red
       in the Reserve, 1 Red on it for a cost of 4). End the Overload is not offered (Alerts
       remain).
+note: CHANGED 2026-11-04 (designer, Q9) - energy you choose to place goes only on ready Modules of
+      its colour; with none, it stays in the Supply (Core Rules 4.6, 5.3).
 
 id: T4_STA_02
 title: The Overload starts after the current effect; waiting Alerts carry into it
@@ -136,13 +139,15 @@ title: A Flare revealed during an Overload is alerted at once and starts nothing
 source: Core Rules 4.6, 9.1, 9.2; F_04
 map: M1
 given: Overload under way. (0,0): F_04[AL] > fd. (0,1): fd:F_01 > fd. Charged Beam ready.
-when: resolve F_04: reveal (0,1); place the 3 energy on Charged Beam
-then: F_01[AL]. Charged Beam holds 1 Yellow, 1 Red, 1 Blue. F_04's "you may deal 2 damage
+when: resolve F_04: reveal (0,1)
+then: F_01[AL]. Charged Beam (Red) holds 1 Red; the Yellow and Blue stay in the Supply (Q9). F_04's "you may deal 2 damage
       to it" has nothing to do: F_01 is a Flare and cannot be damaged, so it is not asked.
       Still the same Overload; End the Overload is not offered until F_01 is resolved
       (it has no effect: resolving it only removes the Alert).
 assumption: F_04 [2] is skipped without a question when the revealed unit is a Flare or
       Wreck (11.1 rule 5: do as much as you can).
+note: CHANGED 2026-11-04 (designer, Q9) - energy you choose to place goes only on ready Modules of
+      its colour; with none, it stays in the Supply (Core Rules 4.6, 5.3).
 
 id: T4_ALR_02
 title: A unit that becomes a Wreck is alerted at once

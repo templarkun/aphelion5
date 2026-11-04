@@ -138,13 +138,19 @@ export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, n
       log(c, `no ready Module: ${n} ${col} energy stays in the Supply`, "5.3");
       continue;
     }
+    // You choose where it goes, so only ready Modules of its colour (5.3, Q9); none: it stays in the Supply.
+    const same = ready.filter((id) => c.data.modules.byId.get(id)!.colour === col);
+    if (same.length === 0) {
+      log(c, `no ready ${col} Module: ${n} ${col} energy stays in the Supply`, "5.3");
+      continue;
+    }
     const a = yield* ask(c, {
       kind: "split",
       pick: "modules",
-      prompt: `Place ${n} ${col} energy on ready Modules.`,
+      prompt: `Place ${n} ${col} energy on ready ${col} Modules.`,
       rule,
       total: n,
-      buckets: ready.map((id) => ({ id: String(id), label: c.data.modules.byId.get(id)!.name, max: n })),
+      buckets: same.map((id) => ({ id: String(id), label: c.data.modules.byId.get(id)!.name, max: n })),
     });
     for (const [mid, x] of Object.entries(a.value as Record<string, number>)) {
       if (x === 0) continue;

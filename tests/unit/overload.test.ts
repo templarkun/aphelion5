@@ -53,7 +53,8 @@ describe("batch 4 - STARTING AN OVERLOAD (9.1)", () => {
   it("T4_STA_01 a Flare revealed in the Command phase starts an Overload; who is alerted", () => {
     const s0 = withModules(given("T4_STA_01"), [[26, true]]);
     const { state } = cmd(s0, [A.option("reveal")]);
-    expect(state.player.modules[0]!.energy).toEqual({ Yellow: 1, Red: 1, Blue: 1 });
+    // Q9: only the Red goes on Charged Beam (Red); no ready Yellow or Blue Module, so those stay in the Supply.
+    expect(state.player.modules[0]!.energy).toEqual({ Yellow: 0, Red: 1, Blue: 0 });
     expect(state.phase).toBe("overload");
     expect(alertedUnits(ctx(state)).map((u) => tile(state, u).unitId).sort()).toEqual(["F_01", "F_04", "O_03", "S_01"]);
     for (const k of ["1,0", "1,-1", "-1,1", "0,-1"]) expect(tokensAt(state, k)).toBe("");
@@ -151,7 +152,7 @@ describe("batch 4 - ALERTS DURING AN OVERLOAD (9.2)", () => {
     const s0 = withModules(given("T4_ALR_01"), [[26, true]]);
     const { state } = ovl(s0, [A.option(`alert:${at(s0, "0,0")}`)]);
     expect(tokensAt(state, "0,1")).toBe("[AL]");
-    expect(state.player.modules[0]!.energy).toEqual({ Yellow: 1, Red: 1, Blue: 1 });
+    expect(state.player.modules[0]!.energy).toEqual({ Yellow: 0, Red: 1, Blue: 0 }); // Q9
     expect(state.phase).toBe("overload");
     expect(state.overloadPending).toBe(false);
     expect(menu(state)).not.toContain("endOverload");

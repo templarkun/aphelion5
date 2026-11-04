@@ -118,7 +118,9 @@ describe("batch 6 - RED", () => {
 describe("batch 6 - BLUE", () => {
   it("T6_BLU_01 Satellite Ion Scan reveals a Flare: energy at once, the Overload after", () => {
     const after = act(board("T6_BLU_01", [[51, true], [26, true]]), [A.option("runModule"), A.yes(), A.sectors("0,1"), A.yes()]);
-    expect(after.player.modules[1]!.energy.Yellow).toBe(1);
+    // Q9: F_04's Yellow cannot go on Charged Beam (Red): no ready Yellow Module, so it stays in the Supply.
+    expect(after.player.modules[1]!.energy.Yellow).toBe(0);
+    expect(after.log.some((e) => /no ready Yellow Module/.test(e.text))).toBe(true);
     expect(pile(after, "discard")).toContain("B_01");
     expect(after.phase).toBe("overload");
     expect(tokensAt(after, "0,1")).toBe("[AL]");
@@ -154,7 +156,7 @@ describe("batch 6 - BLUE", () => {
     s.supply.energy.Yellow = 8;
     s.player.reserve.Red = 0; // Red in the Supply, so it can be placed
     s.supply.energy.Red = 10;
-    const after = act(s, [A.option("runModule"), A.option("26"), A.option("Red"), A.option("Red")]);
+    const after = act(s, [A.option("runModule"), A.option("26")]); // Q9: Red, the Module's colour, no colour question
     expect(after.player.modules[1]!.energy).toEqual({ Yellow: 0, Red: 2, Blue: 0 });
     expect(after.player.modules[2]!.energy.Yellow).toBe(0);
   });

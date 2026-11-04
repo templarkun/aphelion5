@@ -224,7 +224,7 @@ describe("Flares", () => {
     expect(tokensAt(s, "1,0")).toBe("[S1]");
   });
   card("F_27", "Bots minus Mecha: may place that much energy on one Module", () => {
-    const s = ovl("(0,0): F_27[AL] > fd. (0,1): B_01 > fd. (1,0): B_01 > fd. (1,1): B_01 > fd. (-1,0): M_01 > fd.", [A.option("26"), A.option("Red"), A.option("Red")], mods([26]));
+    const s = ovl("(0,0): F_27[AL] > fd. (0,1): B_01 > fd. (1,0): B_01 > fd. (1,1): B_01 > fd. (-1,0): M_01 > fd.", [A.option("26")], mods([26]));
     expect(s.player.modules[0]!.energy.Red).toBe(2);
   });
   card("F_28", "Boosts all units in a horizontal row", () => {
@@ -247,7 +247,7 @@ describe("Sleepers", () => {
     expect(tokensAt(s, "1,0")).toBe("");
   });
   card("P_06", "Bots minus Mecha above 0: place energy; below 0: remove energy", () => {
-    expect(resolveAll("(0,0): P_06[AL] > fd. (0,1): B_01 > fd. (1,0): B_01 > fd.", [A.option("Red"), A.option("Red")], mods([26])).player.modules[0]!.energy.Red).toBe(2);
+    expect(resolveAll("(0,0): P_06[AL] > fd. (0,1): B_01 > fd. (1,0): B_01 > fd.", [], mods([26])).player.modules[0]!.energy.Red).toBe(2);
     expect(resolveAll("(0,0): P_06[AL] > fd. (0,1): M_01 > fd. (1,0): M_01 > fd.", [], mods([26, { Red: 2 }])).player.modules[0]!.energy.Red).toBe(0);
   });
   card("P_09", "a Tick on every Targeted unit", () => expect(tokensAt(resolveAll("(0,0): P_09[AL] > fd. (0,-1): B_03 > fd."), "0,-1")).toBe("[TICK]"));
@@ -331,13 +331,13 @@ describe("Gyros", () => {
   card("G_15", "Drain: 1 energy off every Module. Destroyed: 1 on every ready Module with none", () => {
     const s = drain("(0,0): G_15 > fd.", [], mods([26, { Red: 1 }], [1, { Yellow: 2 }]));
     expect(s.player.modules.map((m) => m.energy.Red + m.energy.Yellow)).toEqual([0, 1]);
-    const d = wreck("G_15", "", [A.option("Red")], mods([26], [1, { Yellow: 1 }]));
+    const d = wreck("G_15", "", [], mods([26], [1, { Yellow: 1 }]));
     expect(d.player.modules[0]!.energy.Red).toBe(1);
     expect(d.player.modules[1]!.energy.Yellow).toBe(1);
   });
   card("G_16", "three different Modules: remove / place 1 energy each", () => {
     expect(drain("(0,0): G_16 > fd.", [], mods([26, { Red: 1 }], [1, { Yellow: 1 }])).player.modules.every((m) => m.energy.Red + m.energy.Yellow === 0)).toBe(true);
-    expect(wreck("G_16", "", [A.option("Red"), A.option("Yellow")], mods([26], [1])).player.modules.map((m) => m.energy.Red + m.energy.Yellow)).toEqual([1, 1]);
+    expect(wreck("G_16", "", [], mods([26], [1])).player.modules.map((m) => m.energy.Red + m.energy.Yellow)).toEqual([1, 1]);
   });
   card("G_17", "Drain: lose 3 energy. Destroyed: gain 1 Command token", () => {
     const s = drain("Reserve Red 3, Blue 1. (0,0): G_17 > fd.", [A.split({ Red: 3, Blue: 0 })]);
@@ -407,7 +407,8 @@ describe("Gyros", () => {
   });
   card("G_34", "lose / place 1 energy per Bot", () => {
     expect(drain("Reserve Red 2. (0,0): G_34 > fd. (0,1): B_01 > fd. (1,0): B_01 > fd.").player.reserve.Red).toBe(0);
-    expect(wreck("G_34", "(0,1): B_01 > fd.", [A.option("Blue")], mods([26])).player.modules[0]!.energy.Blue).toBe(1);
+    // Q9: the energy is the Module's own colour (Red), no colour question.
+    expect(wreck("G_34", "(0,1): B_01 > fd.", [], mods([26])).player.modules[0]!.energy.Red).toBe(1);
   });
   card("G_35", "Drain: exhaust a Module and empty it. Destroyed: make one ready", () => {
     const s = drain("(0,0): G_35 > fd.", [], mods([26, { Red: 1 }]));
