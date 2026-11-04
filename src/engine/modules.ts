@@ -81,12 +81,9 @@ export function* runModule(c: RunCtx, id: number, free = false): Effect {
     // Step 1: use stored energy; step 2: pay the rest from the Reserve.
     const stored = m.energy[col];
     const min = Math.max(0, cost - c.state.player.reserve[col]);
-    const max = Math.min(stored, cost);
-    let fromModule = min;
-    if (max > min) {
-      const a = yield* ask(c, { kind: "amount", prompt: `${d.name} costs ${cost} ${col}. How much of the ${stored} ${col} on it do you use?`, rule: "8.6", min, max });
-      fromModule = a.value as number;
-    }
+    // All the energy on it that the cost can use, no question (designer 2026-11-04): what is
+    // left on a Module returns to the Supply when it is exhausted, so using it first never hurts.
+    const fromModule = Math.max(min, Math.min(stored, cost));
     const fromReserve = cost - fromModule;
     m.energy[col] -= fromModule;
     c.state.player.reserve[col] -= fromReserve;

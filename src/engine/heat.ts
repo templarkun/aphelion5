@@ -72,7 +72,7 @@ function* payExtra(c: RunCtx, moduleId: number, col: "Yellow" | "Red" | "Blue", 
   const reserve = c.state.player.reserve[col];
   const lo = Math.max(0, n - reserve);
   const hi = Math.min(n, onIt);
-  const fromModule = hi > lo ? ((yield* ask(c, { kind: "amount", prompt: `Overclock: how much of it from the ${onIt} ${col} on ${d.name}?`, rule: "H6", min: lo, max: hi })).value as number) : lo;
+  const fromModule = Math.max(lo, hi); // what is on the Module first, no question
   m.energy[col] -= fromModule;
   c.state.player.reserve[col] -= n - fromModule;
   c.state.supply.energy[col] += n;

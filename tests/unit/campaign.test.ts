@@ -397,7 +397,7 @@ describe("batch 7 - HEAT MODULE", () => {
     const s = withModules(heat("T7_HEAT_04", 5), [[1, true, { Yellow: 1 }]]);
     s.player.reserve.Yellow = 6;
     s.supply.energy.Yellow = 3;
-    const after = play(s, (c) => commandStep(c), [A.option("runModule"), A.amount(0), A.yes(), A.amount(1), A.yes()]).state;
+    const after = play(s, (c) => commandStep(c), [A.option("runModule"), A.yes(), A.yes()]).state; // stored energy is used first, no question
     expect(after.player.heat).toBe(7);
     expect(after.player.reserve.Yellow).toBe(1);
     expect(after.supply.energy.Yellow).toBe(9);

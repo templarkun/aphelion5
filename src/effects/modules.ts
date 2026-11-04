@@ -69,13 +69,13 @@ export function* payExactly(c: RunCtx, run: ModuleRun, n: number, what: string):
   return true;
 }
 
-/** Spend `n` energy of a colour for this Module: what is on it and your Reserve, as you choose. */
+/** Spend `n` energy of a colour for this Module: what is on it first, then your Reserve (no question). */
 function* spend(c: RunCtx, id: number, col: EnergyColour, n: number): Effect {
   const m = c.state.player.modules.find((x) => x.id === id)!;
   const reserve = c.state.player.reserve[col];
   const lo = Math.max(0, n - reserve);
   const hi = Math.min(n, m.energy[col]);
-  const fromModule = hi > lo ? ((yield* ask(c, { kind: "amount", prompt: `How much of it from the ${m.energy[col]} ${col} on this Module?`, rule: "8.6", min: lo, max: hi })).value as number) : lo;
+  const fromModule = Math.max(lo, hi);
   m.energy[col] -= fromModule;
   c.state.player.reserve[col] -= n - fromModule;
   c.state.supply.energy[col] += n;

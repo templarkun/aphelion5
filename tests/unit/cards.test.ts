@@ -106,8 +106,8 @@ describe("Modules", () => {
     const s = withModules(board("Overload under way. (0,0): O_01 > fd."), [[26, true, { Red: 2 }]]);
     s.player.reserve.Red = 4;
     s.supply.energy.Red = 4;
-    // Cost 4: use 2 stored + 2 Reserve; then pay 2 more from the Reserve: one hit of 4 destroys the Strength 3 Alpha.
-    const { state } = ovl(s, [A.option("runModule"), A.amount(2), A.units(at(s, "0,0")), A.amount(2)]);
+    // Cost 4: the 2 stored + 2 Reserve (no question); then pay 2 more from the Reserve: one hit of 4 destroys the Strength 3 Alpha.
+    const { state } = ovl(s, [A.option("runModule"), A.units(at(s, "0,0")), A.amount(2)]);
     expect(tokensAt(state, "0,0")).toBe("[WR][AL]");
     expect(state.player.reserve.Red).toBe(0);
     expect(state.supply.energy.Red).toBe(10);
@@ -117,11 +117,11 @@ describe("Modules", () => {
     const s = withModules(board("Overload under way. (0,0): B_03[S2] > fd."), [[26, true, { Red: 3 }]]);
     s.player.reserve.Red = 3;
     s.supply.energy.Red = 4;
-    // Pay the cost with 1 stored + 3 Reserve; 2 left on the Module; pay 1 extra from it.
-    const { state } = ovl(s, [A.option("runModule"), A.amount(1), A.units(at(s, "0,0")), A.amount(1)]);
+    // The cost uses the 3 stored first (no question) + 1 Reserve; pay 1 extra from the Reserve.
+    const { state } = ovl(s, [A.option("runModule"), A.units(at(s, "0,0")), A.amount(1)]);
     expect(tokensAt(state, "0,0")).toBe("[D1]"); // 3 damage: 2 Shields, then 1 Damage
     expect(state.player.modules[0]!.energy.Red).toBe(0); // the last 1 returns to the Supply
-    const skip = ovl(s, [A.option("runModule"), A.amount(1), A.units(at(s, "0,0")), A.amount(0)]).state;
+    const skip = ovl(s, [A.option("runModule"), A.units(at(s, "0,0")), A.amount(0)]).state;
     expect(tokensAt(skip, "0,0")).toBe("");
   });
 });

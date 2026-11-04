@@ -61,7 +61,7 @@ describe("batch 6 - PAYING", () => {
 
   it("T6_PAY_05 Accumulator Beam: the Yellow on it before running, at most 5", () => {
     const s = board("T6_PAY_05", [[6, true, { Yellow: 6 }]]);
-    const after = act(s, [A.option("runModule"), A.amount(1)]);
+    const after = act(s, [A.option("runModule")]);
     expect(sectorState(after, "0,1")).toBe("dark");
     expect(after.player.modules[0]!.energy.Yellow).toBe(0);
     expect(after.supply.energy.Yellow).toBe(6);

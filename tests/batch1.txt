@@ -301,6 +301,8 @@ given: Accumulator Beam ready with 4 Yellow on it. Reserve Yellow 6. (0,0): G_04
 when: run Accumulator Beam on G_04, pay its cost with 1 Yellow from the Module
 then: X = 4: one hit of 4, G_04 becomes a Wreck. 3 Yellow return to the Supply.
       Reserve Yellow still 6. Module exhausted.
+note: 2026-11-04 (designer) - the program no longer asks how much of the energy on the Module to
+      use: it uses all it can first, then the Reserve.
 
 id: T_MOD_02
 title: Flare revealed mid-effect - Overload waits

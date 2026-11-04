@@ -60,17 +60,17 @@ describe("Yellow Modules", () => {
     expect(moduleCost(ctx(s0), 3)).toBe(7);
     const s = run(3, "(0,1): B_03 > fd.", [], { others: [[1, false], [2, false]] });
     gone(s, "0,1");
-    expect(s.player.reserve.Yellow).toBe(3);
+    expect(s.player.reserve.Yellow).toBe(8);
   });
   m(4, "Tick Missile: 1 damage, a Tick if it survives", () => expect(tokensAt(run(4, "(0,1): B_02 > fd."), "0,1")).toBe("[D1][TICK]"));
   m(5, "Heavy Plasma Cannon: 4 damage, all energy on Modules returns", () => {
     const s = run(5, "(0,1): B_03[S1] > fd.", [], { others: [[26, true, { Red: 2 }]] });
     gone(s, "0,1");
     expect(s.player.modules[1]!.energy.Red).toBe(0);
-    expect(s.supply.energy.Red).toBe(10);
+    expect(s.supply.energy.Red).toBe(15);
   });
   m(6, "Accumulator Beam: X = Yellow on it before running", () => {
-    const s = run(6, "(0,1): B_03 > fd.", [A.amount(1)], { stored: { Yellow: 3 } });
+    const s = run(6, "(0,1): B_03 > fd.", [], { stored: { Yellow: 3 } });
     gone(s, "0,1");
     expect(s.player.modules[0]!.energy.Yellow).toBe(0);
   });
@@ -97,7 +97,7 @@ describe("Yellow Modules", () => {
     const s = run(10, "(0,1): B_02 > fd. (0,2): B_02 > fd.", [A.yes()]);
     gone(s, "0,1");
     gone(s, "0,2");
-    expect(s.player.reserve.Yellow).toBe(4);
+    expect(s.player.reserve.Yellow).toBe(9);
     const t = run(10, "(0,1): B_02 > fd. (0,2): B_02 > fd.", [A.no()]);
     expect(tokensAt(t, "0,1")).toBe("[D1]");
   });
@@ -140,7 +140,7 @@ describe("Yellow Modules", () => {
   m(17, "Salvo Launcher: three mutually adjacent units; 1 Yellow less per Cleared sector", () => {
     const s = run(17, "(0,0): B_01 > fd. (0,1): B_01 > fd. (1,0): B_01 > fd.");
     for (const k of ["0,0", "0,1", "1,0"]) gone(s, k);
-    expect(s.player.reserve.Yellow).toBe(10); // 7 Cleared sectors: cost 0
+    expect(s.player.reserve.Yellow).toBe(15); // 7 Cleared sectors: cost 0
   });
   m(18, "Proton Cull: the type with the fewest units", () => {
     const s = run(18, "(0,1): B_01 > fd. (1,0): B_01 > fd. (1,1): G_05 > fd.");
@@ -166,7 +166,7 @@ describe("Yellow Modules", () => {
     gone(s, "0,1");
     gone(s, "1,0");
     expect(tokensAt(s, "1,1")).toBe("");
-    expect(s.player.reserve.Yellow).toBe(4); // one Dark sector when paying: cost 7 - 1 = 6
+    expect(s.player.reserve.Yellow).toBe(9); // one Dark sector when paying: cost 7 - 1 = 6
   });
   m(23, "Harmonic Pulse: 1 damage to every Level 2 unit", () => {
     const s = run(23, "(0,1): B_02 > fd. (1,0): B_01 > fd.");
@@ -206,7 +206,7 @@ describe("Red Modules", () => {
   m(30, "Capacitor Strike: 2 Red less per other exhausted Module", () => {
     const s = run(30, "(0,1): B_02 > fd.", [], { others: [[2, false]] });
     gone(s, "0,1");
-    expect(s.player.reserve.Red).toBe(6);
+    expect(s.player.reserve.Red).toBe(11);
   });
   m(31, "Backlash Beam: X = units that gained a Shield or lost a Damage", () => {
     const g = "(0,0): B_03 > fd. (0,1): B_01[D1] > fd. (1,0): B_02 > fd.";
@@ -303,7 +303,7 @@ describe("Red Modules", () => {
     expect(tokensAt(s, "1,1")).toBe("");
   });
   m(48, "Point-Defense Phaser: X = Red on it before running", () => {
-    const s = run(48, "(0,1): S_01 > fd. (1,0): S_01 > fd.", [A.amount(1)], { stored: { Red: 2 } });
+    const s = run(48, "(0,1): S_01 > fd. (1,0): S_01 > fd.", [], { stored: { Red: 2 } });
     gone(s, "0,1");
     gone(s, "1,0");
   });
@@ -331,7 +331,7 @@ describe("Blue Modules", () => {
   m(53, "Pathfinder Array: reveal X, 2 damage to each Bot", () => {
     const s = run(53, "(0,1): fd:B_01 > fd. (1,0): fd:B_02 > fd.", [A.amount(2), A.sectors("0,1")]);
     expect(pile(s, "discard").sort()).toEqual(["B_01", "B_02"]);
-    expect(s.player.reserve.Blue).toBe(5);
+    expect(s.player.reserve.Blue).toBe(10);
   });
   m(54, "Debris Sifter: look at the top X, discard a Bot", () => {
     const s = run(54, "(0,1): fd:B_01 > fd:G_05 > fd.", [A.amount(2)]);

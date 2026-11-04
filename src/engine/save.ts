@@ -20,9 +20,10 @@ import { type GameState, type Profile, emptyProfile } from "./state.js";
 /**
  * 2: setup asks the Campaign and an expansion list (2026-11-04).
  * 3: energy you place matches the Module's colour (Q9), M_03 / M_06 Attack in one question.
+ * 4: no "how much of the energy on it" question; 15 energy of each colour.
  * A game saved in an older format cannot be replayed (its answers no longer fit).
  */
-export const SAVE_FORMAT = 3;
+export const SAVE_FORMAT = 4;
 
 export interface GameStart {
   seed: number;

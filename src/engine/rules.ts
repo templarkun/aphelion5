@@ -17,8 +17,8 @@ export const TOKEN_LIMIT: Readonly<Record<LimitedToken, number>> = {
   command: 6,
 };
 
-/** Core Rules 2 and 5.4: 10 energy of each colour. */
-export const ENERGY_PER_COLOUR = 10;
+/** Core Rules 2 and 5.3: 15 energy of each colour (designer 2026-11-04, master rev 139). */
+export const ENERGY_PER_COLOUR = 15;
 
 export const FUSE_KINDS = ["tick", "mortar", "feedback"] as const;
 export type FuseKind = (typeof FUSE_KINDS)[number];

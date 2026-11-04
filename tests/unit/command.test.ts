@@ -138,7 +138,7 @@ describe("batch 3 - REVEAL (8.5)", () => {
   it("T_MOD_03 Flare energy with no ready Module stays in the Supply; the Overload still starts", () => {
     const s = withModules(given("T_MOD_03"), [[1, false]]);
     const { state } = step(s, [A.option("reveal"), A.option("0")]); // F_09 has arrows: facing asked
-    expect(state.supply.energy.Yellow).toBe(10);
+    expect(state.supply.energy.Yellow).toBe(15);
     expect(state.phase).toBe("overload");
   });
 

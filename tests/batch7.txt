@@ -241,6 +241,8 @@ given: Command phase, Heat module, Heat 5. Demolition Blast ready with 1 Yellow 
 when: run Demolition Blast (pay 3); Overclock yes (2 Yellow), and yes (1 more Yellow)
 then: Heat 7. Yellow spent: 3 + 2 + 1 = 6 (the 1 on the Module may pay part of it).
 assumption: Overclock is decided after paying the cost and before the effect resolves.
+note: 2026-11-04 (designer) - the program no longer asks how much of the energy on the Module to
+      use: it uses all it can first, then the Reserve.
 
 id: T7_HEAT_05
 title: Meltdown - pay 1 Heat to avoid it

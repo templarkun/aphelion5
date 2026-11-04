@@ -65,6 +65,8 @@ given: Accumulator Beam ready with 6 Yellow on it. (0,1): B_03[S2] > fd. Every o
 when: run Accumulator Beam, paying its cost with 1 of the Yellow on it
 then: X = 5 (6, capped at 5): B_03 loses 2 Shields and takes 3 Damage: destroyed. The 5 unspent
       Yellow return to the Supply.
+note: 2026-11-04 (designer) - the program no longer asks how much of the energy on the Module to
+      use: it uses all it can first, then the Reserve.
 
 ################################################################################
 === SECTION: YELLOW ===

@@ -379,7 +379,7 @@ describe("Core Rules 5.4: energy", () => {
     const s0 = given("T_TOK_01");
     const { state } = play(s0, (c) => gainEnergy(c, 3), [A.split({ Yellow: 1, Blue: 2 })]);
     expect(state.player.reserve).toEqual({ Yellow: 1, Red: 0, Blue: 2 });
-    expect(state.supply.energy).toEqual({ Yellow: 9, Red: 10, Blue: 8 });
+    expect(state.supply.energy).toEqual({ Yellow: 14, Red: 15, Blue: 13 });
     const r2 = play(state, (c) => loseEnergy(c, 5));
     expect(r2.state.player.reserve).toEqual({ Yellow: 0, Red: 0, Blue: 0 });
   });
