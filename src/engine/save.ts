@@ -17,8 +17,12 @@ import type { Answer } from "./questions.js";
 import { type AnswerResult, type SessionView, answerSession, startSession } from "./session.js";
 import { type GameState, type Profile, emptyProfile } from "./state.js";
 
-/** 2: setup asks the Campaign and an expansion list (2026-11-04); a format 1 game cannot be replayed. */
-export const SAVE_FORMAT = 2;
+/**
+ * 2: setup asks the Campaign and an expansion list (2026-11-04).
+ * 3: energy you place matches the Module's colour (Q9), M_03 / M_06 Attack in one question.
+ * A game saved in an older format cannot be replayed (its answers no longer fit).
+ */
+export const SAVE_FORMAT = 3;
 
 export interface GameStart {
   seed: number;
@@ -100,7 +104,7 @@ export function readSave(text: string): SaveFile {
   if (typeof f.formatVersion !== "number") throw new Error("not an Aphelion 5 save file");
   if (f.formatVersion > SAVE_FORMAT) throw new Error(`save format ${f.formatVersion} is newer than this program (${SAVE_FORMAT})`);
   const out: SaveFile = { formatVersion: SAVE_FORMAT, profile: f.profile ?? emptyProfile(), settings: f.settings ?? { autoAnswer: true } };
-  if (f.game && f.formatVersion < 2) out.note = "The game in progress was saved by an older version of the program and cannot be continued. Your Company sheets and high scores are kept.";
+  if (f.game && f.formatVersion < SAVE_FORMAT) out.note = "The game in progress was saved by an older version of the program and cannot be continued. Your Company sheets and high scores are kept.";
   else if (f.game) out.game = f.game;
   return out;
 }
