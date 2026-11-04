@@ -163,7 +163,7 @@ describe("batch 7 - MISSION PREPARATION (7.2) and ALLIED DROP (7.3)", () => {
     s.run.completed = [{ mission: "C1_M1", threat: ["A"] }, { mission: "C1_M2X", threat: ["A"] }];
     s.sheet.ally = "V2";
     let offered: string[] = [];
-    const v = go(s, [several("A"), first, first, first, (q) => ((offered = q.kind === "option" ? q.options.map((o) => o.id) : []), A.option("M_07"))]);
+    const v = go(s, [several("A"), first, first, (q) => ((offered = q.kind === "option" ? q.options.map((o) => o.id) : []), A.option("M_07"))]);
     expect(offered).toEqual(["M_05", "M_03", "M_07"]);
     const m07 = sectorKeys(v.state).map((k) => v.state.field[k]!.at(-1)!).find((t) => v.state.tiles[t]!.unitId === "M_07" && v.state.tiles[t]!.faceUp)!;
     expect(mechaAbilities(ctx(v.state), m07).map((a) => a.id)).toContain("V2_M1A");
@@ -187,7 +187,7 @@ describe("batch 7 - MISSION END (10.1) and UPGRADES (10.2)", () => {
     const s = withModules(ending("T7_END_01"), [[26, false, { Red: 2 }]]);
     for (const u of ["B_01", "M_01", "G_05", "S_12", "F_04"]) s.piles.discard.push(addTile(s, u, true));
     expect(s.flagship).toEqual([4, 6, 5]);
-    const after = runEnd(s, [A.option("done")]);
+    const after = runEnd(s, [A.option("done"), A.yes()]);
     expect(after.flagship).toEqual([5, 6, 6]);
     expect(after.sheet.upgradePoints).toBe(0);
     expect(after.piles.trophy).toEqual([]);
@@ -204,6 +204,16 @@ describe("batch 7 - MISSION END (10.1) and UPGRADES (10.2)", () => {
     expect(after.phase).toBe("preparation");
   });
 
+  it("T7_UPG_02 Done with points left: a warning you must agree to", () => {
+    const s = ending("T7_UPG_02");
+    const r = replay(data(), { ...startRoot(s, "missionEnd"), answers: [A.option("done")] });
+    expect(r.status === "question" && r.question).toMatchObject({ kind: "yesno", prompt: expect.stringMatching(/2 Upgrade points.*lost/) });
+    // No: back to the upgrade menu; then mark 2 slots and nothing is lost.
+    const after = runEnd(s, [A.option("done"), A.no(), A.option("V1_M02_U1"), A.amount(2)]);
+    expect(after.sheet.filled).toContain("V1_M02_U1");
+    expect(after.sheet.upgradePoints).toBe(0);
+  });
+
   it("T7_UPG_01 partial marks, locked, exclusive, Requisitions", () => {
     const s = ending("T7_UPG_01");
     const after = runEnd(s, [A.option("V1_M04_U2"), A.amount(5), A.option("V1_M04_U2A"), A.amount(3), A.option("V1_T1")]);
@@ -216,7 +226,7 @@ describe("batch 7 - MISSION END (10.1) and UPGRADES (10.2)", () => {
     // Locked before its unlocker is filled.
     expect(canMark(ctx(ending("T7_UPG_01")), u2b)).toBe(false);
     // Variant: a Repeatable Requisition fully filled.
-    const v = runEnd(ending("T7_UPG_01", "Trophy pile: 10 F_01"), [A.option("V1_M04_U2"), A.amount(5), A.option("V1_T1"), A.amount(2), A.option("done")]);
+    const v = runEnd(ending("T7_UPG_01", "Trophy pile: 10 F_01"), [A.option("V1_M04_U2"), A.amount(5), A.option("V1_T1"), A.amount(2), A.option("done"), A.yes()]);
     expect(v.player.reserve.Yellow).toBe(1);
     expect(v.sheet.marks.V1_T1).toBe(0);
   });

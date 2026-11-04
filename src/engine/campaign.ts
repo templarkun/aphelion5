@@ -247,11 +247,8 @@ function* missionPreparation(c: RunCtx): Effect {
     const k = yield* ask(c, { kind: "option", prompt: "Draw a Module: keep one.", rule: "7.2", options: top.map((id) => ({ id: String(id), label: `${moduleDef(c, id).name} (${moduleDef(c, id).cost} ${moduleDef(c, id).colour}): ${moduleDef(c, id).effect}` })) });
     const kept = Number(k.value);
     s.player.modules.push({ id: kept, ready: true, energy: { Yellow: 0, Red: 0, Blue: 0 } });
-    let rest = top.filter((x) => x !== kept);
-    if (rest.length === 2) {
-      const b = yield* ask(c, { kind: "option", prompt: "Which of the other two goes to the very bottom of the Module deck?", rule: "7.2", options: rest.map((id) => ({ id: String(id), label: moduleDef(c, id).name })) });
-      rest = [...rest.filter((x) => x !== Number(b.value)), Number(b.value)];
-    }
+    // Designer, 2026-11-04: the other two go to the bottom in random order (no choice).
+    const rest = shuffle(s.rng, top.filter((x) => x !== kept));
     s.decks.modules.push(...rest);
     log(c, `keep ${moduleDef(c, kept).name}`, "7.2");
     s.hiddenInfo += 1;
@@ -354,7 +351,12 @@ function* spendUpgradePoints(c: RunCtx): Effect {
       rule: "10.2",
       options: [...ups.map((u) => ({ id: u.id, label: `${u.id} (${marked(c, u.id)}/${u.cost}): ${u.effect}` })), { id: "done", label: "Done (unspent points are lost)" }],
     });
-    if (a.value === "done") break;
+    if (a.value === "done") {
+      // Designer, 2026-11-04: warn that unspent points are lost, and ask the player to agree.
+      const ok = yield* ask(c, { kind: "yesno", prompt: `You still have ${s.sheet.upgradePoints} Upgrade point${s.sheet.upgradePoints === 1 ? "" : "s"}. If you finish now, they are lost. Finish anyway?`, rule: "10.1" });
+      if (ok.value === true) break;
+      continue;
+    }
     const u = ups.find((x) => x.id === a.value)!;
     const room = Math.min(u.cost - marked(c, u.id), s.sheet.upgradePoints);
     const n = room === 1 ? 1 : ((yield* ask(c, { kind: "amount", prompt: `${u.id}: mark how many slots?`, rule: "10.2", min: 1, max: room })).value as number);
@@ -407,13 +409,8 @@ function* missionEnd(c: RunCtx): Effect {
     else if (d.energyGyro) gyros.push(t);
     else s.piles.supply.push(t);
   }
-  // Energy Gyros to the bottom of the Energy deck, face down, in any order (identical tiles need no choice).
-  while (gyros.length > 0) {
-    const kinds = [...new Set(gyros.map((t) => s.tiles[t]!.unitId!))];
-    const kind = kinds.length === 1 ? kinds[0]! : ((yield* ask(c, { kind: "option", prompt: "Energy Gyros to the bottom of the Energy deck: which goes next (from the top down)?", rule: "10.1", options: kinds.map((k) => ({ id: k, label: k })) })).value as string);
-    const i = gyros.findIndex((t) => s.tiles[t]!.unitId === kind);
-    s.piles.energyDeck.push(...gyros.splice(i, 1));
-  }
+  // Energy Gyros to the bottom of the Energy deck, face down. Designer, 2026-11-04: in random order (no choice).
+  s.piles.energyDeck.push(...shuffle(s.rng, gyros));
   // 5. Clear tokens. 6. Collect the Field.
   for (const k of sectorKeys(s)) {
     for (const t of stack(s, k)) {
