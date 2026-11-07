@@ -21,8 +21,8 @@ Not rules gaps: questions about how the new drag-and-drop interface behaves. Ask
 
 | # | Found | Question | Status |
 | --- | --- | --- | --- |
-| I1 | 2026-11-07 | A Flare's energy with only one legal Module (or none): fly there by itself (keeps "auto-answer when exactly one is legal"), or always wait to be dragged? Recommended: fly by itself. | Open |
-| I2 | 2026-11-07 | Energy waiting on a Flare must be placed before any other action (4.6, as built). Agreed? | Open |
-| I3 | 2026-11-07 | A drop acts at once, with no confirm. Should an Attack drop ask first, since the Mecha is destroyed and Undo cannot pass new hidden information? Recommended: no confirm. | Open |
-| I4 | 2026-11-07 | M_03 / M_06: Passive move or swap and then the Attack in one gesture, or two separate drags? Recommended: one gesture. | Open |
-| I5 | 2026-11-07 | Bay weapon icons and effect sprites need entries in the Art table; added with placeholders once the looks are agreed. | Open |
+| I1 | 2026-11-07 | A Flare's energy with only one legal Module (or none): fly there by itself (keeps "auto-answer when exactly one is legal"), or always wait to be dragged? Recommended: fly by itself. | Answered 2026-11-07: it flies by itself, at half speed (0.8 s) so the player sees it. |
+| I2 | 2026-11-07 | Energy waiting on a Flare must be placed before any other action (4.6, as built). Agreed? | Partly answered 2026-11-07: no, try a change as a trial rule (setup option, off by default; Core Rules unchanged until tested). Energy waits on the Flare and must be taken "at the end of Flare activation effect"; with no ready Module of its colour it keeps waiting; still on a Flare at Overload End: back to the Supply. Waiting on: which moment "the end of Flare activation" is (see the chat question of 2026-11-07). |
+| I3 | 2026-11-07 | A drop acts at once, with no confirm. Should an Attack drop ask first, since the Mecha is destroyed and Undo cannot pass new hidden information? Recommended: no confirm. | Answered 2026-11-07: no confirm. |
+| I4 | 2026-11-07 | M_03 / M_06: Passive move or swap and then the Attack in one gesture, or two separate drags? Recommended: one gesture. | Answered 2026-11-07: one drag. |
+| I5 | 2026-11-07 | Bay weapon icons and effect sprites need entries in the Art table; added with placeholders once the looks are agreed. | Answered 2026-11-07: agreed. |
