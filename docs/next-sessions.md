@@ -9,15 +9,21 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    2026-11-04..07 at the designer's request (CLAUDE.md "Decisions"). Still needed: the
    designer plays one full mission and agrees it matches the rules; fix what they report
    (they send the text from Export save -> Copy; "Paste a save" replays it).
-2. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
+2. **Interaction and animation** (designer 2026-11-07; Program Spec section
+   "Interaction and animation", DRAFT waiting for review and answers I1-I5). Drag and drop with
+   tap twins, an animation for every basic event, weapon and aura looks. Build order is in that
+   section: engine events + animation player; Mecha drag (sample of the feel, agreed before going
+   on); Flare energy, Bays, Modules and Orders; the Upgrade sheet; remaining events and settings;
+   phone check. PixiJS stays.
+3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
-3. **Settings and polish.** Animation speed and simple transitions, colour-blind token
+4. **Settings and polish.** Animation speed and simple transitions, colour-blind token
    shapes, the auto-answer switch; a clearer Mission Preparation and Mission End screen
    (upgrades on the Company sheet).
-4. **Developer tools.** Load scenario (test-batch notation), Edit state, Rule trace, a
+5. **Developer tools.** Load scenario (test-batch notation), Edit state, Rule trace, a
    switch to show hidden tiles.
-5. **Language files.** Every word the player sees from `lang/en.json`, card text generated
+6. **Language files.** Every word the player sees from `lang/en.json`, card text generated
    from the component files.
-6. **Speed and acceptance runs.** Undo and loading from checkpoints at each Mission
+7. **Speed and acceptance runs.** Undo and loading from checkpoints at each Mission
    Preparation; full Campaign 1 play-throughs with V1 and V2, with and without Heat.
-7. **After version 1.** Wrap the same code for PC (Tauri or Electron) and phones (Capacitor).
+8. **After version 1.** Wrap the same code for PC (Tauri or Electron) and phones (Capacitor).

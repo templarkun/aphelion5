@@ -62,6 +62,7 @@ Each stage ends with all its tests passing and a short report to the designer. R
 - 2026-11-04: Energy Supply 15 per colour (Core Rules master rev 139, snapshot rebuilt); stored energy used without a question. The designer copied all batches (with today's CHANGED notes) and the corrected `Modules.txt` (Gravity Well) into the Project. 453 tests passing.
 - 2026-11-07: Rows chosen on the Field with a confirm pop-up (see Decisions); `tests/batch9.txt` T9_CHO_07. Batch 9 AGREED and copied into the Project by the designer; nothing is waiting to be copied. `scripts/find-save.ts` plays random games to a wanted question and writes a save; `npm run test:ui` uses it for the row check. 453 tests passing, browser check passing.
 - 2026-11-07: Master docs unchanged (Core Rules rev 139, spec rev 23). Play-test fix: a long choice list (Mission End Upgrades) made the Field's canvas slide over the top of the question panel, so the first upgrades could not be clicked. The Field now shrinks and is clipped to its own area (`src/web/styles.css`); `npm run test:ui` checks long lists stay clickable. 453 tests passing, browser check passing.
+- 2026-11-07: New direction from the designer: an interactive game, not a card game on screen (drag and drop, animations, effects; rules unchanged; touch first). Claude drafted Program Spec section "Interaction and animation" in the master (rev 35), snapshot rebuilt; waiting for the designer's review and answers I1-I5 (`docs/open-questions.md`). PixiJS stays (no Phaser). Plan: `docs/next-sessions.md`.
 
 ## Working with the designer
 
