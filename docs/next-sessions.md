@@ -1,11 +1,14 @@
-# Next sessions (plan, 2026-11-04)
+# Next sessions (plan, updated 2026-11-07)
 
-All 8 build stages are built and all test batches (1-8) are agreed. What is left for
-version 1 (spec "Scope", "Acceptance") and after:
+All 8 build stages are built and all test batches (1-9) are agreed and in the Project. What
+is left for version 1 (spec "Scope", "Acceptance") and after:
 
-1. **Play-test build and fixes.** Publish the web build so the designer can play a full
-   mission without installing anything; fix what the designer finds. Acceptance needs the
-   designer to play one full mission and agree it matches the rules.
+1. **Play-test build and fixes.** IN PROGRESS. The web build is published at
+   https://claude.ai/artifact/Djc1u5gc9DZRsrP2K9kLT2 (rebuild with `npm run build:artifact`,
+   republish `dist-artifact/aphelion5.html` to that link). The interface was reworked
+   2026-11-04..07 at the designer's request (CLAUDE.md "Decisions"). Still needed: the
+   designer plays one full mission and agrees it matches the rules; fix what they report
+   (they send the text from Export save -> Copy; "Paste a save" replays it).
 2. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
 3. **Settings and polish.** Animation speed and simple transitions, colour-blind token

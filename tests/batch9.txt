@@ -1,8 +1,8 @@
 ################################################################################
 # APHELION 5 - TEST SCENARIOS, BATCH 9: ACTIONS ON THE THINGS THEMSELVES (structured)
 # Written 2026-11-04 by Claude from the designer's interface requests of 2026-11-04
-# (17 points). DRAFT, awaiting the designer. When agreed, copy it into the Project as
-# "claude/Test scenarios batch 9.txt".
+# (17 points) and later requests (M_03, facing, rows). AGREED by the designer 2026-11-07
+# and copied into the Project as "claude/Test scenarios batch 9.txt".
 #
 # It replaces batch 8 records T8_SCR_04 (last sentence), T8_SCR_05 (last part), T8_ANS_01,
 # T8_ANS_02 (first example) and T8_ANS_03 (example). Checked in a real browser by
