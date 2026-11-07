@@ -1,8 +1,8 @@
 ################################################################################
 # APHELION 5 - TEST SCENARIOS, BATCH 10: ENERGY POP-UPS AND THE FLARE ENERGY TRIAL (structured)
 # Written 2026-11-07 by Claude from the designer's requests of 2026-11-07 (energy pop-ups,
-# answers to I1 and I2). DRAFT, awaiting the designer's agreement; then it goes into the
-# Project as "claude/Test scenarios batch 10.txt".
+# answers to I1 and I2). Copied into the Project by the designer 2026-11-07 as
+# "claude/Test scenarios batch 10.txt".
 #
 # Checked by tests/unit/energy.test.ts (engine) and scripts/ui-smoke.mjs (screen).
 # The trial rule is a setup option, off by default: Core Rules 4.6 is unchanged.

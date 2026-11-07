@@ -69,13 +69,22 @@ await page.screenshot({ path: `${out}/ui-command.png` });
 const dark = JSON.parse((await page.locator(".field").getAttribute("data-choosable")) ?? "[]");
 await clickField(page, dark.length - 1);
 const popupTitle = await page.locator(".popup-title").textContent();
+// Bubbles (designer 2026-11-07): one standard width, the row centred on the sector clicked.
+await page.waitForTimeout(700);
+const target = dark[dark.length - 1];
+const fieldBox = await page.locator(".field").boundingBox();
+const bubbleBoxes = await page.locator(".popup .bubble").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { x: r.x, w: r.width, y: r.y, h: r.height }; }));
+const rowLeft = Math.min(...bubbleBoxes.map((b) => b.x));
+const rowRight = Math.max(...bubbleBoxes.map((b) => b.x + b.w));
+const bubbles = bubbleBoxes.length > 0 && bubbleBoxes.every((b) => Math.abs(b.w - bubbleBoxes[0].w) < 1) && Math.abs((rowLeft + rowRight) / 2 - (fieldBox.x + target.x)) < 12;
 await page.mouse.click(5, 300);
-await page.waitForTimeout(100);
+await page.waitForTimeout(350);
 const closedByOutside = (await page.locator(".popup").count()) === 0;
 await clickField(page, dark.length - 1);
 await page.screenshot({ path: `${out}/ui-popup.png` });
+await page.waitForTimeout(700);
 await page.locator(".popup").getByRole("menuitem", { name: "Reveal" }).click();
-await page.waitForTimeout(300);
+await page.waitForTimeout(500);
 await page.screenshot({ path: `${out}/ui-after-reveal.png` });
 // Run a Module by clicking it, if one can run (it may then ask for targets).
 const afterReveal = (await panel.locator(".prompt").last().textContent()) ?? "";
@@ -94,6 +103,7 @@ async function revealSomething(pg) {
     const rev = pg.locator(".popup [role=menuitem]", { hasText: "Reveal" });
     if (await rev.count()) return rev.click();
     await pg.keyboard.press("Escape");
+    await pg.waitForTimeout(250);
   }
 }
 // Facing (3.7): reveal on fresh games until a unit with arrows shows the rotate buttons.
@@ -194,7 +204,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

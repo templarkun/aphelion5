@@ -1,0 +1,46 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 11: MODULES PANEL AND BUBBLE POP-UPS (structured)
+# Written 2026-11-07 by Claude from the designer's requests of 2026-11-07. DRAFT, awaiting
+# the designer's agreement; then it goes into the Project as
+# "claude/Test scenarios batch 11.txt". Screen only: no rule changes.
+# Checked by scripts/ui-smoke.mjs ("bubbles") and by hand.
+################################################################################
+
+=== FORMAT SPEC ===
+Same layout as batch 8: "given" describes the screen, "when" what the player does, "then"
+what the screen must show. No map.
+
+################################################################################
+=== SECTION: MODULES PANEL ===
+
+id: T11_MOD_01
+title: Modules are listed by colour, then by cost
+source: designer 2026-11-07 (point 1)
+given: Modules of every colour, some with the same cost, one with an X cost.
+when: look at the Modules panel
+then: Yellow Modules first, then Red, then Blue. Within a colour, highest printed cost first;
+      X-cost Modules last; Modules with the same cost in the order you gained them.
+
+id: T11_MOD_02
+title: Each Module's rim is its energy colour
+source: designer 2026-11-07 (point 2)
+given: a Yellow, a Red and a Blue Module.
+when: look at the Modules panel
+then: the coloured rim on the left of each Module is yellow, red or blue: its energy colour.
+
+################################################################################
+=== SECTION: BUBBLE POP-UPS ===
+
+id: T11_POP_01
+title: A unit's actions as bubbles centred on the unit
+source: designer 2026-11-07 (point 3)
+given: Command phase; a Mecha with three actions (for example Attack, Scrap, Expend).
+when: click or tap the Mecha
+then: the unit's name shows in a small label, with one bubble per action under it, side by
+      side, all the same width, the row centred on the unit (kept on screen; on a phone it may
+      wrap to two rows). A long action shows its name in bold and its text smaller, cut to two
+      lines; the full text is in the information strip and on hover. The bubbles spring in
+      one after another with an elastic overshoot.
+when: click outside, press Escape, or choose a bubble
+then: the bubbles shrink and fade away quickly (about 0.17 s); a chosen bubble's action is
+      then carried out.

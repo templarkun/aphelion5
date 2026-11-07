@@ -2,7 +2,7 @@
  * Plays random legal answers (from seed 1 up) until the game asks a question
  * of the given kind, then writes that game as a save file, for the browser
  * check (scripts/ui-smoke.mjs pastes it in). Usage:
- *   tsx scripts/find-save.ts rows|energy <out.json>
+ *   tsx scripts/find-save.ts rows|energy|bubbles <out.json>
  */
 import { writeFileSync } from "node:fs";
 import { loadGameData } from "../src/data/nodeLoad.js";
@@ -16,6 +16,12 @@ const WANTED: Record<string, (q: Question) => boolean> = {
   rows: (q) => q.rows !== undefined,
   // Energy on Modules with pop-ups (designer 2026-11-07).
   energy: (q) => q.energy !== undefined && q.kind === "option" && q.options.length >= 2,
+  // A unit with three or more actions in its pop-up (bubbles, designer 2026-11-07).
+  bubbles: (q) => {
+    const per = new Map<string, number>();
+    for (const o of q.shortcuts ?? []) if (o.on?.kind === "unit") per.set(o.on.id, (per.get(o.on.id) ?? 0) + 1);
+    return [...per.values()].some((n) => n >= 3);
+  },
 };
 const [what = "rows", out = "save.json"] = process.argv.slice(2);
 const wanted = WANTED[what];

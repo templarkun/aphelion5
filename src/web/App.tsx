@@ -464,25 +464,34 @@ function GameScreen(p: GameProps) {
   };
   const subSplit = (id: string) => setSplit((x) => ({ ...x, [id]: Math.max(0, (x[id] ?? 0) - 1) }));
 
-  const openPopup = (title: string, options: Option[], note?: string) => setPopup({ x: pointer.current.x, y: pointer.current.y, title, options, note });
+  /** Where a unit or sector is on screen (its sector's centre), else where the pointer was. */
+  const centreOf = (id: string): { x: number; y: number } => {
+    const field = document.querySelector<HTMLElement>(".field");
+    const k = s.tiles[id] ? Object.keys(s.field).find((key) => s.field[key]!.includes(id)) : id;
+    const hits: { k: string; x: number; y: number }[] = JSON.parse(field?.dataset.choosable ?? "[]");
+    const h = hits.find((x) => x.k === k);
+    if (!field || !h) return pointer.current;
+    const r = field.getBoundingClientRect();
+    return { x: r.left + h.x, y: r.top + h.y };
+  };
+  const openPopup = (title: string, options: Option[], note?: string, at?: string) => setPopup({ ...(at ? centreOf(at) : pointer.current), title, options, note });
   const pick = (id: string) => {
     if (actors) {
       const unitOpts = actors.units.get(id);
       if (unitOpts) {
         const alerts = alertedUnits(c);
         const last = inOverload && alerts.length === 1 && alerts[0] === id;
-        return openPopup(describe(c, id), unitOpts, last ? "This is the last Alert on the Field. After it, you can end the Overload (9.2)." : undefined);
+        return openPopup(describe(c, id), unitOpts, last ? "This is the last Alert on the Field. After it, you can end the Overload (9.2)." : undefined, id);
       }
       const secOpts = actors.sectors.get(id);
-      if (secOpts) return openPopup(`Dark sector (${id})`, secOpts);
+      if (secOpts) return openPopup(`Dark sector (${id})`, secOpts, undefined, id);
       return;
     }
     if (!q) return;
     if (rowQ && rowSectors.includes(id)) {
       // The rows through this sector: the first is selected; "Next row" steps through the others.
       const through = rowQ.rows!.flatMap((r, i) => (r.includes(id) ? [i] : []));
-      const x = pointer.current.x;
-      const y = pointer.current.y;
+      const { x, y } = centreOf(id);
       const show = (n: number) => {
         const i = through[n % through.length]!;
         setRowSel(i);
@@ -500,7 +509,7 @@ function GameScreen(p: GameProps) {
     const here = onField.get(id);
     if (here && (q.kind === "option" || q.kind === "order")) {
       if (here.length === 1) return send({ kind: q.kind, value: here[0]!.id } as Answer);
-      return openPopup(s.tiles[id] ? describe(c, id) : `Sector (${id})`, here);
+      return openPopup(s.tiles[id] ? describe(c, id) : `Sector (${id})`, here, undefined, id);
     }
     if (q.kind === "split") return addSplit(id);
     if ((q.kind === "option" || q.kind === "order") && pickIds.includes(id)) return send({ kind: q.kind, value: id } as Answer);
@@ -674,14 +683,14 @@ function GameScreen(p: GameProps) {
 
       <aside className="right panel">
         <h3>Modules</h3>
-        {s.player.modules.map((m) => {
+        {sortedModules(c, s.player.modules).map((m) => {
           const d = moduleDef(c, m.id);
           const e = (["Yellow", "Red", "Blue"] as const).filter((k) => m.energy[k] > 0).map((k) => `${m.energy[k]} ${k}`);
           const st = moduleState(m.id);
           const dim = modulesWanted && !st.can && !energyFor(m.id);
           const Tag = st.can ? "button" : "div";
           return (
-            <Tag key={m.id} data-module={m.id} className={`module ${d.background} ${m.ready ? "" : "exhausted"} ${st.can ? "can" : ""} ${dim ? "dim" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")} onClick={st.onClick}>
+            <Tag key={m.id} data-module={m.id} className={`module rim-${d.colour.toLowerCase()} ${m.ready ? "" : "exhausted"} ${st.can ? "can" : ""} ${dim ? "dim" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")} onClick={st.onClick}>
               <b>{d.name}</b>{" "}
               <span className="small">
                 {d.cost === "X" ? "X" : moduleCost(c, m.id)} {d.colour} · {d.background === "red" ? "Overload" : "Command phase"} · {m.ready ? "ready" : "exhausted"}
@@ -759,6 +768,22 @@ function GameScreen(p: GameProps) {
       )}
     </div>
   );
+}
+
+/**
+ * Modules panel order (designer 2026-11-07): Yellow, Red, Blue; then printed
+ * cost, highest first, X last; ties in the order you gained them.
+ */
+export function sortedModules<M extends { id: number }>(c: Parameters<typeof moduleDef>[0], mods: M[]): M[] {
+  const rank = { Yellow: 0, Red: 1, Blue: 2 } as const;
+  const cost = (id: number) => {
+    const x = moduleDef(c, id).cost;
+    return x === "X" ? -1 : Number(x);
+  };
+  return mods
+    .map((m, i) => ({ m, i }))
+    .sort((a, b) => rank[moduleDef(c, a.m.id).colour] - rank[moduleDef(c, b.m.id).colour] || cost(b.m.id) - cost(a.m.id) || a.i - b.i)
+    .map((x) => x.m);
 }
 
 /** The energy one answer places: a placeholder glyph until the designer's art (spec "Art"). */
@@ -873,36 +898,60 @@ function ActionPrompt({ state, q, actors }: { state: GameState; q: Question; act
   );
 }
 
+/** A long label "Name: what it does" shows the name in bold and the rest smaller, cut to fit. */
+function BubbleLabel({ text }: { text: string }) {
+  const i = text.indexOf(": ");
+  if (text.length <= 30 || i < 0 || i > 24) return <span>{text}</span>;
+  return (
+    <span className="two">
+      <b>{text.slice(0, i)}</b>
+      <small>{text.slice(i + 2)}</small>
+    </span>
+  );
+}
+
+/**
+ * A unit's or sector's pop-up (designer 2026-11-07): each action in its own
+ * bubble of one standard width, side by side, the row centred on the unit.
+ * Long labels get a smaller font and are cut to three lines (the full text
+ * shows on hover and is read out). Bubbles spring in (ease-out elastic) and
+ * shrink away when one is chosen or the pop-up is closed.
+ */
 function PopupMenu({ popup, onPick, onClose }: { popup: Popup; onPick: (id: string) => void; onClose: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: popup.x, top: popup.y });
-  useEffect(() => {
+  const [leaving, setLeaving] = useState(false);
+  useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
-    setPos({ left: Math.max(8, Math.min(popup.x, window.innerWidth - w - 8)), top: Math.max(8, Math.min(popup.y + 8, window.innerHeight - h - 8)) });
-    el.querySelector("button")?.focus();
+    // Centre the group on the unit, kept on screen.
+    setPos({ left: Math.max(8, Math.min(popup.x - w / 2, window.innerWidth - w - 8)), top: Math.max(8, Math.min(popup.y - h / 2, window.innerHeight - h - 8)) });
+    el.querySelector("button")?.focus({ preventScroll: true });
   }, [popup]);
+  const leave = (then: () => void) => {
+    if (leaving) return;
+    setLeaving(true);
+    window.setTimeout(then, 170);
+  };
   useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const k = (e: KeyboardEvent) => e.key === "Escape" && leave(onClose);
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [onClose]);
+  }, [onClose, leaving]);
+  const items = [...popup.options.map((o) => ({ id: o.id, label: o.label, go: () => leave(() => onPick(o.id)), main: popup.commit })), ...(popup.next ? [{ id: "next", label: popup.next.label, go: popup.next.go, main: false }] : [])];
   return (
-    <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={box} className="popup" role="menu" aria-label={popup.title} style={pos}>
+    <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && leave(onClose)}>
+      <div ref={box} className={`popup bubbles ${leaving ? "leaving" : ""}`} role="menu" aria-label={popup.title} style={pos}>
         <div className="popup-title">{popup.title}</div>
-        {popup.options.map((o) => (
-          <button key={o.id} role="menuitem" className={popup.commit ? "primary" : ""} onClick={() => onPick(o.id)}>
-            {o.label}
-          </button>
-        ))}
-        {popup.next && (
-          <button role="menuitem" onClick={popup.next.go}>
-            {popup.next.label}
-          </button>
-        )}
+        <div className="bubble-row">
+          {items.map((o, i) => (
+            <button key={`${popup.title}:${o.id}`} role="menuitem" title={o.label} className={`bubble ${o.main ? "primary" : ""} ${o.label.length > 60 ? "tiny" : o.label.length > 30 ? "small-text" : ""}`} style={{ animationDelay: `${i * 45}ms` }} onClick={o.go}>
+              <BubbleLabel text={o.label} />
+            </button>
+          ))}
+        </div>
         {popup.note && <p className="popup-note">{popup.note}</p>}
       </div>
     </div>

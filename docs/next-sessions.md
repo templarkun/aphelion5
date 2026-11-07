@@ -1,4 +1,4 @@
-# Next sessions (plan, updated 2026-11-07)
+# Next sessions (plan, updated 2026-11-07, evening)
 
 All 8 build stages are built and all test batches (1-9) are agreed and in the Project. What
 is left for version 1 (spec "Scope", "Acceptance") and after:
@@ -15,6 +15,10 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    section: engine events + animation player; Mecha drag (sample of the feel, agreed before going
    on); Flare energy, Bays, Modules and Orders; the Upgrade sheet; remaining events and settings;
    phone check. PixiJS stays.
+   Done so far (2026-11-07): energy pop-ups beside Modules (one energy per tap, any order),
+   the Flare energy trial rule (setup option), Modules panel order and colour rims, bubble
+   pop-ups for units and sectors. Next: engine events and the animation player, then
+   dragging Mecha as the sample of the feel.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
 4. **Settings and polish.** Animation speed and simple transitions, colour-blind token
