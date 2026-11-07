@@ -149,7 +149,16 @@ if (existsSync(rowSave)) {
   if (popupOk) await commit.click();
   await pg.waitForTimeout(300);
   const after = (await q.locator(".prompt").last().textContent()) ?? "";
-  rowCheck = listed === 0 && popupOk && after !== before ? "ok" : `failed (list ${listed}, pop-up ${popupOk}, prompt still "${before}")`;
+  // A long list of choices (like the Upgrade list) must not slide under the Field (play-test 2026-11-07).
+  await pg.evaluate(() => {
+    const c = document.querySelector(".question");
+    for (let i = 0; i < 22; i++) { const b = document.createElement("button"); b.className = "probe"; b.textContent = "A long choice like an Upgrade: Improves M_03's Passive: it may move through any number of adjacent Dark sectors before an Attack."; c.appendChild(b); }
+  });
+  await pg.waitForTimeout(200);
+  const covered = await pg.evaluate(() => [...document.querySelectorAll(".probe")].filter((e) => { const r = e.getBoundingClientRect(); const p = document.querySelector(".question").getBoundingClientRect(); if (r.top < p.top || r.bottom > p.bottom) return false; return document.elementFromPoint(r.x + 10, r.y + r.height / 2) !== e; }).length);
+  await pg.evaluate(() => document.querySelectorAll(".probe").forEach((e) => e.remove()));
+  if (covered) rowCheck = `failed (${covered} long choices covered by the Field)`;
+  else rowCheck = listed === 0 && popupOk && after !== before ? "ok" : `failed (list ${listed}, pop-up ${popupOk}, prompt still "${before}")`;
   await pg.close();
 }
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });

@@ -82,7 +82,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 .game {
   display: grid; height: 100%;
   grid-template-columns: 260px 1fr 300px;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas: "bar bar bar" "left center right" "left question right";
 }
 .game.is-overload { background: var(--overload); }
@@ -93,8 +93,8 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 .panel { background: var(--panel); border: 1px solid var(--line); overflow: auto; padding: 8px 12px; }
 .left { grid-area: left; }
 .right { grid-area: right; }
-.center { grid-area: center; display: flex; flex-direction: column; min-height: 0; }
-.field { flex: 1; min-height: 280px; position: relative; }
+.center { grid-area: center; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.field { flex: 1; min-height: 160px; position: relative; overflow: hidden; }
 .field canvas { position: absolute; inset: 0; }
 .empty-field { flex: 1; display: grid; place-items: center; color: var(--muted); font-size: 20px; }
 .hover { padding: 6px 12px; min-height: 2.6em; border-top: 1px solid var(--line); }
