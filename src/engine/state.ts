@@ -38,6 +38,11 @@ export interface TileState {
   /** 0-5; 0 = as printed (3.8). Kept by every move except Reveal and Place. */
   facing: Facing;
   tokens: Tokens;
+  /**
+   * Trial rule "Flare energy waits" (designer 2026-11-07, open question I2):
+   * the energy a revealed Flare gave, waiting on it until its Alert is resolved.
+   */
+  energy?: Record<EnergyColour, number>;
 }
 
 export type Phase = "setup" | "preparation" | "command" | "overload" | "overloadEnd" | "missionEnd" | "gameEnd";
@@ -170,6 +175,12 @@ export interface GameState {
     /** Answer questions that have exactly one legal answer automatically (spec "Player choices"). */
     autoAnswer: boolean;
     heatModule: boolean;
+    /**
+     * Trial rule (designer 2026-11-07, I2; Core Rules unchanged): a revealed
+     * Flare's energy waits on it and is placed when its Alert is resolved.
+     * Optional so older saves and scenarios read as off.
+     */
+    trialFlareEnergy?: boolean;
     /** Developer mode: a game played with it never records a high score (spec "Developer mode"). */
     developerMode: boolean;
   };

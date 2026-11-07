@@ -27,6 +27,9 @@ then: "Choose a Campaign." with "Campaign 1" (asked even though it is the only o
       "Choose your Company."; then Fresh or Veteran if the sheet has marks; then "Choose the
       expansion modules to play with": a list to select or unselect ("Heat module
       (Expansion1)"), Confirm with any, all or none selected.
+note: CHANGED 2026-11-07 (designer, open question I2) - the list also holds "Trial rule: Flare
+      energy waits on the Flare until its Alert is resolved" (see batch 10, T10_TRY_01). The
+      Project copy needs the same note.
 
 id: T9_SET_02
 title: Extra tiles are placed by the program

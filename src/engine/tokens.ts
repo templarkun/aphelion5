@@ -48,6 +48,15 @@ export function returnTokens(c: Ctx, id: TileId): void {
   s.feedback += t.feedback;
   // Damage, Alert and Wreck markers are unlimited (Core Rules 2): nothing to count.
   tile(c.state, id).tokens = noTokens();
+  returnWaitingEnergy(c, id);
+}
+
+/** Trial rule (I2): energy still waiting on a Flare goes back to the Supply. */
+export function returnWaitingEnergy(c: Ctx, id: TileId): void {
+  const t = tile(c.state, id);
+  if (!t.energy) return;
+  for (const [col, n] of Object.entries(t.energy) as [keyof typeof t.energy, number][]) c.state.supply.energy[col] += n;
+  delete t.energy;
 }
 
 export function printedIntegrity(c: Ctx): number[] {

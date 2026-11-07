@@ -4,7 +4,7 @@
  * question, and turns clicks and taps into answers.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { objectiveText } from "../cli/objective.js";
 import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
@@ -515,11 +515,15 @@ function GameScreen(p: GameProps) {
       const o = actors.modules.get(id);
       return o ? { can: true, onClick: () => answer(o.id) } : { can: false };
     }
+    // Energy (designer 2026-11-07): answered on the pop-up beside the Module, not on the Module itself.
+    if (q?.kind === "option" && q.energy) return { can: false };
     if (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules" && q.options.some((o) => o.id === String(id))) return { can: true, onClick: () => send({ kind: q.kind, value: String(id) } as Answer) };
     if (q?.kind === "split" && splitOn === "modules" && q.buckets.some((b) => b.id === String(id))) return { can: true, onClick: () => addSplit(String(id)), count: split[String(id)] ?? 0 };
     return { can: false };
   };
   const modulesWanted = (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules") || splitOn === "modules";
+  const energyQ = !actors && q?.kind === "option" && q.energy ? q : undefined;
+  const energyFor = (id: number) => energyQ?.energy?.[String(id)];
   const baysWanted = splitOn === "bays";
 
   const co = data.companies.byId.get(s.player.company)!;
@@ -674,10 +678,10 @@ function GameScreen(p: GameProps) {
           const d = moduleDef(c, m.id);
           const e = (["Yellow", "Red", "Blue"] as const).filter((k) => m.energy[k] > 0).map((k) => `${m.energy[k]} ${k}`);
           const st = moduleState(m.id);
-          const dim = modulesWanted && !st.can;
+          const dim = modulesWanted && !st.can && !energyFor(m.id);
           const Tag = st.can ? "button" : "div";
           return (
-            <Tag key={m.id} className={`module ${d.background} ${m.ready ? "" : "exhausted"} ${st.can ? "can" : ""} ${dim ? "dim" : ""}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")} onClick={st.onClick}>
+            <Tag key={m.id} data-module={m.id} className={`module ${d.background} ${m.ready ? "" : "exhausted"} ${st.can ? "can" : ""} ${dim ? "dim" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")} onClick={st.onClick}>
               <b>{d.name}</b>{" "}
               <span className="small">
                 {d.cost === "X" ? "X" : moduleCost(c, m.id)} {d.colour} · {d.background === "red" ? "Overload" : "Command phase"} · {m.ready ? "ready" : "exhausted"}
@@ -725,6 +729,7 @@ function GameScreen(p: GameProps) {
         )}
       </section>
 
+      {energyQ && <EnergyPopups q={energyQ} onPick={(id) => send({ kind: "option", value: id })} />}
       {popup && (
         <PopupMenu
           popup={popup}
@@ -753,6 +758,69 @@ function GameScreen(p: GameProps) {
         </section>
       )}
     </div>
+  );
+}
+
+/** The energy one answer places: a placeholder glyph until the designer's art (spec "Art"). */
+export function EnergyGlyph({ colour }: { colour: "Yellow" | "Red" | "Blue" }) {
+  return (
+    <span className={`glyph ${colour.toLowerCase()}`} aria-label={`${colour} energy`}>
+      {colour[0]}
+    </span>
+  );
+}
+
+/**
+ * Energy on Modules (designer 2026-11-07): a pop-up to the left of every
+ * Module that can take one of the waiting energies, with an arrow to it and
+ * the energy's glyph. One tap places one energy; several colours (a Power
+ * Node) show all their pop-ups at once, placed in any order.
+ */
+function EnergyPopups({ q, onPick }: { q: Question & { kind: "option" }; onPick: (id: string) => void }) {
+  const ids = q.options.filter((o) => !o.id.startsWith("supply:")).map((o) => o.id);
+  const [pos, setPos] = useState<Record<string, { x: number; y: number; inside: boolean } | undefined>>({});
+  const W = 132;
+  useLayoutEffect(() => {
+    const first = document.querySelector(`[data-module="${ids[0]}"]`);
+    first?.scrollIntoView({ block: "nearest" });
+    const place = () => {
+      const next: typeof pos = {};
+      for (const id of ids) {
+        const el = document.querySelector(`[data-module="${id}"]`);
+        const panel = el?.closest(".panel");
+        if (!el || !panel) continue;
+        const r = el.getBoundingClientRect();
+        const pr = panel.getBoundingClientRect();
+        const y = r.top + r.height / 2;
+        if (y < pr.top || y > pr.bottom) continue; // scrolled out of view
+        // No room on the left (phone layout): sit inside the Module's right end, clear of its name.
+        const inside = r.left < W + 24;
+        next[id] = { x: inside ? r.right - W - 10 : r.left - W - 14, y, inside };
+      }
+      setPos(next);
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [ids.join(",")]);
+  return (
+    <>
+      {ids.map((id, i) => {
+        const p = pos[id];
+        const col = q.energy![id]!;
+        if (!p) return null;
+        return (
+          <button key={`${q.prompt}:${id}`} className={`energy-pop ${col.toLowerCase()} ${p.inside ? "inside" : ""}`} style={{ left: p.x, top: p.y, width: W, animationDelay: `${i * 50}ms, ${i * 50 + 300}ms` }} onClick={() => onPick(id)} aria-label={`Place 1 ${col} energy on this Module`}>
+            <EnergyGlyph colour={col} />
+            <span>+1 {col}</span>
+          </button>
+        );
+      })}
+    </>
   );
 }
 
@@ -926,13 +994,13 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
           {head}
           {there > 0 && (
             <p className="small">
-              {q.rows ? "Click a sector of the row you want on the Field (the highlighted sectors), then confirm it in the pop-up." : `Click ${q.pick === "modules" ? "one of the highlighted Modules" : "a highlighted unit or sector on the Field"}.`}
+              {q.energy ? "Tap an energy pop-up beside a Module to place that energy there, one at a time, in any order." : q.rows ? "Click a sector of the row you want on the Field (the highlighted sectors), then confirm it in the pop-up." : `Click ${q.pick === "modules" ? "one of the highlighted Modules" : "a highlighted unit or sector on the Field"}.`}
             </p>
           )}
           <div className="choices">
             {rest.map((o) => (
               <button key={o.id} className={o.id === "concede" ? "danger" : ""} onClick={() => p.onAnswer({ kind: q.kind, value: o.id } as Answer)}>
-                {o.label}
+                {q.energy?.[o.id] && <EnergyGlyph colour={q.energy[o.id]!} />} {o.label}
               </button>
             ))}
           </div>

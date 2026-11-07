@@ -63,12 +63,22 @@ export function startGame(data: GameData, start: GameStart): Game {
 /** Replay a list of answers from the start. Throws if one is refused (a save that no longer fits the rules). */
 export function replayGame(data: GameData, start: GameStart, answers: readonly Answer[]): Game {
   let v = startSession(data, initial(data, start));
+  const kept: Answer[] = [];
   for (const [i, a] of answers.entries()) {
-    const r = answerSession(data, v, a);
-    if (r.status === "illegal" || r.status === "blocked") throw new Error(`saved answer ${i + 1} was refused: ${r.reason}`);
-    v = r;
+    // Saves from before 2026-11-07 answered energy on Modules with one split per colour;
+    // energy is now placed one per answer (designer 2026-11-07): replay the split as those answers.
+    const parts =
+      v.status === "question" && v.question.energy && a.kind === "split"
+        ? Object.entries(a.value).flatMap(([id, n]) => Array.from({ length: n }, (): Answer => ({ kind: "option", value: id })))
+        : [a];
+    for (const p of parts) {
+      const r = answerSession(data, v, p);
+      if (r.status === "illegal" || r.status === "blocked") throw new Error(`saved answer ${i + 1} was refused: ${r.reason}`);
+      v = r;
+      kept.push(p);
+    }
   }
-  return { start, answers: [...answers], view: v };
+  return { start, answers: kept, view: v };
 }
 
 /** Answer the current question. A refused answer leaves the game as it was. */

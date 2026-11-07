@@ -39,6 +39,12 @@ interface Base {
    * the player click a row on the Field and confirm it in a pop-up.
    */
   rows?: SectorKey[][];
+  /**
+   * An energy question (5.3): option id -> the colour of the one energy that
+   * answer places. Module ids put it on that Module; "supply:<colour>" sends
+   * it back to the Supply. The screen shows a pop-up by each Module.
+   */
+  energy?: Record<string, "Yellow" | "Red" | "Blue">;
 }
 
 /** A thing on the screen an option belongs to. */

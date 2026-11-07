@@ -7,6 +7,7 @@ import { unitEffect } from "../effects/registry.js";
 import { type Effect, type RunCtx, ask, asEffect, log } from "./effect.js";
 import { type Ctx, describe, isUnit, isWreck, tile, unitDef, unitType, units } from "./field.js";
 import { commandMecha } from "./mecha.js";
+import { placeWaitingFlareEnergy } from "./moves.js";
 import type { TileId } from "./state.js";
 import { afterTopTileLeaves, removeFromField, removeWreck } from "./tokens.js";
 
@@ -58,8 +59,9 @@ function* alertEffect(c: RunCtx, id: TileId, unitId: string): Effect {
       return;
     case "Flare":
       // A Power Node has no effect (4.6). Flares stay until Overload End.
-      if (unitDef(c, id).text.activate === "none") return;
-      yield* unitEffect(unitId, "activate")(c, id);
+      if (unitDef(c, id).text.activate !== "none") yield* unitEffect(unitId, "activate")(c, id);
+      // Trial rule (I2): then its waiting energy is placed.
+      yield* placeWaitingFlareEnergy(c, id);
       return;
     case "Omega":
       yield* unitEffect(unitId, "atOverload")(c, id);

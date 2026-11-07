@@ -150,3 +150,17 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .reserve > span { padding: 2px 6px; border-radius: 6px; }
 .facing-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
 .facing-note .prompt { margin: 0; }
+
+/* Energy pop-ups (designer 2026-11-07): beside each Module that can take the energy. */
+.energy-pop { position: fixed; z-index: 12; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 999px; border: 2px solid var(--pop); background: var(--panel); font-weight: 700; box-shadow: 0 6px 18px rgb(0 0 0 / 0.25), 0 0 0 0 var(--pop); cursor: pointer; min-height: 44px; animation: pop-in 0.32s cubic-bezier(0.2, 1.5, 0.4, 1) both, pop-pulse 1.4s ease-in-out infinite; }
+.energy-pop::after { content: ""; position: absolute; right: -11px; top: 50%; transform: translateY(-50%); border: 9px solid transparent; border-left: 10px solid var(--pop); border-right: 0; }
+.energy-pop.inside::after { display: none; }
+.energy-pop:hover { filter: brightness(1.08); }
+.energy-pop.yellow { --pop: var(--yellow); } .energy-pop.red { --pop: var(--red); } .energy-pop.blue { --pop: var(--blue); }
+@keyframes pop-in { from { opacity: 0; transform: translate(-14px, -50%) scale(0.6); } to { opacity: 1; transform: translate(0, -50%) scale(1); } }
+@keyframes pop-pulse { 0%, 100% { box-shadow: 0 6px 18px rgb(0 0 0 / 0.25), 0 0 0 0 var(--pop); } 50% { box-shadow: 0 6px 18px rgb(0 0 0 / 0.25), 0 0 0 6px color-mix(in srgb, var(--pop) 35%, transparent); } }
+.glyph { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 800; flex: none; box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.2); }
+.glyph.yellow { background: var(--yellow); } .glyph.red { background: var(--red); } .glyph.blue { background: var(--blue); }
+.module.energy-target { box-shadow: 0 0 0 2px var(--pop), 0 0 14px color-mix(in srgb, var(--pop) 45%, transparent); }
+.module.energy-target.yellow { --pop: var(--yellow); } .module.energy-target.red { --pop: var(--red); } .module.energy-target.blue { --pop: var(--blue); }
+@media (prefers-reduced-motion: reduce) { .energy-pop { animation: none; } }

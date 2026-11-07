@@ -242,7 +242,7 @@ export function* placeEnergySplit(c: RunCtx, n: number, rule: string): Effect {
     return;
   }
   for (let i = 0; i < n; i++) {
-    const id = ready.length === 1 ? ready[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: `${rule}: place energy ${i + 1} of ${n} on which Module?`, rule, options: ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    const id = ready.length === 1 ? ready[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", energy: Object.fromEntries(ready.map((m) => [String(m), moduleDef(c, m).colour])), prompt: `${rule}: place energy ${i + 1} of ${n} on which Module?`, rule, options: ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     if (!(yield* placeOneEnergy(c, id, rule))) return;
   }
 }

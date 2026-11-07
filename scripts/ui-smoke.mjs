@@ -161,6 +161,30 @@ if (existsSync(rowSave)) {
   else rowCheck = listed === 0 && popupOk && after !== before ? "ok" : `failed (list ${listed}, pop-up ${popupOk}, prompt still "${before}")`;
   await pg.close();
 }
+// Energy pop-ups (designer 2026-11-07): one beside each Module that can take the energy; a tap places one.
+let energyCheck = "skipped (no energy save)";
+const energySave = `${out}/energy-save.json`;
+if (existsSync(energySave)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(url);
+  await pg.getByRole("button", { name: "Paste a save…" }).click();
+  await pg.locator("#textbox-text").fill(readFileSync(energySave, "utf8"));
+  await pg.getByRole("button", { name: "Load" }).click();
+  await pg.waitForTimeout(600);
+  const pops = await pg.locator(".energy-pop").count();
+  const targets = await pg.locator(".module.energy-target").count();
+  const before = (await pg.locator(".question .prompt").last().textContent()) ?? "";
+  await pg.screenshot({ path: `${out}/ui-energy.png` });
+  const box = await pg.locator(".energy-pop").first().boundingBox();
+  const mod = await pg.locator(".module.energy-target").first().boundingBox();
+  const leftOf = box && mod ? box.x + box.width <= mod.x + 2 : false;
+  if (pops) await pg.locator(".energy-pop").first().click();
+  await pg.waitForTimeout(400);
+  const after = (await pg.locator(".question .prompt").last().textContent()) ?? "";
+  energyCheck = pops >= 2 && pops === targets && leftOf && after !== before ? "ok" : `failed (pop-ups ${pops}, targets ${targets}, left of Module ${leftOf}, prompt still "${before}")`;
+  await pg.close();
+}
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
 mobile.on("pageerror", (e) => errors.push(e.message));
 await mobile.goto(url);
@@ -170,7 +194,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

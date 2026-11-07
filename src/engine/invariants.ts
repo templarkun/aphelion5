@@ -63,7 +63,8 @@ export function checkInvariants(c: Ctx): string[] {
   // Energy.
   for (const col of ENERGY_COLOURS) {
     const onModules = s.player.modules.reduce((a, m) => a + m.energy[col], 0);
-    const parts = [s.supply.energy[col], s.player.reserve[col], onModules];
+    const onFlares = Object.values(s.tiles).reduce((a, t) => a + (t.energy?.[col] ?? 0), 0);
+    const parts = [s.supply.energy[col], s.player.reserve[col], onModules, onFlares];
     if (parts.some((x) => x < 0)) p.push(`${col} energy is negative somewhere`);
     if (parts.reduce((a, b) => a + b, 0) > ENERGY_PER_COLOUR) p.push(`more than ${ENERGY_PER_COLOUR} ${col} energy exist`);
   }

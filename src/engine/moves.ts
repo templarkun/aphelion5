@@ -126,39 +126,69 @@ export function readyModules(c: Ctx): number[] {
 }
 
 /**
- * Place energy from the Supply on ready Modules, split as you like (4.6, 5.3).
- * No ready Module: it stays in the Supply.
+ * Place energy from the Supply on ready Modules (4.6, 5.3), one energy per
+ * answer, every colour offered at once so the player places them in any
+ * order (designer 2026-11-07). Each energy goes only on a ready Module of
+ * its colour (Q9); a colour with exactly one such Module goes there by
+ * itself; with none it stays in the Supply. `toSupply` (trial rule I2) also
+ * offers sending each energy back to the Supply.
  */
-export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, number>, rule = "4.6"): Effect {
-  const ready = readyModules(c);
+export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, number>, rule = "4.6", toSupply = false): Effect {
+  const left = {} as Record<EnergyColour, number>;
+  for (const col of ENERGY_COLOURS) left[col] = Math.min(amounts[col] ?? 0, c.state.supply.energy[col]);
+  const put = (col: EnergyColour, mid: number) => {
+    c.state.player.modules.find((m) => m.id === mid)!.energy[col] += 1;
+    c.state.supply.energy[col] -= 1;
+    left[col] -= 1;
+    log(c, `1 ${col} energy placed on ${c.data.modules.byId.get(mid)!.name}`, rule);
+  };
+  const targets = (col: EnergyColour) => readyModules(c).filter((id) => c.data.modules.byId.get(id)!.colour === col);
   for (const col of ENERGY_COLOURS) {
-    const n = Math.min(amounts[col], c.state.supply.energy[col]);
-    if (n === 0) continue;
-    if (ready.length === 0) {
-      log(c, `no ready Module: ${n} ${col} energy stays in the Supply`, "5.3");
-      continue;
-    }
-    // You choose where it goes, so only ready Modules of its colour (5.3, Q9); none: it stays in the Supply.
-    const same = ready.filter((id) => c.data.modules.byId.get(id)!.colour === col);
-    if (same.length === 0) {
-      log(c, `no ready ${col} Module: ${n} ${col} energy stays in the Supply`, "5.3");
-      continue;
-    }
-    const a = yield* ask(c, {
-      kind: "split",
-      pick: "modules",
-      prompt: `Place ${n} ${col} energy on ready ${col} Modules.`,
-      rule,
-      total: n,
-      buckets: same.map((id) => ({ id: String(id), label: c.data.modules.byId.get(id)!.name, max: n })),
-    });
-    for (const [mid, x] of Object.entries(a.value as Record<string, number>)) {
-      if (x === 0) continue;
-      c.state.player.modules.find((m) => m.id === Number(mid))!.energy[col] += x;
-      c.state.supply.energy[col] -= x;
-      log(c, `${x} ${col} energy placed on ${c.data.modules.byId.get(Number(mid))!.name}`, rule);
-    }
+    if (left[col] === 0) continue;
+    const t = targets(col);
+    if (t.length === 0) {
+      log(c, `no ready ${col} Module: ${left[col]} ${col} energy stays in the Supply`, "5.3");
+      left[col] = 0;
+    } else if (t.length === 1) while (left[col] > 0) put(col, t[0]!);
   }
+  for (;;) {
+    const cols = ENERGY_COLOURS.filter((col) => left[col] > 0);
+    if (cols.length === 0) return;
+    const energy: Record<string, EnergyColour> = {};
+    const options: { id: string; label: string }[] = [];
+    for (const col of cols)
+      for (const mid of targets(col)) {
+        energy[String(mid)] = col;
+        options.push({ id: String(mid), label: `${col} energy on ${c.data.modules.byId.get(mid)!.name}` });
+      }
+    if (toSupply)
+      for (const col of cols) {
+        energy[`supply:${col}`] = col;
+        options.push({ id: `supply:${col}`, label: `${col} energy back to the Supply` });
+      }
+    const what = cols.map((col) => `${left[col]} ${col}`).join(", ");
+    const a = yield* ask(c, { kind: "option", pick: "modules", energy, prompt: `Place energy (${what} left): choose a Module for each.`, rule, options });
+    const id = a.value as string;
+    if (id.startsWith("supply:")) {
+      const col = id.slice(7) as EnergyColour;
+      left[col] -= 1;
+      log(c, `1 ${col} energy goes back to the Supply`, rule);
+    } else put(energy[id]!, Number(id));
+  }
+}
+
+/**
+ * Trial rule (I2): at the end of a Flare's Alert effect, its waiting energy
+ * must be placed at once; what is not placed goes back to the Supply.
+ */
+export function* placeWaitingFlareEnergy(c: RunCtx, id: TileId): Effect {
+  const t = c.state.tiles[id];
+  if (!t?.energy) return;
+  const amounts = t.energy;
+  delete t.energy;
+  for (const col of ENERGY_COLOURS) c.state.supply.energy[col] += amounts[col];
+  log(c, `${describe(c, id)}: its waiting energy is placed now (trial rule)`, "4.6");
+  yield* placeEnergyOnModules(c, amounts, "4.6", true);
 }
 
 /** "Start an Overload" (9.1): after the current effect, and never during an Overload or Overload End. */
@@ -176,7 +206,18 @@ function* flareFires(c: RunCtx, id: TileId): Effect {
   const d = unitDef(c, id);
   // H4: a revealed Power Node may give 3 Heat instead of its energy.
   const heat = c.state.settings.heatModule && d.id === "F_01" ? yield* powerNodeChoice(c) : false;
-  if (d.energyOnReveal && !heat) yield* placeEnergyOnModules(c, d.energyOnReveal, "4.6");
+  if (d.energyOnReveal && !heat) {
+    if (c.state.settings.trialFlareEnergy) {
+      // Trial rule (I2): take the energy from the Supply; it waits on the Flare until its Alert is resolved.
+      const w = { Yellow: 0, Red: 0, Blue: 0 } as Record<EnergyColour, number>;
+      for (const col of ENERGY_COLOURS) {
+        w[col] = Math.min(d.energyOnReveal[col] ?? 0, c.state.supply.energy[col]);
+        c.state.supply.energy[col] -= w[col];
+      }
+      tile(c.state, id).energy = w;
+      log(c, `${d.id}: its energy waits on it until its Alert is resolved (trial rule)`, "4.6");
+    } else yield* placeEnergyOnModules(c, d.energyOnReveal, "4.6");
+  }
   if (c.state.phase === "command") requestOverload(c, `${d.id} is revealed`);
   else if (c.state.phase === "overload") placeAlert(c, id, "4.6");
 }

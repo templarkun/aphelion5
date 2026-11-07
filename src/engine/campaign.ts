@@ -127,6 +127,7 @@ function* gameSetup(c: RunCtx): Effect {
   // Expansion modules (spec "Scope": chosen at game setup): select any, all or none.
   const x = yield* ask(c, { kind: "several", always: true, prompt: "Choose the expansion modules to play with (any, all or none).", rule: "H1", options: EXPANSION_MODULES, min: 0, max: EXPANSION_MODULES.length });
   s.settings.heatModule = (x.value as string[]).includes("heat");
+  s.settings.trialFlareEnergy = (x.value as string[]).includes("trialFlareEnergy");
   // 4. Starting energy.
   for (const col of ENERGY_COLOURS) {
     const n = Math.min(co.startingEnergy[col], s.supply.energy[col]);
@@ -156,7 +157,11 @@ function* gameSetup(c: RunCtx): Effect {
 }
 
 /** Expansion modules offered at game setup. Only the Heat module (Expansion1) so far. */
-export const EXPANSION_MODULES = [{ id: "heat", label: "Heat module (Expansion1)" }];
+export const EXPANSION_MODULES = [
+  { id: "heat", label: "Heat module (Expansion1)" },
+  // Designer 2026-11-07 (I2): a rule to try before it goes into the Core Rules.
+  { id: "trialFlareEnergy", label: "Trial rule: Flare energy waits on the Flare until its Alert is resolved" },
+];
 
 /** "C1" -> "Campaign 1". */
 export function campaignName(prefix: string): string {

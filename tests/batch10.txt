@@ -1,0 +1,87 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 10: ENERGY POP-UPS AND THE FLARE ENERGY TRIAL (structured)
+# Written 2026-11-07 by Claude from the designer's requests of 2026-11-07 (energy pop-ups,
+# answers to I1 and I2). DRAFT, awaiting the designer's agreement; then it goes into the
+# Project as "claude/Test scenarios batch 10.txt".
+#
+# Checked by tests/unit/energy.test.ts (engine) and scripts/ui-smoke.mjs (screen).
+# The trial rule is a setup option, off by default: Core Rules 4.6 is unchanged.
+################################################################################
+
+=== FORMAT SPEC ===
+Engine records use the batch 3 layout (map M1). Screen records use the batch 8 layout.
+
+################################################################################
+=== SECTION: ENERGY ON MODULES (permanent, designer 2026-11-07) ===
+
+id: T10_NRG_01
+title: Every colour is offered at once; one answer places one energy
+source: designer 2026-11-07; Core Rules 4.6, 5.3
+map: M1
+given: (0,1): fd:F_01 > fd. Ready Modules: Demolition Blast and Module 2 (Yellow), Charged Beam
+       (Red, Module 26), Modules 51 and 52 (Blue).
+when: Reveal (0,1); choose Module 52; then Demolition Blast
+then: Red goes on Charged Beam by itself (its only ready Red Module). One question offers
+      Demolition Blast, Module 2, Module 51 and Module 52 together. After Module 52 (1 Blue),
+      the next question offers only the two Yellow Modules. Demolition Blast gets 1 Yellow.
+      Overload starts.
+
+id: T10_NRG_02
+title: Energy pop-ups beside the Modules
+source: designer 2026-11-07 (points 1-4)
+given: an energy question with two or more Modules that can take an energy.
+when: look at the screen; tap one pop-up
+then: a pop-up eases in to the left of every such Module (inside its right end on a phone),
+      with an arrow to it and the energy's glyph ("+1 Blue"), and keeps pulsing while it waits.
+      The Modules themselves are outlined in the energy's colour but are not the button. For a
+      Power Node, every Module of every colour still waiting shows its pop-up at once. A tap
+      places one energy; the pop-ups of what is left stay.
+
+################################################################################
+=== SECTION: TRIAL RULE - FLARE ENERGY WAITS (setup option, designer 2026-11-07, I2) ===
+
+id: T10_TRY_01
+title: The trial rule is chosen at setup, off by default
+source: designer 2026-11-07
+given: Game setup, the expansion list.
+when: look at the list
+then: it offers "Trial rule: Flare energy waits on the Flare until its Alert is resolved",
+      not selected. Unselected, Flares place their energy when revealed (Core Rules 4.6).
+
+id: T10_TRY_02
+title: On Reveal the energy waits on the Flare
+source: designer 2026-11-07 (I2)
+map: M1
+given: Trial rule on. (0,1): fd:F_01 > fd. Ready Modules as T10_NRG_01.
+when: Reveal (0,1)
+then: 1 Yellow, 1 Red and 1 Blue are taken from the Supply and wait on the Power Node; no
+      question; no Module gets energy. Overload starts; the Power Node gets an Alert token.
+
+id: T10_TRY_03
+title: Resolving the Flare's Alert places its energy at once
+source: designer 2026-11-07 (I2)
+map: M1
+given: T10_TRY_02 after the Reveal, in the Overload.
+when: resolve the Power Node's Alert; choose "Yellow energy back to the Supply"; choose Module 51
+then: after the Flare's own effect (a Power Node has none), its energy must be placed now.
+      Red goes on Charged Beam by itself. One question offers the four Yellow and Blue Modules
+      and "Yellow energy back to the Supply" and "Blue energy back to the Supply". The Yellow
+      goes back to the Supply; Module 51 gets the Blue. Nothing waits on the Flare any more.
+
+id: T10_TRY_04
+title: With no ready Module of its colour, the energy keeps waiting
+source: designer 2026-11-07 (I2)
+map: M1
+given: Trial rule on. (0,1): fd:F_01 > fd. Demolition Blast exhausted, no other Module.
+when: Reveal (0,1); Demolition Blast is made ready; resolve the Power Node's Alert
+then: at Reveal the energy waits on the Flare all the same. When the Alert is resolved, the
+      Yellow goes on Demolition Blast by itself; Red and Blue have no ready Module and go back
+      to the Supply.
+
+id: T10_TRY_05
+title: Energy still on a Flare at Overload End goes back to the Supply
+source: designer 2026-11-07 (I2)
+map: M1
+given: Trial rule on; a Flare with energy waiting on it, no Alert left.
+when: Overload End, step 4 (clear Flares)
+then: the Flare is removed and its energy goes back to the Supply.
