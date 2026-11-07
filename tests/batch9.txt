@@ -182,3 +182,17 @@ then: no list. The unit shows two round buttons: anticlockwise (left) and clockw
       and the panel says "Your next click keeps this facing." The next action keeps facing 2
       (the log says so) and the buttons are gone. If what comes next would show new hidden
       information, a "Done" button keeps the facing first.
+
+id: T9_CHO_07
+title: Rows are chosen on the Field, then confirmed
+source: designer 2026-11-07; Core Rules 3.8 (rows); every card that chooses a row (S_14, S_18,
+        S_20, P_16, P_17, P_18, F_28, G_24 and the other row Gyros)
+given: "G_24: choose a row through this unit." (three rows through G_24: one horizontal, two
+       diagonals).
+when: look; click a sector of one row; click outside; click G_24's own sector; click "Next row
+      through this sector"; click "Choose this row"
+then: no list in the question panel. Every sector of every row offered is highlighted. A click
+      selects that sector's row (its sectors turn green) and opens a pop-up naming the row and
+      its units, with "Choose this row". Clicking outside closes it and nothing is chosen. A
+      sector that lies in several rows offers "Next row through this sector (1 of 3)", which
+      steps to the next row. "Choose this row" answers.

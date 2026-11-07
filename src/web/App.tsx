@@ -356,6 +356,10 @@ interface Popup {
   title: string;
   options: Option[];
   note?: string | undefined;
+  /** A second button that changes the pop-up instead of answering (the next row through a sector). */
+  next?: { label: string; go: () => void } | undefined;
+  /** Its one option commits a selection (shown as the main button). */
+  commit?: boolean;
 }
 
 interface Confirm {
@@ -431,6 +435,10 @@ function GameScreen(p: GameProps) {
       const k = o.on?.kind === "unit" ? o.on.id : o.on?.kind === "sector" ? o.on.key : undefined;
       if (k !== undefined) onField.set(k, [...(onField.get(k) ?? []), o]);
     }
+  // A row question: click a sector of a row, then confirm the row in a pop-up.
+  const rowQ = !actors && q?.kind === "option" && q.rows ? q : undefined;
+  const [rowSel, setRowSel] = usePerQuestion<number | undefined>(q, undefined);
+  const rowSectors = rowQ ? [...new Set(rowQ.rows!.flat())] : [];
   const onFieldUnits = [...onField.keys()].filter((k) => s.tiles[k] !== undefined);
   const onFieldSectors = [...onField.keys()].filter((k) => s.field[k] !== undefined);
   const splitOn = q?.kind === "split" ? q.pick : undefined;
@@ -441,6 +449,7 @@ function GameScreen(p: GameProps) {
         units: q?.kind === "units" ? q.options : q?.kind === "split" && splitOn === "units" ? q.buckets.map((b) => b.id) : [...pickIds, ...onFieldUnits],
       };
   if (!actors && onFieldSectors.length) choosable.sectors = [...choosable.sectors, ...onFieldSectors];
+  if (rowSectors.length) choosable.sectors = [...choosable.sectors, ...rowSectors];
   const splitSum = Object.values(split).reduce((a, b) => a + b, 0);
   const addSplit = (id: string) => {
     if (q?.kind !== "split") return;
@@ -469,6 +478,25 @@ function GameScreen(p: GameProps) {
       return;
     }
     if (!q) return;
+    if (rowQ && rowSectors.includes(id)) {
+      // The rows through this sector: the first is selected; "Next row" steps through the others.
+      const through = rowQ.rows!.flatMap((r, i) => (r.includes(id) ? [i] : []));
+      const x = pointer.current.x;
+      const y = pointer.current.y;
+      const show = (n: number) => {
+        const i = through[n % through.length]!;
+        setRowSel(i);
+        setPopup({
+          x,
+          y,
+          title: rowQ.options[i]!.label,
+          options: [{ id: rowQ.options[i]!.id, label: "Choose this row" }],
+          commit: true,
+          next: through.length > 1 ? { label: `Next row through this sector (${(n % through.length) + 1} of ${through.length})`, go: () => show(n + 1) } : undefined,
+        });
+      };
+      return show(0);
+    }
     const here = onField.get(id);
     if (here && (q.kind === "option" || q.kind === "order")) {
       if (here.length === 1) return send({ kind: q.kind, value: here[0]!.id } as Answer);
@@ -633,7 +661,7 @@ function GameScreen(p: GameProps) {
 
       <section className="center">
         {hasField ? (
-          <FieldView data={data} state={s} rotate={rotate} choosable={choosable} selected={[...selected, ...Object.keys(split).filter((k) => (split[k] ?? 0) > 0)]} onPick={pick} onHover={setHover} showHidden={s.settings.developerMode} dark={dark} />
+          <FieldView data={data} state={s} rotate={rotate} choosable={choosable} selected={[...selected, ...Object.keys(split).filter((k) => (split[k] ?? 0) > 0), ...(rowQ && rowSel !== undefined ? rowQ.rows![rowSel]! : [])]} onPick={pick} onHover={setHover} showHidden={s.settings.developerMode} dark={dark} />
         ) : (
           <div className="empty-field">{PHASE[s.phase]}</div>
         )}
@@ -697,7 +725,16 @@ function GameScreen(p: GameProps) {
         )}
       </section>
 
-      {popup && <PopupMenu popup={popup} onPick={answer} onClose={() => setPopup(undefined)} />}
+      {popup && (
+        <PopupMenu
+          popup={popup}
+          onPick={answer}
+          onClose={() => {
+            setPopup(undefined);
+            setRowSel(undefined);
+          }}
+        />
+      )}
       {confirm && <ConfirmBox confirm={confirm} onClose={() => setConfirm(undefined)} />}
 
       {showLog && (
@@ -789,10 +826,15 @@ function PopupMenu({ popup, onPick, onClose }: { popup: Popup; onPick: (id: stri
       <div ref={box} className="popup" role="menu" aria-label={popup.title} style={pos}>
         <div className="popup-title">{popup.title}</div>
         {popup.options.map((o) => (
-          <button key={o.id} role="menuitem" onClick={() => onPick(o.id)}>
+          <button key={o.id} role="menuitem" className={popup.commit ? "primary" : ""} onClick={() => onPick(o.id)}>
             {o.label}
           </button>
         ))}
+        {popup.next && (
+          <button role="menuitem" onClick={popup.next.go}>
+            {popup.next.label}
+          </button>
+        )}
         {popup.note && <p className="popup-note">{popup.note}</p>}
       </div>
     </div>
@@ -874,6 +916,7 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
     case "order": {
       // Options naming things on the screen are answered there; the rest stay buttons here.
       const onScreen = (id: string) =>
+        q.rows !== undefined ||
         q.options.find((o) => o.id === id)?.on !== undefined ||
         (q.pick === "modules" ? state.player.modules.some((m) => String(m.id) === id) : q.pick === "units" ? state.tiles[id] !== undefined : false);
       const rest = q.options.filter((o) => !onScreen(o.id));
@@ -881,7 +924,11 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
       return (
         <div>
           {head}
-          {there > 0 && <p className="small">Click {q.pick === "modules" ? "one of the highlighted Modules" : "a highlighted unit or sector on the Field"}.</p>}
+          {there > 0 && (
+            <p className="small">
+              {q.rows ? "Click a sector of the row you want on the Field (the highlighted sectors), then confirm it in the pop-up." : `Click ${q.pick === "modules" ? "one of the highlighted Modules" : "a highlighted unit or sector on the Field"}.`}
+            </p>
+          )}
           <div className="choices">
             {rest.map((o) => (
               <button key={o.id} className={o.id === "concede" ? "danger" : ""} onClick={() => p.onAnswer({ kind: q.kind, value: o.id } as Answer)}>

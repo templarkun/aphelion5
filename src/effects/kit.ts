@@ -121,7 +121,7 @@ export function* chooseRow(c: RunCtx, prompt: string, rule: string, rows: Row[])
     return undefined;
   }
   if (rows.length === 1) return rows[0];
-  const a = yield* ask(c, { kind: "option", prompt, rule, options: rows.map((r, i) => ({ id: String(i), label: rowLabel(c, r) })) });
+  const a = yield* ask(c, { kind: "option", prompt, rule, options: rows.map((r, i) => ({ id: String(i), label: rowLabel(c, r) })), rows: rows.map((r) => r.sectors.map((p) => key(p))) });
   return rows[Number(a.value)];
 }
 

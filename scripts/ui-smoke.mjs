@@ -127,6 +127,31 @@ for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
   }
   await pg.close();
 }
+// Rows (designer 2026-11-07): click a row on the Field, confirm in the pop-up.
+let rowCheck = "skipped (no row save)";
+const rowSave = `${out}/row-save.json`;
+const { existsSync, readFileSync } = await import("node:fs");
+if (existsSync(rowSave)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(url);
+  await pg.getByRole("button", { name: "Paste a save…" }).click();
+  await pg.locator("#textbox-text").fill(readFileSync(rowSave, "utf8"));
+  await pg.getByRole("button", { name: "Load" }).click();
+  await pg.waitForTimeout(400);
+  const q = pg.locator(".question");
+  const listed = await q.locator(".choices button").count();
+  const before = (await q.locator(".prompt").last().textContent()) ?? "";
+  await clickField(pg, 0);
+  const commit = pg.locator(".popup [role=menuitem]", { hasText: "Choose this row" });
+  const popupOk = (await commit.count()) === 1;
+  await pg.screenshot({ path: `${out}/ui-row.png` });
+  if (popupOk) await commit.click();
+  await pg.waitForTimeout(300);
+  const after = (await q.locator(".prompt").last().textContent()) ?? "";
+  rowCheck = listed === 0 && popupOk && after !== before ? "ok" : `failed (list ${listed}, pop-up ${popupOk}, prompt still "${before}")`;
+  await pg.close();
+}
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
 mobile.on("pageerror", (e) => errors.push(e.message));
 await mobile.goto(url);
@@ -136,7 +161,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || !noMenu || !rotateShown || !facingKept || !closedByOutside || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

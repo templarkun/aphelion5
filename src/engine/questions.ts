@@ -34,6 +34,11 @@ interface Base {
    * the facing it shows first.
    */
   facing?: { tile: TileId; start: number };
+  /**
+   * A row question: `rows[i]` holds the sectors of option i. The screen lets
+   * the player click a row on the Field and confirm it in a pop-up.
+   */
+  rows?: SectorKey[][];
 }
 
 /** A thing on the screen an option belongs to. */
