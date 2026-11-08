@@ -45,6 +45,11 @@ interface Base {
    * it back to the Supply. The screen shows a pop-up by each Module.
    */
   energy?: Record<string, "Yellow" | "Red" | "Blue">;
+  /**
+   * Energy taken off a Module (S_08, S_13...): option ids are Module ids; "one" takes one energy,
+   * "all" all of it. The screen shows a pop-up with an outward arrow by each such Module.
+   */
+  takeEnergy?: "one" | "all";
 }
 
 /** A thing on the screen an option belongs to. */
@@ -54,6 +59,8 @@ export type Target =
   | { kind: "module"; id: number }
   | { kind: "bay"; bay: number; ability: string }
   | { kind: "order"; id: string }
+  /** One of your Anomaly cards (9.3 step 3: claim a met card). */
+  | { kind: "anomaly"; id: string }
   /** Buttons of the game itself (Overhaul, Concede, End the Overload, Heat Wave). */
   | { kind: "game" };
 

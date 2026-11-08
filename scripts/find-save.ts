@@ -35,6 +35,12 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   drag2: (q, g) =>
     (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.next?.()) ?? false)),
   rows: (q) => q.rows !== undefined,
+  // Energy taken off Modules (S_08, S_13): pop-ups with an outward arrow.
+  take: (q) => q.takeEnergy !== undefined,
+  // Overload End step 3: claim a met Anomaly card.
+  anomaly: (q) => q.kind === "option" && q.options.some((o) => o.on?.kind === "anomaly"),
+  // Bay 3 (look at the top tiles of a Dark sector) on the action menu.
+  bay3: (q) => (q.shortcuts ?? []).some((o) => o.on?.kind === "bay" && /BAY3$/.test(o.on.ability)),
   // Energy on Modules with pop-ups (designer 2026-11-07).
   energy: (q) => q.energy !== undefined && q.kind === "option" && q.options.length >= 2,
   // A unit with three or more actions in its pop-up (bubbles, designer 2026-11-07).

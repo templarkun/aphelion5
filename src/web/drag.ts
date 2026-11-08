@@ -15,6 +15,7 @@ import { newEvents } from "../engine/events.js";
 import { sectorOf, strength } from "../engine/field.js";
 import type { Answer, Question } from "../engine/questions.js";
 import { type Game, playAnswer } from "../engine/save.js";
+import { view as sessionView } from "../engine/session.js";
 
 export type DragKind = "move" | "attack";
 
@@ -160,4 +161,42 @@ export function mechaDragPlan(data: GameData, game: Game, view: Game["view"], ti
   if (targets.length === 0) return undefined;
   const st = view.state.tiles[tile];
   return { tile, unitId: st?.unitId ?? "?", from, hit: strength({ data, state: view.state }, tile), targets };
+}
+
+/**
+ * Targets for dragging a Bay or an Order onto the Field (designer 2026-11-08): only when using it
+ * asks next for one unit or one sector (and shows nothing hidden first). Dropping sends both answers.
+ * One legal target (answered by itself): found with automatic answers off, and the drop sends only the first.
+ */
+export function abilityTargets(data: GameData, game: Game, first: Answer): { sector: string; answers: Answer[] }[] {
+  const now = targetsOf(data, game, first, true);
+  if (now.length) return now;
+  const v = game.view;
+  if (v.status !== "question" || !v.state.settings.autoAnswer) return [];
+  const e = v.session.engine;
+  let manual: Game;
+  try {
+    const off = { ...e.checkpoint, settings: { ...e.checkpoint.settings, autoAnswer: false } };
+    manual = { ...game, view: sessionView(data, { ...v.session, engine: { ...e, checkpoint: off } }) };
+  } catch {
+    return [];
+  }
+  const one = targetsOf(data, manual, first, false);
+  return one.length === 1 ? one : [];
+}
+
+function targetsOf(data: GameData, game: Game, first: Answer, both: boolean): { sector: string; answers: Answer[] }[] {
+  const r = playAnswer(data, game, first);
+  if (r.result.status === "illegal" || r.result.status === "blocked") return [];
+  const v = r.game.view;
+  if (v.status !== "question" || v.state.hiddenInfo !== game.view.state.hiddenInfo) return [];
+  const q = v.question;
+  const ans = (a: Answer): Answer[] => (both ? [first, a] : [first]);
+  if (asSectors(q) && q.kind === "sectors") return q.options.map((k) => ({ sector: k, answers: ans({ kind: "sectors", value: [k] }) }));
+  if (asUnits(q) && q.kind === "units")
+    return q.options.flatMap((u) => {
+      const k = sectorOf(v.state, u);
+      return k ? [{ sector: k, answers: ans({ kind: "units", value: [u] }) }] : [];
+    });
+  return [];
 }

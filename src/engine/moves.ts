@@ -109,10 +109,15 @@ export function putAtBottom(c: Ctx, id: TileId, rule = "8.8"): void {
   if (st.length > 1) afterTopTileLeaves(c, k);
 }
 
-/** Record that the player has looked at face-down tiles. */
-export function markSeen(c: Ctx, ids: readonly TileId[]): void {
+/** Record that the player has looked at face-down tiles (`show`: the screen shows them, in this order). */
+export function markSeen(c: Ctx, ids: readonly TileId[], show = true): void {
   for (const id of ids) if (!c.state.seen.includes(id)) c.state.seen.push(id);
   c.state.hiddenInfo += 1;
+  if (show && ids.length)
+    emit(c, {
+      kind: "looked",
+      tiles: ids.map((id) => ({ tile: id, unitId: tile(c.state, id).unitId ?? "?", sector: Object.keys(c.state.field).find((k) => c.state.field[k]!.includes(id)) })),
+    });
 }
 
 /** The top n tiles of a sector, top first. */

@@ -142,7 +142,7 @@ sentinel("S_13", function* (c) {
     log(c, "S_13: no Module has energy", "S_13");
     return;
   }
-  const id = mods.length === 1 ? mods[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "S_13: remove all energy from which Module?", rule: "S_13", options: mods.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+  const id = mods.length === 1 ? mods[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", takeEnergy: "all", prompt: "S_13: remove all energy from which Module?", rule: "S_13", options: mods.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
   const m = c.state.player.modules.find((x) => x.id === id)!;
   for (const col of ENERGY_COLOURS) {
     c.state.supply.energy[col] += m.energy[col];

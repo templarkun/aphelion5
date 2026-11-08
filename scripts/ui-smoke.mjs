@@ -53,8 +53,8 @@ async function untilAction(pg) {
       await buttons.first().click();
       continue;
     }
-    if (await pg.locator(".module.can, .bay.can").count()) {
-      await pg.locator(".module.can, .bay.can").first().click();
+    if (await pg.locator(".module.can, .bay-btn.can").count()) {
+      await pg.locator(".module.can, .bay-btn.can").first().click();
       continue;
     }
     if (await clickField(pg)) {
@@ -324,6 +324,84 @@ if (existsSync(`${out}/m03-save.json`)) {
   m03Check = /M_03 moves from/.test(log) && /M_03.*Attacks/.test(log) ? "ok" : `failed (log: ${log.split("\n").slice(0, 4).join(" | ")})`;
   await pg.close();
 }
+// Play-test round 2 (2026-11-08): Bay 3 shows what you looked at; Bays drag onto a target;
+// energy taken off Modules by pop-ups; Anomaly cards claimed on their bubbles.
+let bay3Check = "skipped (no save)";
+let bayDragCheck = "skipped (no save)";
+if (existsSync(`${out}/bay3-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/bay3-save.json`);
+  const btn = pg.locator(".bay-btn", { has: pg.locator("text=Bay 3") });
+  await btn.click();
+  const popped = await pg.locator(".thing-pop").count();
+  const fire = await btn.evaluate((e) => e.classList.contains("selected"));
+  await btn.click(); // pressed again: fires
+  await pg.waitForFunction(() => /choose a Dark sector/.test(document.querySelector(".game")?.getAttribute("data-prompt") ?? ""), null, { timeout: 3000 }).catch(() => {});
+  const lit = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]");
+  const box = await pg.locator(".field").boundingBox();
+  if (lit[0]) await pg.mouse.click(box.x + lit[0].x, box.y + lit[0].y);
+  await pg.waitForTimeout(600);
+  const shown = await pg.locator(".look-card .look-tile").count();
+  bay3Check = popped && fire && shown >= 1 ? "ok" : `failed (pop-up ${popped}, fire ${fire}, tiles shown ${shown})`;
+  await pg.screenshot({ path: `${out}/ui-bay3.png` });
+  await pg.close();
+  // Drag a Bay with a target onto it (a fresh copy of the same save).
+  const pg2 = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg2.on("pageerror", (e) => errors.push(e.message));
+  await bayDrag(pg2);
+  await pg2.close();
+}
+async function bayDrag(pg) {
+  await pasteSave(pg, `${out}/bay3-save.json`);
+  const box = await pg.locator(".field").boundingBox();
+  const before = await logText(pg);
+  let done = false;
+  for (let i = 0; i < 5 && !done; i++) {
+    const b = await pg.locator(".bay-btn").nth(i).boundingBox();
+    await pg.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await pg.mouse.down();
+    for (let k = 1; k <= 6; k++) await pg.mouse.move(b.x + b.width / 2 + k * 12, b.y + b.height / 2);
+    const targets = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]");
+    const all = await pg.locator(".thing-ghost").count();
+    if (all && targets.length) {
+      const t = targets[0];
+      await dragMouse(pg, { x: b.x + b.width / 2 + 72, y: b.y + b.height / 2 }, { x: box.x + t.x, y: box.y + t.y });
+      await pg.mouse.up();
+      await pg.waitForTimeout(800);
+      done = (await logText(pg)) !== before;
+    } else await pg.mouse.up();
+  }
+  bayDragCheck = done ? "ok" : "failed (no Bay drag was used)";
+}
+let takeCheck = "skipped (no save)";
+if (existsSync(`${out}/take-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/take-save.json`);
+  const before = await promptOf(pg);
+  const pops = await pg.locator(".energy-pop.take").count();
+  if (pops) await pg.locator(".energy-pop.take").first().click();
+  await pg.waitForTimeout(400);
+  const after = await promptOf(pg);
+  takeCheck = pops >= 1 && after !== before ? "ok" : `failed (pop-ups ${pops}, prompt "${after}")`;
+  await pg.close();
+}
+let anomalyCheck = "skipped (no save)";
+if (existsSync(`${out}/anomaly-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/anomaly-save.json`);
+  const claims = await pg.locator(".anomaly .claim").count();
+  const decline = await pg.locator(".anomaly-strip .decline").isVisible();
+  const dock = await pg.locator(".field-dock .bay-btn").count();
+  if (claims) await pg.locator(".anomaly .claim").first().click();
+  await pg.waitForTimeout(400);
+  const after = await promptOf(pg);
+  anomalyCheck = claims >= 1 && decline && dock >= 1 && /choose your reward/.test(after) ? "ok" : `failed (claims ${claims}, decline ${decline}, dock Bays ${dock}, prompt "${after}")`;
+  await pg.screenshot({ path: `${out}/ui-anomaly-phone.png` });
+  await pg.close();
+}
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
 mobile.on("pageerror", (e) => errors.push(e.message));
 await mobile.goto(url);
@@ -333,7 +411,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

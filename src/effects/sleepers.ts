@@ -233,7 +233,7 @@ sleeper("P_25", function* (c, self) {
     log(c, `P_25: ${describe(c, u)} is flipped face down`, "P_25");
   }
   // The player saw these tiles: they are known face-down tiles.
-  if (flip.length) markSeen(c, flip);
+  if (flip.length) markSeen(c, flip, false);
 });
 
 /** P_26 - Place a Barrier on every Sentinel that has none. */

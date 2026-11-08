@@ -201,7 +201,7 @@ function* anomalyStep(c: RunCtx): Effect {
     kind: "option",
     prompt: "Anomaly: choose one of your met cards, or none.",
     rule: "9.3",
-    options: [...met.map((id) => ({ id, label: `Anomaly ${id}: ${anomalyDef(c, id).text}` })), { id: "none", label: "None: keep all your cards, no reward" }],
+    options: [...met.map((id) => ({ id, label: `Anomaly ${id}: ${anomalyDef(c, id).text}`, on: { kind: "anomaly" as const, id } })), { id: "none", label: "None: keep all your cards, no reward" }],
   });
   const card = a.value as string;
   if (card === "none") {

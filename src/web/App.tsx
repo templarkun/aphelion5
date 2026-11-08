@@ -17,8 +17,11 @@ import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, st
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
 import { FieldView } from "./FieldView.js";
-import { type DragKind, mechaDragPlan, m03TapTargets } from "./drag.js";
+import { type DragKind, abilityTargets, mechaDragPlan, m03TapTargets } from "./drag.js";
 import { newEvents } from "../engine/events.js";
+import { energyFlights } from "./flyers.js";
+import { AnomalyStrip } from "./Anomalies.js";
+import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -31,6 +34,18 @@ const PHASE: Record<GameState["phase"], string> = {
   missionEnd: "Mission End",
   gameEnd: "Game End",
 };
+
+/** Flagship layout by screen width (designer 2026-11-08): A wide, B medium, C narrow (Bays on the Field). */
+function useLayout(): Layout {
+  const pick = (): Layout => (typeof window === "undefined" ? "A" : window.innerWidth >= 1280 ? "A" : window.innerWidth >= 900 ? "B" : "C");
+  const [l, setL] = useState<Layout>(pick);
+  useEffect(() => {
+    const f = () => setL(pick());
+    window.addEventListener("resize", f);
+    return () => window.removeEventListener("resize", f);
+  }, []);
+  return l;
+}
 
 function useDark(): boolean {
   const q = typeof window !== "undefined" ? window.matchMedia("(prefers-color-scheme: dark)") : undefined;
@@ -408,6 +423,20 @@ function GameScreen(p: GameProps) {
     p.onAnswer([{ kind: "yesno", value: yes }]);
   }, [ocQ]); // eslint-disable-line react-hooks/exhaustive-deps
   const [menuOpen, setMenuOpen] = useState(false);
+  const layout = useLayout();
+  // A Bay or Order being dragged: its targets light up on the Field.
+  const [abilityDrag, setAbilityDrag] = useState<{ list: DropTarget[]; attack: boolean } | undefined>();
+  // Tiles the player just looked at (a Bay, a Module...): a card on the Field until the next answer (play-test 2026-11-08).
+  const [look, setLook] = useState<LookTile[] | undefined>();
+  const lastState = useRef(real.state);
+  useEffect(() => {
+    const before = lastState.current;
+    lastState.current = real.state;
+    if (before === real.state) return;
+    energyFlights(before, real.state);
+    const seen = newEvents(before.events, real.state.events).filter((e) => e.kind === "looked");
+    setLook(seen.length ? seen.flatMap((e) => (e.kind === "looked" ? e.tiles : [])) : undefined);
+  }, [real.state]);
   const wayAnswers = useRef(new Map<string, Answer[]>());
   const rotate = faceQ
     ? {
@@ -515,6 +544,37 @@ function GameScreen(p: GameProps) {
         if (k) tones[k] = o.id.startsWith("attack:") ? "attack" : "move";
       }
   }
+  if (abilityDrag) {
+    choosable.sectors = abilityDrag.list.map((t) => t.sector);
+    choosable.units = [];
+    for (const k of Object.keys(tones)) delete tones[k];
+    for (const t of abilityDrag.list) tones[t.sector] = abilityDrag.attack ? "attack" : "move";
+  }
+  const dragApi: DragApi = {
+    targets: (o) => (v === game.view ? abilityTargets(data, game, { kind: "option", value: o.id }) : []),
+    onTargets: setAbilityDrag,
+    sectorAt: (x, y, list) => {
+      const field = document.querySelector<HTMLElement>(".field");
+      if (!field) return undefined;
+      const r = field.getBoundingClientRect();
+      const centres: Record<string, [number, number]> = JSON.parse(field.dataset.sectors ?? "{}");
+      const rad = Number(field.dataset.tile ?? 0) / 2;
+      let best: { t: DropTarget; d: number } | undefined;
+      for (const t of list) {
+        const c0 = centres[t.sector];
+        if (!c0) continue;
+        const d = Math.hypot(r.left + c0[0] - x, r.top + c0[1] - y);
+        if (d <= rad && (!best || d < best.d)) best = { t, d };
+      }
+      return best?.t;
+    },
+    onDrop: (answers) => {
+      setPopup(undefined);
+      setOverclock(false);
+      p.onAnswer(answers);
+    },
+    onNote: (text) => setNote({ text, warn: true, at: Date.now() }),
+  };
   const splitSum = Object.values(split).reduce((a, b) => a + b, 0);
   const addSplit = (id: string) => {
     if (q?.kind !== "split") return;
@@ -622,7 +682,7 @@ function GameScreen(p: GameProps) {
       return o ? { can: true, onClick: () => answer(o.id) } : { can: false };
     }
     // Energy (designer 2026-11-07): answered on the pop-up beside the Module, not on the Module itself.
-    if (q?.kind === "option" && q.energy) return { can: false };
+    if (q?.kind === "option" && (q.energy || q.takeEnergy)) return { can: false };
     if (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules" && q.options.some((o) => o.id === String(id))) return { can: true, onClick: () => send({ kind: q.kind, value: String(id) } as Answer) };
     if (q?.kind === "split" && splitOn === "modules" && q.buckets.some((b) => b.id === String(id))) return { can: true, onClick: () => addSplit(String(id)), count: split[String(id)] ?? 0 };
     return { can: false };
@@ -630,6 +690,8 @@ function GameScreen(p: GameProps) {
   const modulesWanted = (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules") || splitOn === "modules";
   const energyQ = !actors && q?.kind === "option" && q.energy ? q : undefined;
   const energyFor = (id: number) => energyQ?.energy?.[String(id)];
+  const anomalyQ = q?.kind === "option" && q.options.some((o) => o.on?.kind === "anomaly");
+  const takeQ = !actors && q?.kind === "option" && q.takeEnergy ? q : undefined;
   const baysWanted = splitOn === "bays";
 
   const co = data.companies.byId.get(s.player.company)!;
@@ -656,9 +718,44 @@ function GameScreen(p: GameProps) {
     setConfirm({ title: "Concede?", text: "The game ends at once and counts as a loss (10.3).", yes: "Concede", danger: true, onYes: () => answer(concede.id) });
   const endOverload = actors?.game.get("endOverload");
 
+  // Bays and Orders as buttons (designer 2026-11-08): see Flagship.tsx.
+  const abilities = bayAbilities(c);
+  const bayViews: BayView[] = co.bays.map((b, i) => {
+    const bucket = `bay${i + 1}`;
+    const inSplit = baysWanted && q?.kind === "split" && q.buckets.some((x) => x.id === bucket);
+    return {
+      n: i + 1,
+      cur: s.flagship[i]!,
+      max: b.integrity,
+      abilities: abilities.filter((a) => a.bay === i + 1).map((a) => ({ id: a.id, text: a.text, opt: actors?.bays.get(a.id) })),
+      split: inSplit ? { count: split[bucket] ?? 0, onAdd: () => addSplit(bucket), onSub: () => subSplit(bucket) } : undefined,
+      dim: baysWanted && !inSplit,
+    };
+  });
+  const orderViews: OrderView[] = s.mission
+    ? orders(c).map((o) => ({ id: o.id, tokens: o.tokens, text: `${o.overloadOnly ? "[Overload] " : ""}${o.effect}`, word: orderWord(o.effect), opt: actors?.orders.get(o.id) }))
+    : [];
+  const flagshipExtras = (
+    <>
+      {crippled && <p className="warn">CRIPPLED — you must Overhaul before your next action.</p>}
+      <div className="overhaul">
+        <button className={overhaul ? "can" : ""} disabled={!overhaul} onClick={askOverhaul} title="Repair the Flagship, refill energy, swap a Module (8.8)">
+          Overhaul
+        </button>
+        <span className="small">
+          slots used {s.sheet.overhaulUsed}/{co.overhaulSlots}
+        </span>
+      </div>
+      <p className="small">
+        Upgrade points {s.sheet.upgradePoints}
+        {s.sheet.ally ? ` · Ally ${s.sheet.ally}` : ""}
+      </p>
+    </>
+  );
+
   return (
     <div
-      className={`game ${inOverload ? "is-overload" : ""}`}
+      className={`game layout-${layout} ${inOverload ? "is-overload" : ""}`}
       data-prompt={q ? q.prompt : ""}
       onPointerDownCapture={(e) => {
         pointer.current = { x: e.clientX, y: e.clientY };
@@ -666,6 +763,20 @@ function GameScreen(p: GameProps) {
     >
       <header className="bar">
         <strong className="bar-title">{s.mission || "Aphelion 5"}</strong>
+        {/* The Reserve in the top bar (designer 2026-11-08): each colour in its own bubble; energy flies in and out of it. */}
+        <div className="reserve-bar" aria-label="Energy Reserve">
+          {(["Yellow", "Red", "Blue"] as const).map((col) => {
+            const inSplit = splitOn === "reserve" && q?.kind === "split" && q.buckets.some((b) => b.id === col);
+            const Tag = inSplit ? "button" : "span";
+            return (
+              <Tag key={col} data-reserve={col} className={`res-bubble ${col.toLowerCase()} ${inSplit ? "can" : ""} ${splitOn === "reserve" && !inSplit ? "dim" : ""}`} onClick={inSplit ? () => addSplit(col) : undefined} title={`${col} energy in your Reserve`}>
+                <EnergyGlyph colour={col} />
+                <b>{s.player.reserve[col]}</b>
+                {inSplit && <SplitCount n={split[col] ?? 0} onMinus={() => subSplit(col)} />}
+              </Tag>
+            );
+          })}
+        </div>
         <span className="spacer" />
         <button onClick={p.onUndo} disabled={!p.canUndo()} title="Take back your last answer (not past new hidden information)">
           Undo
@@ -697,79 +808,19 @@ function GameScreen(p: GameProps) {
       </header>
 
       <aside className="left panel">
-        <h3>Flagship — {co.name}</h3>
-        {co.bays.map((b, i) => {
-          const bucket = `bay${i + 1}`;
-          const inSplit = baysWanted && q?.kind === "split" && q.buckets.some((x) => x.id === bucket);
-          return (
-            <div key={b.id} className={`bay ${s.flagship[i] === 0 ? "out" : ""} ${inSplit ? "can" : ""} ${baysWanted && !inSplit ? "dim" : ""}`} onClick={inSplit ? () => addSplit(bucket) : undefined}>
-              <b>
-                Bay {i + 1}: {s.flagship[i]}/{b.integrity}
-              </b>
-              {inSplit && <SplitCount n={split[bucket] ?? 0} onMinus={() => subSplit(bucket)} />}
-              {bayAbilities(c)
-                .filter((a) => a.bay === i + 1)
-                .map((a) => {
-                  const o = actors?.bays.get(a.id);
-                  return o ? (
-                    <button key={a.id} className="ability can" onClick={() => answer(o.id)} title="Use this Bay: 1 damage to the Bay, then its ability (8.7)">
-                      {a.text}
-                    </button>
-                  ) : (
-                    <div key={a.id} className="ability small">
-                      {a.text}
-                    </div>
-                  );
-                })}
-            </div>
-          );
-        })}
-        {crippled && <p className="warn">CRIPPLED — you must Overhaul before your next action.</p>}
-        <div className="overhaul">
-          <button className={overhaul ? "can" : ""} disabled={!overhaul} onClick={askOverhaul} title="Repair the Flagship, refill energy, swap a Module (8.8)">
-            Overhaul
-          </button>
-          <span className="small">
-            slots used {s.sheet.overhaulUsed}/{co.overhaulSlots}
-          </span>
-        </div>
-        <p className="small">
-          Upgrade points {s.sheet.upgradePoints}
-          {s.sheet.ally ? ` · Ally ${s.sheet.ally}` : ""}
-        </p>
-        <h3>Reserve</h3>
-        <p className="energy reserve">
-          {(["Yellow", "Red", "Blue"] as const).map((col) => {
-            const inSplit = splitOn === "reserve" && q?.kind === "split" && q.buckets.some((b) => b.id === col);
-            return (
-              <span key={col} className={`${col[0]!.toLowerCase()} ${inSplit ? "can" : ""} ${splitOn === "reserve" && !inSplit ? "dim" : ""}`} onClick={inSplit ? () => addSplit(col) : undefined} role={inSplit ? "button" : undefined}>
-                {col} {s.player.reserve[col]}
-                {inSplit && <SplitCount n={split[col] ?? 0} onMinus={() => subSplit(col)} />}
-              </span>
-            );
-          })}
-        </p>
-        <h3>Anomaly cards</h3>
-        {s.player.anomalies.length === 0 && <p className="small">none</p>}
-        {s.player.anomalies.map((id) => (
-          <p key={id} className="small">
-            {id}: {data.anomalies.byId.get(id)!.text}
-          </p>
-        ))}
-        <h3>Orders · {s.player.commandTokens} Command token{s.player.commandTokens === 1 ? "" : "s"}</h3>
-        {s.mission &&
-          orders(c).map((o) => {
-            const sc = actors?.orders.get(o.id);
-            const text = `${o.overloadOnly ? "[Overload] " : ""}${o.tokens} token${o.tokens === 1 ? "" : "s"}: ${o.effect}`;
-            return (
-              <button key={o.id} className={`order ${sc ? "can" : ""}`} disabled={!sc} onClick={sc ? () => answer(sc.id) : undefined} title={sc ? "Issue this Order (5.6)" : o.overloadOnly !== inOverload ? (o.overloadOnly ? "Only during an Overload" : "Not during an Overload") : "Not available now"}>
-                {text}
-              </button>
-            );
-          })}
+        <h3>Flagship{layout === "A" ? ` — ${co.name}` : ""}</h3>
+        {layout !== "C" ? (
+          <FlagshipDock layout={layout} company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={(o) => answer(o.id)} drag={dragApi}>
+            {flagshipExtras}
+          </FlagshipDock>
+        ) : (
+          flagshipExtras
+        )}
       </aside>
 
       <section className="center">
+        {s.player.anomalies.length > 0 && <AnomalyStrip data={data} cards={s.player.anomalies} q={q} onAnswer={answer} />}
+        <div className="field-area">
         {hasField ? (
           <FieldView
             data={data}
@@ -795,6 +846,7 @@ function GameScreen(p: GameProps) {
         )}
         {hover && !popup && hasField && <InfoBubble data={data} state={s} sector={hover} />}
         {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
+        {look && <LookCard data={data} tiles={look} onClose={() => setLook(undefined)} />}
         {endOverload && (
           <button className="end-overload" onClick={() => answer(endOverload.id)} title="No Alert tokens remain (9.2)">
             End the Overload
@@ -817,7 +869,7 @@ function GameScreen(p: GameProps) {
           <QCard>
             <GameOver state={s} onLeave={p.onLeave} />
           </QCard>
-        ) : actors ? null : onBoard(q) ? (
+        ) : actors || anomalyQ ? null : onBoard(q) ? (
           <div className="q-banner">
             <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
           </div>
@@ -826,6 +878,8 @@ function GameScreen(p: GameProps) {
             <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
           </QCard>
         )}
+        </div>
+        {layout === "C" && hasField && <FlagshipDock layout="C" company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={(o) => answer(o.id)} drag={dragApi} />}
       </section>
 
       <aside className="right panel">
@@ -844,10 +898,11 @@ function GameScreen(p: GameProps) {
           const d = moduleDef(c, m.id);
           const e = (["Yellow", "Red", "Blue"] as const).filter((k) => m.energy[k] > 0).map((k) => `${m.energy[k]} ${k}`);
           const st = moduleState(m.id);
-          const dim = modulesWanted && !st.can && !energyFor(m.id);
+          const taking = takeQ?.options.some((o) => o.id === String(m.id));
+          const dim = modulesWanted && !st.can && !energyFor(m.id) && !taking;
           const Tag = st.can ? "button" : "div";
           return (
-            <Tag key={m.id} data-module={m.id} className={`module rim-${d.colour.toLowerCase()} ${m.ready ? "" : "exhausted"} ${st.can ? "can" : ""} ${dim ? "dim" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")} onClick={st.onClick}>
+            <Tag key={m.id} data-module={m.id} className={`module rim-${d.colour.toLowerCase()} ${m.ready ? "" : "exhausted"} ${st.can ? "can" : ""} ${dim ? "dim" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")} onClick={st.onClick}>
               <b>{d.name}</b>{" "}
               <span className="small">
                 {d.cost === "X" ? "X" : moduleCost(c, m.id)} {d.colour} · {d.background === "red" ? "Overload" : "Command phase"} · {m.ready ? "ready" : "exhausted"}
@@ -877,6 +932,7 @@ function GameScreen(p: GameProps) {
 
 
       {energyQ && <EnergyPopups q={energyQ} onPick={(id) => send({ kind: "option", value: id })} />}
+      {takeQ && <EnergyPopups q={takeQ} take={{ state: s, data }} onPick={(id) => send({ kind: "option", value: id })} />}
       {popup && (
         <PopupMenu
           key={`${popup.at ?? ""}:${popup.title}`}
@@ -951,8 +1007,8 @@ export function EnergyGlyph({ colour }: { colour: "Yellow" | "Red" | "Blue" }) {
  * the energy's glyph. One tap places one energy; several colours (a Power
  * Node) show all their pop-ups at once, placed in any order.
  */
-function EnergyPopups({ q, onPick }: { q: Question & { kind: "option" }; onPick: (id: string) => void }) {
-  const ids = q.options.filter((o) => !o.id.startsWith("supply:")).map((o) => o.id);
+function EnergyPopups({ q, onPick, take }: { q: Question & { kind: "option" }; onPick: (id: string) => void; take?: { state: GameState; data: GameData } }) {
+  const ids = take ? q.options.filter((o) => /^\d+$/.test(o.id)).map((o) => o.id) : q.options.filter((o) => !o.id.startsWith("supply:")).map((o) => o.id);
   const [pos, setPos] = useState<Record<string, { x: number; y: number; inside: boolean } | undefined>>({});
   const W = 132;
   useLayoutEffect(() => {
@@ -986,8 +1042,25 @@ function EnergyPopups({ q, onPick }: { q: Question & { kind: "option" }; onPick:
     <>
       {ids.map((id, i) => {
         const p = pos[id];
-        const col = q.energy![id]!;
         if (!p) return null;
+        // Taking energy away (designer 2026-11-08): the same pop-up, dashed, with an arrow pointing out of the Module.
+        if (take) {
+          const m = take.state.player.modules.find((x) => String(x.id) === id);
+          const cols = (["Yellow", "Red", "Blue"] as const).filter((k) => (m?.energy[k] ?? 0) > 0);
+          const n = cols.reduce((a, k) => a + (m?.energy[k] ?? 0), 0);
+          return (
+            <button key={`${q.prompt}:${id}`} className={`energy-pop take ${(cols[0] ?? "Yellow").toLowerCase()} ${p.inside ? "inside" : ""}`} style={{ left: p.x, top: p.y, width: W, animationDelay: `${i * 50}ms, ${i * 50 + 300}ms` }} onClick={() => onPick(id)} aria-label={q.takeEnergy === "all" ? `Remove all ${n} energy from this Module` : "Remove 1 energy from this Module"}>
+              <span className="out-arrow" aria-hidden>
+                ←
+              </span>
+              {cols.slice(0, 2).map((k) => (
+                <EnergyGlyph key={k} colour={k} />
+              ))}
+              <span>{q.takeEnergy === "all" ? `−${n} all` : "−1"}</span>
+            </button>
+          );
+        }
+        const col = q.energy![id]!;
         return (
           <button key={`${q.prompt}:${id}`} className={`energy-pop ${col.toLowerCase()} ${p.inside ? "inside" : ""}`} style={{ left: p.x, top: p.y, width: W, animationDelay: `${i * 50}ms, ${i * 50 + 300}ms` }} onClick={() => onPick(id)} aria-label={`Place 1 ${col} energy on this Module`}>
             <EnergyGlyph colour={col} />
@@ -1101,7 +1174,7 @@ function ConfirmBox({ confirm, onClose }: { confirm: Confirm; onClose: () => voi
 function onBoard(q: Question): boolean {
   if (q.kind === "units" || q.kind === "sectors") return true;
   if (q.kind === "split") return q.pick !== undefined;
-  if (q.kind === "option" || q.kind === "order") return q.pick !== undefined || q.rows !== undefined || q.energy !== undefined || q.options.some((o) => o.on);
+  if (q.kind === "option" || q.kind === "order") return q.pick !== undefined || q.rows !== undefined || q.energy !== undefined || q.takeEnergy !== undefined || q.options.some((o) => o.on);
   return false;
 }
 
@@ -1131,6 +1204,45 @@ function QCard({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
+}
+
+type LookTile = { tile: string; unitId: string; sector?: string | undefined };
+
+/** What the player just looked at, by sector, top first (placeholder glyphs until the designer's art). */
+function LookCard({ data, tiles, onClose }: { data: GameData; tiles: LookTile[]; onClose: () => void }) {
+  const by = new Map<string, LookTile[]>();
+  for (const t of tiles) by.set(t.sector ?? "", [...(by.get(t.sector ?? "") ?? []), t]);
+  return (
+    <div className="look-card" role="status" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="look-head">
+        <b>You looked at</b>
+        <button className="mini" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
+      </div>
+      {[...by].map(([k, ts]) => (
+        <div key={k} className="look-row">
+          <span className="small">{k ? `(${k}), top first` : "Taken"}</span>
+          <div className="look-tiles">
+            {ts.map((t) => {
+              const u = data.units.byId.get(t.unitId);
+              return (
+                <span key={t.tile} className={`look-tile t-${(u?.type ?? "x").toLowerCase()}`} title={u ? `${t.unitId} (${u.type}, Level ${u.level ?? "?"})` : t.unitId}>
+                  <b>{u ? typeGlyph(u.type) : "?"}</b>
+                  <small>{t.unitId}</small>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Placeholder glyph for a unit type (designer 2026-11-08: real images later). */
+export function typeGlyph(type: string): string {
+  return type === "Sleeper" ? "P" : type[0]!.toUpperCase();
 }
 
 /** The card text of a sector, as a bubble over the Field that nothing else moves for (designer 2026-11-08). */
@@ -1218,7 +1330,7 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
           {head}
           {there > 0 && (
             <p className="small">
-              {q.energy ? "Tap an energy pop-up beside a Module to place that energy there, one at a time, in any order." : q.rows ? "Click a sector of the row you want on the Field (the highlighted sectors), then confirm it in the pop-up." : `Click ${q.pick === "modules" ? "one of the highlighted Modules" : "a highlighted unit or sector on the Field"}.`}
+              {q.takeEnergy ? "Tap a pop-up beside a Module to take its energy away." : q.energy ? "Tap an energy pop-up beside a Module to place that energy there, one at a time, in any order." : q.rows ? "Click a sector of the row you want on the Field (the highlighted sectors), then confirm it in the pop-up." : `Click ${q.pick === "modules" ? "one of the highlighted Modules" : "a highlighted unit or sector on the Field"}.`}
             </p>
           )}
           <div className="choices">

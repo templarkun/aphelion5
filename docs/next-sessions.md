@@ -24,8 +24,14 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    game) for most interactions, e.g. Attacks and destruction; dust when a Mecha lands on a Dark
    sector instead of the small bounce; an energy/fire particle effect around the Field during an
    Overload. Keep the frame rate up (measure on a phone).
+   2026-11-08 round 2: Bays and Orders are buttons (layouts A/B/C, drag onto targets), Reserve in
+   the top bar with flying energy, Anomaly bubbles on the Field, Bay 3 look card, energy-removal
+   pop-ups. Waiting on I6 (M_01) and I7 (Mecha damage abilities).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
+   Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly
+   bubbles and the look card (B, S, F, P, G, M, empty hexagon = Cleared sector; `UnitGlyph`,
+   `typeGlyph`), the Bay pictures (`Icon` in `src/web/Flagship.tsx`), the energy glyphs.
 4. **Settings and polish.** Animation speed and simple transitions, colour-blind token
    shapes, the auto-answer switch; a clearer Mission Preparation and Mission End screen
    (upgrades on the Company sheet).

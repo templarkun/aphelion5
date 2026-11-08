@@ -120,3 +120,19 @@ describe("old saves (energy answered as splits) still load", () => {
     expect(checkInvariants(ctx(g.view.state))).toEqual([]);
   });
 });
+
+describe("old saves keep the old Mecha rule only for the answers already played (designer 2026-11-08)", () => {
+  it("after loading, a Mecha never Attacks a Mecha", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { readSave, replayGame, toSave } = await import("../../src/engine/save.js");
+    const f = readSave(readFileSync("tests/fixtures/save-2026-11-07-energy-split.json", "utf8"));
+    expect(f.game!.start.mechaAttacksMechaUntil).toBe(f.game!.answers.length);
+    const g = replayGame(data(), f.game!.start, f.game!.answers);
+    expect(g.view.state.settings.mechaAttacksMecha).toBeFalsy();
+    // Saved again and loaded: still replays, still the new rule.
+    const again = readSave(JSON.stringify(toSave(g, g.view.state.profile)));
+    const g2 = replayGame(data(), again.game!.start, again.game!.answers);
+    expect(g2.answers.length).toBe(g.answers.length);
+    expect(g2.view.state.settings.mechaAttacksMecha).toBeFalsy();
+  });
+});

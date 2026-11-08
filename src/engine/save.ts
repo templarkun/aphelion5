@@ -14,7 +14,7 @@
 import type { GameData } from "../data/index.js";
 import { newGame } from "./campaign.js";
 import type { Answer } from "./questions.js";
-import { type AnswerResult, type SessionView, answerSession, startSession } from "./session.js";
+import { type AnswerResult, type SessionView, answerSession, startSession, view as sessionView } from "./session.js";
 import { type GameState, type Profile, emptyProfile } from "./state.js";
 
 /**
@@ -31,8 +31,10 @@ export interface GameStart {
   seed: number;
   date: string;
   developerMode: boolean;
-  /** Saved before 2026-11-08 (format 4): Mecha may Attack Mecha, as the Core Rules print it. */
+  /** Saved before 2026-11-08 (format 4): Mecha may Attack Mecha, as the Core Rules print it, ... */
   mechaAttacksMecha?: boolean;
+  /** ... but only for the first this-many answers (those played before); after them a Mecha never Attacks a Mecha. */
+  mechaAttacksMechaUntil?: number;
   /** Fixed for the whole game, so replays ask the same questions (default on). */
   autoAnswer?: boolean;
   /** The profile as it was when the game started. */
@@ -68,6 +70,7 @@ export function startGame(data: GameData, start: GameStart): Game {
 export function replayGame(data: GameData, start: GameStart, answers: readonly Answer[]): Game {
   let v = startSession(data, initial(data, start));
   const kept: Answer[] = [];
+  let until: number | undefined;
   for (const [i, a] of answers.entries()) {
     // Saves from before 2026-11-07 answered energy on Modules with one split per colour;
     // energy is now placed one per answer (designer 2026-11-07): replay the split as those answers.
@@ -83,8 +86,32 @@ export function replayGame(data: GameData, start: GameStart, answers: readonly A
       v = r;
       kept.push(p);
     }
+    if (start.mechaAttacksMecha && i + 1 >= (start.mechaAttacksMechaUntil ?? Infinity)) {
+      until ??= kept.length;
+      v = newMechaRule(data, v);
+    }
   }
-  return { start, answers: kept, view: v };
+  // An old game: from here on a Mecha never Attacks a Mecha (designer 2026-11-08).
+  if (start.mechaAttacksMecha && answers.length >= (start.mechaAttacksMechaUntil ?? Infinity)) {
+    until ??= kept.length;
+    v = newMechaRule(data, v);
+  }
+  // Old answers replayed as several (energy splits): count the kept ones.
+  const st = until !== undefined && until !== start.mechaAttacksMechaUntil ? { ...start, mechaAttacksMechaUntil: until } : start;
+  return { start: st, answers: kept, view: v };
+}
+
+/** The same point of the game with the Mecha rule switched to "never a Mecha"; unchanged if the step under way needs the old rule. */
+function newMechaRule(data: GameData, v: SessionView): SessionView {
+  if (!v.state.settings.mechaAttacksMecha) return v;
+  const off = (s: GameState): GameState => ({ ...s, settings: { ...s.settings, mechaAttacksMecha: false } });
+  if (v.status !== "question") return { ...v, state: off(v.state) };
+  const e = v.session.engine;
+  try {
+    return sessionView(data, { ...v.session, engine: { ...e, checkpoint: off(e.checkpoint) } });
+  } catch {
+    return v;
+  }
 }
 
 /** Answer the current question. A refused answer leaves the game as it was. */
@@ -122,7 +149,11 @@ export function readSave(text: string): SaveFile {
   if (f.formatVersion > SAVE_FORMAT) throw new Error(`save format ${f.formatVersion} is newer than this program (${SAVE_FORMAT})`);
   const out: SaveFile = { formatVersion: SAVE_FORMAT, profile: f.profile ?? emptyProfile(), settings: f.settings ?? { autoAnswer: true } };
   if (f.game && f.formatVersion < 4) out.note = "The game in progress was saved by an older version of the program and cannot be continued. Your Company sheets and high scores are kept.";
-  else if (f.game) out.game = f.formatVersion === 4 ? { ...f.game, start: { ...f.game.start, mechaAttacksMecha: true } } : f.game;
+  else if (f.game) {
+    // Games saved before 2026-11-08 keep the old Mecha rule for the answers already played, so they replay; then the new rule.
+    const old = f.formatVersion === 4 || (f.game.start.mechaAttacksMecha && f.game.start.mechaAttacksMechaUntil === undefined);
+    out.game = old ? { ...f.game, start: { ...f.game.start, mechaAttacksMecha: true, mechaAttacksMechaUntil: f.game.answers.length } } : f.game;
+  }
   return out;
 }
 

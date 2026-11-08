@@ -28,6 +28,8 @@ export type GameEventBody =
   | { kind: "heat"; amount: number; rule: string }
   /** H7 Meltdown happens: no Heat token left to prevent it. `bots`: Bots it hits. */
   | { kind: "meltdown"; bots: number }
+  /** The player looked at face-down tiles (a Bay, a Module...): shown to them, in this order (top first). */
+  | { kind: "looked"; tiles: { tile: TileId; unitId: string; sector?: SectorKey | undefined }[] }
   /** One energy went onto a Module (4.6, 5.3). `auto`: it went there by itself (only one Module could take it). */
   | { kind: "energy"; colour: EnergyColour; module: number; from?: TileId | undefined; auto: boolean };
 
