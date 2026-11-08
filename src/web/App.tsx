@@ -10,13 +10,14 @@ import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
 import { alertedUnits } from "../engine/alerts.js";
 import { bayAbilities, orders } from "../engine/command.js";
-import { describe, sectorKeys, tile, unitDef } from "../engine/field.js";
+import { describe, sectorKeys, sectorOf, tile, unitDef } from "../engine/field.js";
 import { moduleCost, moduleDef } from "../engine/modules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
 import { FieldView } from "./FieldView.js";
+import { type DragKind, mechaDragPlan } from "./drag.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -413,6 +414,13 @@ function GameScreen(p: GameProps) {
   // Selections, a pop-up or a split in progress belong to the question they were made for.
   const [selected, setSelected] = usePerQuestion<string[]>(q, []);
   const [hover, setHover] = useState<string | undefined>();
+  // A short message in the information strip (a drop that was not allowed), shown for a few seconds.
+  const [note, setNote] = useState<{ text: string; warn: boolean; at: number } | undefined>();
+  useEffect(() => {
+    if (!note) return;
+    const t = window.setTimeout(() => setNote(undefined), 5000);
+    return () => window.clearTimeout(t);
+  }, [note]);
   const [showLog, setShowLog] = useState(false);
   const [popup, setPopup] = usePerQuestion<Popup | undefined>(q, undefined);
   const [confirm, setConfirm] = usePerQuestion<Confirm | undefined>(q, undefined);
@@ -452,6 +460,19 @@ function GameScreen(p: GameProps) {
       };
   if (!actors && onFieldSectors.length) choosable.sectors = [...choosable.sectors, ...onFieldSectors];
   if (rowSectors.length) choosable.sectors = [...choosable.sectors, ...rowSectors];
+  // Tap glows like the drag glows: blue-green where a unit moves, red where it Attacks.
+  const tones: Record<string, DragKind> = {};
+  if (q && !actors) {
+    const p0 = "prompt" in q ? String(q.prompt) : "";
+    const at = (id: string) => (s.tiles[id] ? sectorOf(s, id) : id);
+    if (q.kind === "units" && /\bAttacks?\b/.test(p0)) for (const u of q.options) tones[at(u) ?? u] = "attack";
+    if (q.kind === "sectors" && /\b(move|moves|Move|teleport|Teleport|jump|Jump)\b/.test(p0)) for (const k of q.options) tones[k] = "move";
+    if ((q.kind === "option" || q.kind === "order") && /\bAttacks?\b/.test(p0))
+      for (const o of q.options) {
+        const k = o.on?.kind === "unit" ? at(o.on.id) : o.on?.kind === "sector" ? o.on.key : undefined;
+        if (k) tones[k] = o.id.startsWith("attack:") ? "attack" : "move";
+      }
+  }
   const splitSum = Object.values(split).reduce((a, b) => a + b, 0);
   const addSplit = (id: string) => {
     if (q?.kind !== "split") return;
@@ -695,11 +716,29 @@ function GameScreen(p: GameProps) {
 
       <section className="center">
         {hasField ? (
-          <FieldView data={data} state={s} rotate={rotate} choosable={choosable} selected={[...selected, ...Object.keys(split).filter((k) => (split[k] ?? 0) > 0), ...(rowQ && rowSel !== undefined ? rowQ.rows![rowSel]! : [])]} onPick={pick} onHover={setHover} showHidden={s.settings.developerMode} dark={dark} />
+          <FieldView
+            data={data}
+            state={s}
+            rotate={rotate}
+            choosable={choosable}
+            tones={tones}
+            selected={[...selected, ...Object.keys(split).filter((k) => (split[k] ?? 0) > 0), ...(rowQ && rowSel !== undefined ? rowQ.rows![rowSel]! : [])]}
+            onPick={pick}
+            onHover={setHover}
+            showHidden={s.settings.developerMode}
+            dark={dark}
+            dragFor={actors ? (u) => mechaDragPlan(data, game, v, u) : undefined}
+            onDrop={(answers) => {
+              setPopup(undefined);
+              setNote(undefined);
+              p.onAnswer(answers);
+            }}
+            onNote={(text, warn) => setNote({ text, warn, at: Date.now() })}
+          />
         ) : (
           <div className="empty-field">{PHASE[s.phase]}</div>
         )}
-        <div className="hover">{hover ? <HoverInfo data={data} state={s} sector={hover} /> : <span className="small">Point at a sector to see its stack and card text.</span>}</div>
+        <div className="hover">{note ? <span className={`field-note ${note.warn ? "warn" : ""}`}>{note.text}</span> : hover ? <HoverInfo data={data} state={s} sector={hover} /> : <span className="small">Point at a sector to see its stack and card text.</span>}</div>
       </section>
 
       <aside className="right panel">

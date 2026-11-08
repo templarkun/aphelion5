@@ -136,7 +136,9 @@ for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
   for (let i = 0; i < 4 && !rotateShown; i++) {
     if (!/^Your action/.test((await pg.locator(".question .prompt").last().textContent()) ?? "")) break;
     await revealSomething(pg);
-    await pg.waitForTimeout(200);
+    // Wait for the answer to land (the pop-up closes in 0.17 s first), not a fixed time.
+    await pg.waitForFunction(() => (document.querySelector(".field")?.getAttribute("data-rotate") ?? "[]") !== "[]" || !document.querySelector(".popup"), null, { timeout: 2000 }).catch(() => {});
+    await pg.waitForTimeout(250);
     const rot = JSON.parse((await pg.locator(".field").getAttribute("data-rotate")) ?? "[]");
     if (!rot.length) continue;
     rotateShown = true;
@@ -146,6 +148,7 @@ for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
     await pg.screenshot({ path: `${out}/ui-facing.png` });
     if (await pg.getByRole("button", { name: "Done" }).count()) await pg.getByRole("button", { name: "Done" }).click();
     else await revealSomething(pg); // the next action keeps the facing
+    await pg.waitForFunction(() => !document.querySelector(".popup") && (document.querySelector(".field")?.getAttribute("data-rotate") ?? "[]") === "[]", null, { timeout: 2000 }).catch(() => {});
     await pg.waitForTimeout(200);
     await pg.getByRole("button", { name: "Log", exact: true }).click();
     facingKept = (await pg.locator(".log li").allTextContents()).find((l) => / facing 1 /.test(l)) ?? "";
@@ -210,6 +213,86 @@ if (existsSync(energySave)) {
   energyCheck = pops >= 2 && pops === targets && leftOf && after !== before ? "ok" : `failed (pop-ups ${pops}, targets ${targets}, left of Module ${leftOf}, prompt still "${before}")`;
   await pg.close();
 }
+// Dragging Mecha (Program Spec "Interaction and animation", build step 2).
+async function pasteSave(pg, file) {
+  await pg.goto(url);
+  await pg.getByRole("button", { name: "Paste a save…" }).click();
+  await pg.locator("#textbox-text").fill(readFileSync(file, "utf8"));
+  await pg.getByRole("button", { name: "Load" }).click();
+  await pg.waitForTimeout(600);
+}
+async function sectorPoint(pg, k) {
+  const box = await pg.locator(".field").boundingBox();
+  const s = JSON.parse((await pg.locator(".field").getAttribute("data-sectors")) ?? "{}");
+  return { x: box.x + s[k][0], y: box.y + s[k][1] };
+}
+async function dragMouse(pg, a, b) {
+  await pg.mouse.move(a.x, a.y);
+  await pg.mouse.down();
+  for (let i = 1; i <= 12; i++) await pg.mouse.move(a.x + ((b.x - a.x) * i) / 12, a.y + ((b.y - a.y) * i) / 12);
+  await pg.waitForTimeout(300);
+}
+const logText = async (pg) => {
+  await pg.getByRole("button", { name: "Log", exact: true }).click();
+  const t = (await pg.locator(".log li").allTextContents()).join("\n");
+  await pg.getByRole("button", { name: "Log", exact: true }).click();
+  return t;
+};
+let dragCheck = "skipped (no drag save)";
+if (existsSync(`${out}/drag-save.json`)) {
+  const plan = JSON.parse(readFileSync(`${out}/drag-save.json.plan.json`, "utf8"));
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/drag-save.json`);
+  const prompt = async () => (await pg.locator(".question .prompt").last().textContent()) ?? "";
+  const before = await prompt();
+  const from = await sectorPoint(pg, plan.from);
+  const box = await pg.locator(".field").boundingBox();
+  // Dropped on a place that is not lit: it goes back, nothing happens, the strip says why.
+  await dragMouse(pg, from, { x: box.x + 12, y: box.y + 12 });
+  await pg.screenshot({ path: `${out}/ui-drag-lifted.png` });
+  await pg.mouse.up();
+  await pg.waitForTimeout(900);
+  const note = (await pg.locator(".field-note").textContent().catch(() => "")) ?? "";
+  const stayed = (await prompt()) === before && (await pg.locator(".popup").count()) === 0;
+  // Dropped on a blue sector: it moves there.
+  const target = plan.targets.find((t) => t.kind === "move" && !t.next);
+  const red = plan.targets.find((t) => t.kind === "attack");
+  await dragMouse(pg, from, await sectorPoint(pg, red.sector));
+  await pg.screenshot({ path: `${out}/ui-drag-attack-aim.png` });
+  await dragMouse(pg, await sectorPoint(pg, red.sector), await sectorPoint(pg, target.sector)).catch(() => {});
+  await pg.mouse.up();
+  await pg.waitForTimeout(120);
+  const anim = await pg.locator(".field").getAttribute("data-anim");
+  await pg.waitForTimeout(900);
+  const log = await logText(pg);
+  const moved = log.includes(`${plan.unitId} moves from (${plan.from}) to (${target.sector})`) || log.includes(`from (${plan.from})`);
+  dragCheck = /cannot go there/.test(note) && stayed && moved ? "ok" : `failed (note "${note}", stayed ${stayed}, moved ${moved}, anim ${anim})`;
+  await pg.close();
+}
+let drag2Check = "skipped (no M_03/M_06 save)";
+if (existsSync(`${out}/drag2-save.json`)) {
+  const plan = JSON.parse(readFileSync(`${out}/drag2-save.json.plan.json`, "utf8"));
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/drag2-save.json`);
+  const blue = plan.targets.find((t) => t.next && t.next.length);
+  await dragMouse(pg, await sectorPoint(pg, plan.from), await sectorPoint(pg, blue.sector));
+  await pg.mouse.up();
+  await pg.waitForTimeout(300);
+  const lifted = ((await pg.locator(".field-note").textContent().catch(() => "")) ?? "").includes("red unit");
+  await pg.screenshot({ path: `${out}/ui-drag2-carry.png` });
+  const p2 = await sectorPoint(pg, blue.next[0]);
+  await pg.mouse.click(p2.x, p2.y);
+  await pg.waitForTimeout(300);
+  const anim = await pg.locator(".field").getAttribute("data-anim");
+  await pg.screenshot({ path: `${out}/ui-drag2-hit.png` });
+  await pg.waitForTimeout(1500);
+  const log = await logText(pg);
+  const attacked = new RegExp(`${plan.unitId}.*Attacks`).test(log) && /(swap|moves)/.test(log);
+  drag2Check = lifted && attacked && anim === "1" ? "ok" : `failed (lifted ${lifted}, attacked ${attacked}, anim ${anim})`;
+  await pg.close();
+}
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
 mobile.on("pageerror", (e) => errors.push(e.message));
 await mobile.goto(url);
@@ -219,7 +302,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

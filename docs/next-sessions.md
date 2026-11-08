@@ -17,8 +17,9 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    phone check. PixiJS stays.
    Done so far (2026-11-07): energy pop-ups beside Modules (one energy per tap, any order),
    the Flare energy trial rule (setup option), Modules panel order and colour rims, bubble
-   pop-ups for units and sectors. Next: engine events and the animation player, then
-   dragging Mecha as the sample of the feel.
+   pop-ups for units and sectors. 2026-11-08: engine events and the animation player (move,
+   swap, reveal, hit, destroy, energy) and dragging Mecha (step 2) built. Next: the designer
+   tries the feel; then step 3 (energy tokens on Flares, Bay weapons, Modules and Orders).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
 4. **Settings and polish.** Animation speed and simple transitions, colour-blind token
