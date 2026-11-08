@@ -17,9 +17,11 @@ import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, st
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
 import { FieldView } from "./FieldView.js";
-import { type DragKind, abilityTargets, mechaDragPlan, m03TapTargets } from "./drag.js";
+import { type DragKind, type DragPlan, abilityTargets, mechaDragPlan, m03TapTargets, moduleAffects } from "./drag.js";
 import { newEvents } from "../engine/events.js";
-import { energyFlights } from "./flyers.js";
+import { energyFlights, paidShown, reserveFlights } from "./flyers.js";
+import { type ModPlan, normalise, planAnswer, planInfo } from "./modulePlan.js";
+import { HeatBar, type ModPop, ModuleCard, ModulePops } from "./Modules.js";
 import { AnomalyStrip } from "./Anomalies.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
@@ -408,21 +410,31 @@ function GameScreen(p: GameProps) {
     !ahead.game.view.question.facing &&
     ahead.game.view.state.hiddenInfo === real.state.hiddenInfo;
   const v = aheadOk ? ahead.game.view : real;
-  // Overclock (H6, designer 2026-11-08): a toggle above the Modules, pressed before running one.
-  const [overclockOn, setOverclock] = useState(false);
-  const send = (a: Answer) => {
-    if (!(a.kind === "option" && String(a.value).startsWith("module:"))) setOverclock(false);
-    p.onAnswer(aheadOk && faceAnswer ? [faceAnswer, a] : [a]);
-  };
-  // The Overclock question is answered by the toggle, never shown.
-  const ocQ = realQ?.kind === "yesno" && realQ.rule === "H6" && /^Overclock /.test(realQ.prompt) ? realQ : undefined;
+  const send = (a: Answer) => p.onAnswer(aheadOk && faceAnswer ? [faceAnswer, a] : [a]);
+  // A Module run from its selection (designer 2026-11-08): its X, Overclock and extra payment
+  // were set on pop-ups before the run, so those questions are answered by the plan, never shown.
+  const planRef = useRef<ModPlan | undefined>(undefined);
+  if (realQ && actorsOf(realQ)) planRef.current = undefined;
+  const planQ = planRef.current && realQ ? planAnswer(realQ, planRef.current) : undefined;
   useEffect(() => {
-    if (!ocQ) return;
-    const yes = overclockOn;
-    setOverclock(false);
-    p.onAnswer([{ kind: "yesno", value: yes }]);
-  }, [ocQ]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (planQ) p.onAnswer([planQ]);
+  }, [realQ]); // eslint-disable-line react-hooks/exhaustive-deps
   const [menuOpen, setMenuOpen] = useState(false);
+  // The Heat bar (designer 2026-11-08): long when the top bar has room, else a short bubble.
+  const barRef = useRef<HTMLElement>(null);
+  const [shortBar, setShortBar] = useState(false);
+  useLayoutEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const fit = () => {
+      setShortBar(false);
+      requestAnimationFrame(() => barRef.current && setShortBar(barRef.current.scrollWidth > barRef.current.clientWidth + 1));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [real.state.settings.heatModule]);
   const layout = useLayout();
   // A Bay or Order being dragged: its targets light up on the Field.
   const [abilityDrag, setAbilityDrag] = useState<{ list: DropTarget[]; attack: boolean } | undefined>();
@@ -434,6 +446,7 @@ function GameScreen(p: GameProps) {
     lastState.current = real.state;
     if (before === real.state) return;
     energyFlights(before, real.state);
+    if (!planRef.current) paidShown(undefined);
     const seen = newEvents(before.events, real.state.events).filter((e) => e.kind === "looked");
     setLook(seen.length ? seen.flatMap((e) => (e.kind === "looked" ? e.tiles : [])) : undefined);
   }, [real.state]);
@@ -491,10 +504,7 @@ function GameScreen(p: GameProps) {
     setPopup(undefined);
     setConfirm(undefined);
     if (id.startsWith("way:")) return p.onAnswer(wayAnswers.current.get(id) ?? []);
-    if (id.startsWith("heatwave:")) {
-      setOverclock(false);
-      return p.onAnswer(heatWaveBots.get(id.slice("heatwave:".length)) ?? []);
-    }
+    if (id.startsWith("heatwave:")) return p.onAnswer(heatWaveBots.get(id.slice("heatwave:".length)) ?? []);
     send({ kind: "option", value: id });
   };
   const inOverload = s.phase === "overload";
@@ -522,6 +532,8 @@ function GameScreen(p: GameProps) {
   }
   const onFieldSectors = [...onField.keys()].filter((k) => s.field[k] !== undefined);
   const splitOn = q?.kind === "split" ? q.pick : undefined;
+  const [modSel, setModSelRaw] = usePerQuestion<ModPlan | undefined>(q, undefined);
+  const [mechaSel, setMechaSel] = usePerQuestion<{ tile: string; plan: DragPlan } | undefined>(q, undefined);
   const choosable = actors
     ? { sectors: [...actors.sectors.keys()], units: [...new Set([...actors.units.keys(), ...heatWaveBots.keys()])] }
     : {
@@ -543,6 +555,18 @@ function GameScreen(p: GameProps) {
         const k = o.on?.kind === "unit" ? at(o.on.id) : o.on?.kind === "sector" ? o.on.key : undefined;
         if (k) tones[k] = o.id.startsWith("attack:") ? "attack" : "move";
       }
+  }
+  // M_01 tapped (designer 2026-11-08, I6): its targets are lit at once, red to Attack, blue-green to move.
+  if (mechaSel) {
+    choosable.sectors = mechaSel.plan.targets.filter((t) => t.answers.length).map((t) => t.sector);
+    choosable.units = [mechaSel.tile];
+    for (const k of Object.keys(tones)) delete tones[k];
+    for (const t of mechaSel.plan.targets) tones[t.sector] = t.kind;
+  }
+  // A Module selected: only what it would affect is marked (and nothing on the Field is lit).
+  if (modSel) {
+    choosable.sectors = [];
+    choosable.units = [];
   }
   if (abilityDrag) {
     choosable.sectors = abilityDrag.list.map((t) => t.sector);
@@ -570,7 +594,6 @@ function GameScreen(p: GameProps) {
     },
     onDrop: (answers) => {
       setPopup(undefined);
-      setOverclock(false);
       p.onAnswer(answers);
     },
     onNote: (text) => setNote({ text, warn: true, at: Date.now() }),
@@ -623,6 +646,24 @@ function GameScreen(p: GameProps) {
   const tileH = Number(document.querySelector<HTMLElement>(".field")?.dataset.tile ?? 0);
   const bubbleW = Math.max(120, Math.round(tileH * 0.866 * (2 / 3)));
   const pick = (id: string) => {
+    if (mechaSel) {
+      const t = mechaSel.plan.targets.find((x) => x.sector === id && x.answers.length);
+      setMechaSel(undefined);
+      setPopup(undefined);
+      if (t) return p.onAnswer(t.answers);
+      return;
+    }
+    if (actors && s.tiles[id]?.unitId === "M_01" && v === game.view) {
+      const plan = mechaDragPlan(data, game, v, id);
+      if (plan) {
+        // Its other actions (none with a target on the Field) stay in its pop-up.
+        const covered = new Set(plan.targets.map((t) => (t.answers[0]?.kind === "option" ? t.answers[0].value : "")));
+        const rest = (actors.units.get(id) ?? []).filter((o) => !covered.has(o.id));
+        setMechaSel({ tile: id, plan });
+        if (rest.length) openPopup(describe(c, id), rest, undefined, id);
+        return;
+      }
+    }
     if (actors) {
       const hw = heatWaveBots.get(id) ? [{ id: `heatwave:${id}`, label: "Heat Wave: pay 1 Heat, 1 damage to this Bot (H5)" }] : [];
       const unitOpts = actors.units.get(id) || hw.length ? [...(actors.units.get(id) ?? []), ...hw] : undefined;
@@ -675,11 +716,68 @@ function GameScreen(p: GameProps) {
     setSelected((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : xs.length < q.max ? [...xs, id] : xs));
   };
 
+  // A Module selected but not run yet (designer 2026-11-08): see modulePlan.ts.
+  const setModSel = (next: ModPlan | undefined) => {
+    // Energy chips show the Reserve filling the bar, and going back when it is let go.
+    const was = modSel ? planInfo(c, modSel.id, modSel).slots : [];
+    const now = next ? planInfo(c, next.id, next).slots : [];
+    if (modSel && next && modSel.id !== next.id) reserveFlights(modSel.id, was, []);
+    reserveFlights(next?.id ?? modSel?.id ?? 0, modSel && next && modSel.id !== next.id ? [] : was, now);
+    setModSelRaw(next);
+  };
+  const selectModule = (id: number) => {
+    setPopup(undefined);
+    setModSel(normalise(c, { id, oc: 0, extra: 0 }));
+  };
+  const commitModule = () => {
+    const sel = modSel;
+    const o = sel && actors?.modules.get(sel.id);
+    if (!sel || !o) return;
+    planRef.current = sel;
+    setModSelRaw(undefined);
+    paidShown(sel.id);
+    p.onAnswer([{ kind: "option", value: o.id }]);
+  };
+  const selInfo = modSel ? planInfo(c, modSel.id, modSel) : undefined;
+  useEffect(() => {
+    if (!modSel) return;
+    // A tap anywhere but the Module and its pop-ups lets it go.
+    const off = (e: PointerEvent) => {
+      const t = e.target as Element | null;
+      if (t?.closest(`[data-module="${modSel.id}"]`) || t?.closest(".mod-pops")) return;
+      setModSel(undefined);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setModSel(undefined);
+    document.addEventListener("pointerdown", off, true);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", off, true);
+      document.removeEventListener("keydown", esc);
+    };
+  }); // eslint-disable-line react-hooks/exhaustive-deps
+  const affected = useMemo(() => {
+    if (!modSel || v !== game.view) return [];
+    const o = actors?.modules.get(modSel.id);
+    return o ? moduleAffects(data, game, { kind: "option", value: o.id }, (qq) => planAnswer(qq, modSel)) : [];
+  }, [data, game, v, modSel]); // eslint-disable-line react-hooks/exhaustive-deps
+  const modPops: ModPop[] = [];
+  if (modSel && selInfo) {
+    const d = moduleDef(c, modSel.id);
+    if (selInfo.xRange)
+      modPops.push({ key: "x", kind: "step", colour: d.colour, label: "X =", value: modSel.x ?? selInfo.xRange[0], min: selInfo.xRange[0], max: selInfo.xRange[1], onStep: (k) => setModSel(normalise(c, { ...modSel, x: (modSel.x ?? selInfo.xRange![0]) + k })) });
+    if (selInfo.ocNext === "two") modPops.push({ key: "oc1", kind: "take", colour: d.colour, label: "−2 energy +1 Heat", onClick: () => setModSel({ ...modSel, oc: 1 }) });
+    if (selInfo.ocNext === "yellow") modPops.push({ key: "oc2", kind: "take", colour: "Yellow", label: "−1 Yellow +1 Heat", onClick: () => setModSel({ ...modSel, oc: 2 }) });
+    const ex = selInfo.extra;
+    if (ex?.upTo) modPops.push({ key: "extra", kind: "step", colour: d.colour, label: "Extra", value: modSel.extra, min: 0, max: ex.max, onStep: (k) => setModSel(normalise(c, { ...modSel, extra: modSel.extra + k })) });
+    else if (ex && modSel.extra === 0) modPops.push({ key: "extra", kind: "take", colour: d.colour, label: `−${ex.n} energy: ${ex.text.replace(/^Pay \d+ more \w+ energy:?\s*/i, "")}`, onClick: () => setModSel(normalise(c, { ...modSel, extra: ex.n })) });
+  }
+
   // Modules: run one (action menu), choose one (a question about Modules), or place energy on it (a split).
   const moduleState = (id: number): { can: boolean; onClick?: () => void; count?: number } => {
     if (actors) {
+      // Designer 2026-11-08: the first tap selects it, a tap on the selected one runs it.
       const o = actors.modules.get(id);
-      return o ? { can: true, onClick: () => answer(o.id) } : { can: false };
+      return o ? { can: true, onClick: () => (modSel?.id === id ? commitModule() : selectModule(id)) } : { can: false };
     }
     // Energy (designer 2026-11-07): answered on the pop-up beside the Module, not on the Module itself.
     if (q?.kind === "option" && (q.energy || q.takeEnergy)) return { can: false };
@@ -761,7 +859,7 @@ function GameScreen(p: GameProps) {
         pointer.current = { x: e.clientX, y: e.clientY };
       }}
     >
-      <header className="bar">
+      <header className="bar" ref={barRef}>
         <strong className="bar-title">{s.mission || "Aphelion 5"}</strong>
         {/* The Reserve in the top bar (designer 2026-11-08): each colour in its own bubble; energy flies in and out of it. */}
         <div className="reserve-bar" aria-label="Energy Reserve">
@@ -777,13 +875,21 @@ function GameScreen(p: GameProps) {
             );
           })}
         </div>
+        {s.settings.heatModule && <HeatBar heat={s.player.heat} gain={selInfo?.heat ?? 0} short={shortBar} />}
         <span className="spacer" />
-        <button onClick={p.onUndo} disabled={!p.canUndo()} title="Take back your last answer (not past new hidden information)">
-          Undo
+        {/* Narrow phones (designer 2026-11-08: everything in one bar on a Galaxy S24): icons instead of words. */}
+        <button className="bar-btn" aria-label="Undo" onClick={p.onUndo} disabled={!p.canUndo()} title="Take back your last answer (not past new hidden information)">
+          <span className="ico" aria-hidden>
+            ↶
+          </span>
+          <span className="lbl">Undo</span>
         </button>
         <div className="menu-wrap">
-          <button onClick={() => setMenuOpen((x) => !x)} aria-expanded={menuOpen}>
-            Menu
+          <button className="bar-btn" aria-label="Menu" onClick={() => setMenuOpen((x) => !x)} aria-expanded={menuOpen}>
+            <span className="ico" aria-hidden>
+              ☰
+            </span>
+            <span className="lbl">Menu</span>
           </button>
           {menuOpen && (
             <div className="menu panel" role="menu" onClick={() => setMenuOpen(false)}>
@@ -840,6 +946,11 @@ function GameScreen(p: GameProps) {
               p.onAnswer(answers);
             }}
             onNote={(text, warn) => setNote({ text, warn, at: Date.now() })}
+            affected={affected}
+            onMiss={() => {
+              setMechaSel(undefined);
+              setModSel(undefined);
+            }}
           />
         ) : (
           <div className="empty-field">{PHASE[s.phase]}</div>
@@ -852,7 +963,7 @@ function GameScreen(p: GameProps) {
             End the Overload
           </button>
         )}
-        {ocQ ? null : rotate ? (
+        {planQ ? null : rotate ? (
           <div className="q-banner">
             <p className="prompt">
               {describe({ data, state: real.state }, rotate.tile)}: turn it with the ⟲ ⟳ buttons on the unit. <span className="rule">rule 3.7</span>
@@ -884,33 +995,27 @@ function GameScreen(p: GameProps) {
 
       <aside className="right panel">
         <h3>Modules</h3>
-        {s.settings.heatModule && (
-          <div className="overclock-bar">
-            <button className={`overclock ${overclockOn ? "on" : ""}`} aria-pressed={overclockOn} onClick={() => setOverclock((x) => !x)} title="H6: press, then run a Module">
-              Overclock: pay 2 more energy to gain 1 Heat
-            </button>
-            <span className="heat-count" data-heat>
-              Heat {s.player.heat}
-            </span>
-          </div>
-        )}
         {sortedModules(c, s.player.modules).map((m) => {
           const d = moduleDef(c, m.id);
-          const e = (["Yellow", "Red", "Blue"] as const).filter((k) => m.energy[k] > 0).map((k) => `${m.energy[k]} ${k}`);
           const st = moduleState(m.id);
           const taking = takeQ?.options.some((o) => o.id === String(m.id));
-          const dim = modulesWanted && !st.can && !energyFor(m.id) && !taking;
-          const Tag = st.can ? "button" : "div";
+          const dim = (modulesWanted && !st.can && !energyFor(m.id) && !taking) || (modSel !== undefined && modSel.id !== m.id);
+          const sel = modSel?.id === m.id;
           return (
-            <Tag key={m.id} data-module={m.id} className={`module rim-${d.colour.toLowerCase()} ${m.ready ? "" : "exhausted"} ${st.can ? "can" : ""} ${dim ? "dim" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`} title={d.effect + (d.extraPayment ? ` Extra: ${d.extraPayment}` : "")} onClick={st.onClick}>
-              <b>{d.name}</b>{" "}
-              <span className="small">
-                {d.cost === "X" ? "X" : moduleCost(c, m.id)} {d.colour} · {d.background === "red" ? "Overload" : "Command phase"} · {m.ready ? "ready" : "exhausted"}
-                {e.length ? ` · holds ${e.join(", ")}` : ""}
-              </span>
-              <div className="small">{d.effect}</div>
+            <ModuleCard
+              key={m.id}
+              id={m.id}
+              def={d}
+              ready={m.ready}
+              info={sel && selInfo ? selInfo : planInfo(c, m.id)}
+              can={st.can}
+              selected={sel}
+              dim={dim}
+              extraClass={`${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`}
+              onClick={st.onClick}
+            >
               {st.count !== undefined && <SplitCount n={st.count} onMinus={() => subSplit(String(m.id))} />}
-            </Tag>
+            </ModuleCard>
           );
         })}
         <section className="trophy-box">
@@ -931,6 +1036,7 @@ function GameScreen(p: GameProps) {
 
 
 
+      {modSel && <ModulePops id={modSel.id} pops={modPops} />}
       {energyQ && <EnergyPopups q={energyQ} onPick={(id) => send({ kind: "option", value: id })} />}
       {takeQ && <EnergyPopups q={takeQ} take={{ state: s, data }} onPick={(id) => send({ kind: "option", value: id })} />}
       {popup && (
@@ -942,6 +1048,7 @@ function GameScreen(p: GameProps) {
           onClose={() => {
             setPopup(undefined);
             setRowSel(undefined);
+            setMechaSel(undefined);
           }}
           tapThrough={(x, y) => {
             // One tap on another clickable unit or sector: the old pop-up goes and the new one opens.

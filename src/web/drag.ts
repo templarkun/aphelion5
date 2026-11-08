@@ -200,3 +200,45 @@ function targetsOf(data: GameData, game: Game, first: Answer, both: boolean): { 
     });
   return [];
 }
+
+/**
+ * The sectors a Module would affect if run now with these answers (designer 2026-11-08: shown
+ * by an overline while it is selected). Tried on a copy of the game: the units its first
+ * target question offers, or (no question) what it hit, destroyed, moved or swapped.
+ * Nothing when trying it would show new hidden information.
+ */
+export function moduleAffects(data: GameData, game: Game, first: Answer, answerFor: (q: Question) => Answer | undefined): string[] {
+  const start = game.view;
+  if (start.status !== "question") return [];
+  const hidden = start.state.hiddenInfo;
+  let r = playAnswer(data, game, first);
+  if (r.result.status === "illegal" || r.result.status === "blocked") return [];
+  let g = r.game;
+  for (let i = 0; i < 8; i++) {
+    const v = g.view;
+    if (v.status !== "question" || v.state.hiddenInfo !== hidden) break;
+    const a = answerFor(v.question);
+    if (!a) break;
+    r = playAnswer(data, g, a);
+    if (r.result.status === "illegal" || r.result.status === "blocked") return [];
+    g = r.game;
+  }
+  const v = g.view;
+  if (v.state.hiddenInfo !== hidden) return [];
+  const s = v.state;
+  const out = new Set<string>();
+  const add = (k: string | undefined) => k && s.field[k] && out.add(k);
+  if (v.status === "question" && !v.question.shortcuts) {
+    const q = v.question;
+    if (q.kind === "units") q.options.forEach((u) => add(sectorOf(s, u)));
+    else if (q.kind === "sectors") q.options.forEach(add);
+    else if (q.kind === "option") for (const o of q.options) add(o.on?.kind === "unit" ? sectorOf(s, o.on.id) : o.on?.kind === "sector" ? o.on.key : undefined);
+    if (out.size) return [...out];
+  }
+  for (const e of newEvents(start.state.events, s.events)) {
+    if (e.kind === "hit" || e.kind === "destroyed") add(e.sector);
+    else if (e.kind === "moved") add(e.to);
+    else if (e.kind === "swapped") (add(e.from), add(e.to));
+  }
+  return [...out];
+}

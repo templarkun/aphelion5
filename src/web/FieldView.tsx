@@ -50,6 +50,10 @@ export interface FieldProps {
   onDrop?: ((answers: Answer[]) => void) | undefined;
   /** A short message for the information strip (a drop that was not allowed). */
   onNote?: ((text: string, warn: boolean) => void) | undefined;
+  /** Sectors a selected Module would affect (designer 2026-11-08): a violet overline. */
+  affected?: string[] | undefined;
+  /** A tap on nothing that can be chosen. */
+  onMiss?: (() => void) | undefined;
 }
 
 const TYPE_COLOUR: Record<string, number> = {
@@ -65,6 +69,8 @@ const ENERGY_CSS: Record<string, string> = { Yellow: "var(--yellow)", Red: "var(
 const MOVE = 0x23c4a8;
 const ATTACK = 0xff5a36;
 const READY = 0xf2b84b;
+/** What a selected Module would affect (designer 2026-11-08). */
+const AFFECT = 0x9b6bff;
 
 /** Screen angle of each side (1 left, then clockwise), in radians; y grows downwards. */
 const SIDE_ANGLE: Record<number, number> = { 1: Math.PI, 2: (2 * Math.PI) / 3, 3: Math.PI / 3, 4: 0, 5: -Math.PI / 3, 6: (-2 * Math.PI) / 3 };
@@ -336,10 +342,11 @@ export function FieldView(p: FieldProps) {
       if (b) return P.rotate.onTurn(b.dir as 1 | -1);
     }
     const k = sectorAt(x, y);
-    if (k === undefined) return;
+    if (k === undefined) return P.onMiss?.();
     if (P.choosable.sectors.includes(k)) return P.onPick(k);
     const unit = sectorState(P.state, k) === "occupied" ? topTileId(P.state, k) : undefined;
-    if (unit !== undefined && P.choosable.units.includes(unit)) P.onPick(unit);
+    if (unit !== undefined && P.choosable.units.includes(unit)) return P.onPick(unit);
+    P.onMiss?.();
   }
 
   /** Stay lifted over `at` with new targets (M_06 after its Swap; M_03 choosing where to move through). */
@@ -871,6 +878,29 @@ export function FieldView(p: FieldProps) {
         drawGlow(g, n.cx, n.cy, P.tones?.[k] ?? "ready", now, false);
       }
     }
+    // A selected Module's targets: a violet rim just outside the hex with marks running round it.
+    if (!d && !player.current.busy)
+      for (const k of P.affected ?? []) {
+        const n = nodes.current.get(k);
+        if (!n) continue;
+        const r = size * 0.97;
+        const pts = hexPoints(n.cx, n.cy, r);
+        g.poly(pts).stroke({ width: 2, color: AFFECT, alpha: 0.85 });
+        const t = (now / 1800) % 1;
+        for (let i = 0; i < 6; i++) {
+          // A short bright mark sliding along each side.
+          const ax = pts[i * 2]!;
+          const ay = pts[i * 2 + 1]!;
+          const bx = pts[((i + 1) % 6) * 2]!;
+          const by = pts[((i + 1) % 6) * 2 + 1]!;
+          const p0 = t;
+          const p1 = Math.min(1, t + 0.28);
+          g.moveTo(ax + (bx - ax) * p0, ay + (by - ay) * p0)
+            .lineTo(ax + (bx - ax) * p1, ay + (by - ay) * p1)
+            .stroke({ width: 4, color: 0xffffff, alpha: 0.75 });
+        }
+        g.poly(hexPoints(n.cx, n.cy, size * 0.9)).fill({ color: AFFECT, alpha: 0.1 + 0.08 * breath(now, 1800) });
+      }
     if (d) dragFrame(d, now, size);
   }
 

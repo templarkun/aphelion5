@@ -222,10 +222,6 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .trophy-box p { margin: 2px 0; }
 .trophy-box h3 { margin-top: 6px; }
 .phase-line .phase { color: var(--accent); }
-.overclock-bar { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; }
-.overclock { flex: 1; font-size: 12px; text-align: left; min-height: 36px; }
-.overclock.on { color: #fff; border-color: #ff6d00; background: linear-gradient(120deg, #ff6d00, #ff3d00); box-shadow: 0 0 12px 2px rgb(255 100 0 / 0.45); }
-.heat-count { font-weight: 700; color: #e65100; white-space: nowrap; }
 .heat-fly { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; white-space: nowrap; padding: 4px 10px; border-radius: 999px; font-weight: 800; font-size: 13px; color: #fff; background: linear-gradient(120deg, #ff6d00, #ff3d00); box-shadow: 0 0 14px 3px rgb(255 100 0 / 0.5); }
 .meltdown-card { position: absolute; left: 50%; top: 50%; z-index: 14; pointer-events: none; width: min(420px, calc(100% - 32px)); display: flex; flex-direction: column; gap: 6px; text-align: center; padding: 16px 18px; border-radius: 16px; color: #fff; background: radial-gradient(circle at 50% 0%, #ff6d00, #8b1a00 70%); box-shadow: 0 0 40px 10px rgb(255 60 0 / 0.45); }
 .meltdown-card b { font-size: 26px; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -355,3 +351,58 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .anomaly-row { flex: 1; min-width: 0; }
 .anomaly-strip .decline { flex: none; min-height: 30px; border-radius: 999px; padding: 2px 12px; font-size: 12px; }
 .cmd-gems i.empty { background: transparent; border: 1.5px solid var(--muted); box-shadow: none; }
+
+/* Module cards (designer 2026-11-08): name, energy bar, effect text. */
+.module.rim-yellow { --rim: var(--yellow); } .module.rim-red { --rim: var(--red); } .module.rim-blue { --rim: var(--blue); }
+.module-inner { position: relative; z-index: 1; display: grid; gap: 4px; }
+.module-name { font-size: 13px; }
+.module-text { font-size: 12px; color: var(--muted); line-height: 1.3; }
+.module.bg-overload { background: color-mix(in srgb, var(--red) 5%, var(--panel)); }
+.ebar { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; min-height: 14px; }
+.ebar .slot { width: 14px; height: 14px; border-radius: 4px; box-sizing: border-box; border: 1.5px dashed color-mix(in srgb, var(--c) 70%, var(--line)); background: transparent; transition: background 0.25s ease, border-color 0.25s ease; }
+.ebar .slot.yellow { --c: var(--yellow); } .ebar .slot.red { --c: var(--red); } .ebar .slot.blue { --c: var(--blue); }
+.ebar .slot.module { border: 1.5px solid var(--c); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 55%, #fff), var(--c)); animation: slot-fill 0.35s ease-out both; }
+.ebar .slot.reserve { border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 70%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--c) 70%, transparent); animation: slot-fill 0.35s ease-out both, slot-glow 1.2s ease-in-out infinite; }
+.ebar .slot.part-overclock { border-radius: 50%; outline: 1.5px solid #ff6d00; outline-offset: 1px; }
+.ebar .slot.part-extra { outline: 1.5px dotted var(--ink); outline-offset: 1px; }
+.ebar .slot.part-stored { opacity: 0.6; }
+.ebar-x { font-size: 11px; color: var(--muted); }
+.ebar-free { font-size: 11px; color: var(--muted); font-style: italic; }
+@keyframes slot-fill { from { transform: scale(0.4); } 60% { transform: scale(1.18); } to { transform: scale(1); } }
+@keyframes slot-glow { 50% { box-shadow: 0 0 11px color-mix(in srgb, var(--c) 90%, transparent); } }
+/* Selected Module: the Bays' fire outline. */
+.module.selected { position: relative; isolation: isolate; overflow: hidden; border-color: transparent; box-shadow: 0 0 16px 2px rgb(255 110 0 / 0.45); animation: none; }
+.module.selected::before { content: ""; position: absolute; z-index: -2; left: 50%; top: 50%; width: 200%; aspect-ratio: 1; transform: translate(-50%, -50%); background: conic-gradient(from 0deg, #ff3d00, #ffb300, #fff3c4, #ff6d00, #ff1744, #ff9100, #ff3d00); animation: fire-spin 1.3s linear infinite; }
+.module.selected::after { content: ""; position: absolute; z-index: -1; inset: 3px; border-radius: 6px; background: var(--panel); border-left: 4px solid var(--rim); }
+@media (prefers-reduced-motion: reduce) { .module.selected::before, .ebar .slot { animation: none; } }
+/* Pop-ups beside a selected Module: Overclock, X, its extra payment. */
+.mod-pops { position: fixed; z-index: 14; display: flex; flex-direction: column; gap: 6px; }
+.mod-pops.left { transform: translateY(-50%); }
+.mod-pops.above { transform: translateY(-100%); flex-direction: column-reverse; }
+.mod-pops .energy-pop { position: static; transform: none; width: 100%; box-sizing: border-box; font-size: 13px; }
+.mod-pops .energy-pop::after { display: none; }
+.mod-pops .step { justify-content: space-between; cursor: default; padding: 4px 6px; }
+.mod-pops .step .mini { min-width: 32px; min-height: 32px; border-radius: 999px; font-size: 18px; padding: 0; }
+.energy-pop.heat { --pop: #ff6d00; }
+/* Heat (H1) in the top bar: a long bar of cells, or a short bubble. */
+.bar { flex-wrap: nowrap; min-width: 0; }
+.heat-long, .heat-bubble { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 32px; padding: 3px 10px 3px 6px; border-radius: 999px; border: 1px solid color-mix(in srgb, #ff6d00 45%, var(--line)); background: color-mix(in srgb, #ff6d00 8%, var(--panel)); font-variant-numeric: tabular-nums; }
+.heat-long b, .heat-bubble b { font-size: 15px; color: #e65100; min-width: 1.2em; text-align: center; }
+.heat-bubble small { font-size: 11px; font-weight: 700; color: #ff6d00; animation: slot-glow 1.2s ease-in-out infinite; }
+.flame { width: 14px; height: 18px; fill: #ff6d00; filter: drop-shadow(0 0 3px rgb(255 109 0 / 0.5)); }
+.heat-cells { display: inline-flex; gap: 2px; }
+.heat-cells i { width: 9px; height: 16px; border-radius: 3px; border: 1px solid color-mix(in srgb, #ff6d00 50%, var(--line)); background: transparent; }
+.heat-cells i.on { border-color: #e65100; background: linear-gradient(0deg, #ff3d00, #ffb300); }
+.heat-cells i.gain { border: 1.5px dashed #ff6d00; background: color-mix(in srgb, #ff6d00 25%, transparent); animation: slot-glow 1.2s ease-in-out infinite; --c: #ff6d00; }
+@media (max-width: 480px) { .bar { gap: 6px; padding: 6px 10px; } .reserve-bar { gap: 4px; } .res-bubble { gap: 3px; padding-right: 6px; } .heat-bubble { padding-right: 7px; gap: 3px; } }
+/* An Anomaly's full card, under its bubble. */
+.anomaly .anomaly-text { border: 0; background: none; padding: 0; min-height: 0; font: inherit; color: inherit; cursor: pointer; }
+.anomaly.open { border-color: var(--accent); }
+.anomaly-card { position: fixed; z-index: 18; width: min(300px, calc(100vw - 16px)); box-sizing: border-box; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--accent); background: var(--panel); box-shadow: 0 10px 26px rgb(0 0 0 / 0.25); animation: bubble-in 0.35s ease-out both; }
+.anomaly-card p { margin: 6px 0 0; }
+.anomaly-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.anomaly-card-glyphs { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; font-weight: 600; }
+.anomaly-card .met-line { color: var(--accent); font-weight: 700; }
+.bar-btn .ico { display: none; }
+@media (max-width: 480px) { .bar-btn { min-width: 40px; padding: 0 8px; font-size: 18px; } .bar-btn .ico { display: inline; } .bar-btn .lbl { display: none; } }
+.mod-pops .energy-pop { white-space: nowrap; }

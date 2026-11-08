@@ -13,6 +13,7 @@ import { emptyProfile } from "../src/engine/state.js";
 import { randomAnswer } from "../tests/unit/campaignFuzz.js";
 import { mechaDragPlan } from "../src/web/drag.js";
 import type { Game } from "../src/engine/save.js";
+import { planInfo } from "../src/web/modulePlan.js";
 
 const data = loadGameData();
 /** A Mecha that can be dragged both to a move target and to an Attack target. */
@@ -35,6 +36,18 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   drag2: (q, g) =>
     (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.next?.()) ?? false)),
   rows: (q) => q.rows !== undefined,
+  // A Module on the action menu that can be Overclocked (Heat module on; designer 2026-11-08).
+  overclock: (q, g) =>
+    g.view.state.settings.heatModule &&
+    (q.shortcuts ?? []).some((o) => {
+      const m = /^module:(\d+)$/.exec(o.id);
+      if (!m) return false;
+      const id = Number(m[1]);
+      return planInfo({ data, state: g.view.state }, id, { id, oc: 0, extra: 0 }).ocNext === "two";
+    }),
+  // M_01 on the action menu with somewhere to move or Attack (its targets light when tapped).
+  m01: (q, g) =>
+    (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && g.view.state.tiles[o.on.id]?.unitId === "M_01" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.length ?? 0) > 0),
   // Energy taken off Modules (S_08, S_13): pop-ups with an outward arrow.
   take: (q) => q.takeEnergy !== undefined,
   // Overload End step 3: claim a met Anomaly card.
@@ -60,12 +73,12 @@ for (let seed = 1; seed < 400; seed++) {
     const q = g.view.question;
     if (wanted(q, g)) {
       writeFileSync(out, JSON.stringify(toSave(g, g.view.state.profile)));
-      if (what.startsWith("drag") || what === "m03") {
+      if (what.startsWith("drag") || what === "m03" || what === "m01") {
         // Beside the save: the Mecha to drag and its targets (for the browser check).
         for (const o of q.shortcuts ?? []) {
           if (!o.id.startsWith("mecha:") || o.on?.kind !== "unit") continue;
           const plan = mechaDragPlan(data, g, g.view, o.on.id);
-          if (!plan || !(what === "drag" ? plan === dragPlanOf(g) || dragPlanOf(g)?.tile === plan.tile : what === "m03" ? plan.targets.some((t) => t.via) : plan.targets.some((t) => t.next?.()))) continue;
+          if (!plan || !(what === "drag" ? plan === dragPlanOf(g) || dragPlanOf(g)?.tile === plan.tile : what === "m03" ? plan.targets.some((t) => t.via) : what === "m01" ? plan.unitId === "M_01" : plan.targets.some((t) => t.next?.()))) continue;
           const targets = plan.targets.map((t) => ({ sector: t.sector, kind: t.kind, via: t.via, answers: t.answers, next: t.next?.()?.targets.map((x) => x.sector) }));
           writeFileSync(`${out}.plan.json`, JSON.stringify({ unitId: plan.unitId, from: plan.from, targets }));
           break;

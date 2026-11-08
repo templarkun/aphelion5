@@ -229,6 +229,7 @@ mod(9, {
 
 /** 10 Twin Laser Turret - two units adjacent to each other, 1 damage each. Extra: pay 3 more Yellow, 2 each instead. */
 mod(10, {
+  extra: { n: 3 },
   run: function* (c, run) {
     const p = yield* choosePair(c, "Twin Laser Turret: choose two units adjacent to each other.", M(10), adjacentPairs(c));
     if (!p) return;
@@ -403,6 +404,7 @@ mod(77, {
 
 /** 26 Charged Beam - 2 damage to one unit. Extra: pay 1 to 3 more Red, that much more damage (one hit, convention 4). */
 mod(26, {
+  extra: { n: 3, upTo: true },
   run: function* (c, run) {
     const u = yield* chooseUnit(c, "Charged Beam: deal 2 damage to which unit?", M(26));
     if (u === undefined) return;
@@ -580,6 +582,7 @@ mod(42, {
 
 /** 43 Harmonic Wave - 1 damage to every Level 2 Bot and Level 2 Mecha. Extra: pay 3 more Red, 2 each instead. */
 mod(43, {
+  extra: { n: 3 },
   run: function* (c, run) {
     const targets = choosableUnits(c, (u) => level(c, u) === 2 && is(c, "Bot", "Mecha")(u));
     const n = (yield* payExactly(c, run, 3, "deal 2 damage to each instead")) ? 2 : 1;

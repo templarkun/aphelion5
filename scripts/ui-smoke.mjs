@@ -392,14 +392,77 @@ if (existsSync(`${out}/anomaly-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/anomaly-save.json`);
+  // Pressing a bubble shows the full card (designer 2026-11-08).
+  await pg.locator(".anomaly .anomaly-text").first().click();
+  await pg.waitForTimeout(500);
+  const card = await pg.locator(".anomaly-card").evaluate((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth; }).catch(() => false);
+  await pg.screenshot({ path: `${out}/ui-anomaly-card.png` });
+  await pg.keyboard.press("Escape");
   const claims = await pg.locator(".anomaly .claim").count();
   const decline = await pg.locator(".anomaly-strip .decline").isVisible();
   const dock = await pg.locator(".field-dock .bay-btn").count();
   if (claims) await pg.locator(".anomaly .claim").first().click();
   await pg.waitForTimeout(400);
   const after = await promptOf(pg);
-  anomalyCheck = claims >= 1 && decline && dock >= 1 && /choose your reward/.test(after) ? "ok" : `failed (claims ${claims}, decline ${decline}, dock Bays ${dock}, prompt "${after}")`;
+  anomalyCheck = claims >= 1 && card && decline && dock >= 1 && /choose your reward/.test(after) ? "ok" : `failed (claims ${claims}, card ${card}, decline ${decline}, dock Bays ${dock}, prompt "${after}")`;
   await pg.screenshot({ path: `${out}/ui-anomaly-phone.png` });
+  await pg.close();
+}
+// Modules (designer 2026-11-08): tap selects (fire outline, bar filled from the Reserve, Overclock pop-up),
+// tap again runs it with the Overclock chosen. Checked at Galaxy S24 width, with the Heat bar in the top bar.
+let moduleCheck = "skipped (no save)";
+if (existsSync(`${out}/overclock-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 2 });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/overclock-save.json`);
+  const fits = await pg.evaluate(() => { const b = document.querySelector(".bar"); return b.scrollWidth <= b.clientWidth + 1 && document.documentElement.scrollWidth <= 360; });
+  const heat = await pg.locator("[data-heat]").count();
+  const before = await logText(pg);
+  let found = -1;
+  const n = await pg.locator(".module.can").count();
+  for (let i = 0; i < n && found < 0; i++) {
+    await pg.locator(".module.can").nth(i).click();
+    await pg.waitForTimeout(250);
+    if (await pg.locator(".mod-pops .energy-pop", { hasText: "+1 Heat" }).count()) found = i;
+    else await pg.keyboard.press("Escape");
+  }
+  const mod = found >= 0 ? pg.locator(".module.selected") : undefined;
+  const sel = mod ? await mod.count() : 0;
+  const fromReserve = mod ? await mod.locator(".slot.reserve").count() : 0;
+  await pg.screenshot({ path: `${out}/ui-module-selected.png` });
+  if (found >= 0) await pg.locator(".mod-pops .energy-pop", { hasText: "+1 Heat" }).click();
+  await pg.waitForTimeout(250);
+  const ocSlots = mod ? await mod.locator(".slot.part-overclock").count() : 0;
+  await pg.screenshot({ path: `${out}/ui-module-overclock.png` });
+  if (mod) await mod.click();
+  await pg.waitForTimeout(700);
+  const log = await logText(pg);
+  const ran = log !== before && /Overclock: pay 2/.test(log);
+  moduleCheck = fits && heat === 1 && sel === 1 && fromReserve >= 1 && ocSlots === 2 && ran ? "ok" : `failed (bar fits ${fits}, heat ${heat}, selected ${sel}, reserve slots ${fromReserve}, overclock slots ${ocSlots}, ran ${ran})`;
+  await pg.screenshot({ path: `${out}/ui-module-ran.png` });
+  await pg.close();
+}
+// M_01 (designer 2026-11-08, I6): a tap lights its targets at once; a tap on one acts.
+let m01Check = "skipped (no save)";
+if (existsSync(`${out}/m01-save.json`)) {
+  const plan = JSON.parse(readFileSync(`${out}/m01-save.json.plan.json`, "utf8"));
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/m01-save.json`);
+  const box = await pg.locator(".field").boundingBox();
+  const centres = JSON.parse((await pg.locator(".field").getAttribute("data-sectors")) ?? "{}");
+  const at = (k) => ({ x: box.x + centres[k][0], y: box.y + centres[k][1] });
+  const before = await logText(pg);
+  await pg.mouse.click(at(plan.from).x, at(plan.from).y);
+  await pg.waitForTimeout(400);
+  const lit = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]").map((h) => h.k);
+  const want = plan.targets.map((t) => t.sector);
+  const allLit = want.every((k) => lit.includes(k));
+  await pg.screenshot({ path: `${out}/ui-m01.png` });
+  await pg.mouse.click(at(want[0]).x, at(want[0]).y);
+  await pg.waitForTimeout(800);
+  const acted = (await logText(pg)) !== before;
+  m01Check = allLit && acted ? "ok" : `failed (targets lit ${allLit}: ${lit.join(" ")} / ${want.join(" ")}, acted ${acted})`;
   await pg.close();
 }
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
@@ -411,7 +474,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

@@ -61,9 +61,41 @@ export function flyChip(colour: Colour, a: Pt, b: Pt, delay: number, opts: { fad
   anim.oncancel = () => dot.remove();
 }
 
+/** A Module whose payment the screen already showed (its selection filled it from the Reserve). */
+let shown: number | undefined;
+/** Set while a selected Module runs (its Overclock and extra payment come later in the run); cleared after. */
+export function paidShown(id: number | undefined): void {
+  shown = id;
+}
+
+/**
+ * A selected Module's bar filling from the Reserve, or letting it go (designer 2026-11-08):
+ * one chip per slot that changed, Reserve to Module, or back.
+ */
+export function reserveFlights(id: number, before: { colour: Colour; fill: string }[], after: { colour: Colour; fill: string }[]): void {
+  if (typeof document === "undefined") return;
+  const el = document.querySelector(`[data-module="${id}"]`);
+  const m = centre(el);
+  if (!m) return;
+  let delay = 0;
+  for (const col of COLOURS) {
+    const n = (xs: typeof before) => xs.filter((x) => x.colour === col && x.fill === "reserve").length;
+    const d = n(after) - n(before);
+    const res = document.querySelector(`[data-reserve="${col}"]`);
+    const r = centre(res);
+    if (!r) continue;
+    for (let i = 0; i < Math.min(6, Math.abs(d)); i++) {
+      if (d > 0) flyChip(col, r, m, delay, { onArrive: () => pulse(el, col) });
+      else flyChip(col, m, r, delay, { onArrive: () => pulse(res, col) });
+      delay += 70;
+    }
+  }
+}
+
 /** Chips for what changed between two boards: the Reserve, and energy taken off Modules. */
 export function energyFlights(before: GameState, after: GameState): void {
   if (typeof document === "undefined") return;
+  const already = shown;
   // Undo plays nothing backwards.
   const seq = (s: GameState) => s.events?.[s.events.length - 1]?.seq ?? 0;
   if (seq(after) < seq(before) || before.player.modules.length === 0) return;
@@ -76,6 +108,8 @@ export function energyFlights(before: GameState, after: GameState): void {
     const res = document.querySelector(`[data-reserve="${col}"]`);
     const r = centre(res);
     if (!r || d === 0) continue;
+    // Its selection already showed the Reserve paying it.
+    if (d < 0 && already !== undefined) continue;
     for (let i = 0; i < Math.min(6, Math.abs(d)); i++) {
       if (d < 0) {
         const to = centre(ranEl) ?? supplyPoint();
