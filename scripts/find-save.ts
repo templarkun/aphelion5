@@ -35,7 +35,7 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
     (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && g.view.state.tiles[o.on.id]?.unitId === "M_03" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.via) ?? false)),
   // M_03 / M_06: the Passive first, then the Attack, in one drag.
   drag2: (q, g) =>
-    (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.next?.()) ?? false)),
+    (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => !t.via && t.next?.()) ?? false)),
   rows: (q) => q.rows !== undefined,
   // A Module on the action menu that can be Overclocked (Heat module on; designer 2026-11-08).
   overclock: (q, g) =>
@@ -93,7 +93,7 @@ for (let seed = 1; seed < 400; seed++) {
                 : undefined
               : mechaDragPlan(data, g, g.view, o.on.id);
           if (what === "m01" && !plan?.targets.length) continue;
-          if (!plan || !(what === "drag" ? plan === dragPlanOf(g) || dragPlanOf(g)?.tile === plan.tile : what === "m03" ? plan.unitId === "M_03" && plan.targets.some((t) => t.via) : what === "m01" ? true : plan.targets.some((t) => t.next?.()))) continue;
+          if (!plan || !(what === "drag" ? plan === dragPlanOf(g) || dragPlanOf(g)?.tile === plan.tile : what === "m03" ? plan.unitId === "M_03" && plan.targets.some((t) => t.via) : what === "m01" ? true : plan.targets.some((t) => !t.via && t.next?.()))) continue;
           const targets = plan.targets.map((t) => ({ sector: t.sector, kind: t.kind, via: t.via, answers: t.answers, next: t.next?.()?.targets.map((x) => x.sector) }));
           writeFileSync(`${out}.plan.json`, JSON.stringify({ unitId: plan.unitId, from: plan.from, targets }));
           break;

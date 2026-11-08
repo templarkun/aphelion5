@@ -31,8 +31,8 @@ note: Greyed out = cannot be run; they stay ready, so energy can still be placed
 === SECTION: BAYS AND ORDERS WITH NO UNIT ON THE FIELD (designer 2026-11-08) ===
 
 id: T13_BAY_01
-title: Bays and Orders that target units are greyed out with no unit on the Field
-source: designer 2026-11-08 (play-test); Core Rules 5.2, 5.6, 8.7; question I9
+title: Bays and Orders that target units are greyed out when no unit fits them
+source: designer 2026-11-08 (play-test, I9); a rule of this program only (Core Rules unchanged)
 map: M1
 given: Company V1, every sector Dark (no unit on the Field). Enough Command tokens.
 when: list legal actions
@@ -43,8 +43,13 @@ then: only Bay 3 is offered; Bays 1, 2 and 4 are greyed out (Bay 5 is [Overload]
       Overload it is greyed out too). The [Overload] Orders that target units are greyed out
       during an Overload; "Take an Anomaly card" never is.
 note: Flares and Wrecks do not count as units here (effects cannot choose them, 3.2).
-      Greyed out = cannot be used; the pop-up says "No unit on the Field". Units on the Field
-      but none that fits (e.g. no Level 3 unit for V2 Bay 1): still usable, see I9.
+      Greyed out = cannot be used; the pop-up says "No unit to target".
+when: units on the Field, but none that fits: V2 Bay 1 with no Level 3 unit, Bay 4 with no
+      Level 1 unit, Bay 2 with no two adjacent units, Bay 5 with no damaged unit; V1 Bay 2 with
+      no unit next to a Dark (or Cleared) sector; "Destroy one Level 2 Bot" with none; the
+      [Overload] Orders with no Mecha; C1_M7 with no Gamma that has an adjacent unit
+then: each of those is greyed out too (I9 (a)). See the CHANGED notes of 2026-11-08 in batch 3
+      (T3_ACT_03, T3_ACT_04, T3_ORD_02) and batch 4 (T4_ACT_01, T4_END_01, T4_CRP_01).
 
 ################################################################################
 === SECTION: WEAPON AND AURA LOOKS (screen only) ===

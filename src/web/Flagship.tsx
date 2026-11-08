@@ -26,7 +26,7 @@ export interface Ability {
   text: string;
   /** The answer that uses it now, when it can be used. */
   opt?: Option | undefined;
-  /** It targets units and no unit is on the Field: greyed out (designer 2026-11-08). */
+  /** It targets units and no unit on the Field fits it: greyed out (designer 2026-11-08, I9). */
   noUnits?: boolean;
 }
 
@@ -46,7 +46,7 @@ export interface OrderView {
   text: string;
   word: string;
   opt?: Option | undefined;
-  /** It targets units and no unit is on the Field: greyed out (designer 2026-11-08). */
+  /** It targets units and no unit on the Field fits it: greyed out (designer 2026-11-08, I9). */
   noUnits?: boolean;
 }
 
@@ -172,7 +172,7 @@ export function CommandMeter({ n }: { n: number }) {
 
 type Sel = { key: string; el: HTMLElement; items: { label: string; long: boolean; opt?: Option | undefined; why?: string | undefined }[] };
 
-const NO_UNITS = "No unit on the Field";
+const NO_UNITS = "No unit to target";
 
 export function FlagshipDock(p: {
   layout: Layout;
@@ -228,7 +228,7 @@ export function FlagshipDock(p: {
             {b.abilities.map((a) => (
               <p key={a.id} className={a.opt ? "" : "small"}>
                 {a.text}
-                {a.noUnits && <em className="why"> — no unit on the Field</em>}
+                {a.noUnits && <em className="why"> — no unit to target</em>}
               </p>
             ))}
           </div>
@@ -292,7 +292,7 @@ export function FlagshipDock(p: {
           <div className="thing-text">
             <p className={o.opt ? "" : "small"}>
               {o.text}
-              {o.noUnits && <em className="why"> — no unit on the Field</em>}
+              {o.noUnits && <em className="why"> — no unit to target</em>}
             </p>
           </div>
         )}

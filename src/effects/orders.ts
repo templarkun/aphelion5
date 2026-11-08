@@ -1,7 +1,7 @@
 /** Campaign 1 Orders (Campaign board) and mission Orders (mission briefings), from Campaign1.txt. */
 
 import { type RunCtx, ask, log } from "../engine/effect.js";
-import { choosableUnits, fieldMap, level, sectorKeys, sectorOf, tile, unitAt, unitType } from "../engine/field.js";
+import { type Ctx, choosableUnits, fieldMap, level, sectorKeys, sectorOf, tile, unitAt, unitType } from "../engine/field.js";
 import { isOpenSector, swap, teleport } from "../engine/moves.js";
 import type { TileId } from "../engine/state.js";
 import { dealHit, destroy, gainEnergy, placeFuse } from "../engine/tokens.js";
@@ -10,8 +10,18 @@ import { chooseSector, chooseUnit } from "./helpers.js";
 import { registerAbility } from "./registry.js";
 
 /** Deal `n` damage to every unit matching `filter`: one hit each; Flares and Wrecks skipped (6.1, 4.6, 4.8). Units counted when it starts (E4). */
-/** Targets units: not usable with no unit on the Field (designer 2026-11-08, round 7). */
-const UNITS = { targetsUnits: true };
+/** Usable only while a unit fits it (designer 2026-11-08, round 7, I9; a rule of this program only). */
+const fits = (filter: (c: Ctx) => (u: TileId) => boolean) => ({ unitFits: (c: Ctx) => choosableUnits(c, filter(c)).length > 0 });
+const anyUnit = () => () => true;
+const isMecha = (c: Ctx) => (u: TileId) => unitType(c, u) === "Mecha";
+const isGyro = (c: Ctx) => (u: TileId) => unitType(c, u) === "Gyro";
+const twoUnits = (c: Ctx) => () => choosableUnits(c).length > 1;
+/** Units adjacent to a unit (the Ticks of C1_M7 go there). */
+const unitsAround = (c: Ctx, g: TileId): TileId[] =>
+  fieldMap(c.state)
+    .adjacent(fromKey(sectorOf(c.state, g)!))
+    .map((n) => unitAt(c.state, key(n)))
+    .filter((u): u is TileId => u !== undefined && choosableUnits(c).includes(u));
 
 function* damageAll(c: RunCtx, n: number, rule: string, filter: (u: TileId) => boolean = () => true) {
   const targets = choosableUnits(c, filter);
@@ -24,7 +34,7 @@ registerAbility("C1_ORDER_1", function* (c) {
   if (m === undefined) return;
   const to = yield* chooseSector(c, "Teleport it to which Dark sector?", "C1_ORDER_1", sectorKeys(c.state).filter((k) => isOpenSector(c, k)));
   if (to !== undefined) teleport(c, m, to, "C1_ORDER_1");
-}, UNITS);
+}, { unitFits: (c) => fits(isMecha).unitFits(c) && sectorKeys(c.state).some((k) => isOpenSector(c, k)) });
 
 // C1_ORDER_2 - [Overload] Swap a Mecha with another unit.
 registerAbility("C1_ORDER_2", function* (c) {
@@ -32,19 +42,19 @@ registerAbility("C1_ORDER_2", function* (c) {
   if (m === undefined) return;
   const o = yield* chooseUnit(c, "Swap it with which unit?", "C1_ORDER_2", (u) => u !== m);
   if (o !== undefined) swap(c, m, o, "C1_ORDER_2");
-}, UNITS);
+}, fits((c) => (u) => isMecha(c)(u) && twoUnits(c)()));
 
 // C1_M1 and C1_M4Y - 4 Command tokens: Deal 1 damage to all units.
-for (const id of ["C1_M1_ORDER", "C1_M4Y_ORDER"]) registerAbility(id, (c) => damageAll(c, 1, id), UNITS);
+for (const id of ["C1_M1_ORDER", "C1_M4Y_ORDER"]) registerAbility(id, (c) => damageAll(c, 1, id), fits(anyUnit));
 
 // C1_M2Y - 2 Command tokens: Destroy one Level 2 Bot.
 registerAbility("C1_M2Y_ORDER", function* (c) {
   const u = yield* chooseUnit(c, "Destroy which Level 2 Bot?", "C1_M2Y_ORDER", (x) => unitType(c, x) === "Bot" && level(c, x) === 2);
   if (u !== undefined) destroy(c, u, "C1_M2Y_ORDER");
-}, UNITS);
+}, fits((c) => (u) => unitType(c, u) === "Bot" && level(c, u) === 2));
 
 // C1_M3 - 2 Command tokens: Deal 2 damage to all Gyros.
-registerAbility("C1_M3_ORDER", (c) => damageAll(c, 2, "C1_M3_ORDER", (u) => unitType(c, u) === "Gyro"), UNITS);
+registerAbility("C1_M3_ORDER", (c) => damageAll(c, 2, "C1_M3_ORDER", (u) => unitType(c, u) === "Gyro"), fits(isGyro));
 
 // C1_M4X - [Overload] 1 Command token: Swap two units.
 registerAbility("C1_M4X_ORDER", function* (c) {
@@ -52,7 +62,7 @@ registerAbility("C1_M4X_ORDER", function* (c) {
   if (a === undefined) return;
   const b = yield* chooseUnit(c, "Swap it with which unit?", "C1_M4X_ORDER", (u) => u !== a);
   if (b !== undefined) swap(c, a, b, "C1_M4X_ORDER");
-}, UNITS);
+}, fits(twoUnits));
 
 // C1_M5 - 2 Command tokens: Take an Anomaly card.
 registerAbility("C1_M5_ORDER", function* (c) {
@@ -78,18 +88,14 @@ registerAbility("C1_M6_ORDER", function* (c) {
   const row = rows.find((r) => String(r.value) === a.value)!;
   const inRow = new Set(row.sectors.map(key));
   yield* damageAll(c, 1, "C1_M6_ORDER", (u) => inRow.has(sectorOf(c.state, u)!) && tile(c.state, u).tokens.damage > 0);
-}, UNITS);
+}, fits((c) => (u) => tile(c.state, u).tokens.damage > 0));
 
 // C1_M7 - 4 Command tokens: Place a Tick on every unit adjacent to one Gamma unit.
 registerAbility("C1_M7_ORDER", function* (c) {
   const g = yield* chooseUnit(c, "Choose a Gamma unit.", "C1_M7_ORDER", (u) => tile(c.state, u).unitId === "O_03");
   if (g === undefined) return;
-  const around = fieldMap(c.state)
-    .adjacent(fromKey(sectorOf(c.state, g)!))
-    .map((n) => unitAt(c.state, key(n)))
-    .filter((u): u is TileId => u !== undefined && choosableUnits(c).includes(u));
-  for (const u of around) placeFuse(c, u, "tick", "C1_M7_ORDER");
-}, UNITS);
+  for (const u of unitsAround(c, g)) placeFuse(c, u, "tick", "C1_M7_ORDER");
+}, fits((c) => (u) => tile(c.state, u).unitId === "O_03" && unitsAround(c, u).length > 0));
 
 // ---------------------------------------------------------------------------
 // Requisitions (Company sheets; Core Rules 10.2): one-time effects when fully filled.

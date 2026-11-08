@@ -7,11 +7,11 @@
  */
 
 import "../effects/index.js";
-import { ability, targetsUnits, unitEffect } from "../effects/registry.js";
+import { ability, noUnitFits, unitEffect } from "../effects/registry.js";
 import { ENERGY_COLOURS } from "../data/units.js";
 import { type Effect, type RunCtx, ask, asEffect, log, registerRoot } from "./effect.js";
 import { alertShortcuts, alertedUnits, chooseAlert, discardUnit, resolveAlert, splitAlertId } from "./alerts.js";
-import { type Ctx, adjacentUnits, canBeChosen, choosableUnits, darkSectors, describe, isWreck, sectorKeys, sectorOf, sectorState, tile, unitDef, unitType, units } from "./field.js";
+import { type Ctx, adjacentUnits, canBeChosen, darkSectors, describe, isWreck, sectorKeys, sectorOf, sectorState, tile, unitDef, unitType, units } from "./field.js";
 import { commandMecha, commandOptions } from "./mecha.js";
 import { canRunModule, moduleDef, runModule } from "./modules.js";
 import { putAtBottom, reveal } from "./moves.js";
@@ -51,11 +51,12 @@ export function bayAbilities(c: Ctx): BayAbility[] {
 }
 
 /**
- * A Bay ability or Order that targets units, with no unit on the Field it could choose (Flares and
- * Wrecks never count, 3.2): it cannot be used and is greyed out (designer 2026-11-08, round 7).
+ * A Bay ability or Order that targets units, with no unit on the Field that fits it (Flares and
+ * Wrecks never count, 3.2): it cannot be used and is greyed out. Designer 2026-11-08 (round 7, I9):
+ * a rule of this program only, not in the Core Rules.
  */
 export function noUnitToTarget(c: Ctx, id: string): boolean {
-  return targetsUnits(id) && choosableUnits(c).length === 0;
+  return noUnitFits(c, id);
 }
 
 /** Bay abilities you can use now: Bay at 1+ Integrity, timing tag matches the phase, a unit to target if it targets units. */

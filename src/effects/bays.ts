@@ -9,8 +9,8 @@ import { fromKey, key } from "../geometry/hex.js";
 import { chooseDarkSector, chooseSector, chooseUnit } from "./helpers.js";
 import { registerAbility } from "./registry.js";
 
-/** Targets units: not usable with no unit on the Field (designer 2026-11-08, round 7). */
-const UNITS = { targetsUnits: true };
+/** Usable only while a unit fits it (designer 2026-11-08, round 7, I9; a rule of this program only). */
+const fits = (filter: (c: Ctx) => (u: TileId) => boolean) => ({ unitFits: (c: Ctx) => choosableUnits(c, filter(c)).length > 0 });
 
 const levelIs = (c: Ctx, n: number) => (u: TileId) => level(c, u) === n;
 
@@ -22,9 +22,24 @@ function damageOne(id: string, filter: (c: Ctx) => (u: TileId) => boolean, what:
       const u = yield* chooseUnit(c, `${id}: deal 1 damage to ${what}.`, id, filter(c));
       if (u !== undefined) yield* dealHit(c, u, 1, id);
     },
-    UNITS,
+    fits(filter),
   );
 }
+
+/** Units with an adjacent Dark (or Cleared) sector to move to. */
+const canMoveAway = (c: Ctx) => (u: TileId) => openNeighbours(c, u).length > 0;
+
+/** Units another choosable unit is adjacent to (V2 Bay 2). */
+const adjacentPair = (c: Ctx) => (u: TileId) =>
+  fieldMap(c.state)
+    .adjacent(fromKey(sectorOf(c.state, u)!))
+    .some((n) => {
+      const x = unitAt(c.state, key(n));
+      return x !== undefined && canBeChosen(c, x);
+    });
+
+/** Any unit, when there are at least two (a swap of any two units). */
+const twoUnits = (c: Ctx) => () => choosableUnits(c).length > 1;
 
 /** "Move <a unit> to an adjacent Dark sector." Units with nowhere to go are not offered. */
 function* moveOneToAdjacentDark(c: RunCtx, id: string): Effect {
@@ -99,7 +114,7 @@ function putBack(c: RunCtx, k: SectorKey, order: TileId[]): void {
 
 damageOne("V1_BAY1", () => () => true, "any unit");
 
-registerAbility("V1_BAY2", (c) => moveOneToAdjacentDark(c, "V1_BAY2"), UNITS);
+registerAbility("V1_BAY2", (c) => moveOneToAdjacentDark(c, "V1_BAY2"), fits(canMoveAway));
 
 /**
  * Choose one sector with no tokens. Look at its top 3 tiles and put them back in any order. Then reveal
@@ -131,9 +146,9 @@ damageOne("V2_BAY1", (c) => levelIs(c, 3), "a Level 3 unit");
 damageOne("V2_P1", (c) => levelIs(c, 2), "a Level 2 unit");
 damageOne("V2_P1A", (c) => levelIs(c, 1), "a Level 1 unit");
 
-registerAbility("V2_BAY2", (c) => swapTwo(c, "V2_BAY2", true), UNITS);
-registerAbility("V2_P2", (c) => swapTwo(c, "V2_P2", false), UNITS);
-registerAbility("V2_P2A", (c) => moveOneToAdjacentDark(c, "V2_P2A"), UNITS);
+registerAbility("V2_BAY2", (c) => swapTwo(c, "V2_BAY2", true), fits(adjacentPair));
+registerAbility("V2_P2", (c) => swapTwo(c, "V2_P2", false), fits(twoUnits));
+registerAbility("V2_P2A", (c) => moveOneToAdjacentDark(c, "V2_P2A"), fits(canMoveAway));
 
 /** "Choose one Dark sector and look at its top 3 tiles." */
 registerAbility("V2_BAY3", function* (c) {
@@ -156,35 +171,52 @@ function tickOn(id: string, filter: (c: Ctx) => (u: TileId) => boolean, what: st
   registerAbility(id, function* (c) {
     const u = yield* chooseUnit(c, `${id}: place a Tick on ${what}.`, id, filter(c));
     if (u !== undefined) placeFuse(c, u, "tick", id);
-  }, UNITS);
+  }, fits(filter));
 }
 tickOn("V2_BAY4", (c) => levelIs(c, 1), "a Level 1 unit");
 tickOn("V2_P4", (c) => (u) => tile(c.state, u).tokens.damage > 0, "a damaged unit");
 tickOn("V2_P4A", () => () => true, "a unit");
 
+const damaged = (c: Ctx) => (x: TileId) => tile(c.state, x).tokens.damage > 0;
+const shielded = (c: Ctx) => (x: TileId) => tile(c.state, x).tokens.barrier;
+/** Alerted Sentinels and alerted units with an At Overload trigger (V2_P5A). */
+const alertCancellable = (c: Ctx) => (x: TileId) => {
+  if (!tile(c.state, x).tokens.alert) return false;
+  const d = c.data.units.byId.get(tile(c.state, x).unitId!)!;
+  if (d.type === "Sentinel") return true;
+  if (d.type === "Omega") return c.data.campaigns.find((k) => k.prefix === c.state.campaign)!.omega.find((o) => o.id === d.id)?.atOverload !== undefined;
+  return (d.text.ability ?? "").startsWith("At Overload:");
+};
+
 /** [Overload] Remove 1 damage from a unit. */
-registerAbility("V2_BAY5", function* (c) {
-  const u = yield* chooseUnit(c, "V2_BAY5: remove 1 damage from which unit?", "V2_BAY5", (x) => tile(c.state, x).tokens.damage > 0);
-  if (u !== undefined) {
-    tile(c.state, u).tokens.damage -= 1;
-    log(c, `V2_BAY5: 1 Damage removed from ${tile(c.state, u).unitId}`, "V2_BAY5");
-  }
-}, UNITS);
+registerAbility(
+  "V2_BAY5",
+  function* (c) {
+    const u = yield* chooseUnit(c, "V2_BAY5: remove 1 damage from which unit?", "V2_BAY5", damaged(c));
+    if (u !== undefined) {
+      tile(c.state, u).tokens.damage -= 1;
+      log(c, `V2_BAY5: 1 Damage removed from ${tile(c.state, u).unitId}`, "V2_BAY5");
+    }
+  },
+  fits(damaged),
+);
 
 /** [Overload] Remove a Barrier from a unit. */
-registerAbility("V2_P5", function* (c) {
-  const u = yield* chooseUnit(c, "V2_P5: remove the Barrier from which unit?", "V2_P5", (x) => tile(c.state, x).tokens.barrier);
-  if (u !== undefined) removeBarrier(c, u, "V2_P5");
-}, UNITS);
+registerAbility(
+  "V2_P5",
+  function* (c) {
+    const u = yield* chooseUnit(c, "V2_P5: remove the Barrier from which unit?", "V2_P5", shielded(c));
+    if (u !== undefined) removeBarrier(c, u, "V2_P5");
+  },
+  fits(shielded),
+);
 
 /** [Overload] Remove the Alert token from one Sentinel or one unit with an At Overload trigger (its effect is cancelled). */
-registerAbility("V2_P5A", function* (c) {
-  const camp = c.data.campaigns.find((x) => x.prefix === c.state.campaign)!;
-  const atOverload = (u: TileId) => {
-    const d = c.data.units.byId.get(tile(c.state, u).unitId!)!;
-    if (d.type === "Omega") return camp.omega.find((o) => o.id === d.id)?.atOverload !== undefined;
-    return (d.text.ability ?? "").startsWith("At Overload:");
-  };
-  const u = yield* chooseUnit(c, "V2_P5A: remove the Alert token from which unit?", "V2_P5A", (x) => tile(c.state, x).tokens.alert && (c.data.units.byId.get(tile(c.state, x).unitId!)!.type === "Sentinel" || atOverload(x)));
-  if (u !== undefined && isUnit(c.state, u)) cancelAlert(c, u, "V2_P5A");
-}, UNITS);
+registerAbility(
+  "V2_P5A",
+  function* (c) {
+    const u = yield* chooseUnit(c, "V2_P5A: remove the Alert token from which unit?", "V2_P5A", alertCancellable(c));
+    if (u !== undefined && isUnit(c.state, u)) cancelAlert(c, u, "V2_P5A");
+  },
+  fits(alertCancellable),
+);

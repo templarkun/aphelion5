@@ -1171,8 +1171,9 @@ function EnergyPopups({ q, onPick, take }: { q: Question & { kind: "option" }; o
   const [pos, setPos] = useState<Record<string, { x: number; y: number; inside: boolean } | undefined>>({});
   const W = 132;
   useLayoutEffect(() => {
-    const first = document.querySelector(`[data-module="${ids[0]}"]`);
-    first?.scrollIntoView({ block: "nearest" });
+    // Bring every target Module into view when they fit (the last, then the first wins if not).
+    document.querySelector(`[data-module="${ids[ids.length - 1]}"]`)?.scrollIntoView({ block: "nearest" });
+    document.querySelector(`[data-module="${ids[0]}"]`)?.scrollIntoView({ block: "nearest" });
     const place = () => {
       const next: typeof pos = {};
       for (const id of ids) {

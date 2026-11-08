@@ -46,12 +46,12 @@ describe("batch 3 - TAKING ACTIONS (8.1)", () => {
   it("T3_ACT_03 [Overload] Bays and Orders are not offered in the Command phase", () => {
     const s = given("T3_ACT_03");
     expect(s.flagship).toEqual([6, 5, 4, 3, 2]);
-    expect(usableBayAbilities(ctx(s)).map((b) => b.bay)).toEqual([1, 2, 3, 4]);
+    expect(usableBayAbilities(ctx(s)).map((b) => b.bay)).toEqual([1, 2, 3]); // CHANGED (I9): Bay 4, no Level 1 unit
     expect(legal(s)).not.toContain("issueOrder");
   });
 
   it("T3_ACT_04 a Bay at 0 Integrity cannot be used", () => {
-    expect(usableBayAbilities(ctx(given("T3_ACT_04"))).map((b) => b.bay)).toEqual([2, 3]);
+    expect(usableBayAbilities(ctx(given("T3_ACT_04"))).map((b) => b.bay)).toEqual([3]); // CHANGED (I9): Bay 2, no unit next to a Dark sector
   });
 
   it("T13_BAY_01 Bays and Orders that target units are greyed out with no unit on the Field", () => {
@@ -362,7 +362,7 @@ describe("batch 3 - ORDERS (5.6, 8.7)", () => {
     expect(where(r2.state, y)).toBe("discard");
     expect(r2.state.supply.barrier).toBe(10);
     expect(r2.state.player.commandTokens).toBe(2);
-    expect(legal(r2.state)).toContain("issueOrder");
+    expect(legal(r2.state)).not.toContain("issueOrder"); // CHANGED (I9): no Level 2 Bot left
   });
 });
 

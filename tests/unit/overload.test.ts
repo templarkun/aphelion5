@@ -96,8 +96,9 @@ describe("batch 4 - OVERLOAD ACTIONS (9.2)", () => {
   it("T4_ACT_01 the Overload action menu", () => {
     const s = withModules(given("T4_ACT_01"), [[26, true], [1, true]]);
     expect(s.flagship).toEqual([6, 5, 4, 3, 2]);
-    expect(menu(s)).toEqual([`alert:${at(s, "0,0")}`, "runModule", "useBay", "issueOrder", "concede"]);
-    expect(usableBayAbilities(ctx(s)).map((b) => b.id)).toEqual(["V2_BAY5"]);
+    // CHANGED (I9): Bay 5 greyed out, no unit has damage to remove.
+    expect(menu(s)).toEqual([`alert:${at(s, "0,0")}`, "runModule", "issueOrder", "concede"]);
+    expect(usableBayAbilities(ctx(s)).map((b) => b.id)).toEqual([]);
     expect(usableOrders(ctx(s)).map((o) => o.id)).toEqual(["C1_ORDER_1", "C1_ORDER_2"]);
     // Running a Module offers only Charged Beam (one red Module: no question).
     const r = runEffect(data(), s, (c) => overloadStep(c), [A.option("runModule")]);
@@ -206,10 +207,11 @@ describe("batch 4 - ENDING THE OVERLOAD (9.2)", () => {
   it("T4_END_01 end only when no Alerts remain; you may still act first", () => {
     const s0 = red(withModules(given("T4_END_01"), [[26, true]]), 4);
     const s01 = at(s0, "0,0");
-    expect(menu(s0)).toEqual([`alert:${s01}`, "runModule", "issueOrder", "concede"]);
+    // CHANGED (I9): no Order, both [Overload] Orders need a Mecha.
+    expect(menu(s0)).toEqual([`alert:${s01}`, "runModule", "concede"]);
     const s1 = ovl(s0, [A.option(`alert:${s01}`), A.split({ bay1: 1, bay2: 0, bay3: 0 })]).state;
     expect(s1.flagship).toEqual([5, 6, 6]);
-    expect(menu(s1)).toEqual(["runModule", "issueOrder", "endOverload", "concede"]);
+    expect(menu(s1)).toEqual(["runModule", "endOverload", "concede"]);
     const s2 = ovl(s1, [A.option("runModule"), A.units(at(s1, "0,1"))]).state;
     expect(sectorState(s2, "0,1")).toBe("dark");
     const s3 = ovl(s2, [A.option("endOverload")]).state;
@@ -334,10 +336,10 @@ describe("batch 4 - CRIPPLED DURING AN OVERLOAD (5.2)", () => {
   it("T4_CRP_01 play on, extra damage ignored, no Bays; Overhaul in the Command phase", () => {
     const s0 = given("T4_CRP_01");
     const [a, b] = [at(s0, "0,0"), at(s0, "0,1")];
-    expect(menu(s0)).toContain("useBay");
+    expect(menu(s0)).not.toContain("useBay"); // CHANGED (I9): Bay 5, no damaged unit
     const s1 = ovl(s0, [A.option(`alert:${a}`)]).state;
     expect(s1.flagship).toEqual([0, 0, 0, 0, 0]);
-    expect(menu(s1)).toEqual([`alert:${b}`, "issueOrder", "concede"]); // no useBay
+    expect(menu(s1)).toEqual([`alert:${b}`, "concede"]); // no useBay; CHANGED (I9): no Order, no Mecha
     const s2 = ovl(s1, [A.option(`alert:${b}`)]).state;
     expect(s2.flagship).toEqual([0, 0, 0, 0, 0]);
     expect(s2.log.some((e) => /Crippled: 1 damage ignored/.test(e.text))).toBe(true);

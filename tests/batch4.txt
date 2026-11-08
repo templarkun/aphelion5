@@ -97,6 +97,9 @@ then: Resolve S_01's Alert; Run a Module (Charged Beam only: Demolition Blast is
       (C1_ORDER_1 and C1_ORDER_2 only: Mission 1's Order is not [Overload]); Concede.
       Not offered: Command a Mecha (M_01 has no [Overload] ability), Reveal, Drain a Gyro,
       Drain a Bio-shield, Overhaul, End the Overload (S_01 still has its Alert).
+note: CHANGED 2026-11-08 (designer, I9: a Bay ability or Order with no unit on the Field that
+      fits it is greyed out and cannot be used; a rule of this program only):
+      Use a Bay is not offered: Bay 5 is greyed out, as no unit has damage to remove.
 
 id: T4_ACT_02
 title: Command a Mecha during an Overload: [Overload] abilities only
@@ -206,6 +209,10 @@ then: first menu: resolve S_01, Run a Module, Issue an Order (the Campaign's [Ov
       Orders), Concede; no End the Overload. After S_01: Flagship 5/6/6; Run a Module,
       Issue an Order, End the Overload and Concede are offered. Charged Beam
       destroys B_02 ((0,1) Dark). Then Overload End runs.
+note: CHANGED 2026-11-08 (designer, I9: a Bay ability or Order with no unit on the Field that
+      fits it is greyed out and cannot be used; a rule of this program only):
+      Issue an Order is not offered in either menu: both [Overload] Orders need a Mecha, and
+      there is none on the Field.
 
 ################################################################################
 === SECTION: OVERLOAD END ===
@@ -317,6 +324,10 @@ then: the first S_01 takes the last Integrity: Crippled (0/0/0/0/0). The second 
       Overload End runs in full. Before the first Command phase action: Crippled, so the
       only actions are Overhaul and Concede.
       Rescued by an Anomaly instead: T_SHIP_01 (batch 1).
+note: CHANGED 2026-11-08 (designer, I9: a Bay ability or Order with no unit on the Field that
+      fits it is greyed out and cannot be used; a rule of this program only):
+      Use a Bay is not offered even at the start (Bay 5: no damaged unit), and no Order is
+      offered (no Mecha on the Field).
 
 ################################################################################
 === SECTION: OBJECTIVE ===

@@ -290,7 +290,7 @@ if (existsSync(`${out}/drag2-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/drag2-save.json`);
-  const blue = plan.targets.find((t) => t.next && t.next.length);
+  const blue = plan.targets.find((t) => !t.via && t.next && t.next.length); // the Passive's sector, not a "where to move first" target
   await dragMouse(pg, await sectorPoint(pg, plan.from), await sectorPoint(pg, blue.sector));
   await pg.mouse.up();
   await pg.waitForTimeout(300);
@@ -558,7 +558,7 @@ if (existsSync(`${out}/nounits-save.json`)) {
   await pg.waitForTimeout(400);
   const why = (await pg.locator(".thing-pop .bubble.info small").allTextContents()).join("|");
   await pg.screenshot({ path: `${out}/ui-no-units.png` });
-  greyCheck = greyAtStart === 0 && ["1,2", "1,2,4"].includes(greyBays) && greyCan === 0 && greyOrders >= 1 && why.includes("No unit on the Field") ? "ok" : `failed (at start ${greyAtStart}, grey Bays ${greyBays}, lit ${greyCan}, grey Orders ${greyOrders}, pop-up "${why}")`;
+  greyCheck = greyAtStart === 0 && ["1,2", "1,2,4"].includes(greyBays) && greyCan === 0 && greyOrders >= 1 && why.includes("No unit to target") ? "ok" : `failed (at start ${greyAtStart}, grey Bays ${greyBays}, lit ${greyCan}, grey Orders ${greyOrders}, pop-up "${why}")`;
   await pg.close();
 }
 console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck }));

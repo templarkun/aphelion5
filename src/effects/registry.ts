@@ -66,8 +66,11 @@ export interface ModuleEffects {
 
 const unitFx = new Map<string, UnitEffects>();
 const abilityFx = new Map<string, Ability>();
-/** Bay abilities and Orders that target units: they cannot be used with no unit on the Field (designer 2026-11-08, round 7). */
-const unitTargeting = new Set<string>();
+/**
+ * Bay abilities and Orders that target units: whether a unit fits them now. With none, they cannot
+ * be used and are greyed out (designer 2026-11-08, round 7, I9; a rule of this program only).
+ */
+const unitTargeting = new Map<string, (c: Ctx) => boolean>();
 const moduleFx = new Map<number, ModuleEffects>();
 
 export function registerUnit(id: string, fx: UnitEffects): void {
@@ -75,15 +78,16 @@ export function registerUnit(id: string, fx: UnitEffects): void {
 }
 
 /** Mecha base abilities by unit id; upgrades, Bays and Orders by their own ids. */
-export function registerAbility(id: string, fn: Ability, opts?: { targetsUnits?: boolean }): void {
+export function registerAbility(id: string, fn: Ability, opts?: { unitFits?: (c: Ctx) => boolean }): void {
   if (abilityFx.has(id)) throw new Error(`ability ${id} registered twice`);
   abilityFx.set(id, fn);
-  if (opts?.targetsUnits) unitTargeting.add(id);
+  if (opts?.unitFits) unitTargeting.set(id, opts.unitFits);
 }
 
-/** Does this Bay ability or Order target units (so it needs a unit on the Field)? */
-export function targetsUnits(id: string): boolean {
-  return unitTargeting.has(id);
+/** A Bay ability or Order that targets units, with no unit on the Field that fits it now. */
+export function noUnitFits(c: Ctx, id: string): boolean {
+  const fits = unitTargeting.get(id);
+  return fits !== undefined && !fits(c);
 }
 
 export function registerModule(id: number, fx: ModuleEffects): void {
