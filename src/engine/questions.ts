@@ -47,6 +47,10 @@ interface Base {
   energy?: Record<string, "Yellow" | "Red" | "Blue">;
   /** How much energy each `energy` answer places (default 1; Harvest Beacon, F_27...). */
   energyN?: number;
+  /** The Flare the energy comes from (4.6, trial rule I2): the screen lets its tokens be dragged onto Modules. */
+  energyFrom?: TileId;
+  /** With `energyFrom`: the energy still to place, by colour. */
+  energyLeft?: Partial<Record<"Yellow" | "Red" | "Blue", number>>;
   /**
    * Energy taken off a Module (S_08, S_13...): option ids are Module ids; "one" takes one energy,
    * "all" all of it. The screen shows a pop-up with an outward arrow by each such Module.

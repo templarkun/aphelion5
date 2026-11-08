@@ -22,6 +22,7 @@ import { energyFlights, paidShown, reserveFlights, trophyFlights } from "./flyer
 import { type ModPlan, normalise, planAnswer, planInfo } from "./modulePlan.js";
 import { Flame, HeatBar, type ModPop, ModuleCard, ModulePops } from "./Modules.js";
 import { AnomalyStrip } from "./Anomalies.js";
+import { FlareEnergyChips } from "./FlareEnergy.js";
 import { MissionBar } from "./Mission.js";
 import { UpgradeBubble } from "./Upgrade.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
@@ -1089,6 +1090,7 @@ function GameScreen(p: GameProps) {
 
       {modSel && <ModulePops id={modSel.id} pops={modPops} />}
       {energyQ && <EnergyPopups q={energyQ} onPick={(id) => send({ kind: "option", value: id })} />}
+      {energyQ?.energyFrom && hasField && <FlareEnergyChips q={energyQ} sector={sectorOf(s, energyQ.energyFrom)} onPick={(id) => send({ kind: "option", value: id })} onNote={(text) => setNote({ text, warn: true, at: Date.now() })} />}
       {takeQ && <EnergyPopups q={takeQ} take={{ state: s, data }} onPick={(id) => send({ kind: "option", value: id })} />}
       {popup && (
         <PopupMenu

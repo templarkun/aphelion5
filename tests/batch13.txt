@@ -76,3 +76,30 @@ source: trial rule "Flare energy waits" (I2); build step 3
 given: trial rule on.
 then: a revealed Flare shows one small round token per energy waiting on it, in its colour.
       When the energy is placed, each token flies from the Flare to its Module.
+
+################################################################################
+=== SECTION: DRAGGING MODULES, ORDERS AND FLARE ENERGY (screen only) ===
+
+id: T13_DRAG_01
+title: A Module or an Order is dragged onto its one target
+source: Program Spec "Interaction and animation"; build step 3 (designer 2026-11-08)
+given: Command phase; a Module you can run whose run asks next for one unit or one sector
+       (e.g. Capacitor Lance: "Deal 3 damage to one unit").
+when: drag the Module card onto the Field
+then: its targets light up (red when it deals damage); dropped on one, it runs there at once (no
+      tap, no confirm). Its X, Overclock and extra payment are those set on its pop-ups when it
+      was selected first, else none. Dropped elsewhere: nothing happens, a note says where to
+      drop it. A Module that asks something else first (a unit type, a row, several units) is
+      not dragged; tap it as before. Orders work the same way (as Bays already did).
+note: Checked by scripts/ui-smoke.mjs (find-save.ts moddrag, orderdrag).
+
+id: T13_DRAG_02
+title: Energy on a Flare is dragged onto a Module
+source: Program Spec "Interaction and animation"; build step 3 (designer 2026-11-08)
+given: a Flare's energy waits to be placed (its Reveal, or its Alert with the trial rule), with
+       two or more ready Modules of a colour.
+then: its energy sits on the Flare's tile as round tokens. Drag one onto a lit Module of its
+      colour: it is placed there (the Module shows a ring while the token is over it). Dropped
+      anywhere else, it springs back and a note says to drop it on a lit Module. The pop-ups
+      beside the Modules (and "back to the Supply") still work by tapping.
+note: Checked by scripts/ui-smoke.mjs (find-save.ts flarechip).

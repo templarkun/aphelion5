@@ -178,7 +178,7 @@ export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, n
         options.push({ id: `supply:${col}`, label: `${col} energy back to the Supply` });
       }
     const what = cols.map((col) => `${left[col]} ${col}`).join(", ");
-    const a = yield* ask(c, { kind: "option", pick: "modules", energy, prompt: `Place energy (${what} left): choose a Module for each.`, rule, options });
+    const a = yield* ask(c, { kind: "option", pick: "modules", energy, prompt: `Place energy (${what} left): choose a Module for each.`, rule, options, ...(from !== undefined ? { energyFrom: from, energyLeft: { ...left } } : {}) });
     const id = a.value as string;
     if (id.startsWith("supply:")) {
       const col = id.slice(7) as EnergyColour;

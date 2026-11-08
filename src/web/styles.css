@@ -489,3 +489,9 @@ button.heat-long, button.heat-bubble { font: inherit; color: inherit; cursor: po
 /* A Module dragged onto its target (designer 2026-11-08): vertical swipes still scroll the panel. */
 .module.can { touch-action: pan-y; }
 .module.thing-ghost { width: 200px; margin: 0; background: var(--panel); }
+/* Energy waiting on a Flare, dragged onto a Module (designer 2026-11-08, build step 3). */
+.flare-chip { position: fixed; z-index: 13; width: 26px; height: 26px; transform: translate(-50%, -50%); cursor: grab; touch-action: none; user-select: none; border: 2px solid #fff; box-shadow: 0 3px 8px rgb(0 0 0 / 0.35); animation: pop-in 0.32s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+.flare-chip.dragging { cursor: grabbing; z-index: 41; transform: translate(-50%, -50%) scale(1.25); animation: none; }
+.flare-chip.over { box-shadow: 0 0 0 4px var(--accent), 0 6px 14px rgb(0 0 0 / 0.35); }
+.flare-chip.back { transition: left 0.3s cubic-bezier(0.2, 1.4, 0.4, 1), top 0.3s cubic-bezier(0.2, 1.4, 0.4, 1); }
+body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .module.energy-target.red, body.energy-drag-blue .module.energy-target.blue { box-shadow: 0 0 0 3px var(--accent); }

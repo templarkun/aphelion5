@@ -583,7 +583,38 @@ async function dragThing(file, handle, name) {
 }
 const modDragCheck = await dragThing(`${out}/moddrag-save.json`, (p) => `[data-module="${p.id}"]`, "module");
 const orderDragCheck = await dragThing(`${out}/orderdrag-save.json`, (p) => `[data-order="${p.id}"]`, "order");
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck }));
+// A Flare's energy token dragged onto a Module of its colour (build step 3); a wrong drop floats it back.
+let flareChipCheck = "skipped (no save)";
+if (existsSync(`${out}/flarechip-save.json`)) {
+  const plan = JSON.parse(readFileSync(`${out}/flarechip-save.json.plan.json`, "utf8"));
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/flarechip-save.json`);
+  await pg.waitForTimeout(1200);
+  const chip = pg.locator(`.flare-chip.${plan.colour.toLowerCase()}`).first();
+  const chips = await pg.locator(".flare-chip").count();
+  const before = await promptOf(pg);
+  const placedIn = (t) => (t.match(new RegExp(`1 ${plan.colour} energy placed on`, "g")) ?? []).length;
+  const n0 = placedIn(await logText(pg));
+  const c0 = await chip.boundingBox();
+  const from = { x: c0.x + c0.width / 2, y: c0.y + c0.height / 2 };
+  // A wrong drop (an empty spot of the Field's corner): it floats back, nothing answered.
+  const fb = await pg.locator(".field").boundingBox();
+  await dragMouse(pg, from, { x: fb.x + 12, y: fb.y + fb.height - 12 });
+  await pg.mouse.up();
+  await pg.waitForTimeout(500);
+  const stayed = (await promptOf(pg)) === before;
+  const m = await pg.locator(`[data-module="${plan.module}"]`).boundingBox();
+  await dragMouse(pg, from, { x: m.x + m.width / 2, y: m.y + m.height / 2 });
+  await pg.screenshot({ path: `${out}/ui-flare-chip.png` });
+  await pg.mouse.up();
+  await pg.waitForTimeout(900);
+  const log = await logText(pg);
+  const placed = placedIn(log) === n0 + 1;
+  flareChipCheck = chips >= 1 && stayed && placed ? "ok" : `failed (chips ${chips}, stayed ${stayed}, placed ${placed})`;
+  await pg.close();
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

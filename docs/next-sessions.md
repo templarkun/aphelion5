@@ -33,6 +33,9 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    drag a Module (or an Order) onto its one target, like the Bays (its plan's X / Overclock /
    extra answers go before the target); drag the energy tokens off a Flare onto a Module when
    its Alert asks; give each look a real sprite later (Art table). Then step 4 (Upgrade sheet).
+   2026-11-08 round 7: I9 (Bays and Orders greyed out when no unit fits). Step 3 done: Modules
+   drag onto their one target, Flare energy tokens drag onto Modules. Left in step 3: tune the
+   weapon looks after the designer's play-test. Next: step 4 (Upgrade sheet).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly

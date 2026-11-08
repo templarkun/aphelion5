@@ -61,6 +61,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   anomaly: (q) => q.kind === "option" && q.options.some((o) => o.on?.kind === "anomaly"),
   // The action menu with no unit on the Field: Bays and Orders that target units are greyed out (designer 2026-11-08).
   nounits: (q, g) => g.view.state.phase === "command" && /^Choose an action/.test(q.prompt) && noUnitToTarget({ data, state: g.view.state }, "V1_BAY1"),
+  // Energy from a Flare waiting to be placed: its tokens are dragged onto a Module (build step 3).
+  flarechip: (q) => q.kind === "option" && q.energyFrom !== undefined && q.options.some((o) => /^\d+$/.test(o.id)),
   // A Module that can be dragged onto its one target (designer 2026-11-08, build step 3).
   moddrag: (q, g) => moduleDrag(q, g) !== undefined,
   // An Order that can be dragged onto its one target.
@@ -113,6 +115,10 @@ for (let seed = 1; seed < 400; seed++) {
           writeFileSync(`${out}.plan.json`, JSON.stringify({ unitId: plan.unitId, from: plan.from, targets }));
           break;
         }
+      }
+      if (what === "flarechip" && q.kind === "option") {
+        const id = q.options.find((o) => /^\d+$/.test(o.id))!.id;
+        writeFileSync(`${out}.plan.json`, JSON.stringify({ module: id, colour: q.energy![id] }));
       }
       if (what === "moddrag") writeFileSync(`${out}.plan.json`, JSON.stringify(moduleDrag(q, g)));
       if (what === "orderdrag") {
