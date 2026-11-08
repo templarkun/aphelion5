@@ -9,6 +9,7 @@ import { type Ctx, choosableUnits, unitType } from "./field.js";
 import { moduleDef } from "./modules.js";
 import type { TileId } from "./state.js";
 import { damageFlagship, dealHit } from "./tokens.js";
+import { emit } from "./events.js";
 
 export const heatOn = (c: Ctx) => c.state.settings.heatModule;
 
@@ -25,6 +26,7 @@ export function payHeat(c: Ctx, n: number, rule: string): void {
   c.state.player.heat -= n;
   c.state.supply.heat += n;
   log(c, `pay ${n} Heat; Heat ${c.state.player.heat}`, rule);
+  emit(c, { kind: "heat", amount: n, rule });
 }
 
 /** H4: a revealed Power Node: its 3 energy as usual, or 3 Heat instead. Returns true if Heat was chosen. */
@@ -80,16 +82,15 @@ function* payExtra(c: RunCtx, moduleId: number, col: "Yellow" | "Red" | "Blue", 
 }
 
 /**
- * H7 Meltdown (Overload End, after step 4): pay 1 Heat; if you can't or don't want to:
+ * H7 Meltdown (Overload End, after step 4): pay 1 Heat; if you can't:
+ * (Computer version, designer 2026-11-08: a Heat token is always paid when you have one, no question.)
  * [1] 1 damage to every Bot (own hit each) [2] N = Bots hit [3] gain N Heat [4] N + 1 damage to your Flagship.
  */
 export function* meltdown(c: RunCtx): Effect {
-  if (c.state.player.heat >= 1) {
-    const a = yield* ask(c, { kind: "yesno", prompt: "Meltdown: pay 1 Heat token to avoid it?", rule: "H7" });
-    if (a.value === true) return payHeat(c, 1, "H7");
-  }
-  log(c, "Meltdown", "H7");
+  if (c.state.player.heat >= 1) return payHeat(c, 1, "H7");
+  log(c, "Meltdown: no Heat token left to prevent it", "H7");
   const bots = choosableUnits(c, (u) => unitType(c, u) === "Bot");
+  emit(c, { kind: "meltdown", bots: bots.length });
   // Bio-shield effects from step [1] resolve as soon as step [1] has finished.
   yield* asEffect(
     c,

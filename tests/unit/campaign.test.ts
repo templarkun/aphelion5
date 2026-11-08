@@ -403,13 +403,16 @@ describe("batch 7 - HEAT MODULE", () => {
     expect(after.supply.energy.Yellow).toBe(9);
   });
 
-  it("T7_HEAT_05 Meltdown: pay 1 Heat to avoid it; or take it", () => {
-    const paid = play(heat("T7_HEAT_05", 1), (c) => overloadEnd(c), [A.yes()]).state;
-    expect(paid.player.heat).toBe(0);
-    expect(paid.flagship).toEqual([6, 6, 6]);
-    const not = play(heat("T7_HEAT_05", 1), (c) => overloadEnd(c), [A.no(), A.split({ bay1: 2, bay2: 0, bay3: 0 })]).state;
-    expect(not.player.heat).toBe(2);
+  it("T7_HEAT_05 Meltdown: 1 Heat is paid to avoid it, without a question (designer 2026-11-08); with no Heat it happens", () => {
+    const r = play(heat("T7_HEAT_05", 1), (c) => overloadEnd(c));
+    expect(r.asked.some((q) => q.rule === "H7")).toBe(false);
+    expect(r.state.player.heat).toBe(0);
+    expect(r.state.flagship).toEqual([6, 6, 6]);
+    expect(r.state.events?.some((e) => e.kind === "heat" && e.rule === "H7")).toBe(true);
+    const not = play(heat("T7_HEAT_05", 0), (c) => overloadEnd(c), [A.split({ bay1: 2, bay2: 0, bay3: 0 })]).state;
+    expect(not.player.heat).toBe(1);
     expect(not.flagship).toEqual([4, 6, 6]);
+    expect(not.events?.some((e) => e.kind === "meltdown" && e.bots === 1)).toBe(true);
   });
 
   it("T_HEAT_01 (batch 1) Meltdown when you cannot pay", () => {

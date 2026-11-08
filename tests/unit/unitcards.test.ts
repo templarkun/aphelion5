@@ -12,7 +12,7 @@ import { sectorState, tile, unitAt } from "../../src/engine/field.js";
 import { overloadStep } from "../../src/engine/overload.js";
 import { scenarioState } from "../../src/engine/scenario.js";
 import type { GameState } from "../../src/engine/state.js";
-import { A, at, data, play, tokensAt, withModules } from "./helpers.js";
+import { A, at, ctx, data, play, tokensAt, withModules } from "./helpers.js";
 
 const tested = new Set<string>();
 const card = (id: string, name: string, fn: () => void) =>
@@ -432,6 +432,17 @@ describe("Gyros", () => {
     withModules(s2, [[1, true]]);
     const d = play(s2, (c) => commandStep(c), [A.option("drainGyro"), A.units(at(s2, "0,1"))]).state;
     gone(d, "0,1");
+  });
+});
+
+describe("computer version: a Mecha never Attacks a Mecha (designer 2026-11-08)", () => {
+  it("an adjacent Mecha is not an Attack target; a Bot is", async () => {
+    const { attackTargets } = await import("../../src/engine/mecha.js");
+    const s0 = board(CMD + "(0,0): M_01 > fd. (0,1): M_02 > fd. (1,0): B_01 > fd.");
+    expect(attackTargets(ctx(s0), at(s0, "0,0"))).toEqual([at(s0, "1,0")]);
+    // Games saved before the change replay with the Core Rules as printed.
+    s0.settings.mechaAttacksMecha = true;
+    expect(attackTargets(ctx(s0), at(s0, "0,0")).sort()).toEqual([at(s0, "0,1"), at(s0, "1,0")].sort());
   });
 });
 

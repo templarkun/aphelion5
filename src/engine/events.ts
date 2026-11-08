@@ -22,6 +22,12 @@ export type GameEventBody =
   | { kind: "hit"; tile: TileId; unitId: string; type: string; sector: SectorKey; amount: number; damage: number; shields: number; stopped?: "barrier" }
   /** A unit was destroyed (3.3): it left the Field, or stayed as a Wreck (4.8). */
   | { kind: "destroyed"; tile: TileId; unitId: string; type: string; sector: SectorKey; wreck: boolean }
+  /** A Mecha Attacks (4.2): reported before the hit, so the screen can show the Mecha go first. */
+  | { kind: "attack"; tile: TileId; unitId: string; from: SectorKey; target: TileId; to: SectorKey }
+  /** Heat tokens paid back to the Supply (H5, H7). */
+  | { kind: "heat"; amount: number; rule: string }
+  /** H7 Meltdown happens: no Heat token left to prevent it. `bots`: Bots it hits. */
+  | { kind: "meltdown"; bots: number }
   /** One energy went onto a Module (4.6, 5.3). `auto`: it went there by itself (only one Module could take it). */
   | { kind: "energy"; colour: EnergyColour; module: number; from?: TileId | undefined; auto: boolean };
 

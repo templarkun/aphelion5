@@ -252,5 +252,8 @@ given: Overload ending. Heat module, Heat 1. (0,0): B_01 > fd. Every other secto
 when: Overload End: pay 1 Heat
 then: Heat 0; no Meltdown. Variant: do not pay -> Meltdown: B_01 destroyed, N = 1, Heat 2
       (1 + 1), Flagship takes 2.
+note: CHANGED 2026-11-08 (designer, computer version only): the Heat token is always paid when
+      you have one, with no question. The variant is now: Heat 0 -> Meltdown: B_01 destroyed,
+      N = 1, Heat 1, Flagship takes 2.
 
 === END OF FILE ===

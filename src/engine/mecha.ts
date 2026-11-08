@@ -8,7 +8,8 @@
 import type { CompanyDef } from "../data/company.js";
 import { ability } from "../effects/registry.js";
 import { type Effect, type RunCtx, ask, log } from "./effect.js";
-import { type Ctx, adjacentUnits, canBeChosen, describe, fieldMap, isUnit, sectorOf, strength, tile, unitAt, unitDef, units } from "./field.js";
+import { type Ctx, adjacentUnits, canBeChosen, describe, fieldMap, isUnit, sectorOf, strength, tile, unitAt, unitDef, unitType, units } from "./field.js";
+import { emit } from "./events.js";
 import { isOpenSector, move, swap } from "./moves.js";
 import type { Target } from "./questions.js";
 import { type SectorKey, type TileId, hasAnyToken } from "./state.js";
@@ -83,9 +84,14 @@ export function attackTargets(c: Ctx, id: TileId): TileId[] {
   const k = sectorOf(c.state, id)!;
   if (unitDef(c, id).id === "M_04") {
     const lines = Object.values(fieldMap(c.state).straightLines(fromKey(k))).flat();
-    return lines.map((p) => unitAt(c.state, key(p))).filter((u): u is TileId => u !== undefined && u !== id && canBeChosen(c, u));
+    return lines.map((p) => unitAt(c.state, key(p))).filter((u): u is TileId => u !== undefined && u !== id && canBeChosen(c, u) && notMecha(c, u));
   }
-  return adjacentUnits(c.state, k).filter((u) => canBeChosen(c, u));
+  return adjacentUnits(c.state, k).filter((u) => canBeChosen(c, u) && notMecha(c, u));
+}
+
+/** Computer version (designer 2026-11-08, not a Core Rules change): a Mecha never Attacks a Mecha. */
+function notMecha(c: Ctx, u: TileId): boolean {
+  return c.state.settings.mechaAttacksMecha === true || unitType(c, u) !== "Mecha";
 }
 
 /**
@@ -209,6 +215,7 @@ export function* commandMecha(c: RunCtx, id: TileId, mode: CommandMode, chosen?:
       target = (t.value as TileId[])[0]!;
     }
     log(c, `${describe(c, id)} Attacks ${describe(c, target)}`, "4.2");
+    emit(c, { kind: "attack", tile: id, unitId: unitDef(c, id).id, from: sectorOf(c.state, id)!, target, to: sectorOf(c.state, target)! });
     const hit = yield* dealHit(c, target, str, "4.2");
     destroy(c, id, "4.2");
     yield* afterMechaHit(c, id, hit);

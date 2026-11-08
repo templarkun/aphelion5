@@ -21,14 +21,18 @@ import { type GameState, type Profile, emptyProfile } from "./state.js";
  * 2: setup asks the Campaign and an expansion list (2026-11-04).
  * 3: energy you place matches the Module's colour (Q9), M_03 / M_06 Attack in one question.
  * 4: no "how much of the energy on it" question; 15 energy of each colour.
- * A game saved in an older format cannot be replayed (its answers no longer fit).
+ * 5: Meltdown (H7) pays a Heat token without asking; a Mecha never Attacks a Mecha (2026-11-08).
+ * A game saved in an older format cannot be replayed (its answers no longer fit),
+ * except format 4: it replays, an answer to the Meltdown question (no longer asked) is skipped.
  */
-export const SAVE_FORMAT = 4;
+export const SAVE_FORMAT = 5;
 
 export interface GameStart {
   seed: number;
   date: string;
   developerMode: boolean;
+  /** Saved before 2026-11-08 (format 4): Mecha may Attack Mecha, as the Core Rules print it. */
+  mechaAttacksMecha?: boolean;
   /** Fixed for the whole game, so replays ask the same questions (default on). */
   autoAnswer?: boolean;
   /** The profile as it was when the game started. */
@@ -53,7 +57,7 @@ export interface Game {
 }
 
 function initial(data: GameData, start: GameStart): GameState {
-  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true });
+  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false });
 }
 
 export function startGame(data: GameData, start: GameStart): Game {
@@ -71,6 +75,8 @@ export function replayGame(data: GameData, start: GameStart, answers: readonly A
       v.status === "question" && v.question.energy && a.kind === "split"
         ? Object.entries(a.value).flatMap(([id, n]) => Array.from({ length: n }, (): Answer => ({ kind: "option", value: id })))
         : [a];
+    // Format 4 saves answered "pay 1 Heat to avoid Meltdown?" (H7); it is no longer asked (2026-11-08).
+    if (v.status === "question" && v.question.kind !== "yesno" && a.kind === "yesno") continue;
     for (const p of parts) {
       const r = answerSession(data, v, p);
       if (r.status === "illegal" || r.status === "blocked") throw new Error(`saved answer ${i + 1} was refused: ${r.reason}`);
@@ -115,8 +121,8 @@ export function readSave(text: string): SaveFile {
   if (typeof f.formatVersion !== "number") throw new Error("not an Aphelion 5 save file");
   if (f.formatVersion > SAVE_FORMAT) throw new Error(`save format ${f.formatVersion} is newer than this program (${SAVE_FORMAT})`);
   const out: SaveFile = { formatVersion: SAVE_FORMAT, profile: f.profile ?? emptyProfile(), settings: f.settings ?? { autoAnswer: true } };
-  if (f.game && f.formatVersion < SAVE_FORMAT) out.note = "The game in progress was saved by an older version of the program and cannot be continued. Your Company sheets and high scores are kept.";
-  else if (f.game) out.game = f.game;
+  if (f.game && f.formatVersion < 4) out.note = "The game in progress was saved by an older version of the program and cannot be continued. Your Company sheets and high scores are kept.";
+  else if (f.game) out.game = f.formatVersion === 4 ? { ...f.game, start: { ...f.game.start, mechaAttacksMecha: true } } : f.game;
   return out;
 }
 
