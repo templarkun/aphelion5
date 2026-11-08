@@ -131,8 +131,14 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 .textbox textarea { box-sizing: border-box; width: 100%; height: 12em; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
 
 /* Things you can click now: the action menu lives on them (highlight = clickable). */
-.can { outline: 3px solid var(--can); outline-offset: 1px; background: var(--can-soft); cursor: pointer; }
-.can:hover { outline-width: 4px; }
+/* Ready to use: a soft glow that breathes in and out (designer 2026-11-08), not a thick border. */
+.can { outline: 1.5px solid var(--can); outline-offset: 1px; background: var(--can-soft); cursor: pointer; animation: can-breathe 1.8s ease-in-out infinite; }
+.can:hover { outline-width: 2px; animation-duration: 1.2s; }
+@keyframes can-breathe {
+  0%, 100% { outline-color: color-mix(in srgb, var(--can) 45%, transparent); box-shadow: 0 0 0 0 color-mix(in srgb, var(--can) 0%, transparent); }
+  50% { outline-color: var(--can); box-shadow: 0 0 10px 3px color-mix(in srgb, var(--can) 45%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .can { animation: none; } }
 .dim { opacity: 0.4; }
 button.module { display: block; width: 100%; text-align: left; font: inherit; color: inherit; min-height: 0; }
 .bay { padding: 4px 6px; border-radius: 8px; }

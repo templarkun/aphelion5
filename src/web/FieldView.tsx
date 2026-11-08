@@ -70,6 +70,8 @@ export function FieldView(p: FieldProps) {
   const ready = useRef(false);
   const props = useRef(p);
   props.current = p;
+  /** The halos of clickable sectors: they breathe (designer 2026-11-08) instead of a thick border. */
+  const halos = useRef<Graphics[]>([]);
 
   useEffect(() => {
     const a = new Application();
@@ -80,6 +82,13 @@ export function FieldView(p: FieldProps) {
       host.current!.appendChild(a.canvas);
       ready.current = true;
       draw();
+      // Breathing: the halo fades in and out smoothly, about one breath every 1.8 s.
+      const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      a.ticker.add(() => {
+        const t = performance.now() / 1800;
+        const k = still ? 0.6 : 0.5 - 0.5 * Math.cos(t * 2 * Math.PI);
+        for (const g of halos.current) if (!g.destroyed) g.alpha = 0.2 + 0.7 * k;
+      });
       new ResizeObserver(() => draw()).observe(host.current!);
     });
     return () => {
@@ -97,6 +106,7 @@ export function FieldView(p: FieldProps) {
     const { data, state, choosable, selected, onPick, onHover, showHidden, dark, rotate } = props.current;
     const c: Ctx = { data, state };
     a.stage.removeChildren().forEach((x) => x.destroy({ children: true }));
+    halos.current = [];
     const keys = sectorKeys(state);
     if (keys.length === 0) return;
     const w = host.current.clientWidth;
@@ -119,7 +129,7 @@ export function FieldView(p: FieldProps) {
     a.stage.addChild(root);
 
     // Where the clickable sectors are, in CSS pixels of the Field (for the browser check).
-    const hits: { k: string; x: number; y: number }[] = [];
+    const hits: { k: string; id: string; x: number; y: number }[] = [];
     const rotHits: { dir: number; x: number; y: number }[] = [];
     for (const p of pos) {
       const cx = ox + p.x * size;
@@ -130,11 +140,19 @@ export function FieldView(p: FieldProps) {
       const unit = st === "occupied" ? top : undefined;
       const fill = st === "cleared" ? plate : st === "dark" ? back : TYPE_COLOUR[unitDef(c, top!).type] ?? 0xcccccc;
       const isChoice = choosable.sectors.includes(p.k) || (unit !== undefined && choosable.units.includes(unit));
-      if (isChoice) hits.push({ k: p.k, x: Math.round(cx), y: Math.round(cy) });
+      if (isChoice) hits.push({ k: p.k, id: choosable.sectors.includes(p.k) ? p.k : unit!, x: Math.round(cx), y: Math.round(cy) });
       const isSel = selected.includes(p.k) || (unit !== undefined && selected.includes(unit));
-      // Clickable now: a wide amber halo around the plate (selected: green).
-      if (isChoice || isSel) g.poly(hexPoints(cx, cy, size * 0.97)).stroke({ width: size * 0.12, color: isSel ? 0x00a37a : 0xffb000, alpha: 0.55 });
-      g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 4 : isChoice ? 3 : 1.5, color: isSel ? 0x00a37a : isChoice ? 0xffb000 : dark ? 0x111111 : 0x77736b });
+      // Clickable now: a soft amber halo that breathes (selected: a steady green one).
+      if (isSel) g.poly(hexPoints(cx, cy, size * 0.97)).stroke({ width: size * 0.12, color: 0x00a37a, alpha: 0.55 });
+      else if (isChoice) {
+        const halo = new Graphics();
+        halo.poly(hexPoints(cx, cy, size * 0.96)).stroke({ width: size * 0.1, color: 0xffb000 });
+        halo.poly(hexPoints(cx, cy, size * 1.0)).stroke({ width: size * 0.05, color: 0xffd36b, alpha: 0.5 });
+        halo.eventMode = "none";
+        halos.current.push(halo);
+        root.addChild(halo);
+      }
+      g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 4 : isChoice ? 2 : 1.5, color: isSel ? 0x00a37a : isChoice ? 0xffb000 : dark ? 0x111111 : 0x77736b });
       g.eventMode = "static";
       g.cursor = isChoice ? "pointer" : "default";
       g.on("pointerover", () => onHover(p.k));
@@ -209,6 +227,8 @@ export function FieldView(p: FieldProps) {
       }
     }
     host.current.dataset.choosable = JSON.stringify(hits);
+    // The height of a whole tile on screen (pointy-top hex: two radii), for placing pop-ups.
+    host.current.dataset.tile = String(Math.round(2 * size));
     host.current.dataset.rotate = JSON.stringify(rotHits);
   }
 

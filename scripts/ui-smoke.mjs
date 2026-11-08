@@ -77,9 +77,24 @@ const bubbleBoxes = await page.locator(".popup .bubble").evaluateAll((els) => el
 const rowLeft = Math.min(...bubbleBoxes.map((b) => b.x));
 const rowRight = Math.max(...bubbleBoxes.map((b) => b.x + b.w));
 const bubbles = bubbleBoxes.length > 0 && bubbleBoxes.every((b) => Math.abs(b.w - bubbleBoxes[0].w) < 1) && Math.abs((rowLeft + rowRight) / 2 - (fieldBox.x + target.x)) < 12;
+// Raised by a quarter of the tile's height (designer 2026-11-08).
+const tileH = Number(await page.locator(".field").getAttribute("data-tile"));
+const popBox = await page.locator(".popup").boundingBox();
+const raised = Math.abs(popBox.y + popBox.height / 2 - (fieldBox.y + target.y - tileH / 4)) < 12 || popBox.y <= 9;
+// One tap on another Dark sector closes this pop-up and opens that one (designer 2026-11-08).
+let tapThrough = "only one Dark sector";
+if (dark.length > 1) {
+  const other = dark[0];
+  await page.mouse.click(fieldBox.x + other.x, fieldBox.y + other.y);
+  await page.waitForTimeout(400);
+  const t = await page.locator(".popup-title").allTextContents();
+  tapThrough = t.length === 1 && t[0].includes(`(${other.k})`) ? "ok" : `titles after tap: ${JSON.stringify(t)}`;
+}
 await page.mouse.click(5, 300);
 await page.waitForTimeout(350);
 const closedByOutside = (await page.locator(".popup").count()) === 0;
+// Ready things breathe instead of a thick border.
+const breathing = await page.evaluate(() => [...document.querySelectorAll(".can")].every((e) => getComputedStyle(e).animationName === "can-breathe"));
 await clickField(page, dark.length - 1);
 await page.screenshot({ path: `${out}/ui-popup.png` });
 await page.waitForTimeout(700);
@@ -204,7 +219,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

@@ -360,6 +360,8 @@ interface Popup {
   next?: { label: string; go: () => void } | undefined;
   /** Its one option commits a selection (shown as the main button). */
   commit?: boolean;
+  /** The unit or sector it belongs to. */
+  at?: string | undefined;
 }
 
 interface Confirm {
@@ -464,7 +466,10 @@ function GameScreen(p: GameProps) {
   };
   const subSplit = (id: string) => setSplit((x) => ({ ...x, [id]: Math.max(0, (x[id] ?? 0) - 1) }));
 
-  /** Where a unit or sector is on screen (its sector's centre), else where the pointer was. */
+  /**
+   * Where a unit's or sector's pop-up goes: its sector's centre raised by a
+   * quarter of the tile's height (designer 2026-11-08), else where the pointer was.
+   */
   const centreOf = (id: string): { x: number; y: number } => {
     const field = document.querySelector<HTMLElement>(".field");
     const k = s.tiles[id] ? Object.keys(s.field).find((key) => s.field[key]!.includes(id)) : id;
@@ -472,9 +477,24 @@ function GameScreen(p: GameProps) {
     const h = hits.find((x) => x.k === k);
     if (!field || !h) return pointer.current;
     const r = field.getBoundingClientRect();
-    return { x: r.left + h.x, y: r.top + h.y };
+    const tileH = Number(field.dataset.tile ?? 0);
+    return { x: r.left + h.x, y: r.top + h.y - tileH / 4 };
   };
-  const openPopup = (title: string, options: Option[], note?: string, at?: string) => setPopup({ ...(at ? centreOf(at) : pointer.current), title, options, note });
+  /** The clickable unit or sector under a screen point, if any (a tap that closes a pop-up opens the next). */
+  const choosableAt = (x: number, y: number): string | undefined => {
+    const field = document.querySelector<HTMLElement>(".field");
+    if (!field) return undefined;
+    const r = field.getBoundingClientRect();
+    const radius = (Number(field.dataset.tile ?? 0) / 2) * 0.9;
+    const hits: { k: string; id: string; x: number; y: number }[] = JSON.parse(field.dataset.choosable ?? "[]");
+    let best: { id: string; d: number } | undefined;
+    for (const h of hits) {
+      const d = Math.hypot(r.left + h.x - x, r.top + h.y - y);
+      if (d <= radius * 0.95 && (!best || d < best.d)) best = { id: h.id, d };
+    }
+    return best?.id;
+  };
+  const openPopup = (title: string, options: Option[], note?: string, at?: string) => setPopup({ ...(at ? centreOf(at) : pointer.current), title, options, note, at });
   const pick = (id: string) => {
     if (actors) {
       const unitOpts = actors.units.get(id);
@@ -498,6 +518,7 @@ function GameScreen(p: GameProps) {
         setPopup({
           x,
           y,
+          at: id,
           title: rowQ.options[i]!.label,
           options: [{ id: rowQ.options[i]!.id, label: "Choose this row" }],
           commit: true,
@@ -741,11 +762,22 @@ function GameScreen(p: GameProps) {
       {energyQ && <EnergyPopups q={energyQ} onPick={(id) => send({ kind: "option", value: id })} />}
       {popup && (
         <PopupMenu
+          key={`${popup.at ?? ""}:${popup.title}`}
           popup={popup}
           onPick={answer}
           onClose={() => {
             setPopup(undefined);
             setRowSel(undefined);
+          }}
+          tapThrough={(x, y) => {
+            // One tap on another clickable unit or sector: the old pop-up goes and the new one opens.
+            const id = choosableAt(x, y);
+            if (!id || id === popup.at || (s.tiles[popup.at ?? ""] && Object.keys(s.field).find((k) => s.field[k]!.includes(popup.at!)) === id)) return false;
+            pointer.current = { x, y };
+            setPopup(undefined);
+            setRowSel(undefined);
+            pick(id);
+            return true;
           }}
         />
       )}
@@ -917,7 +949,7 @@ function BubbleLabel({ text }: { text: string }) {
  * shows on hover and is read out). Bubbles spring in (ease-out elastic) and
  * shrink away when one is chosen or the pop-up is closed.
  */
-function PopupMenu({ popup, onPick, onClose }: { popup: Popup; onPick: (id: string) => void; onClose: () => void }) {
+function PopupMenu({ popup, onPick, onClose, tapThrough }: { popup: Popup; onPick: (id: string) => void; onClose: () => void; tapThrough: (x: number, y: number) => boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: popup.x, top: popup.y });
   const [leaving, setLeaving] = useState(false);
@@ -942,7 +974,7 @@ function PopupMenu({ popup, onPick, onClose }: { popup: Popup; onPick: (id: stri
   }, [onClose, leaving]);
   const items = [...popup.options.map((o) => ({ id: o.id, label: o.label, go: () => leave(() => onPick(o.id)), main: popup.commit })), ...(popup.next ? [{ id: "next", label: popup.next.label, go: popup.next.go, main: false }] : [])];
   return (
-    <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && leave(onClose)}>
+    <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && !leaving && !tapThrough(e.clientX, e.clientY) && leave(onClose)}>
       <div ref={box} className={`popup bubbles ${leaving ? "leaving" : ""}`} role="menu" aria-label={popup.title} style={pos}>
         <div className="popup-title">{popup.title}</div>
         <div className="bubble-row">
