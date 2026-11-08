@@ -14,12 +14,17 @@ import type { SectorKey, TileId } from "./state.js";
 
 export type GameEventBody =
   /** A unit went from one sector to another (Move, Teleport, Jump...). */
-  | { kind: "moved"; tile: TileId; unitId: string; from: SectorKey; to: SectorKey; how: "move" | "teleport" }
-  | { kind: "swapped"; a: TileId; b: TileId; from: SectorKey; to: SectorKey }
+  | { kind: "moved"; tile: TileId; unitId: string; from: SectorKey; to: SectorKey; how: "move" | "teleport"; rule?: string }
+  | { kind: "swapped"; a: TileId; b: TileId; from: SectorKey; to: SectorKey; rule?: string }
   /** The top tile of a Dark sector was flipped face up (8.5). */
   | { kind: "revealed"; tile: TileId; unitId: string; type: string; sector: SectorKey }
   /** A hit landed (6.1): `damage` Damage tokens placed, `shields` Shield or Bio-shield tokens removed; or a Barrier stopped it. */
-  | { kind: "hit"; tile: TileId; unitId: string; type: string; sector: SectorKey; amount: number; damage: number; shields: number; stopped?: "barrier" }
+  | { kind: "hit"; tile: TileId; unitId: string; type: string; sector: SectorKey; amount: number; damage: number; shields: number; stopped?: "barrier"; rule?: string }
+  /**
+   * A Bay, an Order or a Module starts its effect (8.6, 8.7). `rule` is what its hits and moves name as
+   * their rule, so the screen can draw them from it (Program Spec "Weapon and aura looks").
+   */
+  | { kind: "used"; what: "bay" | "order" | "module"; rule: string; bay?: number; module?: number; colour?: EnergyColour; text: string }
   /** A unit was destroyed (3.3): it left the Field, or stayed as a Wreck (4.8). */
   | { kind: "destroyed"; tile: TileId; unitId: string; type: string; sector: SectorKey; wreck: boolean }
   /** A Mecha Attacks (4.2): reported before the hit, so the screen can show the Mecha go first. */
@@ -29,7 +34,7 @@ export type GameEventBody =
   /** H7 Meltdown happens: no Heat token left to prevent it. `bots`: Bots it hits. */
   | { kind: "meltdown"; bots: number }
   /** The player looked at face-down tiles (a Bay, a Module...): shown to them, in this order (top first). */
-  | { kind: "looked"; tiles: { tile: TileId; unitId: string; sector?: SectorKey | undefined }[] }
+  | { kind: "looked"; rule?: string; tiles: { tile: TileId; unitId: string; sector?: SectorKey | undefined }[] }
   /** One energy went onto a Module (4.6, 5.3). `auto`: it went there by itself (only one Module could take it). */
   | { kind: "energy"; colour: EnergyColour; module: number; from?: TileId | undefined; auto: boolean };
 

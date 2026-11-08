@@ -19,6 +19,7 @@ import type { Option, Target } from "./questions.js";
 import type { TileId } from "./state.js";
 import { boost, isCrippled, printedIntegrity, returnTokens } from "./tokens.js";
 import { heatWave } from "./heat.js";
+import { emit } from "./events.js";
 
 // ---------------------------------------------------------------------------
 // Bays (5.2, 8.7)
@@ -60,6 +61,7 @@ export function* useBay(c: RunCtx, a: BayAbility): Effect {
   c.state.flagship[a.bay - 1]! -= 1;
   log(c, `use Bay ${a.bay} (Integrity ${c.state.flagship[a.bay - 1]}): ${a.text}`, "8.7");
   if (isCrippled(c)) log(c, "Flagship is Crippled", "5.2");
+  emit(c, { kind: "used", what: "bay", rule: a.id, bay: a.bay, text: a.text });
   yield* ability(a.id)(c, undefined);
 }
 
@@ -90,6 +92,7 @@ export function* issueOrder(c: RunCtx, o: OrderOption): Effect {
   c.state.player.commandTokens -= o.tokens;
   c.state.supply.command += o.tokens;
   log(c, `issue an Order (${o.tokens} Command token${o.tokens === 1 ? "" : "s"}): ${o.effect}`, "5.6");
+  emit(c, { kind: "used", what: "order", rule: o.id, text: o.effect });
   yield* ability(o.id)(c, undefined);
 }
 

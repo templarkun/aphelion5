@@ -324,7 +324,7 @@ export function* dealHit(c: RunCtx, id: TileId, amount: number, rule = "6.1"): E
     t.barrier = false;
     c.state.supply.barrier += 1;
     log(c, `the Barrier on ${describe(c, id)} cancels a hit of ${amount}`, "6.4");
-    emit(c, { kind: "hit", tile: id, unitId: unitDef(c, id).id, type: unitType(c, id), sector: sectorOf(c.state, id)!, amount, damage: 0, shields: 0, stopped: "barrier" });
+    emit(c, { kind: "hit", tile: id, unitId: unitDef(c, id).id, type: unitType(c, id), sector: sectorOf(c.state, id)!, amount, damage: 0, shields: 0, stopped: "barrier", rule });
     return { kind: "cancelled" };
   }
   const before = strength(c, id)!;
@@ -351,7 +351,7 @@ export function* dealHit(c: RunCtx, id: TileId, amount: number, rule = "6.1"): E
   t.damage += dmg;
   const parts = [shields && `${shields} Shield`, bio && `${bio} Bio-shield`, dmg && `${dmg} Damage`].filter(Boolean);
   log(c, `${describe(c, id)} takes a hit of ${amount}: ${parts.join(", ")}; Strength ${strength(c, id)}`, rule);
-  emit(c, { kind: "hit", tile: id, unitId: unitDef(c, id).id, type: unitType(c, id), sector: sectorOf(c.state, id)!, amount, damage: dmg, shields: removed });
+  emit(c, { kind: "hit", tile: id, unitId: unitDef(c, id).id, type: unitType(c, id), sector: sectorOf(c.state, id)!, amount, damage: dmg, shields: removed, rule });
 
   const k = sectorOf(c.state, id)!;
   const type = unitType(c, id);

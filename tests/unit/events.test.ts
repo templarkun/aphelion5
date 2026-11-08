@@ -18,7 +18,23 @@ describe("engine events", () => {
     const s0 = given("T_TOK_01");
     const id = at(s0, "0,0");
     const { state } = play(s0, (c) => dealHit(c, id, 2));
-    expect(state.events).toEqual([{ seq: 1, kind: "hit", tile: id, unitId: "B_02", type: "Bot", sector: "0,0", amount: 2, damage: 1, shields: 1 }]);
+    expect(state.events).toEqual([{ seq: 1, kind: "hit", tile: id, unitId: "B_02", type: "Bot", sector: "0,0", amount: 2, damage: 1, shields: 1, rule: "6.1" }]);
+  });
+
+  it("a Bay reports that it was used, and its hit names it as its rule (weapon looks, build step 3)", () => {
+    const s0 = given("T3_BAY_01");
+    const { state } = play(s0, (c) => commandStep(c), [A.option("useBay"), A.option("V1_BAY1"), A.units(at(s0, "0,1"))]);
+    expect(kinds(state.events)).toEqual(["used", "hit"]);
+    expect(state.events![0]).toMatchObject({ what: "bay", rule: "V1_BAY1", bay: 1 });
+    expect(state.events![1]).toMatchObject({ rule: "V1_BAY1", sector: "0,1" });
+  });
+
+  it("a Module run reports its colour, and its hit names it", () => {
+    const s0 = withModules(given("T6_PAY_05"), [[6, true, { Yellow: 2 }]]);
+    const { state } = play(s0, (c) => commandStep(c), [A.option("runModule")]);
+    const used = state.events!.find((e) => e.kind === "used");
+    expect(used).toMatchObject({ what: "module", module: 6, colour: "Yellow", rule: "Module 6" });
+    expect(state.events!.filter((e) => e.kind === "hit").every((e) => e.kind === "hit" && e.rule === "Module 6")).toBe(true);
   });
 
   it("a hit that brings Strength to 0 reports the hit, then the unit destroyed", () => {
@@ -40,7 +56,7 @@ describe("engine events", () => {
     const { state } = play(s0, function* (c) {
       move(c, id, to);
     });
-    expect(state.events).toEqual([{ seq: 1, kind: "moved", tile: id, unitId: "B_02", from: "0,0", to, how: "move" }]);
+    expect(state.events).toEqual([{ seq: 1, kind: "moved", tile: id, unitId: "B_02", from: "0,0", to, how: "move", rule: "glossary" }]);
   });
 
   it("a Reveal of a Power Node reports the reveal, then each energy placed; one Module only: placed by itself", () => {

@@ -6,6 +6,7 @@
  */
 
 import type { Effect, RunCtx } from "../engine/effect.js";
+import type { Ctx } from "../engine/field.js";
 import type { TileId } from "../engine/state.js";
 
 export class NotBuiltYet extends Error {
@@ -54,6 +55,8 @@ export interface ModuleEffects {
   x?: { min: number };
   /** X is the energy of this colour on the Module before you ran it (Accumulator Beam, Point-Defense Phaser). */
   xFromStored?: "Yellow" | "Red" | "Blue";
+  /** Its X would surely be 0 now, so it cannot be run (designer 2026-11-08, I8; Core Rules 5.3). */
+  xZero?: (c: Ctx) => boolean;
   /**
    * Its extra payment (8.6 step 3), for the screen to offer before you run it:
    * exactly `n` more energy, or (`upTo`) 1 to `n` more.

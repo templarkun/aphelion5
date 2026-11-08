@@ -227,6 +227,7 @@ export function FlagshipDock(p: {
         <div className="thing-col">
           <Meter cur={b.cur} max={b.max} />
           <button
+            data-bay={b.n}
             className={`thing-btn bay-btn ${can ? "can" : ""} ${sel?.key === key ? "selected" : ""}`}
             aria-label={`Bay ${b.n}: ${b.abilities.map((a) => a.text).join(" / ")}`}
             {...(b.split ? { onClick: b.split.onAdd } : press(key, bayItems(b), b.abilities.map((a) => a.opt), firstOpt, firstOpt ? b.abilities.find((a) => a.opt)!.text : ""))}
@@ -255,6 +256,7 @@ export function FlagshipDock(p: {
     const items = [{ label: o.opt && p.layout === "A" ? "Activate" : `${o.tokens} token${o.tokens === 1 ? "" : "s"}: ${o.text}`, long: !(o.opt && p.layout === "A"), opt: o.opt }];
     const btn = (
       <button
+        data-order={o.id}
         className={`thing-btn order-btn ${p.layout === "A" ? "square" : "pill"} ${o.opt ? "can" : ""} ${sel?.key === key ? "selected" : ""}`}
         aria-label={`Order: ${o.tokens} Command token${o.tokens === 1 ? "" : "s"}: ${o.text}`}
         {...press(key, items, [o.opt], o.opt, o.text)}

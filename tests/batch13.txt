@@ -1,0 +1,53 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 13: ROUND 6 (structured)
+# Written 2026-11-08 by Claude from the designer's requests of 2026-11-08. DRAFT, awaiting
+# the designer's agreement; then it goes into the Project as
+# "claude/Test scenarios batch 13.txt". One rules ruling (I8, Core Rules 5.3 rev 141); the
+# rest is screen only (Interaction and animation, build step 3). Checked by
+# tests/unit/modules.test.ts, tests/unit/events.test.ts and scripts/ui-smoke.mjs.
+################################################################################
+
+=== FORMAT SPEC ===
+Same layout as batches 8, 10 and 12. Screen scenarios have no map.
+
+################################################################################
+=== SECTION: MODULES WHOSE X WOULD BE 0 (I8) ===
+
+id: T13_X_01
+title: Counter-Battery, Mirror Lattice and Backlash Beams are greyed out when their X would be 0
+source: designer 2026-11-08 (I8); Core Rules 5.3 (master rev 141)
+map: M1
+given: Counter-Battery Beam, Mirror Lattice Beam and Backlash Beam ready, enough energy.
+       Every sector holds a B_03, nothing else.
+then: Counter-Battery Beam is greyed out (no Sentinel on the Field); the other two can be run.
+when: every unit is a Sentinel instead
+then: Mirror Lattice Beam is greyed out (no Bot on the Field).
+when: the Field holds only one unit (a Wreck does not count)
+then: Backlash Beam is greyed out (fewer than 2 units).
+note: Greyed out = cannot be run; they stay ready, so energy can still be placed on them.
+
+################################################################################
+=== SECTION: WEAPON AND AURA LOOKS (screen only) ===
+
+id: T13_FX_01
+title: A Bay's shot starts at the Bay
+source: Program Spec "Weapon and aura looks"; build step 3
+then: using V1 Bay 1 on a unit: Bay 1 glows, a thin bright laser runs from Bay 1 to the unit
+      and holds for a moment, then the hit (flash, "−1"). V1 Bay 2: a pale wavy tractor beam
+      grips the unit, then it moves. V1 Bay 3: a ring of light travels to the sector and wraps
+      it, then the look card shows the tiles. An Order uses the same looks from its button.
+
+id: T13_FX_02
+title: A Module's shot starts at the Module, in its colour
+source: Program Spec "Weapon and aura looks"; build step 3
+then: the Module card glows as it runs. Yellow: a quick bolt with a short trail to each target.
+      Red: a wide red beam with a shimmer. Blue: a wave that travels and spreads over the target.
+      A Module that moves units or looks at tiles uses the tractor beam or the scan in its colour.
+      Several targets: one shot per hit, one after the other.
+
+id: T13_FX_03
+title: Energy waiting on a Flare shows on its tile
+source: trial rule "Flare energy waits" (I2); build step 3
+given: trial rule on.
+then: a revealed Flare shows one small round token per energy waiting on it, in its colour.
+      When the energy is placed, each token flies from the Flare to its Module.

@@ -67,7 +67,7 @@ function* lookAtTop(c: RunCtx, id: string, n: number, anyNoTokens = false): Effe
   const k = anyNoTokens ? yield* chooseSector(c, `${id}: choose a sector with no tokens.`, id, sectorsWithNoTokens(c)) : yield* chooseDarkSector(c, `${id}: choose a Dark sector.`, id);
   if (k === undefined) return undefined;
   const tiles = topTiles(c, k, n);
-  markSeen(c, tiles);
+  markSeen(c, tiles, true, id);
   log(c, `${id}: look at the top ${tiles.length} tile${tiles.length === 1 ? "" : "s"} of (${k}): ${tiles.map((t) => tile(c.state, t).unitId).join(", ")}`, id);
   return { sector: k, tiles };
 }

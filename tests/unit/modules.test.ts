@@ -61,6 +61,18 @@ describe("batch 6 - PAYING", () => {
     expect(canRunModule(ctx(board("T6_PAY_05", [[6, true, { Yellow: 1 }]], { Yellow: 0 })), 6)).toBe(true);
   });
 
+  it("T13_X_01 I8 (designer 2026-11-08): Counter-Battery, Mirror Lattice and Backlash Beams greyed out when their X would surely be 0", () => {
+    const bots = given("T3_ACT_05"); // ten B_03, nothing else
+    const z = (s: GameState, id: number) => xWouldBeZero(ctx(withModules(s, [[id, true]])), id, false);
+    expect(z(bots, 27)).toBe(true); // no Sentinel
+    expect(z(given("T3_ACT_05", "(0,0): S_01 > fd."), 27)).toBe(false);
+    expect(z(bots, 28)).toBe(false);
+    expect(z(given("T3_ACT_05", "(0,0): S_01 > fd. (1,0): S_01 > fd. (1,-1): S_01 > fd. (0,-1): S_01 > fd. (-1,0): S_01 > fd. (-1,1): S_01 > fd. (0,1): S_01 > fd. (1,1): S_01 > fd. (0,2): S_01 > fd. (-1,2): S_01 > fd."), 28)).toBe(true); // no Bot
+    expect(z(bots, 31)).toBe(false);
+    const lone = given("T6_PAY_03"); // a Wreck and a Dark sector only
+    expect(z(lone, 31)).toBe(true);
+  });
+
   it("T6_PAY_04 an extra payment is offered only when you can pay it", () => {
     const s = board("T6_PAY_04", [[10, true]], { Yellow: 5 });
     const a = act(s, [A.option("runModule")]);

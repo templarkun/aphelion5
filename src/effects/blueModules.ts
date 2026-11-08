@@ -59,7 +59,7 @@ mod(52, {
     if (ds.length === 0) return log(c, "Tactical Scan: no Dark sector", M(52));
     const pick = (yield* ask(c, { kind: "sectors", prompt: "Tactical Scan: look at the top tiles of up to 4 Dark sectors.", rule: M(52), options: ds, min: 0, max: Math.min(4, ds.length) })).value as string[];
     const tops = pick.map((k) => topTileId(c.state, k)!);
-    markSeen(c, tops);
+    markSeen(c, tops, true, M(52));
     log(c, `Tactical Scan: you look at ${names(c, tops)}`, M(52));
     const bots: TileId[] = [];
     for (const k of pick) {
@@ -89,7 +89,7 @@ mod(54, {
     if (k === undefined) return;
     const st = stack(c.state, k);
     const top = [...st].reverse().slice(0, run.x ?? 1);
-    markSeen(c, top);
+    markSeen(c, top, true, M(54));
     log(c, `Debris Sifter: you look at ${names(c, top)} (top first)`, M(54));
     const bots = top.filter((t) => c.data.units.byId.get(tile(c.state, t).unitId!)?.type === "Bot");
     if (bots.length === 0) return log(c, "Debris Sifter: no Bot among them", M(54));
@@ -245,7 +245,7 @@ mod(66, {
     const k = yield* chooseSectorFrom(c, "Deep Scan Probe: choose a Dark sector.", M(66), darkSectors(c.state));
     if (k === undefined) return;
     const t = topTileId(c.state, k)!;
-    markSeen(c, [t]);
+    markSeen(c, [t], true, M(66));
     log(c, `Deep Scan Probe: the top tile of (${k}) is ${tile(c.state, t).unitId}`, M(66));
     if (stack(c.state, k).length === 1) return;
     const a = yield* ask(c, { kind: "yesno", prompt: `Deep Scan Probe: put ${tile(c.state, t).unitId} face down at the bottom of (${k})?`, rule: M(66) });
@@ -298,7 +298,7 @@ mod(69, {
     const n = (yield* ask(c, { kind: "amount", prompt: `Strata Shifter: take how many tiles from the top of (${from})?`, rule: M(69), min: 0, max: st.length })).value as number;
     if (n === 0) return;
     const taken = st.slice(st.length - n); // bottom first
-    markSeen(c, taken.filter((t) => !tile(c.state, t).faceUp));
+    markSeen(c, taken.filter((t) => !tile(c.state, t).faceUp), true, M(69));
     log(c, `Strata Shifter: you look at ${names(c, [...taken].reverse())} (top first)`, M(69));
     const targets = fieldMap(c.state)
       .adjacent(fromKey(from))
@@ -320,7 +320,7 @@ mod(70, {
     const k = yield* chooseSectorFrom(c, "Core Drill: choose a Dark sector.", M(70), darkSectors(c.state));
     if (k === undefined) return;
     const st = stack(c.state, k);
-    markSeen(c, st.filter((t) => !tile(c.state, t).faceUp));
+    markSeen(c, st.filter((t) => !tile(c.state, t).faceUp), true, M(70));
     log(c, `Core Drill: (${k}) holds ${names(c, [...st].reverse())} (top first)`, M(70));
     const a = yield* ask(c, { kind: "yesno", prompt: `Core Drill: put the bottom tile (${tile(c.state, st[0]!).unitId}) face down on top, then Reveal it?`, rule: M(70) });
     if (a.value !== true) return;
@@ -343,7 +343,7 @@ mod(71, {
       afterTopTileLeaves(c, k);
     }
     if (taken.length > 0) {
-      markSeen(c, taken);
+      markSeen(c, taken, true, M(71));
       log(c, `Gravity Well: you take ${names(c, taken)}`, M(71));
       // Designer, Q7 (card text changed): "one Dark sector or Cleared sector".
       const options = sectorKeys(c.state).filter((k) => ["dark", "cleared"].includes(sectorState(c.state, k)));
@@ -373,7 +373,7 @@ mod(72, {
       if (k === undefined) break;
       used.push(k);
       const b = stack(c.state, k)[0]!;
-      if (!tile(c.state, b).faceUp) markSeen(c, [b]);
+      if (!tile(c.state, b).faceUp) markSeen(c, [b], true, M(72));
       log(c, `Seismic Sonar: the bottom tile of (${k}) is ${tile(c.state, b).unitId}`, M(72));
     }
     requestOverload(c, "Seismic Sonar");

@@ -27,6 +27,12 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    2026-11-08 round 2: Bays and Orders are buttons (layouts A/B/C, drag onto targets), Reserve in
    the top bar with flying energy, Anomaly bubbles on the Field, Bay 3 look card, energy-removal
    pop-ups. Waiting on I6 (M_01) and I7 (Mecha damage abilities).
+   2026-11-08 rounds 3-5: Modules panel rework, Mission bar, cards, M_01 walks (see CLAUDE.md).
+   2026-11-08 round 6: step 3 begun: weapon and aura looks from Bays, Orders and Modules
+   (`src/web/weapons.ts`, `used` events), Flare energy tokens on the tile. Still in step 3:
+   drag a Module (or an Order) onto its one target, like the Bays (its plan's X / Overclock /
+   extra answers go before the target); drag the energy tokens off a Flare onto a Module when
+   its Alert asks; give each look a real sprite later (Art table). Then step 4 (Upgrade sheet).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly

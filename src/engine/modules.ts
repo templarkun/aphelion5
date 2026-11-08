@@ -10,6 +10,7 @@ import { type Effect, type RunCtx, ask, log } from "./effect.js";
 import type { Ctx } from "./field.js";
 import type { ModuleState } from "./state.js";
 import { overclock } from "./heat.js";
+import { emit } from "./events.js";
 
 export function moduleDef(c: Ctx, id: number): ModuleDef {
   const m = c.data.modules.byId.get(id);
@@ -54,6 +55,7 @@ export function xWouldBeZero(c: Ctx, id: number, free: boolean): boolean {
   if (!hasModuleEffect(id)) return false;
   const fx = moduleEffect(id);
   if (fx.xFromStored && moduleState(c, id).energy[fx.xFromStored] === 0) return true;
+  if (fx.xZero?.(c)) return true;
   return free && (fx.x !== undefined || moduleDef(c, id).cost === "X");
 }
 
@@ -103,6 +105,7 @@ export function* runModule(c: RunCtx, id: number, free = false): Effect {
     c.state.supply.energy[col] += cost;
     log(c, `run ${d.name}: pay ${cost} ${col} (${fromModule} from the Module, ${fromReserve} from the Reserve)`, "8.6");
   }
+  emit(c, { kind: "used", what: "module", rule: `Module ${id}`, module: id, colour: col, text: d.name });
   // H6 Overclock: once per run, paid or free.
   if (c.state.settings.heatModule) yield* overclock(c, id);
   yield* fx.run(c, run);

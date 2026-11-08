@@ -1,7 +1,7 @@
 ################################################################################
 # APHELION 5 - TEST SCENARIOS, BATCH 12: PLAY-TEST ROUND 4 (structured)
-# Written 2026-11-08 by Claude from the designer's requests of 2026-11-08. DRAFT, awaiting
-# the designer's agreement; then it goes into the Project as
+# Written 2026-11-08 by Claude from the designer's requests of 2026-11-08. AGREED by the designer
+# 2026-11-08 and copied into the Project as
 # "claude/Test scenarios batch 12.txt". One change to the trial rule (T12_TRY_01); the
 # rest is screen only. Checked by tests/unit/energy.test.ts and scripts/ui-smoke.mjs.
 ################################################################################

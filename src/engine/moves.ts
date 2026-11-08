@@ -51,7 +51,7 @@ export function move(c: Ctx, id: TileId, to: SectorKey, rule = "glossary"): void
   lift(c, id);
   stack(c.state, to).push(id);
   log(c, `${tile(c.state, id).unitId} moves from (${from}) to (${to})`, rule);
-  emit(c, { kind: "moved", tile: id, unitId: tile(c.state, id).unitId ?? "?", from, to, how: "move" });
+  emit(c, { kind: "moved", tile: id, unitId: tile(c.state, id).unitId ?? "?", from, to, how: "move", rule });
   afterTopTileLeaves(c, from);
 }
 
@@ -62,7 +62,7 @@ export function teleport(c: Ctx, id: TileId, to: SectorKey, rule = "glossary"): 
   lift(c, id);
   stack(c.state, to).push(id);
   log(c, `${tile(c.state, id).unitId} teleports from (${from}) to (${to})`, rule);
-  emit(c, { kind: "moved", tile: id, unitId: tile(c.state, id).unitId ?? "?", from, to, how: "teleport" });
+  emit(c, { kind: "moved", tile: id, unitId: tile(c.state, id).unitId ?? "?", from, to, how: "teleport", rule });
   afterTopTileLeaves(c, from);
 }
 
@@ -76,7 +76,7 @@ export function swap(c: Ctx, a: TileId, b: TileId, rule = "glossary"): void {
   sa[sa.length - 1] = b;
   sb[sb.length - 1] = a;
   log(c, `${tile(c.state, a).unitId} and ${tile(c.state, b).unitId} swap: (${ka}) <-> (${kb})`, rule);
-  emit(c, { kind: "swapped", a, b, from: ka, to: kb });
+  emit(c, { kind: "swapped", a, b, from: ka, to: kb, rule });
 }
 
 /**
@@ -110,12 +110,13 @@ export function putAtBottom(c: Ctx, id: TileId, rule = "8.8"): void {
 }
 
 /** Record that the player has looked at face-down tiles (`show`: the screen shows them, in this order). */
-export function markSeen(c: Ctx, ids: readonly TileId[], show = true): void {
+export function markSeen(c: Ctx, ids: readonly TileId[], show = true, rule?: string): void {
   for (const id of ids) if (!c.state.seen.includes(id)) c.state.seen.push(id);
   c.state.hiddenInfo += 1;
   if (show && ids.length)
     emit(c, {
       kind: "looked",
+      ...(rule ? { rule } : {}),
       tiles: ids.map((id) => ({ tile: id, unitId: tile(c.state, id).unitId ?? "?", sector: Object.keys(c.state.field).find((k) => c.state.field[k]!.includes(id)) })),
     });
 }

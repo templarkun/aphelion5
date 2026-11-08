@@ -11,7 +11,7 @@
 import type { UnitType } from "../data/units.js";
 import { ENERGY_COLOURS, type EnergyColour } from "../data/units.js";
 import { type Effect, type RunCtx, ask, log } from "../engine/effect.js";
-import { type Ctx, canBeChosen, choosableUnits, darkSectors, describe, fieldMap, level, sectorKeys, sectorOf, sectorState, tile, unitType } from "../engine/field.js";
+import { type Ctx, canBeChosen, choosableUnits, darkSectors, describe, fieldMap, level, sectorKeys, sectorOf, sectorState, tile, unitType, units, isWreck } from "../engine/field.js";
 import { moduleDef } from "../engine/modules.js";
 import { reveal } from "../engine/moves.js";
 import type { SectorKey, TileId } from "../engine/state.js";
@@ -416,6 +416,8 @@ mod(26, {
 
 /** 27 Counter-Battery Beam - X damage to one unit, X = Sentinels on the Field. */
 mod(27, {
+  // I8 (designer 2026-11-08): greyed out with no Sentinel on the Field.
+  xZero: (c) => countType(c, "Sentinel") === 0,
   run: function* (c) {
     const x = countType(c, "Sentinel");
     const u = yield* chooseUnit(c, `Counter-Battery Beam: ${x} damage to which unit?`, M(27));
@@ -425,6 +427,8 @@ mod(27, {
 
 /** 28 Mirror Lattice Beam - [1] Choose one unit. [2] X damage to it, X = Bots adjacent to it. */
 mod(28, {
+  // I8 (designer 2026-11-08): greyed out with no Bot on the Field.
+  xZero: (c) => countType(c, "Bot") === 0,
   run: function* (c) {
     const u = yield* chooseUnit(c, "Mirror Lattice Beam: choose a unit.", M(28));
     if (u === undefined) return;
@@ -454,6 +458,8 @@ mod(30, {
 
 /** 31 Backlash Beam - [1] Choose one unit. [2] Boost every unit adjacent to it. [3] X damage to the chosen unit, X = units that gained a Shield or lost a Damage token this way. */
 mod(31, {
+  // I8 (designer 2026-11-08): greyed out with fewer than 2 units on the Field.
+  xZero: (c) => units(c.state).filter((u) => !isWreck(c, u)).length < 2, // a Wreck is a destroyed unit (glossary)
   run: function* (c) {
     const u = yield* chooseUnit(c, "Backlash Beam: choose a unit.", M(31));
     if (u === undefined) return;

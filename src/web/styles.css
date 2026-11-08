@@ -471,3 +471,15 @@ button.heat-long, button.heat-bubble { font: inherit; color: inherit; cursor: po
 .upgrade-bubble { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 6px; min-height: 28px; border-radius: 999px; border: 1px solid color-mix(in srgb, #7c3aed 45%, var(--line)); background: color-mix(in srgb, #7c3aed 9%, var(--panel)); }
 .upgrade-bubble b { font-size: 15px; color: #7c3aed; }
 .upgrade-glyph { width: 18px; height: 18px; fill: #7c3aed; }
+
+/* Weapon and aura looks (build step 3, src/web/weapons.ts): drawn over the whole page. */
+.weapon-fx { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 70; overflow: visible; filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.55)); }
+.weapon-fx.look-beam { filter: drop-shadow(0 0 10px rgba(255, 80, 60, 0.7)); }
+.weapon-fx.look-field { filter: drop-shadow(0 0 10px rgba(60, 140, 255, 0.7)); }
+.fx-fire { animation: fx-fire 0.9s ease-out; }
+@keyframes fx-fire {
+  0% { box-shadow: 0 0 0 0 var(--fire, #ffd27a); transform: scale(1); }
+  20% { box-shadow: 0 0 18px 6px var(--fire, #ffd27a); transform: scale(1.06); }
+  100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .fx-fire { animation: none; } }

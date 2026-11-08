@@ -337,13 +337,15 @@ if (existsSync(`${out}/bay3-save.json`)) {
   const popped = await pg.locator(".thing-pop").count();
   const fire = await btn.evaluate((e) => e.classList.contains("selected"));
   await btn.click(); // pressed again: fires
-  await pg.waitForFunction(() => /choose a Dark sector/.test(document.querySelector(".game")?.getAttribute("data-prompt") ?? ""), null, { timeout: 3000 }).catch(() => {});
+  await pg.waitForFunction(() => /choose a (Dark sector|sector with no tokens)/.test(document.querySelector(".game")?.getAttribute("data-prompt") ?? ""), null, { timeout: 3000 }).catch(() => {});
   const lit = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]");
   const box = await pg.locator(".field").boundingBox();
   if (lit[0]) await pg.mouse.click(box.x + lit[0].x, box.y + lit[0].y);
-  await pg.waitForTimeout(600);
+  // The scanning aura travels from Bay 3 to the sector (weapon looks, build step 3).
+  const scan = await pg.waitForSelector(".weapon-fx.look-scan", { timeout: 2500 }).then(() => true).catch(() => false);
+  await pg.waitForTimeout(900);
   const shown = await pg.locator(".look-card .look-tile").count();
-  bay3Check = popped && fire && shown >= 1 ? "ok" : `failed (pop-up ${popped}, fire ${fire}, tiles shown ${shown})`;
+  bay3Check = popped && fire && shown >= 1 && scan ? "ok" : `failed (pop-up ${popped}, fire ${fire}, tiles shown ${shown}, scan look ${scan})`;
   await pg.screenshot({ path: `${out}/ui-bay3.png` });
   await pg.close();
   // Drag a Bay with a target onto it (a fresh copy of the same save).

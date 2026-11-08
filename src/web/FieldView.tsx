@@ -28,6 +28,7 @@ import type { Answer } from "../engine/questions.js";
 import type { GameState, TileId } from "../engine/state.js";
 import { arrowSides, fromKey } from "../geometry/hex.js";
 import { type NodeLook, Player, type Step, easeInOut, easeOut } from "./anim.js";
+import { type Source, fireGlow, weaponStep } from "./weapons.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
 export interface FieldProps {
@@ -65,6 +66,7 @@ const TYPE_COLOUR: Record<string, number> = {
   Flare: 0xf2c94c,
   Omega: 0x9b6bd6,
 };
+const ENERGY_HEX: Record<string, number> = { Yellow: 0xf2c230, Red: 0xe8402f, Blue: 0x2f74e8 };
 const ENERGY_CSS: Record<string, string> = { Yellow: "var(--yellow)", Red: "var(--red)", Blue: "var(--blue)" };
 const MOVE = 0x23c4a8;
 const ATTACK = 0xff5a36;
@@ -540,8 +542,37 @@ export function FieldView(p: FieldProps) {
     const out: Step[] = [];
     /** Mecha whose destruction was already shown with their Attack (designer 2026-11-08: Mecha first, then the hit). */
     const attacked = new Set<TileId>();
+    /** The Bay, Order or Module whose effect is playing (its hits, moves and looks start from it). */
+    let src: Source | undefined;
+    // Used in an earlier answer (a Bay asks for its target after it is used): the last "used" before these events.
+    {
+      const first = events[0]?.seq ?? Infinity;
+      const prev = [...(s.events ?? [])].reverse().find((x) => x.seq < first && x.kind === "used");
+      if (prev && prev.kind === "used") src = { what: prev.what, rule: prev.rule, bay: prev.bay, module: prev.module, colour: prev.colour };
+    }
+    const onPage = (k: string) => () => {
+      const r = host.current?.getBoundingClientRect();
+      if (!r || !nodes.current.has(k)) return undefined;
+      const c0 = centre(k);
+      return { x: r.left + c0.x, y: r.top + c0.y, size: size() };
+    };
+    const from = (rule: string | undefined) => (src && rule === src.rule ? src : undefined);
     for (let i = 0; i < events.length; i++) {
       const e = events[i]!;
+      if (e.kind === "used") {
+        const used: Source = { what: e.what, rule: e.rule, bay: e.bay, module: e.module, colour: e.colour };
+        src = used;
+        // The Bay, Order or Module glows as it fires.
+        out.push({ ms: 160, start: () => fireGlow(used), frame: () => {}, end: () => {} });
+        continue;
+      }
+      // Weapon and aura looks (build step 3): the shot, the tractor beam or the scan comes first.
+      if (e.kind === "hit" && from(e.rule)) out.push(weaponStep(src!, "hit", onPage(e.sector)));
+      if ((e.kind === "moved" || e.kind === "swapped") && from(e.rule)) out.push(weaponStep(src!, "move", onPage(e.from)));
+      if (e.kind === "looked" && from(e.rule)) {
+        const k = e.tiles.find((t) => t.sector)?.sector;
+        if (k) out.push(weaponStep(src!, "look", onPage(k)));
+      }
       if (e.kind === "destroyed" && attacked.has(e.tile) && !e.wreck) continue;
       // A walk (M_01 moving several times in a row, designer 2026-11-08): one step along its path.
       if (e.kind === "moved" && e.how === "move") {
@@ -1115,6 +1146,21 @@ export function FieldView(p: FieldProps) {
         const b = badgeText(t.tokens);
         if (b.length) label(b.join(" "), size * 0.26, size * 0.16, t.tokens.alert || t.tokens.wreck ? 0x9b1c1c : 0x1d1d1f, true);
         label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.14);
+        // Trial rule (I2): the energy waiting on a Flare, as tokens on its tile (build step 3).
+        const waiting = t.energy ? (["Yellow", "Red", "Blue"] as const).flatMap((col) => Array.from({ length: t.energy![col] ?? 0 }, () => col)) : [];
+        if (waiting.length) {
+          const r = size * 0.1;
+          const gap = r * 2.4;
+          const y0 = cy + size * (b.length ? 0.37 : 0.27);
+          const tok = new Graphics();
+          waiting.forEach((col, i) => {
+            const x0 = cx + (i - (waiting.length - 1) / 2) * gap;
+            tok.circle(x0, y0, r).fill({ color: ENERGY_HEX[col] ?? 0x888888 }).stroke({ width: 1.5, color: 0xffffff });
+          });
+          tok.eventMode = "none";
+          tok.label = "flare-energy";
+          node.addChild(tok);
+        }
         // Arrows on their sides, turned by the tile's facing (3.8).
         const turning = rotate?.tile === unit;
         const sides = arrowSides(unitDef(c, unit!).arrows, turning ? (rotate!.facing as typeof t.facing) : t.facing);
