@@ -66,6 +66,8 @@ export interface ModuleEffects {
 
 const unitFx = new Map<string, UnitEffects>();
 const abilityFx = new Map<string, Ability>();
+/** Bay abilities and Orders that target units: they cannot be used with no unit on the Field (designer 2026-11-08, round 7). */
+const unitTargeting = new Set<string>();
 const moduleFx = new Map<number, ModuleEffects>();
 
 export function registerUnit(id: string, fx: UnitEffects): void {
@@ -73,9 +75,15 @@ export function registerUnit(id: string, fx: UnitEffects): void {
 }
 
 /** Mecha base abilities by unit id; upgrades, Bays and Orders by their own ids. */
-export function registerAbility(id: string, fn: Ability): void {
+export function registerAbility(id: string, fn: Ability, opts?: { targetsUnits?: boolean }): void {
   if (abilityFx.has(id)) throw new Error(`ability ${id} registered twice`);
   abilityFx.set(id, fn);
+  if (opts?.targetsUnits) unitTargeting.add(id);
+}
+
+/** Does this Bay ability or Order target units (so it needs a unit on the Field)? */
+export function targetsUnits(id: string): boolean {
+  return unitTargeting.has(id);
 }
 
 export function registerModule(id: number, fx: ModuleEffects): void {

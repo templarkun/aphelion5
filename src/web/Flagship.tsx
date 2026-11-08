@@ -26,6 +26,8 @@ export interface Ability {
   text: string;
   /** The answer that uses it now, when it can be used. */
   opt?: Option | undefined;
+  /** It targets units and no unit is on the Field: greyed out (designer 2026-11-08). */
+  noUnits?: boolean;
 }
 
 export interface BayView {
@@ -44,6 +46,8 @@ export interface OrderView {
   text: string;
   word: string;
   opt?: Option | undefined;
+  /** It targets units and no unit is on the Field: greyed out (designer 2026-11-08). */
+  noUnits?: boolean;
 }
 
 /** What a drag of an ability can be dropped on (worked out by the screen from the engine). */
@@ -166,7 +170,9 @@ export function CommandMeter({ n }: { n: number }) {
   );
 }
 
-type Sel = { key: string; el: HTMLElement; items: { label: string; long: boolean; opt?: Option | undefined }[] };
+type Sel = { key: string; el: HTMLElement; items: { label: string; long: boolean; opt?: Option | undefined; why?: string | undefined }[] };
+
+const NO_UNITS = "No unit on the Field";
 
 export function FlagshipDock(p: {
   layout: Layout;
@@ -208,18 +214,21 @@ export function FlagshipDock(p: {
     return () => window.removeEventListener("pointerdown", f, true);
   }, [sel]);
 
-  const bayItems = (b: BayView) => b.abilities.map((a) => ({ label: a.opt && p.layout === "A" && b.abilities.length === 1 ? "Activate" : a.text, long: !(a.opt && p.layout === "A" && b.abilities.length === 1), opt: a.opt }));
+  const bayItems = (b: BayView) => b.abilities.map((a) => ({ label: a.opt && p.layout === "A" && b.abilities.length === 1 ? "Activate" : a.text, long: !(a.opt && p.layout === "A" && b.abilities.length === 1), opt: a.opt, why: a.noUnits ? NO_UNITS : undefined }));
   const bays = p.bays.map((b) => {
     const key = `bay:${b.n}`;
     const can = b.abilities.some((a) => a.opt) || b.split !== undefined;
     const firstOpt = b.abilities.find((a) => a.opt)?.opt;
+    // Greyed out when what it could do now all needs a unit and none is on the Field.
+    const noUnits = !can && b.cur > 0 && b.abilities.some((a) => a.noUnits);
     return (
-      <div key={key} className={`thing bay-thing ${b.cur === 0 ? "out" : ""} ${b.dim ? "dim" : ""}`}>
+      <div key={key} className={`thing bay-thing ${b.cur === 0 ? "out" : ""} ${noUnits ? "no-units" : ""} ${b.dim ? "dim" : ""}`}>
         {p.layout === "A" && (
           <div className="thing-text">
             {b.abilities.map((a) => (
               <p key={a.id} className={a.opt ? "" : "small"}>
                 {a.text}
+                {a.noUnits && <em className="why"> — no unit on the Field</em>}
               </p>
             ))}
           </div>
@@ -253,7 +262,7 @@ export function FlagshipDock(p: {
   });
   const orders = p.orders.map((o) => {
     const key = `order:${o.id}`;
-    const items = [{ label: o.opt && p.layout === "A" ? "Activate" : `${o.tokens} token${o.tokens === 1 ? "" : "s"}: ${o.text}`, long: !(o.opt && p.layout === "A"), opt: o.opt }];
+    const items = [{ label: o.opt && p.layout === "A" ? "Activate" : `${o.tokens} token${o.tokens === 1 ? "" : "s"}: ${o.text}`, long: !(o.opt && p.layout === "A"), opt: o.opt, why: o.noUnits ? NO_UNITS : undefined }];
     const btn = (
       <button
         data-order={o.id}
@@ -278,10 +287,13 @@ export function FlagshipDock(p: {
       </button>
     );
     return (
-      <div key={key} className={`thing order-thing ${o.opt ? "" : "off"}`}>
+      <div key={key} className={`thing order-thing ${o.opt ? "" : "off"} ${o.noUnits ? "no-units" : ""}`}>
         {p.layout === "A" && (
           <div className="thing-text">
-            <p className={o.opt ? "" : "small"}>{o.text}</p>
+            <p className={o.opt ? "" : "small"}>
+              {o.text}
+              {o.noUnits && <em className="why"> — no unit on the Field</em>}
+            </p>
           </div>
         )}
         <div className="thing-col">{btn}</div>
@@ -348,7 +360,7 @@ function ThingPopup({ sel, layout, onUse }: { sel: Sel; layout: Layout; onUse: (
         ) : (
           <div key={i} className="bubble info" style={{ animationDelay: `${i * 45}ms` }}>
             {it.label}
-            <small>Not usable now</small>
+            <small>{it.why ?? "Not usable now"}</small>
           </div>
         ),
       )}

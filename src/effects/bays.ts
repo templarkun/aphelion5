@@ -9,14 +9,21 @@ import { fromKey, key } from "../geometry/hex.js";
 import { chooseDarkSector, chooseSector, chooseUnit } from "./helpers.js";
 import { registerAbility } from "./registry.js";
 
+/** Targets units: not usable with no unit on the Field (designer 2026-11-08, round 7). */
+const UNITS = { targetsUnits: true };
+
 const levelIs = (c: Ctx, n: number) => (u: TileId) => level(c, u) === n;
 
 /** "Deal 1 damage to <a unit matching filter>." */
 function damageOne(id: string, filter: (c: Ctx) => (u: TileId) => boolean, what: string) {
-  registerAbility(id, function* (c) {
-    const u = yield* chooseUnit(c, `${id}: deal 1 damage to ${what}.`, id, filter(c));
-    if (u !== undefined) yield* dealHit(c, u, 1, id);
-  });
+  registerAbility(
+    id,
+    function* (c) {
+      const u = yield* chooseUnit(c, `${id}: deal 1 damage to ${what}.`, id, filter(c));
+      if (u !== undefined) yield* dealHit(c, u, 1, id);
+    },
+    UNITS,
+  );
 }
 
 /** "Move <a unit> to an adjacent Dark sector." Units with nowhere to go are not offered. */
@@ -92,7 +99,7 @@ function putBack(c: RunCtx, k: SectorKey, order: TileId[]): void {
 
 damageOne("V1_BAY1", () => () => true, "any unit");
 
-registerAbility("V1_BAY2", (c) => moveOneToAdjacentDark(c, "V1_BAY2"));
+registerAbility("V1_BAY2", (c) => moveOneToAdjacentDark(c, "V1_BAY2"), UNITS);
 
 /**
  * Choose one sector with no tokens. Look at its top 3 tiles and put them back in any order. Then reveal
@@ -124,9 +131,9 @@ damageOne("V2_BAY1", (c) => levelIs(c, 3), "a Level 3 unit");
 damageOne("V2_P1", (c) => levelIs(c, 2), "a Level 2 unit");
 damageOne("V2_P1A", (c) => levelIs(c, 1), "a Level 1 unit");
 
-registerAbility("V2_BAY2", (c) => swapTwo(c, "V2_BAY2", true));
-registerAbility("V2_P2", (c) => swapTwo(c, "V2_P2", false));
-registerAbility("V2_P2A", (c) => moveOneToAdjacentDark(c, "V2_P2A"));
+registerAbility("V2_BAY2", (c) => swapTwo(c, "V2_BAY2", true), UNITS);
+registerAbility("V2_P2", (c) => swapTwo(c, "V2_P2", false), UNITS);
+registerAbility("V2_P2A", (c) => moveOneToAdjacentDark(c, "V2_P2A"), UNITS);
 
 /** "Choose one Dark sector and look at its top 3 tiles." */
 registerAbility("V2_BAY3", function* (c) {
@@ -149,7 +156,7 @@ function tickOn(id: string, filter: (c: Ctx) => (u: TileId) => boolean, what: st
   registerAbility(id, function* (c) {
     const u = yield* chooseUnit(c, `${id}: place a Tick on ${what}.`, id, filter(c));
     if (u !== undefined) placeFuse(c, u, "tick", id);
-  });
+  }, UNITS);
 }
 tickOn("V2_BAY4", (c) => levelIs(c, 1), "a Level 1 unit");
 tickOn("V2_P4", (c) => (u) => tile(c.state, u).tokens.damage > 0, "a damaged unit");
@@ -162,13 +169,13 @@ registerAbility("V2_BAY5", function* (c) {
     tile(c.state, u).tokens.damage -= 1;
     log(c, `V2_BAY5: 1 Damage removed from ${tile(c.state, u).unitId}`, "V2_BAY5");
   }
-});
+}, UNITS);
 
 /** [Overload] Remove a Barrier from a unit. */
 registerAbility("V2_P5", function* (c) {
   const u = yield* chooseUnit(c, "V2_P5: remove the Barrier from which unit?", "V2_P5", (x) => tile(c.state, x).tokens.barrier);
   if (u !== undefined) removeBarrier(c, u, "V2_P5");
-});
+}, UNITS);
 
 /** [Overload] Remove the Alert token from one Sentinel or one unit with an At Overload trigger (its effect is cancelled). */
 registerAbility("V2_P5A", function* (c) {
@@ -180,4 +187,4 @@ registerAbility("V2_P5A", function* (c) {
   };
   const u = yield* chooseUnit(c, "V2_P5A: remove the Alert token from which unit?", "V2_P5A", (x) => tile(c.state, x).tokens.alert && (c.data.units.byId.get(tile(c.state, x).unitId!)!.type === "Sentinel" || atOverload(x)));
   if (u !== undefined && isUnit(c.state, u)) cancelAlert(c, u, "V2_P5A");
-});
+}, UNITS);

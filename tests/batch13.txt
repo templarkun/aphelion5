@@ -4,7 +4,8 @@
 # the designer's agreement; then it goes into the Project as
 # "claude/Test scenarios batch 13.txt". One rules ruling (I8, Core Rules 5.3 rev 141); the
 # rest is screen only (Interaction and animation, build step 3). Checked by
-# tests/unit/modules.test.ts, tests/unit/events.test.ts and scripts/ui-smoke.mjs.
+# tests/unit/modules.test.ts, tests/unit/command.test.ts, tests/unit/events.test.ts and
+# scripts/ui-smoke.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -25,6 +26,25 @@ then: Mirror Lattice Beam is greyed out (no Bot on the Field).
 when: the Field holds only one unit (a Wreck does not count)
 then: Backlash Beam is greyed out (fewer than 2 units).
 note: Greyed out = cannot be run; they stay ready, so energy can still be placed on them.
+
+################################################################################
+=== SECTION: BAYS AND ORDERS WITH NO UNIT ON THE FIELD (designer 2026-11-08) ===
+
+id: T13_BAY_01
+title: Bays and Orders that target units are greyed out with no unit on the Field
+source: designer 2026-11-08 (play-test); Core Rules 5.2, 5.6, 8.7; question I9
+map: M1
+given: Company V1, every sector Dark (no unit on the Field). Enough Command tokens.
+when: list legal actions
+then: Use a Bay offers only Bay 3 (it chooses a sector). Bays 1 and 2 are greyed out and cannot
+      be used. "Deal 1 damage to all units" is greyed out; no Order is offered.
+when: Company V2 instead, same Field
+then: only Bay 3 is offered; Bays 1, 2 and 4 are greyed out (Bay 5 is [Overload]; during an
+      Overload it is greyed out too). The [Overload] Orders that target units are greyed out
+      during an Overload; "Take an Anomaly card" never is.
+note: Flares and Wrecks do not count as units here (effects cannot choose them, 3.2).
+      Greyed out = cannot be used; the pop-up says "No unit on the Field". Units on the Field
+      but none that fits (e.g. no Level 3 unit for V2 Bay 1): still usable, see I9.
 
 ################################################################################
 === SECTION: WEAPON AND AURA LOOKS (screen only) ===

@@ -10,6 +10,9 @@ import { chooseSector, chooseUnit } from "./helpers.js";
 import { registerAbility } from "./registry.js";
 
 /** Deal `n` damage to every unit matching `filter`: one hit each; Flares and Wrecks skipped (6.1, 4.6, 4.8). Units counted when it starts (E4). */
+/** Targets units: not usable with no unit on the Field (designer 2026-11-08, round 7). */
+const UNITS = { targetsUnits: true };
+
 function* damageAll(c: RunCtx, n: number, rule: string, filter: (u: TileId) => boolean = () => true) {
   const targets = choosableUnits(c, filter);
   for (const u of targets) yield* dealHit(c, u, n, rule);
@@ -21,7 +24,7 @@ registerAbility("C1_ORDER_1", function* (c) {
   if (m === undefined) return;
   const to = yield* chooseSector(c, "Teleport it to which Dark sector?", "C1_ORDER_1", sectorKeys(c.state).filter((k) => isOpenSector(c, k)));
   if (to !== undefined) teleport(c, m, to, "C1_ORDER_1");
-});
+}, UNITS);
 
 // C1_ORDER_2 - [Overload] Swap a Mecha with another unit.
 registerAbility("C1_ORDER_2", function* (c) {
@@ -29,19 +32,19 @@ registerAbility("C1_ORDER_2", function* (c) {
   if (m === undefined) return;
   const o = yield* chooseUnit(c, "Swap it with which unit?", "C1_ORDER_2", (u) => u !== m);
   if (o !== undefined) swap(c, m, o, "C1_ORDER_2");
-});
+}, UNITS);
 
 // C1_M1 and C1_M4Y - 4 Command tokens: Deal 1 damage to all units.
-for (const id of ["C1_M1_ORDER", "C1_M4Y_ORDER"]) registerAbility(id, (c) => damageAll(c, 1, id));
+for (const id of ["C1_M1_ORDER", "C1_M4Y_ORDER"]) registerAbility(id, (c) => damageAll(c, 1, id), UNITS);
 
 // C1_M2Y - 2 Command tokens: Destroy one Level 2 Bot.
 registerAbility("C1_M2Y_ORDER", function* (c) {
   const u = yield* chooseUnit(c, "Destroy which Level 2 Bot?", "C1_M2Y_ORDER", (x) => unitType(c, x) === "Bot" && level(c, x) === 2);
   if (u !== undefined) destroy(c, u, "C1_M2Y_ORDER");
-});
+}, UNITS);
 
 // C1_M3 - 2 Command tokens: Deal 2 damage to all Gyros.
-registerAbility("C1_M3_ORDER", (c) => damageAll(c, 2, "C1_M3_ORDER", (u) => unitType(c, u) === "Gyro"));
+registerAbility("C1_M3_ORDER", (c) => damageAll(c, 2, "C1_M3_ORDER", (u) => unitType(c, u) === "Gyro"), UNITS);
 
 // C1_M4X - [Overload] 1 Command token: Swap two units.
 registerAbility("C1_M4X_ORDER", function* (c) {
@@ -49,7 +52,7 @@ registerAbility("C1_M4X_ORDER", function* (c) {
   if (a === undefined) return;
   const b = yield* chooseUnit(c, "Swap it with which unit?", "C1_M4X_ORDER", (u) => u !== a);
   if (b !== undefined) swap(c, a, b, "C1_M4X_ORDER");
-});
+}, UNITS);
 
 // C1_M5 - 2 Command tokens: Take an Anomaly card.
 registerAbility("C1_M5_ORDER", function* (c) {
@@ -75,7 +78,7 @@ registerAbility("C1_M6_ORDER", function* (c) {
   const row = rows.find((r) => String(r.value) === a.value)!;
   const inRow = new Set(row.sectors.map(key));
   yield* damageAll(c, 1, "C1_M6_ORDER", (u) => inRow.has(sectorOf(c.state, u)!) && tile(c.state, u).tokens.damage > 0);
-});
+}, UNITS);
 
 // C1_M7 - 4 Command tokens: Place a Tick on every unit adjacent to one Gamma unit.
 registerAbility("C1_M7_ORDER", function* (c) {
@@ -86,7 +89,7 @@ registerAbility("C1_M7_ORDER", function* (c) {
     .map((n) => unitAt(c.state, key(n)))
     .filter((u): u is TileId => u !== undefined && choosableUnits(c).includes(u));
   for (const u of around) placeFuse(c, u, "tick", "C1_M7_ORDER");
-});
+}, UNITS);
 
 // ---------------------------------------------------------------------------
 // Requisitions (Company sheets; Core Rules 10.2): one-time effects when fully filled.

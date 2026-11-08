@@ -8,7 +8,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
 import { alertedUnits } from "../engine/alerts.js";
-import { bayAbilities, orders } from "../engine/command.js";
+import { bayAbilities, noUnitToTarget, orders } from "../engine/command.js";
 import { describe, sectorKeys, sectorOf, strength, tile, unitDef } from "../engine/field.js";
 import { moduleCost, moduleDef, xWouldBeZero } from "../engine/modules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
@@ -852,6 +852,8 @@ function GameScreen(p: GameProps) {
   };
 
   // Bays and Orders as buttons (designer 2026-11-08): see Flagship.tsx.
+  // Those that target units are greyed out while no unit is on the Field (designer 2026-11-08, round 7).
+  const inPlay = s.phase === "command" || s.phase === "overload";
   const abilities = bayAbilities(c);
   const bayViews: BayView[] = co.bays.map((b, i) => {
     const bucket = `bay${i + 1}`;
@@ -860,13 +862,13 @@ function GameScreen(p: GameProps) {
       n: i + 1,
       cur: s.flagship[i]!,
       max: b.integrity,
-      abilities: abilities.filter((a) => a.bay === i + 1).map((a) => ({ id: a.id, text: a.text, opt: actors?.bays.get(a.id) })),
+      abilities: abilities.filter((a) => a.bay === i + 1).map((a) => ({ id: a.id, text: a.text, opt: actors?.bays.get(a.id), noUnits: inPlay && a.overload === inOverload && noUnitToTarget(c, a.id) })),
       split: inSplit ? { count: split[bucket] ?? 0, onAdd: () => addSplit(bucket), onSub: () => subSplit(bucket) } : undefined,
       dim: baysWanted && !inSplit,
     };
   });
   const orderViews: OrderView[] = s.mission
-    ? orders(c).map((o) => ({ id: o.id, tokens: o.tokens, text: `${o.overloadOnly ? "[Overload] " : ""}${o.effect}`, word: orderWord(o.effect), opt: actors?.orders.get(o.id) }))
+    ? orders(c).map((o) => ({ id: o.id, tokens: o.tokens, text: `${o.overloadOnly ? "[Overload] " : ""}${o.effect}`, word: orderWord(o.effect), opt: actors?.orders.get(o.id), noUnits: inPlay && o.overloadOnly === inOverload && noUnitToTarget(c, o.id) }))
     : [];
   const flagshipExtras = (
     <>

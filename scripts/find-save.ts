@@ -14,6 +14,7 @@ import { randomAnswer } from "../tests/unit/campaignFuzz.js";
 import { m01Targets, mechaDragPlan } from "../src/web/drag.js";
 import type { Game } from "../src/engine/save.js";
 import { planInfo } from "../src/web/modulePlan.js";
+import { noUnitToTarget } from "../src/engine/command.js";
 
 const data = loadGameData();
 /** A Mecha that can be dragged both to a move target and to an Attack target. */
@@ -58,6 +59,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   take: (q) => q.takeEnergy !== undefined,
   // Overload End step 3: claim a met Anomaly card.
   anomaly: (q) => q.kind === "option" && q.options.some((o) => o.on?.kind === "anomaly"),
+  // The action menu with no unit on the Field: Bays and Orders that target units are greyed out (designer 2026-11-08).
+  nounits: (q, g) => g.view.state.phase === "command" && /^Choose an action/.test(q.prompt) && noUnitToTarget({ data, state: g.view.state }, "V1_BAY1"),
   // Bay 3 (look at the top tiles of a Dark sector) on the action menu.
   bay3: (q) => (q.shortcuts ?? []).some((o) => o.on?.kind === "bay" && /BAY3$/.test(o.on.ability)),
   // Energy on Modules with pop-ups (designer 2026-11-07).

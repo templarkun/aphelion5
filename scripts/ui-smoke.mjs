@@ -73,6 +73,8 @@ await setup(page);
 await untilAction(page);
 const noMenu = (await panel.locator(".choices button").count()) === 0;
 await page.screenshot({ path: `${out}/ui-command.png` });
+// The Allied Drop's Mecha is on the Field: nothing greyed out for want of a unit.
+const greyAtStart = await page.locator(".no-units").count();
 // A Dark sector opens a pop-up with Reveal; clicking outside closes it.
 const dark = JSON.parse((await page.locator(".field").getAttribute("data-choosable")) ?? "[]");
 await clickField(page, dark.length - 1);
@@ -542,7 +544,24 @@ if (existsSync(`${out}/fill-save.json`)) {
   fillCheck = pops >= 2 && asButton === 0 && after !== before ? "ok" : `failed (pop-ups ${pops}, Modules as buttons ${asButton}, prompt "${after}")`;
   await pg.close();
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck }));
+// No unit on the Field (designer 2026-11-08): Bays and Orders that target units are greyed out and cannot be
+// used (V1 Bays 1-2, V2 Bays 1, 2, 4); Bay 3 (a sector) is not; the pop-up says why.
+let greyCheck = "skipped (no save)";
+if (existsSync(`${out}/nounits-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/nounits-save.json`);
+  const greyBays = (await pg.locator(".bay-thing.no-units .bay-btn").evaluateAll((els) => els.map((e) => e.getAttribute("data-bay")))).join(",");
+  const greyCan = await pg.locator(".no-units .can").count();
+  const greyOrders = await pg.locator(".order-thing.no-units").count();
+  await pg.locator(".bay-btn").first().click();
+  await pg.waitForTimeout(400);
+  const why = (await pg.locator(".thing-pop .bubble.info small").allTextContents()).join("|");
+  await pg.screenshot({ path: `${out}/ui-no-units.png` });
+  greyCheck = greyAtStart === 0 && ["1,2", "1,2,4"].includes(greyBays) && greyCan === 0 && greyOrders >= 1 && why.includes("No unit on the Field") ? "ok" : `failed (at start ${greyAtStart}, grey Bays ${greyBays}, lit ${greyCan}, grey Orders ${greyOrders}, pop-up "${why}")`;
+  await pg.close();
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

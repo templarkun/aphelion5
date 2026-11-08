@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { commandStep, legalActions, usableBayAbilities } from "../../src/engine/command.js";
+import { commandStep, legalActions, noUnitToTarget, usableBayAbilities, usableOrders } from "../../src/engine/command.js";
 import { runEffect } from "../../src/engine/effect.js";
 import { tile } from "../../src/engine/field.js";
 import { commandOptions } from "../../src/engine/mecha.js";
@@ -52,6 +52,24 @@ describe("batch 3 - TAKING ACTIONS (8.1)", () => {
 
   it("T3_ACT_04 a Bay at 0 Integrity cannot be used", () => {
     expect(usableBayAbilities(ctx(given("T3_ACT_04"))).map((b) => b.bay)).toEqual([2, 3]);
+  });
+
+  it("T13_BAY_01 Bays and Orders that target units are greyed out with no unit on the Field", () => {
+    // Every tile face down: only Dark sectors, no unit (designer 2026-11-08).
+    const dark = (s: GameState) => {
+      for (const t of Object.values(s.tiles)) t.faceUp = false;
+      return s;
+    };
+    const v1 = withModules(given("T3_ACT_01"), [[1, true]]);
+    expect(usableOrders(ctx(v1)).length).toBeGreaterThan(0);
+    const d1 = dark(v1);
+    expect(usableBayAbilities(ctx(d1)).map((b) => b.id)).toEqual(["V1_BAY3"]);
+    expect(noUnitToTarget(ctx(d1), "V1_BAY1")).toBe(true);
+    expect(legal(d1)).not.toContain("issueOrder");
+    const d2 = dark(given("T3_ACT_03"));
+    expect(usableBayAbilities(ctx(d2)).map((b) => b.id)).toEqual(["V2_BAY3"]);
+    expect(noUnitToTarget(ctx(d2), "C1_ORDER_1")).toBe(true); // [Overload] Teleport a Mecha
+    expect(noUnitToTarget(ctx(d2), "C1_M5_ORDER")).toBe(false); // Take an Anomaly card: no unit needed
   });
 
   it("T3_ACT_05 an action that would do nothing is still legal", () => {

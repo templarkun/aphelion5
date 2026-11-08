@@ -7,11 +7,11 @@
  */
 
 import "../effects/index.js";
-import { ability, unitEffect } from "../effects/registry.js";
+import { ability, targetsUnits, unitEffect } from "../effects/registry.js";
 import { ENERGY_COLOURS } from "../data/units.js";
 import { type Effect, type RunCtx, ask, asEffect, log, registerRoot } from "./effect.js";
 import { alertShortcuts, alertedUnits, chooseAlert, discardUnit, resolveAlert, splitAlertId } from "./alerts.js";
-import { type Ctx, adjacentUnits, canBeChosen, darkSectors, describe, isWreck, sectorKeys, sectorOf, sectorState, tile, unitDef, unitType, units } from "./field.js";
+import { type Ctx, adjacentUnits, canBeChosen, choosableUnits, darkSectors, describe, isWreck, sectorKeys, sectorOf, sectorState, tile, unitDef, unitType, units } from "./field.js";
 import { commandMecha, commandOptions } from "./mecha.js";
 import { canRunModule, moduleDef, runModule } from "./modules.js";
 import { putAtBottom, reveal } from "./moves.js";
@@ -50,10 +50,18 @@ export function bayAbilities(c: Ctx): BayAbility[] {
   return out;
 }
 
-/** Bay abilities you can use now: Bay at 1+ Integrity, timing tag matches the phase. */
+/**
+ * A Bay ability or Order that targets units, with no unit on the Field it could choose (Flares and
+ * Wrecks never count, 3.2): it cannot be used and is greyed out (designer 2026-11-08, round 7).
+ */
+export function noUnitToTarget(c: Ctx, id: string): boolean {
+  return targetsUnits(id) && choosableUnits(c).length === 0;
+}
+
+/** Bay abilities you can use now: Bay at 1+ Integrity, timing tag matches the phase, a unit to target if it targets units. */
 export function usableBayAbilities(c: Ctx): BayAbility[] {
   const inOverload = c.state.phase === "overload";
-  return bayAbilities(c).filter((a) => c.state.flagship[a.bay - 1]! >= 1 && a.overload === inOverload);
+  return bayAbilities(c).filter((a) => c.state.flagship[a.bay - 1]! >= 1 && a.overload === inOverload && !noUnitToTarget(c, a.id));
 }
 
 /** Use a Bay (8.7): deal 1 damage to that Bay, then resolve the ability. */
@@ -85,7 +93,7 @@ export function orders(c: Ctx): OrderOption[] {
 
 export function usableOrders(c: Ctx): OrderOption[] {
   const inOverload = c.state.phase === "overload";
-  return orders(c).filter((o) => o.overloadOnly === inOverload && c.state.player.commandTokens >= o.tokens);
+  return orders(c).filter((o) => o.overloadOnly === inOverload && c.state.player.commandTokens >= o.tokens && !noUnitToTarget(c, o.id));
 }
 
 export function* issueOrder(c: RunCtx, o: OrderOption): Effect {
