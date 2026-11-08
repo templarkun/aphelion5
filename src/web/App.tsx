@@ -17,7 +17,8 @@ import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, st
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
 import { FieldView } from "./FieldView.js";
-import { type DragKind, mechaDragPlan } from "./drag.js";
+import { type DragKind, mechaDragPlan, m03TapTargets } from "./drag.js";
+import { newEvents } from "../engine/events.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -392,7 +393,22 @@ function GameScreen(p: GameProps) {
     !ahead.game.view.question.facing &&
     ahead.game.view.state.hiddenInfo === real.state.hiddenInfo;
   const v = aheadOk ? ahead.game.view : real;
-  const send = (a: Answer) => p.onAnswer(aheadOk && faceAnswer ? [faceAnswer, a] : [a]);
+  // Overclock (H6, designer 2026-11-08): a toggle above the Modules, pressed before running one.
+  const [overclockOn, setOverclock] = useState(false);
+  const send = (a: Answer) => {
+    if (!(a.kind === "option" && String(a.value).startsWith("module:"))) setOverclock(false);
+    p.onAnswer(aheadOk && faceAnswer ? [faceAnswer, a] : [a]);
+  };
+  // The Overclock question is answered by the toggle, never shown.
+  const ocQ = realQ?.kind === "yesno" && realQ.rule === "H6" && /^Overclock /.test(realQ.prompt) ? realQ : undefined;
+  useEffect(() => {
+    if (!ocQ) return;
+    const yes = overclockOn;
+    setOverclock(false);
+    p.onAnswer([{ kind: "yesno", value: yes }]);
+  }, [ocQ]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [menuOpen, setMenuOpen] = useState(false);
+  const wayAnswers = useRef(new Map<string, Answer[]>());
   const rotate = faceQ
     ? {
         tile: faceQ.facing!.tile,
@@ -429,9 +445,27 @@ function GameScreen(p: GameProps) {
   const pointer = useRef({ x: 0, y: 0 });
 
   const actors = actorsOf(q);
+  // Heat Wave (H5) sits in each Bot's pop-up (designer 2026-11-08): the action and its Bot in one tap.
+  const heatWaveOpt = actors?.game.get("heatWave");
+  const heatWaveBots = useMemo(() => {
+    const out = new Map<string, Answer[]>();
+    if (!heatWaveOpt || v !== game.view) return out;
+    const first: Answer = { kind: "option", value: heatWaveOpt.id };
+    const r = playAnswer(data, game, first);
+    if (r.result.status === "illegal" || r.result.status === "blocked") return out;
+    const nv = r.game.view;
+    if (nv.status === "question" && nv.question.kind === "units") for (const u of nv.question.options) out.set(u, [first, { kind: "units", value: [u] }]);
+    else for (const e of newEvents(s.events, nv.state.events)) if (e.kind === "hit") out.set(e.tile, [first]);
+    return out;
+  }, [data, game, v, heatWaveOpt]); // eslint-disable-line react-hooks/exhaustive-deps
   const answer = (id: string) => {
     setPopup(undefined);
     setConfirm(undefined);
+    if (id.startsWith("way:")) return p.onAnswer(wayAnswers.current.get(id) ?? []);
+    if (id.startsWith("heatwave:")) {
+      setOverclock(false);
+      return p.onAnswer(heatWaveBots.get(id.slice("heatwave:".length)) ?? []);
+    }
     send({ kind: "option", value: id });
   };
   const inOverload = s.phase === "overload";
@@ -445,15 +479,22 @@ function GameScreen(p: GameProps) {
       const k = o.on?.kind === "unit" ? o.on.id : o.on?.kind === "sector" ? o.on.key : undefined;
       if (k !== undefined) onField.set(k, [...(onField.get(k) ?? []), o]);
     }
+  // M_03's Attack (designer 2026-11-08): every reachable target is red; one with several ways in asks where to move.
+  const m03 = useMemo(() => (q?.kind === "option" && /Attacks/.test(q.prompt) && v === game.view ? m03TapTargets(data, game) : []), [data, game, v, q]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (m03.length) onField.clear();
   // A row question: click a sector of a row, then confirm the row in a pop-up.
   const rowQ = !actors && q?.kind === "option" && q.rows ? q : undefined;
   const [rowSel, setRowSel] = usePerQuestion<number | undefined>(q, undefined);
   const rowSectors = rowQ ? [...new Set(rowQ.rows!.flat())] : [];
   const onFieldUnits = [...onField.keys()].filter((k) => s.tiles[k] !== undefined);
+  for (const t of m03) {
+    const u = s.field[t.sector]?.[s.field[t.sector]!.length - 1];
+    if (u) onFieldUnits.push(u);
+  }
   const onFieldSectors = [...onField.keys()].filter((k) => s.field[k] !== undefined);
   const splitOn = q?.kind === "split" ? q.pick : undefined;
   const choosable = actors
-    ? { sectors: [...actors.sectors.keys()], units: [...actors.units.keys()] }
+    ? { sectors: [...actors.sectors.keys()], units: [...new Set([...actors.units.keys(), ...heatWaveBots.keys()])] }
     : {
         sectors: q?.kind === "sectors" ? q.options : [],
         units: q?.kind === "units" ? q.options : q?.kind === "split" && splitOn === "units" ? q.buckets.map((b) => b.id) : [...pickIds, ...onFieldUnits],
@@ -467,7 +508,8 @@ function GameScreen(p: GameProps) {
     const at = (id: string) => (s.tiles[id] ? sectorOf(s, id) : id);
     if (q.kind === "units" && /\bAttacks?\b/.test(p0)) for (const u of q.options) tones[at(u) ?? u] = "attack";
     if (q.kind === "sectors" && /\b(move|moves|Move|teleport|Teleport|jump|Jump)\b/.test(p0)) for (const k of q.options) tones[k] = "move";
-    if ((q.kind === "option" || q.kind === "order") && /\bAttacks?\b/.test(p0))
+    for (const t of m03) tones[t.sector] = "attack";
+    if (!m03.length && (q.kind === "option" || q.kind === "order") && /\bAttacks?\b/.test(p0))
       for (const o of q.options) {
         const k = o.on?.kind === "unit" ? at(o.on.id) : o.on?.kind === "sector" ? o.on.key : undefined;
         if (k) tones[k] = o.id.startsWith("attack:") ? "attack" : "move";
@@ -499,7 +541,8 @@ function GameScreen(p: GameProps) {
     if (!field || !h) return pointer.current;
     const r = field.getBoundingClientRect();
     const tileH = Number(field.dataset.tile ?? 0);
-    return { x: r.left + h.x, y: r.top + h.y - tileH / 4 };
+    // Designer 2026-11-08: centred on the pointy top end of the hexagon.
+    return { x: r.left + h.x, y: r.top + h.y - tileH / 2 };
   };
   /** The clickable unit or sector under a screen point, if any (a tap that closes a pop-up opens the next). */
   const choosableAt = (x: number, y: number): string | undefined => {
@@ -516,9 +559,13 @@ function GameScreen(p: GameProps) {
     return best?.id;
   };
   const openPopup = (title: string, options: Option[], note?: string, at?: string) => setPopup({ ...(at ? centreOf(at) : pointer.current), title, options, note, at });
+  /** Bubble width (designer 2026-11-08): at least 120 px, and at least 2/3 of a tile's width on big screens. */
+  const tileH = Number(document.querySelector<HTMLElement>(".field")?.dataset.tile ?? 0);
+  const bubbleW = Math.max(120, Math.round(tileH * 0.866 * (2 / 3)));
   const pick = (id: string) => {
     if (actors) {
-      const unitOpts = actors.units.get(id);
+      const hw = heatWaveBots.get(id) ? [{ id: `heatwave:${id}`, label: "Heat Wave: pay 1 Heat, 1 damage to this Bot (H5)" }] : [];
+      const unitOpts = actors.units.get(id) || hw.length ? [...(actors.units.get(id) ?? []), ...hw] : undefined;
       if (unitOpts) {
         const alerts = alertedUnits(c);
         const last = inOverload && alerts.length === 1 && alerts[0] === id;
@@ -529,6 +576,14 @@ function GameScreen(p: GameProps) {
       return;
     }
     if (!q) return;
+    const m3 = m03.find((t) => t.sector === (s.tiles[id] ? sectorOf(s, id) : id));
+    if (m3) {
+      if (!m3.next) return p.onAnswer(m3.answers);
+      const ways = m3.next()?.targets ?? [];
+      const pickWay = new Map(ways.map((w) => [`way:${w.sector}`, w.answers]));
+      wayAnswers.current = pickWay;
+      return openPopup(`${describe(c, id)}: move where first?`, ways.map((w) => ({ id: `way:${w.sector}`, label: `Move to (${w.sector}), then Attack` })), undefined, id);
+    }
     if (rowQ && rowSectors.includes(id)) {
       // The rows through this sector: the first is selected; "Next row" steps through the others.
       const through = rowQ.rows!.flatMap((r, i) => (r.includes(id) ? [i] : []));
@@ -600,45 +655,45 @@ function GameScreen(p: GameProps) {
     concede &&
     setConfirm({ title: "Concede?", text: "The game ends at once and counts as a loss (10.3).", yes: "Concede", danger: true, onYes: () => answer(concede.id) });
   const endOverload = actors?.game.get("endOverload");
-  const heatWave = actors?.game.get("heatWave");
 
   return (
     <div
       className={`game ${inOverload ? "is-overload" : ""}`}
+      data-prompt={q ? q.prompt : ""}
       onPointerDownCapture={(e) => {
         pointer.current = { x: e.clientX, y: e.clientY };
       }}
     >
       <header className="bar">
-        <strong>{s.mission}</strong>
-        <span className="phase">{PHASE[s.phase]}</span>
-        <span>{objectiveText(c)}</span>
-        <span>Threat: {s.run.threat.join(", ") || "—"}</span>
-        <span>Command tokens {s.player.commandTokens}</span>
-        {s.settings.heatModule && <span>Heat {s.player.heat}</span>}
-        {heatWave && (
-          <button className="can" onClick={() => answer(heatWave.id)} title="H5">
-            Heat Wave
-          </button>
-        )}
-        {endOverload && (
-          <button className="primary can" onClick={() => answer(endOverload.id)} title="No Alert tokens remain (9.2)">
-            End the Overload
-          </button>
-        )}
+        <strong className="bar-title">{s.mission || "Aphelion 5"}</strong>
         <span className="spacer" />
         <button onClick={p.onUndo} disabled={!p.canUndo()} title="Take back your last answer (not past new hidden information)">
           Undo
         </button>
-        <button onClick={() => setShowLog((x) => !x)}>Log</button>
-        <button onClick={p.onExport} title="Save the game and your Company sheets as text or a file">
-          Export save
-        </button>
-        <button onClick={p.onExportLog}>Export log</button>
-        <button className="danger" onClick={askConcede} disabled={!concede} title={concede ? "Concede the game (10.3)" : "You can concede when it is your turn to act"}>
-          Concede
-        </button>
-        <button onClick={p.onLeave}>Menu</button>
+        <div className="menu-wrap">
+          <button onClick={() => setMenuOpen((x) => !x)} aria-expanded={menuOpen}>
+            Menu
+          </button>
+          {menuOpen && (
+            <div className="menu panel" role="menu" onClick={() => setMenuOpen(false)}>
+              <p className="small">
+                {s.mission} · {PHASE[s.phase]}
+                <br />
+                Threat: {s.run.threat.join(", ") || "—"} · Command tokens {s.player.commandTokens}
+                {s.settings.heatModule ? ` · Heat ${s.player.heat}` : ""}
+              </p>
+              <button onClick={() => setShowLog((x) => !x)}>{showLog ? "Hide the log" : "Log"}</button>
+              <button onClick={p.onExport} title="Save the game and your Company sheets as text or a file">
+                Export save
+              </button>
+              <button onClick={p.onExportLog}>Export log</button>
+              <button className="danger" onClick={askConcede} disabled={!concede} title={concede ? "Concede the game (10.3)" : "You can concede when it is your turn to act"}>
+                Concede
+              </button>
+              <button onClick={p.onLeave}>Leave to the start screen</button>
+            </div>
+          )}
+        </div>
       </header>
 
       <aside className="left panel">
@@ -701,7 +756,7 @@ function GameScreen(p: GameProps) {
             {id}: {data.anomalies.byId.get(id)!.text}
           </p>
         ))}
-        <h3>Orders</h3>
+        <h3>Orders · {s.player.commandTokens} Command token{s.player.commandTokens === 1 ? "" : "s"}</h3>
         {s.mission &&
           orders(c).map((o) => {
             const sc = actors?.orders.get(o.id);
@@ -738,11 +793,53 @@ function GameScreen(p: GameProps) {
         ) : (
           <div className="empty-field">{PHASE[s.phase]}</div>
         )}
-        <div className="hover">{note ? <span className={`field-note ${note.warn ? "warn" : ""}`}>{note.text}</span> : hover ? <HoverInfo data={data} state={s} sector={hover} /> : <span className="small">Point at a sector to see its stack and card text.</span>}</div>
+        {hover && !popup && hasField && <InfoBubble data={data} state={s} sector={hover} />}
+        {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
+        {endOverload && (
+          <button className="end-overload" onClick={() => answer(endOverload.id)} title="No Alert tokens remain (9.2)">
+            End the Overload
+          </button>
+        )}
+        {ocQ ? null : rotate ? (
+          <div className="q-banner">
+            <p className="prompt">
+              {describe({ data, state: real.state }, rotate.tile)}: turn it with the ⟲ ⟳ buttons on the unit. <span className="rule">rule 3.7</span>
+            </p>
+            {rotate.done ? (
+              <button className="primary" onClick={rotate.done}>
+                Done
+              </button>
+            ) : (
+              <span className="small">Your next tap keeps this facing.</span>
+            )}
+          </div>
+        ) : !q ? (
+          <QCard>
+            <GameOver state={s} onLeave={p.onLeave} />
+          </QCard>
+        ) : actors ? null : onBoard(q) ? (
+          <div className="q-banner">
+            <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
+          </div>
+        ) : (
+          <QCard>
+            <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
+          </QCard>
+        )}
       </section>
 
       <aside className="right panel">
         <h3>Modules</h3>
+        {s.settings.heatModule && (
+          <div className="overclock-bar">
+            <button className={`overclock ${overclockOn ? "on" : ""}`} aria-pressed={overclockOn} onClick={() => setOverclock((x) => !x)} title="H6: press, then run a Module">
+              Overclock: pay 2 more energy to gain 1 Heat
+            </button>
+            <span className="heat-count" data-heat>
+              Heat {s.player.heat}
+            </span>
+          </div>
+        )}
         {sortedModules(c, s.player.modules).map((m) => {
           const d = moduleDef(c, m.id);
           const e = (["Yellow", "Red", "Blue"] as const).filter((k) => m.energy[k] > 0).map((k) => `${m.energy[k]} ${k}`);
@@ -761,48 +858,30 @@ function GameScreen(p: GameProps) {
             </Tag>
           );
         })}
-        <h3>Trophy pile</h3>
-        <p className="small">
-          {Object.entries(
-            s.piles.trophy.reduce<Record<string, number>>((acc, t) => ((acc[s.tiles[t]!.unitId!] = (acc[s.tiles[t]!.unitId!] ?? 0) + 1), acc), {}),
-          )
-            .map(([u, n]) => `${n} ${u}`)
-            .join(", ") || "empty"}
-        </p>
+        <section className="trophy-box">
+          <p className="phase-line">
+            <b className={inOverload ? "warn" : "phase"}>{PHASE[s.phase]}</b> · {s.mission}
+          </p>
+          <p className="small">{objectiveText(c)}</p>
+          <h3>Trophy pile</h3>
+          <p className="small">
+            {Object.entries(
+              s.piles.trophy.reduce<Record<string, number>>((acc, t) => ((acc[s.tiles[t]!.unitId!] = (acc[s.tiles[t]!.unitId!] ?? 0) + 1), acc), {}),
+            )
+              .map(([u, n]) => `${n} ${u}`)
+              .join(", ") || "empty"}
+          </p>
+        </section>
       </aside>
 
-      <section className="question panel" aria-live="polite">
-        {p.notice && <p className="notice">{p.notice}</p>}
-        {rotate && (
-          <div className="facing-note">
-            <p className="prompt">
-              {describe({ data, state: real.state }, rotate.tile)}: turn it with the ⟲ ⟳ buttons on the unit. <span className="rule">rule 3.7</span>
-            </p>
-            {rotate.done ? (
-              <button className="primary" onClick={rotate.done}>
-                Done
-              </button>
-            ) : (
-              <p className="small">Your next click keeps this facing.</p>
-            )}
-          </div>
-        )}
-        {rotate?.done ? null : q ? (
-          actors ? (
-            <ActionPrompt state={s} q={q} actors={actors} />
-          ) : (
-            <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
-          )
-        ) : (
-          <GameOver state={s} onLeave={p.onLeave} />
-        )}
-      </section>
+
 
       {energyQ && <EnergyPopups q={energyQ} onPick={(id) => send({ kind: "option", value: id })} />}
       {popup && (
         <PopupMenu
           key={`${popup.at ?? ""}:${popup.title}`}
           popup={popup}
+          bubbleW={bubbleW}
           onPick={answer}
           onClose={() => {
             setPopup(undefined);
@@ -940,34 +1019,6 @@ function SplitCount({ n, onMinus }: { n: number; onMinus: () => void }) {
   );
 }
 
-/** What to do when the action menu is the question: the things themselves are the menu. */
-function ActionPrompt({ state, q, actors }: { state: GameState; q: Question; actors: Actors }) {
-  const alerts = actors.units.size > 0 && [...actors.units.values()].some((os) => os.some((o) => o.id.startsWith("alert:")));
-  const where: string[] = [];
-  if (actors.units.size) where.push("a unit");
-  if (actors.sectors.size) where.push("a Dark sector");
-  if (actors.modules.size) where.push("a Module");
-  if (actors.bays.size) where.push("a Bay");
-  if (actors.orders.size) where.push("an Order");
-  const lead =
-    state.phase === "overload"
-      ? alerts
-        ? "Overload: resolve the Alerts (click an alerted unit), or take another Overload action."
-        : "Overload: no Alerts remain. End the Overload, or take more Overload actions first."
-      : state.flagship.every((x) => x === 0)
-        ? "Your Flagship is Crippled: you must Overhaul."
-        : alerts
-          ? "Alerts first: click an alerted unit to resolve its Alert (or Overhaul)."
-          : "Your action.";
-  return (
-    <div>
-      <p className="prompt">
-        {lead} <span className="rule">rule {q.rule}</span>
-      </p>
-      {where.length > 0 && <p className="small">Click a highlighted thing: {where.join(", ")}.</p>}
-    </div>
-  );
-}
 
 /** A long label "Name: what it does" shows the name in bold and the rest smaller, cut to fit. */
 function BubbleLabel({ text }: { text: string }) {
@@ -988,7 +1039,7 @@ function BubbleLabel({ text }: { text: string }) {
  * shows on hover and is read out). Bubbles spring in (ease-out elastic) and
  * shrink away when one is chosen or the pop-up is closed.
  */
-function PopupMenu({ popup, onPick, onClose, tapThrough }: { popup: Popup; onPick: (id: string) => void; onClose: () => void; tapThrough: (x: number, y: number) => boolean }) {
+function PopupMenu({ popup, onPick, onClose, tapThrough, bubbleW }: { popup: Popup; onPick: (id: string) => void; onClose: () => void; tapThrough: (x: number, y: number) => boolean; bubbleW: number }) {
   const box = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: popup.x, top: popup.y });
   const [leaving, setLeaving] = useState(false);
@@ -1014,7 +1065,7 @@ function PopupMenu({ popup, onPick, onClose, tapThrough }: { popup: Popup; onPic
   const items = [...popup.options.map((o) => ({ id: o.id, label: o.label, go: () => leave(() => onPick(o.id)), main: popup.commit })), ...(popup.next ? [{ id: "next", label: popup.next.label, go: popup.next.go, main: false }] : [])];
   return (
     <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && !leaving && !tapThrough(e.clientX, e.clientY) && leave(onClose)}>
-      <div ref={box} className={`popup bubbles ${leaving ? "leaving" : ""}`} role="menu" aria-label={popup.title} style={pos}>
+      <div ref={box} className={`popup bubbles ${leaving ? "leaving" : ""}`} role="menu" aria-label={popup.title} style={{ ...pos, ["--bw" as string]: `${bubbleW}px`, ["--bs" as string]: String(bubbleW / 120) }}>
         <div className="popup-title">{popup.title}</div>
         <div className="bubble-row">
           {items.map((o, i) => (
@@ -1042,6 +1093,59 @@ function ConfirmBox({ confirm, onClose }: { confirm: Confirm; onClose: () => voi
           <button onClick={onClose}>Cancel</button>
         </div>
       </section>
+    </div>
+  );
+}
+
+/** Questions answered by tapping the board show a slim banner on the Field; the rest a card. */
+function onBoard(q: Question): boolean {
+  if (q.kind === "units" || q.kind === "sectors") return true;
+  if (q.kind === "split") return q.pick !== undefined;
+  if (q.kind === "option" || q.kind === "order") return q.pick !== undefined || q.rows !== undefined || q.energy !== undefined || q.options.some((o) => o.on);
+  return false;
+}
+
+/**
+ * A question card over the Field (designer 2026-11-08). While you press anywhere
+ * outside it, it turns almost transparent, so the board under it can be seen.
+ */
+function QCard({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [peek, setPeek] = useState(false);
+  useEffect(() => {
+    const down = (e: PointerEvent) => {
+      if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) setPeek(true);
+    };
+    const up = () => setPeek(false);
+    window.addEventListener("pointerdown", down);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, []);
+  return (
+    <div ref={ref} className={`q-card ${peek ? "peek" : ""}`} aria-live="polite">
+      {children}
+    </div>
+  );
+}
+
+/** The card text of a sector, as a bubble over the Field that nothing else moves for (designer 2026-11-08). */
+function InfoBubble({ data, state, sector }: { data: GameData; state: GameState; sector: string }) {
+  const field = document.querySelector<HTMLElement>(".field");
+  const centres: Record<string, [number, number]> = JSON.parse(field?.dataset.sectors ?? "{}");
+  const at = centres[sector];
+  const tileH = Number(field?.dataset.tile ?? 80);
+  const w = field?.clientWidth ?? 400;
+  if (!at) return null;
+  const above = at[1] - tileH / 2 > 90;
+  const style = { left: Math.max(8, Math.min(at[0] - 140, w - 288)), top: above ? at[1] - tileH / 2 - 6 : at[1] + tileH / 2 + 6 };
+  return (
+    <div className={`info-bubble ${above ? "above" : "below"}`} style={style}>
+      <HoverInfo data={data} state={state} sector={sector} />
     </div>
   );
 }

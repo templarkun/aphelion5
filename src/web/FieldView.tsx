@@ -130,8 +130,10 @@ export function FieldView(p: FieldProps) {
   const geo = useRef({ size: 40 });
   const lastState = useRef<GameState | undefined>(undefined);
   const drag = useRef<DragState | undefined>(undefined);
-  const press = useRef<{ unit: TileId; x: number; y: number; touch: boolean } | undefined>(undefined);
-  const suppressTap = useRef(false);
+  const press = useRef<{ k: string | undefined; unit: TileId | undefined; x: number; y: number; touch: boolean; held: boolean } | undefined>(undefined);
+  const holdTimer = useRef<number | undefined>(undefined);
+  const hovered = useRef<string | undefined>(undefined);
+  const drawn = useRef<{ state: GameState | undefined; sig: string }>({ state: undefined, sig: "" });
   /** A Mecha dropped on a move target already sits there: its move plays no glide. */
   const dropped = useRef<{ tile: TileId; to: string } | undefined>(undefined);
 
@@ -191,10 +193,20 @@ export function FieldView(p: FieldProps) {
     };
   }, []);
 
-  useEffect(() => draw());
+  // Re-draw only when what is shown changes: re-drawing in the middle of a tap lost the tap
+  // (play-test 2026-11-08: the first tap on a touch screen only showed the hover text).
+  useEffect(() => {
+    const P = props.current;
+    const sig = JSON.stringify([P.choosable, P.selected, P.tones, P.rotate && [P.rotate.tile, P.rotate.facing], P.dark, P.showHidden]);
+    if (P.state === drawn.current.state && sig === drawn.current.sig) return;
+    drawn.current = { state: P.state, sig };
+    draw();
+  });
 
   // ---------------------------------------------------------------------------
-  // Pointer: a press on a draggable unit becomes a drag after 8 px (spec "Touch details").
+  // Pointer (plain browser events, so nothing is lost when the board re-draws).
+  // A press on a draggable unit becomes a drag after 8 px (spec "Touch details"); a short
+  // press is a tap; on a touch screen, holding 0.5 s shows the card text instead.
 
   const local = (e: { clientX: number; clientY: number }) => {
     const r = host.current!.getBoundingClientRect();
@@ -205,31 +217,52 @@ export function FieldView(p: FieldProps) {
     let best: { k: string; d: number } | undefined;
     for (const [k, n] of nodes.current) {
       const d = Math.hypot(n.cx - x, n.cy - y);
-      if (d < geo.current.size * 0.9 && (!best || d < best.d)) best = { k, d };
+      if (d < geo.current.size * 0.92 && (!best || d < best.d)) best = { k, d };
     }
     return best?.k;
   };
+  /** The drag target under the pointer: the target sector it is over, else the nearest within one sector. */
+  const targetAt = (d: DragState, x: number, y: number): DragTarget | undefined => {
+    let best: { t: DragTarget; dist: number } | undefined;
+    for (const t of d.plan.targets) {
+      const c = centre(t.sector);
+      const dist = Math.hypot(c.x - x, c.y - y);
+      if (dist < geo.current.size * 1.05 && (!best || dist < best.dist)) best = { t, dist };
+    }
+    return best?.t;
+  };
 
   function onDown(e: PointerEvent): void {
-    suppressTap.current = false;
+    if (e.pointerType === "mouse") e.preventDefault(); // no text selection from presses on the Field
     const { x, y } = local(e);
     const d = drag.current;
     if (d && d.stage === "carry") {
-      // M_03 / M_06: lifted after the Passive; a tap on a red unit Attacks it, anywhere else puts it back.
-      suppressTap.current = true;
-      const k = sectorAt(x, y);
-      const t = d.plan.targets.find((tg) => tg.sector === k);
-      if (t) {
+      // Lifted after the Passive (M_06) or waiting for the sector to move through (M_03):
+      // a tap on a lit target does it, anywhere else puts the Mecha back.
+      const t = targetAt(d, x, y);
+      if (t && sectorAt(x, y) === t.sector) {
         const n = nodes.current.get(t.sector)!;
-        d.wantX = n.cx;
-        d.wantY = n.cy;
+        d.wantX = d.x = n.cx;
+        d.wantY = d.y = n.cy;
         land(t);
       } else startReturn(true);
+      press.current = undefined;
       return;
     }
+    if (d) endDrag(); // a piece still floating back: finish it now (no piece is ever left behind)
     const k = sectorAt(x, y);
-    const unit = k !== undefined && sectorState(props.current.state, k) === "occupied" ? topTileId(props.current.state, k) : undefined;
-    if (unit !== undefined && props.current.dragFor && props.current.choosable.units.includes(unit)) press.current = { unit, x, y, touch: e.pointerType === "touch" };
+    const st = props.current.state;
+    const unit = k !== undefined && sectorState(st, k) === "occupied" ? topTileId(st, k) : undefined;
+    const touch = e.pointerType !== "mouse";
+    press.current = { k, unit, x, y, touch, held: false };
+    window.clearTimeout(holdTimer.current);
+    if (touch && k !== undefined)
+      holdTimer.current = window.setTimeout(() => {
+        const pr = press.current;
+        if (!pr || drag.current) return;
+        pr.held = true;
+        props.current.onHover(pr.k);
+      }, 500);
   }
 
   function onMove(e: PointerEvent): void {
@@ -239,43 +272,91 @@ export function FieldView(p: FieldProps) {
     if (d && (d.stage === "drag" || d.stage === "carry")) {
       d.wantX = x;
       d.wantY = y - (d.touch ? 40 : 0);
+      if (d.stage === "drag") d.snap = targetAt(d, x, y);
       return;
     }
     const pr = press.current;
-    if (!pr || Math.hypot(x - pr.x, y - pr.y) < 8) return;
+    if (!pr) {
+      // Mouse hover: the card text of the sector under the pointer.
+      if (e.pointerType === "mouse" && e.target instanceof Node && host.current.contains(e.target)) {
+        const k = sectorAt(x, y);
+        if (k !== hovered.current) {
+          hovered.current = k;
+          props.current.onHover(k);
+        }
+      } else if (hovered.current !== undefined) {
+        hovered.current = undefined;
+        props.current.onHover(undefined);
+      }
+      return;
+    }
+    if (pr.held || Math.hypot(x - pr.x, y - pr.y) < 8) return;
+    window.clearTimeout(holdTimer.current);
     press.current = undefined;
-    const plan = props.current.dragFor?.(pr.unit);
+    const P = props.current;
+    if (pr.unit === undefined || !P.dragFor || !P.choosable.units.includes(pr.unit)) return;
+    const plan = P.dragFor(pr.unit);
     if (!plan) return;
     player.current.skip();
-    suppressTap.current = true;
+    endDrag();
     const n = nodes.current.get(plan.from)!;
     drag.current = { plan, home: plan.from, anchor: plan.from, stage: "drag", x: n.cx, y: n.cy, wantX: x, wantY: y - (pr.touch ? 40 : 0), tilt: 0, touch: pr.touch, t0: performance.now() };
     makePiece(plan);
-    props.current.onHover(undefined);
+    hovered.current = undefined;
+    P.onHover(undefined);
   }
 
-  function onUp(_e: PointerEvent): void {
+  function onUp(e: PointerEvent): void {
+    window.clearTimeout(holdTimer.current);
+    const pr = press.current;
     press.current = undefined;
     const d = drag.current;
-    if (!d || d.stage !== "drag") return;
-    if (!d.snap) return startReturn(true);
-    const t = d.snap;
-    if (t.next) {
-      const next = t.next();
-      if (next && next.targets.length > 0) {
-        // Landed on the Passive's place; stays lifted for the Attack.
-        const n = nodes.current.get(t.sector)!;
-        d.plan = { ...next, unitId: d.plan.unitId, hit: d.plan.hit, tile: d.plan.tile };
-        d.anchor = t.sector;
-        d.stage = "carry";
-        d.snap = undefined;
-        d.wantX = n.cx;
-        d.wantY = n.cy - geo.current.size * 0.25;
-        props.current.onNote?.(`${d.plan.unitId}: now tap a red unit to Attack it, or anywhere else to put it back (rule 4.2).`, false);
-        return;
+    if (d && d.stage === "drag") {
+      // The drop counts where the pointer is now, however fast it moved.
+      const { x, y } = local(e);
+      const t = targetAt(d, x, y);
+      if (!t) return startReturn(true);
+      if (t.next) {
+        const next = t.next();
+        if (next && next.targets.length > 0) return carry(d, t.sector, next, t.kind === "attack");
       }
+      d.snap = t;
+      return land(t);
     }
-    land(t);
+    if (!pr || e.type === "pointercancel") return;
+    if (pr.held) return props.current.onHover(undefined);
+    // A tap.
+    const { x, y } = local(e);
+    if (Math.hypot(x - pr.x, y - pr.y) >= 8 || !(e.target instanceof Node) || !host.current?.contains(e.target)) return;
+    const P = props.current;
+    if (P.rotate) {
+      const size = geo.current.size;
+      const rot: { dir: number; x: number; y: number }[] = JSON.parse(host.current.dataset.rotate ?? "[]");
+      const b = rot.find((r) => Math.hypot(r.x - x, r.y - y) < Math.max(22, size * 0.2));
+      if (b) return P.rotate.onTurn(b.dir as 1 | -1);
+    }
+    const k = sectorAt(x, y);
+    if (k === undefined) return;
+    if (P.choosable.sectors.includes(k)) return P.onPick(k);
+    const unit = sectorState(P.state, k) === "occupied" ? topTileId(P.state, k) : undefined;
+    if (unit !== undefined && P.choosable.units.includes(unit)) P.onPick(unit);
+  }
+
+  /** Stay lifted over `at` with new targets (M_06 after its Swap; M_03 choosing where to move through). */
+  function carry(d: DragState, at: string, next: DragPlan, choosingPath: boolean): void {
+    const n = nodes.current.get(at)!;
+    d.plan = { ...next, unitId: d.plan.unitId, hit: d.plan.hit, tile: d.plan.tile };
+    d.anchor = choosingPath ? d.home : at;
+    d.stage = "carry";
+    d.snap = undefined;
+    d.x = d.wantX = n.cx;
+    d.y = d.wantY = n.cy - geo.current.size * 0.25;
+    props.current.onNote?.(
+      choosingPath
+        ? `${d.plan.unitId}: tap the sector it moves to before this Attack (rule 4.2), or anywhere else to put it back.`
+        : `${d.plan.unitId}: now tap a red unit to Attack it, or anywhere else to put it back (rule 4.2).`,
+      false,
+    );
   }
 
   function land(t: DragTarget): void {
@@ -284,7 +365,8 @@ export function FieldView(p: FieldProps) {
     d.snap = t;
     d.send = t.answers;
     d.t0 = performance.now();
-    if (t.kind === "move" && !t.next) dropped.current = { tile: d.plan.tile, to: t.sector };
+    if (t.kind === "move" && !t.next && !t.via) dropped.current = { tile: d.plan.tile, to: t.sector };
+    else if (t.kind === "attack" && !t.via) dropped.current = { tile: d.plan.tile, to: t.sector };
   }
 
   function startReturn(explain: boolean): void {
@@ -352,12 +434,125 @@ export function FieldView(p: FieldProps) {
   };
   const typeOf = (unitId: string) => props.current.data.units.byId.get(unitId)?.type ?? "Bot";
 
+  /** Fragments flying out from a point, in a unit's colour (shared by Attack and destroyed). */
+  function fragments(colour: number): { b: Graphics; a: number; r: number; spin: number }[] {
+    const size = geo.current.size;
+    return Array.from({ length: 12 }, (_, i) => {
+      const b = new Graphics().poly([0, -size * 0.16, size * 0.12, size * 0.1, -size * 0.12, size * 0.1]).fill({ color: i % 3 === 0 ? 0xfff1c4 : colour });
+      return { b, a: (i / 12) * Math.PI * 2 + (i % 2) * 0.3, r: 0.7 + ((i * 37) % 10) / 20, spin: (i % 2 ? 1 : -1) * (2 + (i % 3)) };
+    });
+  }
+
+  /** A Mecha Attack: it charges at the target and bursts there (dropped by hand: it bursts where it was dropped). */
+  function burstStep(from: string, to: string, unitId: string, type: string, fromDrop: boolean, stays: boolean): Step {
+    const fx = layers.current!.fx;
+    const g = ghost(type, unitId);
+    const bits = stays ? [] : fragments(TYPE_COLOUR[type] ?? 0xcccccc);
+    return {
+      ms: fromDrop ? 520 : 760,
+      hides: stays ? [] : [from],
+      start: () => {
+        fx.addChild(g);
+        for (const x of bits) fx.addChild(x.b);
+      },
+      frame: (p, look) => {
+        const a = centre(from);
+        const b = centre(to);
+        const charge = fromDrop ? 1 : easeInOut(Math.min(1, p / 0.45));
+        const burst = fromDrop ? Math.min(1, p / 0.9) : Math.max(0, (p - 0.45) / 0.55);
+        const reach = fromDrop ? 1 : 0.62;
+        const x = a.x + (b.x - a.x) * charge * reach;
+        const y = a.y + (b.y - a.y) * charge * reach;
+        g.position.set(x, y);
+        g.scale.set(1 + 0.08 * Math.sin(Math.PI * Math.min(1, p / 0.45)) - (stays ? 0 : 0.45 * burst));
+        g.alpha = stays ? 1 - burst * 0.6 : 1 - burst;
+        for (const f of bits) {
+          const d = geo.current.size * f.r * easeOut(burst);
+          f.b.position.set(x + Math.cos(f.a) * d, y + Math.sin(f.a) * d);
+          f.b.rotation = f.spin * burst;
+          f.b.alpha = burst === 0 ? 0 : 1 - burst;
+        }
+        if (!stays) look(from).alpha = easeOut(burst);
+        else look(from).alpha = 0;
+      },
+      end: () => {
+        g.destroy({ children: true });
+        for (const f of bits) f.b.destroy();
+      },
+    };
+  }
+
+  /** Heat paid back to the Supply: a Heat chip floats up from the Heat counter (H7: slowly, with a word why). */
+  function heatStep(amount: number, rule: string): Step {
+    let chip: HTMLDivElement | undefined;
+    let a = { x: 0, y: 0 };
+    return {
+      ms: rule === "H7" ? 1600 : 700,
+      start: () => {
+        const el = document.querySelector<HTMLElement>("[data-heat]")?.getBoundingClientRect();
+        const r = host.current?.getBoundingClientRect();
+        a = el ? { x: el.left + el.width / 2, y: el.top + el.height / 2 } : { x: (r?.left ?? 0) + (r?.width ?? 0) / 2, y: (r?.top ?? 0) + 40 };
+        chip = document.createElement("div");
+        chip.className = "heat-fly";
+        chip.textContent = rule === "H7" ? `−${amount} Heat: Meltdown avoided (H7)` : `−${amount} Heat (${rule})`;
+        document.body.appendChild(chip);
+      },
+      frame: (p) => {
+        if (!chip) return;
+        chip.style.transform = `translate(calc(${a.x}px - 50%), ${a.y - 14 - 70 * easeOut(p)}px) scale(${1 + 0.1 * Math.sin(Math.PI * Math.min(1, p * 3))})`;
+        chip.style.opacity = String(p < 0.15 ? p / 0.15 : p > 0.75 ? (1 - p) / 0.25 : 1);
+      },
+      end: () => chip?.remove(),
+    };
+  }
+
+  /** H7 Meltdown happens: a card over the Field says why and what follows. */
+  function meltdownStep(bots: number): Step {
+    let card: HTMLDivElement | undefined;
+    return {
+      ms: 3200,
+      start: () => {
+        card = document.createElement("div");
+        card.className = "meltdown-card";
+        card.innerHTML = `<b>Meltdown</b><span>No Heat token left to prevent it (H7).</span><span>1 damage to every Bot (${bots}), then you gain ${bots} Heat and your Flagship takes ${bots + 1} damage.</span>`;
+        host.current?.appendChild(card);
+      },
+      frame: (p) => {
+        if (!card) return;
+        card.style.opacity = String(p < 0.1 ? p / 0.1 : p > 0.85 ? (1 - p) / 0.15 : 1);
+        card.style.transform = `translate(-50%, -50%) scale(${0.92 + 0.08 * easeOut(Math.min(1, p * 5))})`;
+      },
+      end: () => card?.remove(),
+    };
+  }
+
   function stepsFor(events: GameEvent[], s: GameState): Step[] {
     const fx = layers.current!.fx;
     const size = () => geo.current.size;
     const isTop = (k: string, id: TileId) => topTileId(s, k) === id && sectorState(s, k) === "occupied";
     const out: Step[] = [];
+    /** Mecha whose destruction was already shown with their Attack (designer 2026-11-08: Mecha first, then the hit). */
+    const attacked = new Set<TileId>();
     for (const e of events) {
+      if (e.kind === "destroyed" && attacked.has(e.tile) && !e.wreck) continue;
+      if (e.kind === "attack") {
+        const now = sectorOf(s, e.tile);
+        const stays = now !== undefined && isTop(now, e.tile); // a Mecha that becomes a Wreck stays
+        if (!stays) attacked.add(e.tile);
+        const dr = dropped.current;
+        const fromDrop = dr !== undefined && dr.tile === e.tile && dr.to === e.to;
+        if (fromDrop) dropped.current = undefined;
+        out.push(burstStep(e.from, e.to, e.unitId, "Mecha", fromDrop, stays));
+        continue;
+      }
+      if (e.kind === "heat") {
+        out.push(heatStep(e.amount, e.rule));
+        continue;
+      }
+      if (e.kind === "meltdown") {
+        out.push(meltdownStep(e.bots));
+        continue;
+      }
       if (e.kind === "moved") {
         const real = isTop(e.to, e.tile);
         const dr = dropped.current;
@@ -685,24 +880,14 @@ export function FieldView(p: FieldProps) {
     if (!piece) return;
     const anchor = centre(d.anchor);
     if (d.stage === "drag" || d.stage === "carry") {
-      // Snap: within about half a sector of a target, the piece is pulled to its centre.
-      let snap: DragTarget | undefined;
-      let best = size * 0.6;
-      for (const t of d.plan.targets) {
-        const c = centre(t.sector);
-        const dist = Math.hypot(c.x - d.wantX, c.y - d.wantY);
-        if (dist < best) {
-          best = dist;
-          snap = t;
-        }
-      }
-      d.snap = snap;
+      // The piece follows the pointer exactly; over a target (anywhere on its sector) it sits on its centre.
+      const snap = d.stage === "drag" ? d.snap : undefined;
       const tx = snap ? centre(snap.sector).x : d.wantX;
       const ty = snap ? centre(snap.sector).y : d.wantY;
       const vx = tx - d.x;
-      d.x += (tx - d.x) * 0.35;
-      d.y += (ty - d.y) * 0.35;
-      d.tilt += (Math.max(-0.1, Math.min(0.1, vx * 0.004)) - d.tilt) * 0.2;
+      d.x += (tx - d.x) * (snap ? 0.6 : 1);
+      d.y += (ty - d.y) * (snap ? 0.6 : 1);
+      d.tilt += (Math.max(-0.1, Math.min(0.1, vx * 0.004)) - d.tilt) * 0.3;
     } else if (d.stage === "settle") {
       const p = Math.min(1, (now - d.t0) / 150);
       const c = centre(d.snap!.sector);
@@ -830,15 +1015,7 @@ export function FieldView(p: FieldProps) {
       node.label = isChoice && !isSel ? `choice:${p.k}` : `sector:${p.k}`;
       // Selected: a steady thin green rim.
       g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 2.5 : 1.5, color: isSel ? 0x00a37a : dark ? 0x111111 : 0x77736b });
-      g.eventMode = "static";
-      g.cursor = isChoice ? (unit !== undefined && props.current.dragFor ? "grab" : "pointer") : "default";
-      g.on("pointerover", () => !drag.current && onHover(p.k));
-      g.on("pointerout", () => !drag.current && onHover(undefined));
-      g.on("pointertap", () => {
-        if (suppressTap.current) return;
-        if (choosable.sectors.includes(p.k)) onPick(p.k);
-        else if (unit !== undefined && choosable.units.includes(unit)) onPick(unit);
-      });
+      g.eventMode = "none";
       node.addChild(g);
 
       const label = (text: string, y: number, sz: number, color = 0x1d1d1f, bold = false) => {
@@ -886,12 +1063,7 @@ export function FieldView(p: FieldProps) {
             const by = cy + size * 0.29; // lower corners: arrows sit on the sides, never on corners
             const btn = new Graphics();
             btn.circle(bx, by, size * 0.15).fill({ color: 0xffffff }).stroke({ width: 2, color: READY });
-            btn.eventMode = "static";
-            btn.cursor = "pointer";
-            btn.on("pointertap", (e) => {
-              e.stopPropagation();
-              rotate!.onTurn(dir);
-            });
+            btn.eventMode = "none";
             node.addChild(btn);
             const tx = new Text({ text: glyph, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(12, size * 0.26), fill: 0x1d1d1f, fontWeight: "700" } });
             tx.anchor.set(0.5);

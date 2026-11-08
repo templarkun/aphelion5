@@ -24,8 +24,10 @@ export interface DragTarget {
   kind: DragKind;
   /** The answers sent on a drop here, in order. */
   answers: Answer[];
-  /** M_03 / M_06: after this (blue) target, the Mecha stays lifted for its Attack. */
+  /** M_06: after this (blue) target, the Mecha stays lifted for its Attack. M_03 (with `via`): the sectors it may move to first. */
   next?: () => DragPlan | undefined;
+  /** M_03 (designer 2026-11-08): a red target reached by moving first; the move plays before the Attack. */
+  via?: boolean;
 }
 
 export interface DragPlan {
@@ -62,6 +64,33 @@ function targetsAfter(data: GameData, game: Game, tile: string, answers: Answer[
       });
     if (q.kind === "option" && !q.facing && q.options.some((o) => o.on)) {
       const out: DragTarget[] = [];
+      // M_03 (designer 2026-11-08): every unit it can Attack, now or after its Passive move, is red at once.
+      if (kind === "attack" && depth === 0 && q.options.some((o) => o.id.startsWith("move:"))) {
+        const direct = new Set<string>();
+        for (const o of q.options) {
+          if (!o.id.startsWith("attack:") || o.on?.kind !== "unit") continue;
+          const k = sectorOf(s, o.on.id);
+          if (k) {
+            direct.add(k);
+            out.push({ sector: k, kind, answers: [...answers, { kind: "option", value: o.id }] });
+          }
+        }
+        // Targets after each possible move, grouped by target: one way there goes at once; several: tap where to move.
+        const ways = new Map<string, DragTarget[]>();
+        for (const o of q.options) {
+          if (!o.id.startsWith("move:") || o.on?.kind !== "sector") continue;
+          const mv = o.on.key;
+          for (const t of targetsAfter(data, game, tile, [...answers, { kind: "option", value: o.id }], "attack", 1)) {
+            if (direct.has(t.sector)) continue;
+            ways.set(t.sector, [...(ways.get(t.sector) ?? []), { ...t, sector: mv, kind: "move" }]);
+          }
+        }
+        for (const [k, w] of ways) {
+          if (w.length === 1) out.push({ sector: k, kind, answers: w[0]!.answers, via: true });
+          else out.push({ sector: k, kind, answers: [], via: true, next: () => ({ tile, unitId: "", from: k, targets: w }) });
+        }
+        return out;
+      }
       for (const o of q.options) {
         if (!o.on) continue;
         const k = o.on.kind === "sector" ? o.on.key : o.on.kind === "unit" ? sectorOf(s, o.on.id) : undefined;
@@ -98,6 +127,16 @@ function targetsAfter(data: GameData, game: Game, tile: string, answers: Answer[
   }
   const h = ev.find((e) => e.kind === "hit" && e.tile !== tile);
   return h && h.kind === "hit" ? [{ sector: h.sector, kind, answers }] : [];
+}
+
+/**
+ * M_03's Attack question, answered by tapping (designer 2026-11-08): every unit it can
+ * Attack now or after its move, with the answers from this question on.
+ */
+export function m03TapTargets(data: GameData, game: Game): DragTarget[] {
+  const v = game.view;
+  if (v.status !== "question" || v.question.kind !== "option" || !v.question.options.some((o) => o.id.startsWith("move:"))) return [];
+  return targetsAfter(data, game, "", [], "attack", 0);
 }
 
 /** The drag plan for a Mecha on the action menu, or undefined when it cannot be dragged now. */

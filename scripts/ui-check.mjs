@@ -4,7 +4,7 @@ import { mkdirSync } from "node:fs";
 
 mkdirSync("dist/ui-check", { recursive: true });
 // A saved game that waits on a row question, for the row check in ui-smoke.mjs.
-for (const what of ["rows", "energy", "drag", "drag2"]) {
+for (const what of ["rows", "energy", "drag", "drag2", "m03"]) {
   const find = spawn("npx", ["tsx", "scripts/find-save.ts", what, `dist/ui-check/${what === "rows" ? "row" : what}-save.json`], { stdio: "inherit" });
   if ((await new Promise((r) => find.on("exit", r))) !== 0) process.exit(1);
 }

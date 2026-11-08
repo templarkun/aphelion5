@@ -20,6 +20,10 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    pop-ups for units and sectors. 2026-11-08: engine events and the animation player (move,
    swap, reveal, hit, destroy, energy) and dragging Mecha (step 2) built. Next: the designer
    tries the feel; then step 3 (energy tokens on Flares, Bay weapons, Modules and Orders).
+   Designer's wishes for later (2026-11-08): particle effects like a computer game (not a card
+   game) for most interactions, e.g. Attacks and destruction; dust when a Mecha lands on a Dark
+   sector instead of the small bounce; an energy/fire particle effect around the Field during an
+   Overload. Keep the frame rate up (measure on a phone).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
 4. **Settings and polish.** Animation speed and simple transitions, colour-blind token

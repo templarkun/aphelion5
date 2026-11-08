@@ -10,8 +10,16 @@ const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-const panel = page.locator(".question");
-const clickIn = async (pg, name) => pg.locator(".question").getByRole("button", { name }).first().click();
+// Questions sit inside the Field (designer 2026-11-08): a banner, or a card; the action menu shows none.
+const Q = ".q-card, .q-banner";
+const panel = page.locator(Q);
+const clickIn = async (pg, name) => pg.locator(Q).getByRole("button", { name }).first().click();
+/** The Log is in the Menu (designer 2026-11-08). */
+const toggleLog = async (pg) => {
+  await pg.locator(".menu-wrap > button").click();
+  await pg.locator(".menu button", { hasText: /^(Log|Hide the log)$/ }).click();
+};
+const promptOf = async (pg) => (await pg.locator(".game").getAttribute("data-prompt")) ?? "";
 
 /** Click the n-th highlighted sector on the Field (positions come from the Field's data-choosable). */
 async function clickField(pg, n = 0) {
@@ -36,10 +44,10 @@ async function setup(pg) {
 
 /** Answer whatever else comes (Module, Ally, Allied Drop) until it is the player's action. */
 async function untilAction(pg) {
-  const q = pg.locator(".question");
+  const q = pg.locator(Q);
   for (let i = 0; i < 30; i++) {
-    const prompt = (await q.locator(".prompt").last().textContent()) ?? "";
-    if (/^Your action/.test(prompt)) return prompt;
+    const prompt = await promptOf(pg);
+    if (/^Choose an action/.test(prompt)) return prompt;
     const buttons = q.locator(".choices button");
     if (await buttons.count()) {
       await buttons.first().click();
@@ -77,10 +85,11 @@ const bubbleBoxes = await page.locator(".popup .bubble").evaluateAll((els) => el
 const rowLeft = Math.min(...bubbleBoxes.map((b) => b.x));
 const rowRight = Math.max(...bubbleBoxes.map((b) => b.x + b.w));
 const bubbles = bubbleBoxes.length > 0 && bubbleBoxes.every((b) => Math.abs(b.w - bubbleBoxes[0].w) < 1) && Math.abs((rowLeft + rowRight) / 2 - (fieldBox.x + target.x)) < 12;
-// Raised by a quarter of the tile's height (designer 2026-11-08).
+// Raised: centred on the top point of the tile (designer 2026-11-08).
 const tileH = Number(await page.locator(".field").getAttribute("data-tile"));
 const popBox = await page.locator(".popup").boundingBox();
-const raised = Math.abs(popBox.y + popBox.height / 2 - (fieldBox.y + target.y - tileH / 4)) < 12 || popBox.y <= 9;
+// Centred on the pointy top end of the hexagon (designer 2026-11-08).
+const raised = Math.abs(popBox.y + popBox.height / 2 - (fieldBox.y + target.y - tileH / 2)) < 12 || popBox.y <= 9;
 // One tap on another Dark sector closes this pop-up and opens that one (designer 2026-11-08).
 let tapThrough = "only one Dark sector";
 if (dark.length > 1) {
@@ -102,11 +111,11 @@ await page.locator(".popup").getByRole("menuitem", { name: "Reveal" }).click();
 await page.waitForTimeout(500);
 await page.screenshot({ path: `${out}/ui-after-reveal.png` });
 // Run a Module by clicking it, if one can run (it may then ask for targets).
-const afterReveal = (await panel.locator(".prompt").last().textContent()) ?? "";
+const afterReveal = await promptOf(page);
 const canModules = await page.locator(".module.can").count();
 // Overhaul asks to confirm while the Flagship is not Crippled.
 let overhaulConfirm = false;
-if (/^Your action/.test(afterReveal)) {
+if (/^Choose an action/.test(afterReveal)) {
   await page.locator(".overhaul button").click();
   overhaulConfirm = (await page.getByRole("dialog", { name: "Overhaul now?" }).count()) === 1;
   await page.getByRole("button", { name: "Cancel" }).click();
@@ -134,7 +143,7 @@ for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
   await setup(pg);
   await untilAction(pg);
   for (let i = 0; i < 4 && !rotateShown; i++) {
-    if (!/^Your action/.test((await pg.locator(".question .prompt").last().textContent()) ?? "")) break;
+    if (!/^Choose an action/.test(await promptOf(pg))) break;
     await revealSomething(pg);
     // Wait for the answer to land (the pop-up closes in 0.17 s first), not a fixed time.
     await pg.waitForFunction(() => (document.querySelector(".field")?.getAttribute("data-rotate") ?? "[]") !== "[]" || !document.querySelector(".popup"), null, { timeout: 2000 }).catch(() => {});
@@ -150,7 +159,7 @@ for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
     else await revealSomething(pg); // the next action keeps the facing
     await pg.waitForFunction(() => !document.querySelector(".popup") && (document.querySelector(".field")?.getAttribute("data-rotate") ?? "[]") === "[]", null, { timeout: 2000 }).catch(() => {});
     await pg.waitForTimeout(200);
-    await pg.getByRole("button", { name: "Log", exact: true }).click();
+    await toggleLog(pg);
     facingKept = (await pg.locator(".log li").allTextContents()).find((l) => / facing 1 /.test(l)) ?? "";
   }
   await pg.close();
@@ -167,23 +176,24 @@ if (existsSync(rowSave)) {
   await pg.locator("#textbox-text").fill(readFileSync(rowSave, "utf8"));
   await pg.getByRole("button", { name: "Load" }).click();
   await pg.waitForTimeout(400);
-  const q = pg.locator(".question");
+  const q = pg.locator(Q);
   const listed = await q.locator(".choices button").count();
-  const before = (await q.locator(".prompt").last().textContent()) ?? "";
+  const before = await promptOf(pg);
   await clickField(pg, 0);
   const commit = pg.locator(".popup [role=menuitem]", { hasText: "Choose this row" });
   const popupOk = (await commit.count()) === 1;
   await pg.screenshot({ path: `${out}/ui-row.png` });
   if (popupOk) await commit.click();
   await pg.waitForTimeout(300);
-  const after = (await q.locator(".prompt").last().textContent()) ?? "";
+  const after = await promptOf(pg);
   // A long list of choices (like the Upgrade list) must not slide under the Field (play-test 2026-11-07).
   await pg.evaluate(() => {
-    const c = document.querySelector(".question");
+    const c = document.querySelector(".q-card, .q-banner");
+    if (!c) return;
     for (let i = 0; i < 22; i++) { const b = document.createElement("button"); b.className = "probe"; b.textContent = "A long choice like an Upgrade: Improves M_03's Passive: it may move through any number of adjacent Dark sectors before an Attack."; c.appendChild(b); }
   });
   await pg.waitForTimeout(200);
-  const covered = await pg.evaluate(() => [...document.querySelectorAll(".probe")].filter((e) => { const r = e.getBoundingClientRect(); const p = document.querySelector(".question").getBoundingClientRect(); if (r.top < p.top || r.bottom > p.bottom) return false; return document.elementFromPoint(r.x + 10, r.y + r.height / 2) !== e; }).length);
+  const covered = await pg.evaluate(() => [...document.querySelectorAll(".probe")].filter((e) => { const r = e.getBoundingClientRect(); const box = document.querySelector(".q-card, .q-banner"); if (!box) return false; const p = box.getBoundingClientRect(); if (r.top < p.top || r.bottom > p.bottom) return false; return document.elementFromPoint(r.x + 10, r.y + r.height / 2) !== e; }).length);
   await pg.evaluate(() => document.querySelectorAll(".probe").forEach((e) => e.remove()));
   if (covered) rowCheck = `failed (${covered} long choices covered by the Field)`;
   else rowCheck = listed === 0 && popupOk && after !== before ? "ok" : `failed (list ${listed}, pop-up ${popupOk}, prompt still "${before}")`;
@@ -201,16 +211,17 @@ if (existsSync(energySave)) {
   await pg.getByRole("button", { name: "Load" }).click();
   await pg.waitForTimeout(600);
   const pops = await pg.locator(".energy-pop").count();
-  const targets = await pg.locator(".module.energy-target").count();
-  const before = (await pg.locator(".question .prompt").last().textContent()) ?? "";
+  // Modules scrolled out of the panel show their pop-up once scrolled into view.
+  const targets = await pg.evaluate(() => [...document.querySelectorAll(".module.energy-target")].filter((m) => { const r = m.getBoundingClientRect(); const p = m.closest(".panel").getBoundingClientRect(); const y = r.top + r.height / 2; return y >= p.top && y <= p.bottom; }).length);
+  const before = await promptOf(pg);
   await pg.screenshot({ path: `${out}/ui-energy.png` });
   const box = await pg.locator(".energy-pop").first().boundingBox();
   const mod = await pg.locator(".module.energy-target").first().boundingBox();
   const leftOf = box && mod ? box.x + box.width <= mod.x + 2 : false;
   if (pops) await pg.locator(".energy-pop").first().click();
   await pg.waitForTimeout(400);
-  const after = (await pg.locator(".question .prompt").last().textContent()) ?? "";
-  energyCheck = pops >= 2 && pops === targets && leftOf && after !== before ? "ok" : `failed (pop-ups ${pops}, targets ${targets}, left of Module ${leftOf}, prompt still "${before}")`;
+  const after = await promptOf(pg);
+  energyCheck = pops >= 1 && pops === targets && leftOf && after !== before ? "ok" : `failed (pop-ups ${pops}, targets ${targets}, left of Module ${leftOf}, prompt still "${before}")`;
   await pg.close();
 }
 // Dragging Mecha (Program Spec "Interaction and animation", build step 2).
@@ -233,9 +244,9 @@ async function dragMouse(pg, a, b) {
   await pg.waitForTimeout(300);
 }
 const logText = async (pg) => {
-  await pg.getByRole("button", { name: "Log", exact: true }).click();
+  await toggleLog(pg);
   const t = (await pg.locator(".log li").allTextContents()).join("\n");
-  await pg.getByRole("button", { name: "Log", exact: true }).click();
+  await toggleLog(pg);
   return t;
 };
 let dragCheck = "skipped (no drag save)";
@@ -244,7 +255,7 @@ if (existsSync(`${out}/drag-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/drag-save.json`);
-  const prompt = async () => (await pg.locator(".question .prompt").last().textContent()) ?? "";
+  const prompt = async () => promptOf(pg);
   const before = await prompt();
   const from = await sectorPoint(pg, plan.from);
   const box = await pg.locator(".field").boundingBox();
@@ -253,17 +264,18 @@ if (existsSync(`${out}/drag-save.json`)) {
   await pg.screenshot({ path: `${out}/ui-drag-lifted.png` });
   await pg.mouse.up();
   await pg.waitForTimeout(900);
-  const note = (await pg.locator(".field-note").textContent().catch(() => "")) ?? "";
+  const note = (await pg.locator(".field-toast").textContent().catch(() => "")) ?? "";
   const stayed = (await prompt()) === before && (await pg.locator(".popup").count()) === 0;
   // Dropped on a blue sector: it moves there.
   const target = plan.targets.find((t) => t.kind === "move" && !t.next);
   const red = plan.targets.find((t) => t.kind === "attack");
   await dragMouse(pg, from, await sectorPoint(pg, red.sector));
   await pg.screenshot({ path: `${out}/ui-drag-attack-aim.png` });
-  await dragMouse(pg, await sectorPoint(pg, red.sector), await sectorPoint(pg, target.sector)).catch(() => {});
+  // Still holding: carry on to the blue target and let go there.
+  const tp = await sectorPoint(pg, target.sector);
+  for (let i = 1; i <= 8; i++) await pg.mouse.move(tp.x, tp.y);
   await pg.mouse.up();
-  await pg.waitForTimeout(120);
-  const anim = await pg.locator(".field").getAttribute("data-anim");
+  const anim = await pg.waitForFunction(() => document.querySelector(".field")?.getAttribute("data-anim") === "1", null, { timeout: 1500 }).then(() => "1").catch(() => "0");
   await pg.waitForTimeout(900);
   const log = await logText(pg);
   const moved = log.includes(`${plan.unitId} moves from (${plan.from}) to (${target.sector})`) || log.includes(`from (${plan.from})`);
@@ -280,17 +292,36 @@ if (existsSync(`${out}/drag2-save.json`)) {
   await dragMouse(pg, await sectorPoint(pg, plan.from), await sectorPoint(pg, blue.sector));
   await pg.mouse.up();
   await pg.waitForTimeout(300);
-  const lifted = ((await pg.locator(".field-note").textContent().catch(() => "")) ?? "").includes("red unit");
+  const lifted = ((await pg.locator(".field-toast").textContent().catch(() => "")) ?? "").includes("red unit");
   await pg.screenshot({ path: `${out}/ui-drag2-carry.png` });
   const p2 = await sectorPoint(pg, blue.next[0]);
   await pg.mouse.click(p2.x, p2.y);
-  await pg.waitForTimeout(300);
-  const anim = await pg.locator(".field").getAttribute("data-anim");
+  const anim = await pg.waitForFunction(() => document.querySelector(".field")?.getAttribute("data-anim") === "1", null, { timeout: 1500 }).then(() => "1").catch(() => "0");
   await pg.screenshot({ path: `${out}/ui-drag2-hit.png` });
   await pg.waitForTimeout(1500);
   const log = await logText(pg);
   const attacked = new RegExp(`${plan.unitId}.*Attacks`).test(log) && /(swap|moves)/.test(log);
   drag2Check = lifted && attacked && anim === "1" ? "ok" : `failed (lifted ${lifted}, attacked ${attacked}, anim ${anim})`;
+  await pg.close();
+}
+// M_03 (designer 2026-11-08): dropped on a unit it reaches only by moving: it moves, then Attacks.
+let m03Check = "skipped (no M_03 save)";
+if (existsSync(`${out}/m03-save.json`)) {
+  const plan = JSON.parse(readFileSync(`${out}/m03-save.json.plan.json`, "utf8"));
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/m03-save.json`);
+  const far = plan.targets.find((t) => t.via && !t.next) ?? plan.targets.find((t) => t.via);
+  await dragMouse(pg, await sectorPoint(pg, plan.from), await sectorPoint(pg, far.sector));
+  await pg.mouse.up();
+  await pg.waitForTimeout(400);
+  if (far.next) {
+    const way = await sectorPoint(pg, far.next[0]);
+    await pg.mouse.click(way.x, way.y);
+  }
+  await pg.waitForTimeout(2500);
+  const log = await logText(pg);
+  m03Check = /M_03 moves from/.test(log) && /M_03.*Attacks/.test(log) ? "ok" : `failed (log: ${log.split("\n").slice(0, 4).join(" | ")})`;
   await pg.close();
 }
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
@@ -302,7 +333,7 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

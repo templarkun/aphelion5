@@ -28,6 +28,9 @@ function dragPlanOf(g: Game) {
 const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   // Dragging a Mecha (Program Spec "Interaction and animation"): blue and red targets.
   drag: (_q, g) => dragPlanOf(g) !== undefined,
+  // M_03 (designer 2026-11-08): a red target reached only by moving first.
+  m03: (q, g) =>
+    (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.via) ?? false)),
   // M_03 / M_06: the Passive first, then the Attack, in one drag.
   drag2: (q, g) =>
     (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.next?.()) ?? false)),
@@ -51,13 +54,13 @@ for (let seed = 1; seed < 400; seed++) {
     const q = g.view.question;
     if (wanted(q, g)) {
       writeFileSync(out, JSON.stringify(toSave(g, g.view.state.profile)));
-      if (what.startsWith("drag")) {
+      if (what.startsWith("drag") || what === "m03") {
         // Beside the save: the Mecha to drag and its targets (for the browser check).
         for (const o of q.shortcuts ?? []) {
           if (!o.id.startsWith("mecha:") || o.on?.kind !== "unit") continue;
           const plan = mechaDragPlan(data, g, g.view, o.on.id);
-          if (!plan || !(what === "drag" ? plan === dragPlanOf(g) || dragPlanOf(g)?.tile === plan.tile : plan.targets.some((t) => t.next?.()))) continue;
-          const targets = plan.targets.map((t) => ({ sector: t.sector, kind: t.kind, next: t.next?.()?.targets.map((x) => x.sector) }));
+          if (!plan || !(what === "drag" ? plan === dragPlanOf(g) || dragPlanOf(g)?.tile === plan.tile : what === "m03" ? plan.targets.some((t) => t.via) : plan.targets.some((t) => t.next?.()))) continue;
+          const targets = plan.targets.map((t) => ({ sector: t.sector, kind: t.kind, via: t.via, answers: t.answers, next: t.next?.()?.targets.map((x) => x.sector) }));
           writeFileSync(`${out}.plan.json`, JSON.stringify({ unitId: plan.unitId, from: plan.from, targets }));
           break;
         }
