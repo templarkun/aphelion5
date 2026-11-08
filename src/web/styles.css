@@ -131,14 +131,14 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 .textbox textarea { box-sizing: border-box; width: 100%; height: 12em; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
 
 /* Things you can click now: the action menu lives on them (highlight = clickable). */
-/* Ready to use: a soft glow that breathes in and out (designer 2026-11-08), not a thick border. */
-.can { outline: 1.5px solid var(--can); outline-offset: 1px; background: var(--can-soft); cursor: pointer; animation: can-breathe 1.8s ease-in-out infinite; }
-.can:hover { outline-width: 2px; animation-duration: 1.2s; }
+/* Ready to use (designer 2026-11-08): no thick border; a hairline amber edge that slowly brightens and fades. */
+.can { position: relative; cursor: pointer; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--can) 40%, transparent); animation: can-breathe 2.6s ease-in-out infinite; }
+.can:hover { background-color: var(--can-soft); }
 @keyframes can-breathe {
-  0%, 100% { outline-color: color-mix(in srgb, var(--can) 45%, transparent); box-shadow: 0 0 0 0 color-mix(in srgb, var(--can) 0%, transparent); }
-  50% { outline-color: var(--can); box-shadow: 0 0 10px 3px color-mix(in srgb, var(--can) 45%, transparent); }
+  0%, 100% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--can) 30%, transparent); }
+  50% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--can) 85%, transparent), 0 0 8px color-mix(in srgb, var(--can) 18%, transparent); }
 }
-@media (prefers-reduced-motion: reduce) { .can { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .can { animation: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--can) 65%, transparent); } }
 .dim { opacity: 0.4; }
 button.module { display: block; width: 100%; text-align: left; font: inherit; color: inherit; min-height: 0; }
 .bay { padding: 4px 6px; border-radius: 8px; }

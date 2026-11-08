@@ -82,12 +82,12 @@ export function FieldView(p: FieldProps) {
       host.current!.appendChild(a.canvas);
       ready.current = true;
       draw();
-      // Breathing: the halo fades in and out smoothly, about one breath every 1.8 s.
+      // Breathing: the halo fades in and out smoothly, about one breath every 2.6 s.
       const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       a.ticker.add(() => {
-        const t = performance.now() / 1800;
-        const k = still ? 0.6 : 0.5 - 0.5 * Math.cos(t * 2 * Math.PI);
-        for (const g of halos.current) if (!g.destroyed) g.alpha = 0.2 + 0.7 * k;
+        const t = performance.now() / 2600;
+        const k = still ? 0.7 : 0.5 - 0.5 * Math.cos(t * 2 * Math.PI);
+        for (const g of halos.current) if (!g.destroyed) g.alpha = 0.35 + 0.6 * k;
       });
       new ResizeObserver(() => draw()).observe(host.current!);
     });
@@ -142,17 +142,8 @@ export function FieldView(p: FieldProps) {
       const isChoice = choosable.sectors.includes(p.k) || (unit !== undefined && choosable.units.includes(unit));
       if (isChoice) hits.push({ k: p.k, id: choosable.sectors.includes(p.k) ? p.k : unit!, x: Math.round(cx), y: Math.round(cy) });
       const isSel = selected.includes(p.k) || (unit !== undefined && selected.includes(unit));
-      // Clickable now: a soft amber halo that breathes (selected: a steady green one).
-      if (isSel) g.poly(hexPoints(cx, cy, size * 0.97)).stroke({ width: size * 0.12, color: 0x00a37a, alpha: 0.55 });
-      else if (isChoice) {
-        const halo = new Graphics();
-        halo.poly(hexPoints(cx, cy, size * 0.96)).stroke({ width: size * 0.1, color: 0xffb000 });
-        halo.poly(hexPoints(cx, cy, size * 1.0)).stroke({ width: size * 0.05, color: 0xffd36b, alpha: 0.5 });
-        halo.eventMode = "none";
-        halos.current.push(halo);
-        root.addChild(halo);
-      }
-      g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 4 : isChoice ? 2 : 1.5, color: isSel ? 0x00a37a : isChoice ? 0xffb000 : dark ? 0x111111 : 0x77736b });
+      // Selected: a steady thin green rim.
+      g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 2.5 : 1.5, color: isSel ? 0x00a37a : dark ? 0x111111 : 0x77736b });
       g.eventMode = "static";
       g.cursor = isChoice ? "pointer" : "default";
       g.on("pointerover", () => onHover(p.k));
@@ -162,6 +153,16 @@ export function FieldView(p: FieldProps) {
         else if (unit !== undefined && choosable.units.includes(unit)) onPick(unit);
       });
       root.addChild(g);
+      // Clickable now (designer 2026-11-08): a hairline light rim just inside the edge that
+      // slowly brightens and fades, no thick border.
+      if (isChoice && !isSel) {
+        const rim = new Graphics();
+        rim.poly(hexPoints(cx, cy, size * 0.86)).stroke({ width: 1.5, color: dark ? 0xffe2a0 : 0xffffff, alpha: 0.9 });
+        rim.poly(hexPoints(cx, cy, size * 0.9)).stroke({ width: 1.5, color: 0xf2b84b });
+        rim.eventMode = "none";
+        halos.current.push(rim);
+        root.addChild(rim);
+      }
 
       const label = (text: string, y: number, sz: number, color = 0x1d1d1f, bold = false) => {
         const t = new Text({ text, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(9, sz), fill: color, fontWeight: bold ? "700" : "400", align: "center" } });
