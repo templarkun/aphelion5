@@ -561,7 +561,29 @@ if (existsSync(`${out}/nounits-save.json`)) {
   greyCheck = greyAtStart === 0 && ["1,2", "1,2,4"].includes(greyBays) && greyCan === 0 && greyOrders >= 1 && why.includes("No unit to target") ? "ok" : `failed (at start ${greyAtStart}, grey Bays ${greyBays}, lit ${greyCan}, grey Orders ${greyOrders}, pop-up "${why}")`;
   await pg.close();
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck }));
+// Build step 3 (designer 2026-11-08): a Module, and an Order, dragged onto their one target: the
+// targets light up while dragging, the drop uses it there (no tap, no confirm).
+async function dragThing(file, handle, name) {
+  if (!existsSync(file)) return "skipped (no save)";
+  const plan = JSON.parse(readFileSync(`${file}.plan.json`, "utf8"));
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, file);
+  const before = await logText(pg);
+  const box = await pg.locator(handle(plan)).first().boundingBox();
+  await dragMouse(pg, { x: box.x + box.width / 2, y: box.y + box.height / 2 }, await sectorPoint(pg, plan.targets[0]));
+  const lit = await pg.locator(".thing-ghost").count();
+  await pg.screenshot({ path: `${out}/ui-${name}-drag.png` });
+  await pg.mouse.up();
+  await pg.waitForTimeout(1800);
+  const log = await logText(pg);
+  const used = log !== before && log.split("\n").length > before.split("\n").length;
+  await pg.close();
+  return lit === 1 && used ? "ok" : `failed (ghost ${lit}, used ${used})`;
+}
+const modDragCheck = await dragThing(`${out}/moddrag-save.json`, (p) => `[data-module="${p.id}"]`, "module");
+const orderDragCheck = await dragThing(`${out}/orderdrag-save.json`, (p) => `[data-order="${p.id}"]`, "order");
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

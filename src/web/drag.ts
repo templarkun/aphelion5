@@ -242,12 +242,14 @@ export function mechaDragPlan(data: GameData, game: Game, view: Game["view"], ti
 }
 
 /**
- * Targets for dragging a Bay or an Order onto the Field (designer 2026-11-08): only when using it
- * asks next for one unit or one sector (and shows nothing hidden first). Dropping sends both answers.
- * One legal target (answered by itself): found with automatic answers off, and the drop sends only the first.
+ * Targets for dragging a Bay, an Order or a Module onto the Field (designer 2026-11-08): only when
+ * using it asks next for one unit or one sector (and shows nothing hidden first). Dropping sends
+ * every answer. One legal target (answered by itself): found with automatic answers off, and the
+ * drop sends only the answers before it. `answerFor`: a Module's plan answers its X, Overclock and
+ * extra payment on the way (modulePlan.ts).
  */
-export function abilityTargets(data: GameData, game: Game, first: Answer): { sector: string; answers: Answer[] }[] {
-  const now = targetsOf(data, game, first, true);
+export function abilityTargets(data: GameData, game: Game, first: Answer, answerFor?: (q: Question) => Answer | undefined): { sector: string; answers: Answer[] }[] {
+  const now = targetsOf(data, game, first, true, answerFor);
   if (now.length) return now;
   const v = game.view;
   if (v.status !== "question" || !v.state.settings.autoAnswer) return [];
@@ -259,17 +261,26 @@ export function abilityTargets(data: GameData, game: Game, first: Answer): { sec
   } catch {
     return [];
   }
-  const one = targetsOf(data, manual, first, false);
+  const one = targetsOf(data, manual, first, false, answerFor);
   return one.length === 1 ? one : [];
 }
 
-function targetsOf(data: GameData, game: Game, first: Answer, both: boolean): { sector: string; answers: Answer[] }[] {
-  const r = playAnswer(data, game, first);
+function targetsOf(data: GameData, game: Game, first: Answer, both: boolean, answerFor?: (q: Question) => Answer | undefined): { sector: string; answers: Answer[] }[] {
+  let r = playAnswer(data, game, first);
   if (r.result.status === "illegal" || r.result.status === "blocked") return [];
+  const before: Answer[] = [first];
+  // A Module's own payment questions, answered by its plan.
+  for (let i = 0; i < 6 && answerFor && r.game.view.status === "question"; i++) {
+    const a = answerFor(r.game.view.question);
+    if (!a || r.game.view.state.hiddenInfo !== game.view.state.hiddenInfo) break;
+    r = playAnswer(data, r.game, a);
+    if (r.result.status === "illegal" || r.result.status === "blocked") return [];
+    before.push(a);
+  }
   const v = r.game.view;
   if (v.status !== "question" || v.state.hiddenInfo !== game.view.state.hiddenInfo) return [];
   const q = v.question;
-  const ans = (a: Answer): Answer[] => (both ? [first, a] : [first]);
+  const ans = (a: Answer): Answer[] => (both ? [...before, a] : before);
   if (asSectors(q) && q.kind === "sectors") return q.options.map((k) => ({ sector: k, answers: ans({ kind: "sectors", value: [k] }) }));
   if (asUnits(q) && q.kind === "units")
     return q.options.flatMap((u) => {

@@ -170,7 +170,7 @@ export function CommandMeter({ n }: { n: number }) {
   );
 }
 
-type Sel = { key: string; el: HTMLElement; items: { label: string; long: boolean; opt?: Option | undefined; why?: string | undefined }[] };
+export type Sel = { key: string; el: HTMLElement; items: { label: string; long: boolean; opt?: Option | undefined; why?: string | undefined }[] };
 
 const NO_UNITS = "No unit to target";
 
@@ -369,10 +369,10 @@ function ThingPopup({ sel, layout, onUse }: { sel: Sel; layout: Layout; onUse: (
 }
 
 /**
- * Press, tap and drag on a Bay or Order button. A tap selects (or fires the selected one);
- * a drag of an ability that has a target lights its targets and drops on one.
+ * Press, tap and drag on a Bay or Order button (and a Module card). A tap selects (or fires the
+ * selected one); a drag of an ability that has a target lights its targets and drops on one.
  */
-function useAbilityPress(api: DragApi, onTap: (key: string, el: HTMLElement, items: Sel["items"], opts: (Option | undefined)[]) => void) {
+export function useAbilityPress(api: DragApi, onTap: (key: string, el: HTMLElement, items: Sel["items"], opts: (Option | undefined)[]) => void) {
   const st = useRef<{ x: number; y: number; id: number; drag?: { list: DropTarget[]; ghost: HTMLElement } | undefined; dead?: boolean } | undefined>(undefined);
   return (key: string, items: Sel["items"], opts: (Option | undefined)[], dragOpt: Option | undefined, text: string) => ({
     onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {

@@ -24,7 +24,7 @@ import { Flame, HeatBar, type ModPop, ModuleCard, ModulePops } from "./Modules.j
 import { AnomalyStrip } from "./Anomalies.js";
 import { MissionBar } from "./Mission.js";
 import { UpgradeBubble } from "./Upgrade.js";
-import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord } from "./Flagship.js";
+import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -611,6 +611,27 @@ function GameScreen(p: GameProps) {
     },
     onNote: (text) => setNote({ text, warn: true, at: Date.now() }),
   };
+  // A Module dragged onto its one target (designer 2026-11-08, build step 3), like a Bay: its X,
+  // Overclock and extra payment come from its selection's pop-ups (or none when not selected).
+  const modulePlanFor = (id: number): ModPlan => (modSel?.id === id ? modSel : normalise(c, { id, oc: 0, extra: 0 }));
+  const moduleOf = (o: Option) => [...(actors?.modules ?? [])].find(([, x]) => x.id === o.id)?.[0];
+  const moduleDragApi: DragApi = {
+    ...dragApi,
+    targets: (o) => {
+      const id = moduleOf(o);
+      if (id === undefined || v !== game.view) return [];
+      const plan = modulePlanFor(id);
+      return abilityTargets(data, game, { kind: "option", value: o.id }, (qq) => planAnswer(qq, plan));
+    },
+    onDrop: (answers) => {
+      const id = answers[0]?.kind === "option" ? moduleOf({ id: String(answers[0].value), label: "" }) : undefined;
+      if (id !== undefined && modSel?.id === id) paidShown(id);
+      setModSelRaw(undefined);
+      setPopup(undefined);
+      p.onAnswer(answers);
+    },
+  };
+  const modulePress = useAbilityPress(moduleDragApi, (key) => moduleState(Number(key.slice("module:".length))).onClick?.());
   const splitSum = Object.values(split).reduce((a, b) => a + b, 0);
   const addSplit = (id: string) => {
     if (q?.kind !== "split") return;
@@ -1056,6 +1077,7 @@ function GameScreen(p: GameProps) {
               dim={dim}
               extraClass={`${m.ready && xWouldBeZero(c, m.id, false) ? "x-zero" : ""} ${affectedNow.modules.includes(m.id) ? "affected" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`}
               onClick={st.onClick}
+              press={actors?.modules.get(m.id) ? modulePress(`module:${m.id}`, [], [actors.modules.get(m.id)], actors.modules.get(m.id), d.effect) : undefined}
             >
               {st.count !== undefined && <SplitCount n={st.count} onMinus={() => subSplit(String(m.id))} />}
             </ModuleCard>

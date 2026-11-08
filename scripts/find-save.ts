@@ -11,9 +11,9 @@ import { newRng } from "../src/engine/rng.js";
 import { playAnswer, startGame, toSave } from "../src/engine/save.js";
 import { emptyProfile } from "../src/engine/state.js";
 import { randomAnswer } from "../tests/unit/campaignFuzz.js";
-import { m01Targets, mechaDragPlan } from "../src/web/drag.js";
+import { abilityTargets, m01Targets, mechaDragPlan } from "../src/web/drag.js";
 import type { Game } from "../src/engine/save.js";
-import { planInfo } from "../src/web/modulePlan.js";
+import { normalise, planAnswer, planInfo } from "../src/web/modulePlan.js";
 import { noUnitToTarget } from "../src/engine/command.js";
 
 const data = loadGameData();
@@ -61,6 +61,10 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   anomaly: (q) => q.kind === "option" && q.options.some((o) => o.on?.kind === "anomaly"),
   // The action menu with no unit on the Field: Bays and Orders that target units are greyed out (designer 2026-11-08).
   nounits: (q, g) => g.view.state.phase === "command" && /^Choose an action/.test(q.prompt) && noUnitToTarget({ data, state: g.view.state }, "V1_BAY1"),
+  // A Module that can be dragged onto its one target (designer 2026-11-08, build step 3).
+  moddrag: (q, g) => moduleDrag(q, g) !== undefined,
+  // An Order that can be dragged onto its one target.
+  orderdrag: (q, g) => (q.shortcuts ?? []).some((o) => o.on?.kind === "order" && abilityTargets(data, g, { kind: "option", value: o.id }).length > 0),
   // Bay 3 (look at the top tiles of a Dark sector) on the action menu.
   bay3: (q) => (q.shortcuts ?? []).some((o) => o.on?.kind === "bay" && /BAY3$/.test(o.on.ability)),
   // Energy on Modules with pop-ups (designer 2026-11-07).
@@ -72,6 +76,17 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
     return [...per.values()].some((n) => n >= 3);
   },
 };
+/** The first Module on the action menu with drag targets (its plan: no Overclock, no extra), and those targets. */
+function moduleDrag(q: Question, g: Game): { id: number; targets: string[] } | undefined {
+  for (const o of q.shortcuts ?? []) {
+    if (o.on?.kind !== "module") continue;
+    const id = o.on.id;
+    const plan = normalise({ data, state: g.view.state }, { id, oc: 0, extra: 0 });
+    const t = abilityTargets(data, g, { kind: "option", value: o.id }, (qq) => planAnswer(qq, plan));
+    if (t.length) return { id, targets: t.map((x) => x.sector) };
+  }
+  return undefined;
+}
 const [what = "rows", out = "save.json"] = process.argv.slice(2);
 const wanted = WANTED[what];
 if (!wanted) throw new Error(`unknown question kind ${what}`);
@@ -98,6 +113,11 @@ for (let seed = 1; seed < 400; seed++) {
           writeFileSync(`${out}.plan.json`, JSON.stringify({ unitId: plan.unitId, from: plan.from, targets }));
           break;
         }
+      }
+      if (what === "moddrag") writeFileSync(`${out}.plan.json`, JSON.stringify(moduleDrag(q, g)));
+      if (what === "orderdrag") {
+        const o = (q.shortcuts ?? []).find((x) => x.on?.kind === "order" && abilityTargets(data, g, { kind: "option", value: x.id }).length > 0)!;
+        writeFileSync(`${out}.plan.json`, JSON.stringify({ id: o.on!.kind === "order" ? o.on!.id : "", targets: abilityTargets(data, g, { kind: "option", value: o.id }).map((x) => x.sector) }));
       }
       console.log(`${out}: seed ${seed}, after ${n} answers: ${q.prompt}`);
       process.exit(0);

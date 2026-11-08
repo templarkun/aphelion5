@@ -486,3 +486,6 @@ button.heat-long, button.heat-bubble { font: inherit; color: inherit; cursor: po
 /* Bays and Orders that target units, with no unit on the Field: greyed out (designer 2026-11-08). */
 .bay-thing.no-units .bay-btn, .order-thing.no-units .order-btn { filter: grayscale(1); opacity: 0.45; }
 .thing-text .why { font-style: normal; opacity: 0.8; }
+/* A Module dragged onto its target (designer 2026-11-08): vertical swipes still scroll the panel. */
+.module.can { touch-action: pan-y; }
+.module.thing-ghost { width: 200px; margin: 0; background: var(--panel); }
