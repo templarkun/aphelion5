@@ -215,7 +215,9 @@ export function requestOverload(c: Ctx, why: string): void {
 function* flareFires(c: RunCtx, id: TileId): Effect {
   const d = unitDef(c, id);
   // H4: a revealed Power Node may give 3 Heat instead of its energy.
-  const heat = c.state.settings.heatModule && d.id === "F_01" ? yield* powerNodeChoice(c) : false;
+  // Trial rule (designer 2026-11-08): a Power Node's energy waits on it; energy or Heat is chosen at its Alert.
+  const waits = d.id === "F_01" && !!c.state.settings.trialFlareEnergy && !c.state.settings.powerNodeAtReveal;
+  const heat = c.state.settings.heatModule && d.id === "F_01" && !waits ? yield* powerNodeChoice(c) : false;
   if (d.energyOnReveal && !heat) {
     if (c.state.settings.trialFlareEnergy) {
       // Trial rule (I2): take the energy from the Supply; it waits on the Flare until its Alert is resolved.

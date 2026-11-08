@@ -201,18 +201,27 @@ function targetsOf(data: GameData, game: Game, first: Answer, both: boolean): { 
   return [];
 }
 
+/** What an action would affect: sectors on the Field and Modules (designer 2026-11-08). */
+export interface Affects {
+  sectors: string[];
+  modules: number[];
+}
+
 /**
- * The sectors a Module would affect if run now with these answers (designer 2026-11-08: shown
- * by an overline while it is selected). Tried on a copy of the game: the units its first
- * target question offers, or (no question) what it hit, destroyed, moved or swapped.
- * Nothing when trying it would show new hidden information.
+ * What running an action (a Module, a Bay, an Order) would affect, tried on a
+ * copy of the game: the plan answers its own questions (`answerFor`); then the
+ * first question it asks names its targets (units, sectors, rows, Modules), or,
+ * with none, what changed (hits, moves, swaps, energy on Modules, Modules made
+ * ready or exhausted). Nothing if it would show new hidden information.
+ * `self`: the Module being run (its own payment is not an effect).
  */
-export function moduleAffects(data: GameData, game: Game, first: Answer, answerFor: (q: Question) => Answer | undefined): string[] {
+export function actionAffects(data: GameData, game: Game, first: Answer, answerFor: (q: Question) => Answer | undefined, self?: number): Affects {
+  const none: Affects = { sectors: [], modules: [] };
   const start = game.view;
-  if (start.status !== "question") return [];
+  if (start.status !== "question") return none;
   const hidden = start.state.hiddenInfo;
   let r = playAnswer(data, game, first);
-  if (r.result.status === "illegal" || r.result.status === "blocked") return [];
+  if (r.result.status === "illegal" || r.result.status === "blocked") return none;
   let g = r.game;
   for (let i = 0; i < 8; i++) {
     const v = g.view;
@@ -220,25 +229,39 @@ export function moduleAffects(data: GameData, game: Game, first: Answer, answerF
     const a = answerFor(v.question);
     if (!a) break;
     r = playAnswer(data, g, a);
-    if (r.result.status === "illegal" || r.result.status === "blocked") return [];
+    if (r.result.status === "illegal" || r.result.status === "blocked") return none;
     g = r.game;
   }
   const v = g.view;
-  if (v.state.hiddenInfo !== hidden) return [];
+  if (v.state.hiddenInfo !== hidden) return none;
   const s = v.state;
   const out = new Set<string>();
+  const mods = new Set<number>();
   const add = (k: string | undefined) => k && s.field[k] && out.add(k);
+  const addM = (m: string | number) => {
+    const n = Number(m);
+    if (Number.isInteger(n) && n !== self && s.player.modules.some((x) => x.id === n)) mods.add(n);
+  };
   if (v.status === "question" && !v.question.shortcuts) {
     const q = v.question;
     if (q.kind === "units") q.options.forEach((u) => add(sectorOf(s, u)));
     else if (q.kind === "sectors") q.options.forEach(add);
-    else if (q.kind === "option") for (const o of q.options) add(o.on?.kind === "unit" ? sectorOf(s, o.on.id) : o.on?.kind === "sector" ? o.on.key : undefined);
-    if (out.size) return [...out];
+    else if (q.kind === "option" || q.kind === "order") {
+      if (q.rows) q.rows.flat().forEach(add);
+      for (const o of q.options) add(o.on?.kind === "unit" ? sectorOf(s, o.on.id) : o.on?.kind === "sector" ? o.on.key : undefined);
+      if (q.pick === "modules" || q.energy || q.takeEnergy) for (const o of q.options) addM(o.id);
+    } else if (q.kind === "split" && q.pick === "modules") q.buckets.forEach((b) => addM(b.id));
+    if (out.size || mods.size) return { sectors: [...out], modules: [...mods] };
   }
   for (const e of newEvents(start.state.events, s.events)) {
     if (e.kind === "hit" || e.kind === "destroyed") add(e.sector);
     else if (e.kind === "moved") add(e.to);
     else if (e.kind === "swapped") (add(e.from), add(e.to));
   }
-  return [...out];
+  // Modules whose energy or ready state changed (other than the one being run).
+  for (const m of s.player.modules) {
+    const b = start.state.player.modules.find((x) => x.id === m.id);
+    if (!b || b.ready !== m.ready || b.energy.Yellow !== m.energy.Yellow || b.energy.Red !== m.energy.Red || b.energy.Blue !== m.energy.Blue) addM(m.id);
+  }
+  return { sectors: [...out], modules: [...mods] };
 }

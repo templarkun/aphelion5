@@ -48,6 +48,10 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   // M_01 on the action menu with somewhere to move or Attack (its targets light when tapped).
   m01: (q, g) =>
     (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && g.view.state.tiles[o.on.id]?.unitId === "M_01" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.length ?? 0) > 0),
+  // Trial rule + Heat module: a Power Node's Alert offers its energy or 3 Heat on the unit (designer 2026-11-08).
+  node: (q) => (q.shortcuts ?? []).some((o) => /^alert:.*\|heat$/.test(o.id)),
+  // A Module or card choosing a Module to put energy on (Harvest Beacon...): energy pop-ups.
+  fill: (q) => q.kind === "option" && q.energy !== undefined && !/^Place energy/.test(q.prompt) && Object.keys(q.energy).length >= 2,
   // Energy taken off Modules (S_08, S_13): pop-ups with an outward arrow.
   take: (q) => q.takeEnergy !== undefined,
   // Overload End step 3: claim a met Anomaly card.

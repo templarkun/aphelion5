@@ -25,13 +25,15 @@ function* chooseSectorFrom(c: RunCtx, prompt: string, rule: string, options: Sec
   return ((yield* ask(c, { kind: "sectors", prompt, rule, options, min: 1, max: 1 })).value as string[])[0];
 }
 
-function* chooseModule(c: RunCtx, prompt: string, rule: string, ids: number[]): Effect<number | undefined> {
+/** `place`: the Module is chosen to get this much energy of its colour (the screen shows energy pop-ups, designer 2026-11-08). */
+function* chooseModule(c: RunCtx, prompt: string, rule: string, ids: number[], place?: number): Effect<number | undefined> {
   if (ids.length === 0) {
     log(c, `${prompt} - no such Module`, rule);
     return undefined;
   }
   if (ids.length === 1) return ids[0];
-  return Number((yield* ask(c, { kind: "option", pick: "modules", prompt, rule, options: ids.map((m) => ({ id: String(m), label: name(c, m) })) })).value);
+  const energy = place ? { energy: Object.fromEntries(ids.map((m) => [String(m), moduleDef(c, m).colour])), energyN: place } : {};
+  return Number((yield* ask(c, { kind: "option", pick: "modules", ...energy, prompt, rule, options: ids.map((m) => ({ id: String(m), label: name(c, m) })) })).value);
 }
 
 const names = (c: Ctx, ids: TileId[]) => ids.map((t) => tile(c.state, t).unitId).join(", ");
@@ -213,7 +215,7 @@ mod(64, {
     if (ids.length > 5) {
       const pick: number[] = [];
       for (let i = 0; i < 5; i++) {
-        const m = yield* chooseModule(c, `Power Relay: Module ${i + 1} of 5?`, M(64), ids.filter((x) => !pick.includes(x)));
+        const m = yield* chooseModule(c, `Power Relay: Module ${i + 1} of 5?`, M(64), ids.filter((x) => !pick.includes(x)), 1);
         pick.push(m!);
       }
       ids = pick;
@@ -229,9 +231,9 @@ mod(64, {
  */
 mod(65, {
   run: function* (c, run) {
-    const chosen = yield* chooseModule(c, "Salvage Siphon: choose a ready Module other than this one.", M(65), readyIds(c).filter((x) => x !== run.id));
-    if (chosen === undefined) return;
     const n = countType(c, "Bot");
+    const chosen = yield* chooseModule(c, "Salvage Siphon: choose a ready Module other than this one.", M(65), readyIds(c).filter((x) => x !== run.id), n);
+    if (chosen === undefined) return;
     for (let i = 0; i < n; i++) if (!(yield* placeOneEnergy(c, chosen, M(65)))) break;
     returnEnergy(c, c.state.player.modules.map((m) => m.id).filter((m) => m !== chosen), M(65));
   },
@@ -258,7 +260,7 @@ mod(66, {
 
 /** Place 1 energy per count on one ready Module other than this one. */
 function* fillOne(c: RunCtx, self: number, n: number, rule: string): Effect {
-  const m = yield* chooseModule(c, `${rule}: choose a ready Module other than this one.`, rule, readyIds(c).filter((x) => x !== self));
+  const m = yield* chooseModule(c, `${rule}: choose a ready Module other than this one.`, rule, readyIds(c).filter((x) => x !== self), n);
   if (m === undefined) return;
   for (let i = 0; i < n; i++) if (!(yield* placeOneEnergy(c, m, rule))) return;
 }

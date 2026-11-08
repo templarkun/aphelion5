@@ -104,6 +104,28 @@ describe("trial rule: Flare energy waits on the Flare (I2)", () => {
     expect(checkInvariants(ctx(state))).toEqual([]);
   });
 
+  it("with the Heat module, a Power Node asks nothing at Reveal; its Alert offers its energy or 3 Heat on the unit (designer 2026-11-08)", () => {
+    const s = trial();
+    s.settings.heatModule = true;
+    const { state: s0, asked } = cmd(s, [A.option("reveal")]);
+    const node = at(s0, "0,1");
+    expect(asked).toHaveLength(1);
+    expect(s0.tiles[node]!.energy).toEqual({ Yellow: 1, Red: 1, Blue: 1 });
+    const menu = asks(s0, overloadStep, []);
+    const mine = (menu.shortcuts ?? []).filter((o) => o.on?.kind === "unit" && o.on.id === node);
+    expect(mine.map((o) => o.id)).toEqual([`alert:${node}|energy`, `alert:${node}|heat`]);
+    expect(mine[0]!.chips).toEqual(["Yellow", "Red", "Blue"]);
+    const heat0 = s0.player.heat;
+    const h = ovl(s0, [A.option(`alert:${node}|heat`)]).state;
+    expect(h.player.heat).toBe(Math.min(10, heat0 + 3));
+    expect(h.tiles[node]!.energy).toBeUndefined();
+    expect(h.supply.energy).toEqual({ Yellow: 15, Red: 15, Blue: 15 });
+    expect(checkInvariants(ctx(h))).toEqual([]);
+    const e = ovl(s0, [A.option(`alert:${node}|energy`), A.option("supply:Yellow"), A.option("51")]).state;
+    expect(e.player.heat).toBe(heat0);
+    expect(energyOf(e, 26)).toEqual({ Yellow: 0, Red: 1, Blue: 0 });
+  });
+
   it("off by default: the energy is placed at Reveal as the Core Rules say (4.6)", () => {
     expect(board().settings.trialFlareEnergy).toBeFalsy();
   });

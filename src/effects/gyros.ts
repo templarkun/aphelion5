@@ -128,7 +128,7 @@ gyro(
 );
 
 /** "... each of three different Modules ..." (as many as possible): choose which, then act on each. */
-function* threeModules(c: RunCtx, rule: string, options: number[], act: (m: number) => Effect<unknown>): Effect {
+function* threeModules(c: RunCtx, rule: string, options: number[], act: (m: number) => Effect<unknown>, place = false): Effect {
   const k = Math.min(3, options.length);
   if (k === 0) {
     log(c, `${rule}: no Module to choose`, rule);
@@ -140,14 +140,15 @@ function* threeModules(c: RunCtx, rule: string, options: number[], act: (m: numb
     pick = [];
     for (let i = 0; i < 3; i++) {
       const left = options.filter((m) => !pick.includes(m));
-      const a = yield* ask(c, { kind: "option", pick: "modules", prompt: `${rule}: choose Module ${i + 1} of 3.`, rule, options: left.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) });
+      const energy = place ? { energy: Object.fromEntries(left.map((m) => [String(m), moduleDef(c, m).colour])) } : {};
+      const a = yield* ask(c, { kind: "option", pick: "modules", ...energy, prompt: `${rule}: choose Module ${i + 1} of 3.`, rule, options: left.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) });
       pick.push(Number(a.value));
     }
   }
   for (const m of pick) yield* act(m);
 }
 const drain3 = (rule: string) => (c: RunCtx) => threeModules(c, rule, modulesWithEnergy(c), (m) => removeOneEnergy(c, m, rule));
-const place3 = (rule: string) => (c: RunCtx) => threeModules(c, rule, readyIds(c), (m) => placeOneEnergy(c, m, rule));
+const place3 = (rule: string) => (c: RunCtx) => threeModules(c, rule, readyIds(c), (m) => placeOneEnergy(c, m, rule), true);
 
 // G_16, G_19 - Drain: remove 1 energy from each of three different Modules that have energy. Destroyed: place 1 energy on each of three different ready Modules.
 gyro("G_16", drain3("G_16"), place3("G_16"));

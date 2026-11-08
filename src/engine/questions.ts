@@ -45,6 +45,8 @@ interface Base {
    * it back to the Supply. The screen shows a pop-up by each Module.
    */
   energy?: Record<string, "Yellow" | "Red" | "Blue">;
+  /** How much energy each `energy` answer places (default 1; Harvest Beacon, F_27...). */
+  energyN?: number;
   /**
    * Energy taken off a Module (S_08, S_13...): option ids are Module ids; "one" takes one energy,
    * "all" all of it. The screen shows a pop-up with an outward arrow by each such Module.
@@ -68,6 +70,8 @@ export interface Option {
   id: string;
   label: string;
   on?: Target;
+  /** For the screen only: show these as glyphs instead of words (energy chips, Heat). */
+  chips?: ("Yellow" | "Red" | "Blue" | "Heat")[];
 }
 
 export type Question =

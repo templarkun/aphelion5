@@ -177,12 +177,15 @@ export function FlagshipDock(p: {
   q: Question | undefined;
   inOverload: boolean;
   onUse: (opt: Option) => void;
+  /** The usable options of the Bay or Order whose pop-up is open (none when closed): the screen outlines what they affect. */
+  onSelect?: (opts: Option[]) => void;
   drag: DragApi;
   /** Extra things below the Bays (Overhaul...), in layouts A and B. */
   children?: React.ReactNode;
 }) {
   const [sel, setSel] = useState<Sel | undefined>();
   useEffect(() => setSel(undefined), [p.q]);
+  useEffect(() => p.onSelect?.(sel ? sel.items.flatMap((it) => (it.opt ? [it.opt] : [])) : []), [sel]); // eslint-disable-line react-hooks/exhaustive-deps
   const Meter = p.company === "V2" ? BarMeter : PipMeter;
   const press = useAbilityPress(p.drag, (key, el, items, opts) => {
     // Pressing the selected one again fires it (when it has one thing to do).

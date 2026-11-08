@@ -261,7 +261,8 @@ flare("F_27", function* (c) {
     log(c, `F_27: total ${n}${ready.length === 0 ? ", no ready Module" : ""}`, "F_27");
     return;
   }
-  const a = yield* ask(c, { kind: "option", pick: "modules", prompt: `F_27: you may place ${n} energy on one ready Module.`, rule: "F_27", options: [...ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })), { id: "none", label: "Place none" }] });
+  const energy = Object.fromEntries(ready.map((m) => [String(m), moduleDef(c, m).colour]));
+  const a = yield* ask(c, { kind: "option", pick: "modules", energy, energyN: n, prompt: `F_27: you may place ${n} energy on one ready Module.`, rule: "F_27", options: [...ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })), { id: "none", label: "Place none" }] });
   if (a.value !== "none") yield* placeEnergyOn(c, Number(a.value), n, "F_27");
 });
 

@@ -5,7 +5,6 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { objectiveText } from "../cli/objective.js";
 import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
 import { alertedUnits } from "../engine/alerts.js";
@@ -17,12 +16,14 @@ import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, st
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
 import { FieldView } from "./FieldView.js";
-import { type DragKind, type DragPlan, abilityTargets, mechaDragPlan, m03TapTargets, moduleAffects } from "./drag.js";
+import { type DragKind, type DragPlan, type Affects, abilityTargets, actionAffects, mechaDragPlan, m03TapTargets } from "./drag.js";
 import { newEvents } from "../engine/events.js";
-import { energyFlights, paidShown, reserveFlights } from "./flyers.js";
+import { energyFlights, paidShown, reserveFlights, trophyFlights } from "./flyers.js";
 import { type ModPlan, normalise, planAnswer, planInfo } from "./modulePlan.js";
-import { HeatBar, type ModPop, ModuleCard, ModulePops } from "./Modules.js";
+import { Flame, HeatBar, type ModPop, ModuleCard, ModulePops } from "./Modules.js";
 import { AnomalyStrip } from "./Anomalies.js";
+import { MissionBar } from "./Mission.js";
+import { UpgradeBubble } from "./Upgrade.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 
@@ -446,6 +447,7 @@ function GameScreen(p: GameProps) {
     lastState.current = real.state;
     if (before === real.state) return;
     energyFlights(before, real.state);
+    trophyFlights(before, real.state);
     if (!planRef.current) paidShown(undefined);
     const seen = newEvents(before.events, real.state.events).filter((e) => e.kind === "looked");
     setLook(seen.length ? seen.flatMap((e) => (e.kind === "looked" ? e.tiles : [])) : undefined);
@@ -734,6 +736,7 @@ function GameScreen(p: GameProps) {
     const o = sel && actors?.modules.get(sel.id);
     if (!sel || !o) return;
     planRef.current = sel;
+    keep(modAffects);
     setModSelRaw(undefined);
     paidShown(sel.id);
     p.onAnswer([{ kind: "option", value: o.id }]);
@@ -755,11 +758,34 @@ function GameScreen(p: GameProps) {
       document.removeEventListener("keydown", esc);
     };
   }); // eslint-disable-line react-hooks/exhaustive-deps
-  const affected = useMemo(() => {
-    if (!modSel || v !== game.view) return [];
+  // What a selected Module, Bay or Order would affect (designer 2026-11-08): a violet outline on
+  // those sectors and Modules, kept while it runs (until the action menu is back and a moment has passed).
+  const [thingSel, setThingSel] = useState<Option[]>([]);
+  const modAffects = useMemo((): Affects => {
+    if (!modSel || v !== game.view) return { sectors: [], modules: [] };
     const o = actors?.modules.get(modSel.id);
-    return o ? moduleAffects(data, game, { kind: "option", value: o.id }, (qq) => planAnswer(qq, modSel)) : [];
+    return o ? actionAffects(data, game, { kind: "option", value: o.id }, (qq) => planAnswer(qq, modSel), modSel.id) : { sectors: [], modules: [] };
   }, [data, game, v, modSel]); // eslint-disable-line react-hooks/exhaustive-deps
+  const thingAffects = useMemo((): Affects => {
+    const out: Affects = { sectors: [], modules: [] };
+    if (!actors || v !== game.view) return out;
+    for (const o of thingSel) {
+      const a = actionAffects(data, game, { kind: "option", value: o.id }, () => undefined);
+      out.sectors.push(...a.sectors);
+      out.modules.push(...a.modules);
+    }
+    return out;
+  }, [data, game, v, thingSel.map((o) => o.id).join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [kept, setKept] = useState<{ aff: Affects; at: number } | undefined>();
+  const keep = (aff: Affects) => setKept(aff.sectors.length || aff.modules.length ? { aff, at: game.answers.length } : undefined);
+  const backToMenu = !!actorsOf(realQ) && kept !== undefined && game.answers.length > kept.at;
+  useEffect(() => {
+    if (!backToMenu) return;
+    const t = window.setTimeout(() => setKept(undefined), 1400);
+    return () => window.clearTimeout(t);
+  }, [backToMenu, game.answers.length]);
+  const affectedNow: Affects = modSel ? modAffects : thingSel.length ? thingAffects : (kept?.aff ?? { sectors: [], modules: [] });
+  const affected = affectedNow.sectors;
   const modPops: ModPop[] = [];
   if (modSel && selInfo) {
     const d = moduleDef(c, modSel.id);
@@ -815,6 +841,12 @@ function GameScreen(p: GameProps) {
     concede &&
     setConfirm({ title: "Concede?", text: "The game ends at once and counts as a loss (10.3).", yes: "Concede", danger: true, onYes: () => answer(concede.id) });
   const endOverload = actors?.game.get("endOverload");
+  /** A Bay or Order used from its pop-up: what it affects stays outlined while it runs. */
+  const useThing = (o: Option) => {
+    if (thingSel.some((x) => x.id === o.id)) keep(thingAffects);
+    setThingSel([]);
+    answer(o.id);
+  };
 
   // Bays and Orders as buttons (designer 2026-11-08): see Flagship.tsx.
   const abilities = bayAbilities(c);
@@ -844,9 +876,9 @@ function GameScreen(p: GameProps) {
           slots used {s.sheet.overhaulUsed}/{co.overhaulSlots}
         </span>
       </div>
-      <p className="small">
-        Upgrade points {s.sheet.upgradePoints}
-        {s.sheet.ally ? ` · Ally ${s.sheet.ally}` : ""}
+      <p className="small sheet-line">
+        <UpgradeBubble n={s.sheet.upgradePoints} />
+        {s.sheet.ally ? <span>Ally {s.sheet.ally}</span> : null}
       </p>
     </>
   );
@@ -916,7 +948,7 @@ function GameScreen(p: GameProps) {
       <aside className="left panel">
         <h3>Flagship{layout === "A" ? ` — ${co.name}` : ""}</h3>
         {layout !== "C" ? (
-          <FlagshipDock layout={layout} company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={(o) => answer(o.id)} drag={dragApi}>
+          <FlagshipDock layout={layout} company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={useThing} onSelect={setThingSel} drag={dragApi}>
             {flagshipExtras}
           </FlagshipDock>
         ) : (
@@ -925,7 +957,13 @@ function GameScreen(p: GameProps) {
       </aside>
 
       <section className="center">
-        {s.player.anomalies.length > 0 && <AnomalyStrip data={data} cards={s.player.anomalies} q={q} onAnswer={answer} />}
+        {/* Anomalies on the left (they scroll), the Mission bar always at the right end (designer 2026-11-08). */}
+        {s.mission && hasField && (
+          <div className="top-strip">
+            <AnomalyStrip data={data} cards={s.player.anomalies} q={q} onAnswer={answer} />
+            <MissionBar c={c} phase={PHASE[s.phase]} />
+          </div>
+        )}
         <div className="field-area">
         {hasField ? (
           <FieldView
@@ -990,7 +1028,7 @@ function GameScreen(p: GameProps) {
           </QCard>
         )}
         </div>
-        {layout === "C" && hasField && <FlagshipDock layout="C" company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={(o) => answer(o.id)} drag={dragApi} />}
+        {layout === "C" && hasField && <FlagshipDock layout="C" company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={useThing} onSelect={setThingSel} drag={dragApi} />}
       </section>
 
       <aside className="right panel">
@@ -1011,27 +1049,13 @@ function GameScreen(p: GameProps) {
               can={st.can}
               selected={sel}
               dim={dim}
-              extraClass={`${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`}
+              extraClass={`${affectedNow.modules.includes(m.id) ? "affected" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`}
               onClick={st.onClick}
             >
               {st.count !== undefined && <SplitCount n={st.count} onMinus={() => subSplit(String(m.id))} />}
             </ModuleCard>
           );
         })}
-        <section className="trophy-box">
-          <p className="phase-line">
-            <b className={inOverload ? "warn" : "phase"}>{PHASE[s.phase]}</b> · {s.mission}
-          </p>
-          <p className="small">{objectiveText(c)}</p>
-          <h3>Trophy pile</h3>
-          <p className="small">
-            {Object.entries(
-              s.piles.trophy.reduce<Record<string, number>>((acc, t) => ((acc[s.tiles[t]!.unitId!] = (acc[s.tiles[t]!.unitId!] ?? 0) + 1), acc), {}),
-            )
-              .map(([u, n]) => `${n} ${u}`)
-              .join(", ") || "empty"}
-          </p>
-        </section>
       </aside>
 
 
@@ -1108,6 +1132,28 @@ export function EnergyGlyph({ colour }: { colour: "Yellow" | "Red" | "Blue" }) {
   );
 }
 
+/** A Power Node's Alert pop-up (designer 2026-11-08): "Gain" and the energy (or Heat) as glyphs. */
+function ChipLabel({ chips, label }: { chips: NonNullable<Option["chips"]>; label: string }) {
+  if (chips.length === 0) return <span>{label}</span>;
+  const heat = chips.every((x) => x === "Heat");
+  return (
+    <span className="chip-label" aria-label={label}>
+      <span>Gain</span>
+      <span className="chips">
+        {heat ? (
+          <>
+            <b>{chips.length}</b>
+            <Flame />
+            <span>Heat</span>
+          </>
+        ) : (
+          chips.map((x, i) => <EnergyGlyph key={i} colour={x as "Yellow" | "Red" | "Blue"} />)
+        )}
+      </span>
+    </span>
+  );
+}
+
 /**
  * Energy on Modules (designer 2026-11-07): a pop-up to the left of every
  * Module that can take one of the waiting energies, with an arrow to it and
@@ -1115,7 +1161,8 @@ export function EnergyGlyph({ colour }: { colour: "Yellow" | "Red" | "Blue" }) {
  * Node) show all their pop-ups at once, placed in any order.
  */
 function EnergyPopups({ q, onPick, take }: { q: Question & { kind: "option" }; onPick: (id: string) => void; take?: { state: GameState; data: GameData } }) {
-  const ids = take ? q.options.filter((o) => /^\d+$/.test(o.id)).map((o) => o.id) : q.options.filter((o) => !o.id.startsWith("supply:")).map((o) => o.id);
+  const ids = take ? q.options.filter((o) => /^\d+$/.test(o.id)).map((o) => o.id) : q.options.filter((o) => !o.id.startsWith("supply:") && q.energy?.[o.id]).map((o) => o.id);
+  const n = q.energyN ?? 1;
   const [pos, setPos] = useState<Record<string, { x: number; y: number; inside: boolean } | undefined>>({});
   const W = 132;
   useLayoutEffect(() => {
@@ -1169,9 +1216,11 @@ function EnergyPopups({ q, onPick, take }: { q: Question & { kind: "option" }; o
         }
         const col = q.energy![id]!;
         return (
-          <button key={`${q.prompt}:${id}`} className={`energy-pop ${col.toLowerCase()} ${p.inside ? "inside" : ""}`} style={{ left: p.x, top: p.y, width: W, animationDelay: `${i * 50}ms, ${i * 50 + 300}ms` }} onClick={() => onPick(id)} aria-label={`Place 1 ${col} energy on this Module`}>
+          <button key={`${q.prompt}:${id}`} className={`energy-pop ${col.toLowerCase()} ${p.inside ? "inside" : ""}`} style={{ left: p.x, top: p.y, width: W, animationDelay: `${i * 50}ms, ${i * 50 + 300}ms` }} onClick={() => onPick(id)} aria-label={`Place ${n} ${col} energy on this Module`}>
             <EnergyGlyph colour={col} />
-            <span>+1 {col}</span>
+            <span>
+              +{n} {col}
+            </span>
           </button>
         );
       })}
@@ -1242,7 +1291,7 @@ function PopupMenu({ popup, onPick, onClose, tapThrough, bubbleW }: { popup: Pop
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
   }, [onClose, leaving]);
-  const items = [...popup.options.map((o) => ({ id: o.id, label: o.label, go: () => leave(() => onPick(o.id)), main: popup.commit })), ...(popup.next ? [{ id: "next", label: popup.next.label, go: popup.next.go, main: false }] : [])];
+  const items = [...popup.options.map((o) => ({ id: o.id, label: o.label, chips: o.chips, go: () => leave(() => onPick(o.id)), main: popup.commit || o.chips !== undefined })), ...(popup.next ? [{ id: "next", label: popup.next.label, go: popup.next.go, main: false }] : [])];
   return (
     <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && !leaving && !tapThrough(e.clientX, e.clientY) && leave(onClose)}>
       <div ref={box} className={`popup bubbles ${leaving ? "leaving" : ""}`} role="menu" aria-label={popup.title} style={{ ...pos, ["--bw" as string]: `${bubbleW}px`, ["--bs" as string]: String(bubbleW / 120) }}>
@@ -1250,7 +1299,7 @@ function PopupMenu({ popup, onPick, onClose, tapThrough, bubbleW }: { popup: Pop
         <div className="bubble-row">
           {items.map((o, i) => (
             <button key={`${popup.title}:${o.id}`} role="menuitem" title={o.label} className={`bubble ${o.main ? "primary" : ""} ${o.label.length > 60 ? "tiny" : o.label.length > 30 ? "small-text" : ""}`} style={{ animationDelay: `${i * 45}ms` }} onClick={o.go}>
-              <BubbleLabel text={o.label} />
+              {"chips" in o && o.chips ? <ChipLabel chips={o.chips} label={o.label} /> : <BubbleLabel text={o.label} />}
             </button>
           ))}
         </div>

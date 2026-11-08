@@ -10,7 +10,7 @@
 
 import type { AnomalyDef, AnomalyTerm } from "../data/anomalies.js";
 import { type Effect, type RunCtx, ask, asEffect, log, registerRoot } from "./effect.js";
-import { alertedUnits, resolveAlert } from "./alerts.js";
+import { alertShortcuts, alertedUnits, resolveAlert, splitAlertId } from "./alerts.js";
 import {
   ACTION_LABEL,
   type OrderOption,
@@ -59,7 +59,7 @@ export function overloadMenu(c: Ctx): Option[] {
 
 function* doOverloadAction(c: RunCtx, id: string): Effect {
   if (id.startsWith("alert:")) {
-    yield* resolveAlert(c, id.slice("alert:".length));
+    yield* resolveAlert(c, ...splitAlertId(id.slice("alert:".length)));
     return;
   }
   switch (id as OverloadActionId) {
@@ -118,7 +118,7 @@ export function* overloadStep(c: RunCtx): Effect {
 export function overloadShortcuts(c: Ctx): Option[] {
   const out: Option[] = [];
   const alerts = alertedUnits(c);
-  for (const u of alerts) out.push({ id: `alert:${u}`, label: `Resolve the Alert${isWreck(c, u) ? " (Wreck)" : ""}`, on: { kind: "unit", id: u } });
+  out.push(...alertShortcuts(c));
   for (const m of c.state.player.modules) if (canRunModule(c, m.id)) out.push({ id: `module:${m.id}`, label: `Run ${moduleDef(c, m.id).name}`, on: { kind: "module", id: m.id } });
   for (const u of mechaUnits(c, "overload")) for (const o of commandOptions(c, u, "overload")) out.push({ id: `mecha:${u}:${o.id}`, label: o.label, on: { kind: "unit", id: u } });
   for (const b of usableBayAbilities(c)) out.push({ id: `bay:${b.id}`, label: `Bay ${b.bay}: ${b.text}`, on: { kind: "bay", bay: b.bay, ability: b.id } });
@@ -131,6 +131,9 @@ export function overloadShortcuts(c: Ctx): Option[] {
 function* doOverloadShortcut(c: RunCtx, id: string): Effect {
   const [kind, x, choice] = splitShortcut(id);
   switch (kind) {
+    case "alert":
+      yield* resolveAlert(c, ...splitAlertId(x));
+      return;
     case "module":
       yield* runModule(c, Number(x));
       return;

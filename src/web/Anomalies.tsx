@@ -11,8 +11,8 @@
  * "Decline all" button keeps them all.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useLayoutEffect, useRef, useState } from "react";
+import { type Anchor, PopCard, anchorOf } from "./PopCard.js";
 import type { GameData } from "../data/index.js";
 import type { Option, Question } from "../engine/questions.js";
 
@@ -75,21 +75,6 @@ export function AnomalyStrip({ data, cards, q, onAnswer }: { data: GameData; car
   const none = claim?.options.find((o) => o.id === "none");
   // Pressing a bubble shows the card's full text (designer 2026-11-08).
   const [open, setOpen] = useState<{ id: string; x: number; y: number } | undefined>();
-  useEffect(() => {
-    if (!open) return;
-    const off = (e: PointerEvent) => {
-      const t = e.target as Element | null;
-      if (!t?.closest(".anomaly-card") && !t?.closest(`[data-anomaly="${open.id}"]`)) setOpen(undefined);
-    };
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(undefined);
-    document.addEventListener("pointerdown", off, true);
-    document.addEventListener("keydown", esc);
-    window.addEventListener("scroll", () => setOpen(undefined), { capture: true, once: true });
-    return () => {
-      document.removeEventListener("pointerdown", off, true);
-      document.removeEventListener("keydown", esc);
-    };
-  }, [open]);
   // Long form if it fits on one line, else short (measured again when the width or the cards change).
   useLayoutEffect(() => {
     const el = row.current;
@@ -105,7 +90,6 @@ export function AnomalyStrip({ data, cards, q, onAnswer }: { data: GameData; car
     ro.observe(el);
     return () => ro.disconnect();
   }, [cards.join(","), claim !== undefined]);
-  if (cards.length === 0) return null;
   return (
     <div className={`anomaly-strip ${claim ? "claiming" : ""}`}>
       <div ref={row} className={`anomaly-row ${short ? "short" : ""}`} role="list" aria-label="Your Anomaly cards">
@@ -121,8 +105,7 @@ export function AnomalyStrip({ data, cards, q, onAnswer }: { data: GameData; car
                 aria-label={`Anomaly ${id}: ${a.text} Press for the full card.`}
                 onClick={(e) => {
                   if (open?.id === id) return setOpen(undefined);
-                  const r = (e.currentTarget.closest(".anomaly") ?? e.currentTarget).getBoundingClientRect();
-                  setOpen({ id, x: r.left + r.width / 2, y: r.bottom + 8 });
+                  setOpen({ id, ...anchorOf(e.currentTarget.closest(".anomaly") ?? e.currentTarget) });
                 }}
               >
                 {short ? shortForm(a.terms, a.minimum) : longForm(a.text)}
@@ -146,27 +129,13 @@ export function AnomalyStrip({ data, cards, q, onAnswer }: { data: GameData; car
   );
 }
 
-/** The full text of one Anomaly card, below its bubble, kept on screen. */
-function AnomalyCard({ id, text, at, met, onClose }: { id: string; text: string; at: { x: number; y: number }; met: boolean | undefined; onClose: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  // Its left edge: centred under the bubble, kept on screen (the pop-in animation owns its transform).
-  const [left, setLeft] = useState<number | undefined>();
-  useLayoutEffect(() => {
-    const w = ref.current?.offsetWidth ?? 0;
-    setLeft(Math.max(8, Math.min(window.innerWidth - 8 - w, at.x - w / 2)));
-  }, [at.x]);
-  return createPortal(
-    <div ref={ref} className="anomaly-card" role="dialog" aria-label={`Anomaly ${id}`} style={{ left: left ?? 0, top: at.y, visibility: left === undefined ? "hidden" : undefined }}>
-      <div className="anomaly-card-head">
-        <b>Anomaly {id}</b>
-        <button className="mini" onClick={onClose} aria-label="Close">
-          ✕
-        </button>
-      </div>
+/** The full text of one Anomaly card, below its bubble (designer 2026-11-08: the text once, with its glyphs; no close button). */
+function AnomalyCard({ id, text, at, met, onClose }: { id: string; text: string; at: Anchor; met: boolean | undefined; onClose: () => void }) {
+  return (
+    <PopCard at={at} label={`Anomaly ${id}`} className="anomaly-card" keepFor={`[data-anomaly="${id}"]`} onClose={onClose}>
+      <b>Anomaly {id}</b>
       <p className="anomaly-card-glyphs">{longForm(text)}</p>
-      <p className="small">{text}</p>
-      {met !== undefined && <p className={met ? "met-line" : "small"}>{met ? "Met now: you can claim it." : "Not met now."}</p>}
-    </div>,
-    document.body,
+      {met !== undefined && <p className={`status ${met ? "met-line" : "small"}`}>{met ? "Met now: you can claim it." : "Not met now."}</p>}
+    </PopCard>
   );
 }

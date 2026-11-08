@@ -10,7 +10,7 @@ import "../effects/index.js";
 import { ability, unitEffect } from "../effects/registry.js";
 import { ENERGY_COLOURS } from "../data/units.js";
 import { type Effect, type RunCtx, ask, asEffect, log, registerRoot } from "./effect.js";
-import { alertedUnits, chooseAlert, discardUnit, resolveAlert } from "./alerts.js";
+import { alertShortcuts, alertedUnits, chooseAlert, discardUnit, resolveAlert, splitAlertId } from "./alerts.js";
 import { type Ctx, adjacentUnits, canBeChosen, darkSectors, describe, isWreck, sectorKeys, sectorOf, sectorState, tile, unitDef, unitType, units } from "./field.js";
 import { commandMecha, commandOptions } from "./mecha.js";
 import { canRunModule, moduleDef, runModule } from "./modules.js";
@@ -413,7 +413,7 @@ export function commandShortcuts(c: Ctx, legal: ActionId[]): Option[] {
   for (const act of legal) {
     switch (act) {
       case "resolveAlerts":
-        for (const u of alertedUnits(c)) out.push({ id: `alert:${u}`, label: "Resolve the Alert", on: { kind: "unit", id: u } });
+        out.push(...alertShortcuts(c));
         break;
       case "commandMecha":
         for (const u of mechaUnits(c)) for (const o of commandOptions(c, u, "command")) out.push({ id: `mecha:${u}:${o.id}`, label: o.label, on: { kind: "unit", id: u } });
@@ -463,9 +463,10 @@ function* doShortcut(c: RunCtx, id: string): Effect {
   switch (kind) {
     case "alert": {
       // Resolve Alerts (8.3), starting with the one chosen; then the rest in your order.
-      let u: TileId | undefined = x;
+      const [first, choice] = splitAlertId(x);
+      let u: TileId | undefined = first;
       while (u !== undefined) {
-        yield* resolveAlert(c, u);
+        yield* resolveAlert(c, u, u === first ? choice : undefined);
         if (c.state.overloadPending) return;
         u = yield* chooseAlert(c);
       }

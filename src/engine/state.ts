@@ -182,6 +182,12 @@ export interface GameState {
      * Optional so older saves and scenarios read as off.
      */
     trialFlareEnergy?: boolean;
+    /**
+     * Games saved before 2026-11-08 (format 5 or older): with the trial rule, a
+     * Power Node still asks energy or 3 Heat when revealed (H4). Newer games ask
+     * it when its Alert is resolved (designer 2026-11-08).
+     */
+    powerNodeAtReveal?: boolean;
     /** Core Rules as printed: a Mecha may Attack a Mecha (games saved before 2026-11-08 only; the computer version forbids it). */
     mechaAttacksMecha?: boolean;
     /** Developer mode: a game played with it never records a high score (spec "Developer mode"). */

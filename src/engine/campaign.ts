@@ -43,6 +43,8 @@ export interface NewGameOptions {
   developerMode?: boolean;
   /** Games saved before 2026-11-08 replay with Mecha allowed to Attack Mecha (Core Rules as printed). */
   mechaAttacksMecha?: boolean;
+  /** Games saved before format 6: a Power Node's energy-or-Heat choice is made at its Reveal (trial rule). */
+  powerNodeAtReveal?: boolean;
   /** Answer questions with one legal answer automatically (spec "Player choices"); fixed for the whole game. */
   autoAnswer?: boolean;
 }
@@ -58,6 +60,7 @@ export function newGame(data: GameData, o: NewGameOptions): GameState {
   s.settings.developerMode = o.developerMode ?? false;
   s.settings.autoAnswer = o.autoAnswer ?? true;
   if (o.mechaAttacksMecha) s.settings.mechaAttacksMecha = true;
+  if (o.powerNodeAtReveal) s.settings.powerNodeAtReveal = true;
   s.player.commandTokens = 0;
   // Every tile copy (unit file "copies"): Energy Gyros form the Energy deck, the rest wait in the box.
   for (const u of data.units.units) {

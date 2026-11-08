@@ -396,6 +396,8 @@ if (existsSync(`${out}/anomaly-save.json`)) {
   await pg.locator(".anomaly .anomaly-text").first().click();
   await pg.waitForTimeout(500);
   const card = await pg.locator(".anomaly-card").evaluate((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth; }).catch(() => false);
+  // Designer 2026-11-08: the text once (no second plain copy) and no close button.
+  const once = (await pg.locator(".anomaly-card p:not(.status)").count()) === 1 && (await pg.locator(".anomaly-card button").count()) === 0;
   await pg.screenshot({ path: `${out}/ui-anomaly-card.png` });
   await pg.keyboard.press("Escape");
   const claims = await pg.locator(".anomaly .claim").count();
@@ -404,7 +406,7 @@ if (existsSync(`${out}/anomaly-save.json`)) {
   if (claims) await pg.locator(".anomaly .claim").first().click();
   await pg.waitForTimeout(400);
   const after = await promptOf(pg);
-  anomalyCheck = claims >= 1 && card && decline && dock >= 1 && /choose your reward/.test(after) ? "ok" : `failed (claims ${claims}, card ${card}, decline ${decline}, dock Bays ${dock}, prompt "${after}")`;
+  anomalyCheck = claims >= 1 && card && once && decline && dock >= 1 && /choose your reward/.test(after) ? "ok" : `failed (claims ${claims}, card ${card}, text once ${once}, decline ${decline}, dock Bays ${dock}, prompt "${after}")`;
   await pg.screenshot({ path: `${out}/ui-anomaly-phone.png` });
   await pg.close();
 }
@@ -417,6 +419,19 @@ if (existsSync(`${out}/overclock-save.json`)) {
   await pasteSave(pg, `${out}/overclock-save.json`);
   const fits = await pg.evaluate(() => { const b = document.querySelector(".bar"); return b.scrollWidth <= b.clientWidth + 1 && document.documentElement.scrollWidth <= 360; });
   const heat = await pg.locator("[data-heat]").count();
+  // The Heat bar explains Heat; the Mission bar sits at the right end and shows the objective and the Trophy pile.
+  await pg.locator("[data-heat]").click();
+  await pg.waitForTimeout(450);
+  const heatCard = await pg.locator(".heat-card").isVisible();
+  await pg.screenshot({ path: `${out}/ui-heat-card.png` });
+  await pg.keyboard.press("Escape");
+  const mbar = await pg.evaluate(() => { const b = document.querySelector("[data-mission-bar]"); const s = document.querySelector(".top-strip"); if (!b || !s) return false; const r = b.getBoundingClientRect(), t = s.getBoundingClientRect(); return t.right - r.right <= 12 && r.right <= window.innerWidth; });
+  await pg.locator("[data-mission-bar]").click();
+  await pg.waitForTimeout(450);
+  const mcard = /Trophy pile/.test((await pg.locator(".mission-card").textContent().catch(() => "")) ?? "");
+  await pg.screenshot({ path: `${out}/ui-mission-card.png` });
+  await pg.keyboard.press("Escape");
+  await pg.waitForTimeout(200);
   const before = await logText(pg);
   let found = -1;
   const n = await pg.locator(".module.can").count();
@@ -438,7 +453,7 @@ if (existsSync(`${out}/overclock-save.json`)) {
   await pg.waitForTimeout(700);
   const log = await logText(pg);
   const ran = log !== before && /Overclock: pay 2/.test(log);
-  moduleCheck = fits && heat === 1 && sel === 1 && fromReserve >= 1 && ocSlots === 2 && ran ? "ok" : `failed (bar fits ${fits}, heat ${heat}, selected ${sel}, reserve slots ${fromReserve}, overclock slots ${ocSlots}, ran ${ran})`;
+  moduleCheck = fits && heat === 1 && heatCard && mbar && mcard && sel === 1 && fromReserve >= 1 && ocSlots === 2 && ran ? "ok" : `failed (bar fits ${fits}, heat ${heat}, heat card ${heatCard}, mission bar ${mbar}, mission card ${mcard}, selected ${sel}, reserve slots ${fromReserve}, overclock slots ${ocSlots}, ran ${ran})`;
   await pg.screenshot({ path: `${out}/ui-module-ran.png` });
   await pg.close();
 }
@@ -474,7 +489,50 @@ await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
 await mobile.screenshot({ path: `${out}/ui-phone.png` });
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check }));
+// Trial rule (designer 2026-11-08): a Power Node's Alert: two pop-ups on it, energy glyphs or 3 Heat.
+let nodeCheck = "skipped (no save)";
+if (existsSync(`${out}/node-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/node-save.json`);
+  const before = await logText(pg);
+  const hits = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]");
+  const box = await pg.locator(".field").boundingBox();
+  let shown = false;
+  for (const h of hits) {
+    await pg.mouse.click(box.x + h.x, box.y + h.y);
+    await pg.waitForTimeout(500);
+    const n = await pg.locator(".popup .bubble .chip-label").count();
+    if (n === 2) { shown = true; break; }
+    await pg.keyboard.press("Escape");
+    await pg.mouse.click(box.x + 4, box.y + 4);
+    await pg.waitForTimeout(300);
+  }
+  const glyphs = shown ? await pg.locator(".popup .bubble .chip-label .glyph").count() : 0;
+  await pg.screenshot({ path: `${out}/ui-power-node.png` });
+  if (shown) await pg.locator(".popup .bubble", { hasText: "Heat" }).first().click();
+  await pg.waitForTimeout(600);
+  const log = await logText(pg);
+  nodeCheck = shown && glyphs >= 1 && log !== before && /gain 3 Heat|gain 0 Heat|gain [0-9]+ Heat/.test(log) ? "ok" : `failed (pop-ups ${shown}, glyphs ${glyphs}, log ${log.split("\n")[0]})`;
+  await pg.close();
+}
+// A Module choosing where energy goes (Salvage Siphon, Harvest Beacon...): energy pop-ups, not the Module itself.
+let fillCheck = "skipped (no save)";
+if (existsSync(`${out}/fill-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/fill-save.json`);
+  const pops = await pg.locator(".energy-pop:not(.take)").count();
+  const asButton = await pg.locator("button.module.can").count();
+  await pg.screenshot({ path: `${out}/ui-fill-pops.png` });
+  const before = await promptOf(pg);
+  if (pops) await pg.locator(".energy-pop:not(.take)").first().click();
+  await pg.waitForTimeout(500);
+  const after = await promptOf(pg);
+  fillCheck = pops >= 2 && asButton === 0 && after !== before ? "ok" : `failed (pop-ups ${pops}, Modules as buttons ${asButton}, prompt "${after}")`;
+  await pg.close();
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

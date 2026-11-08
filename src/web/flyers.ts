@@ -36,10 +36,11 @@ function pulse(el: Element | null | undefined, colour: Colour): void {
 }
 
 /** One chip from a to b along an arc; `fade`: it fades out on the way (into the Supply). */
-export function flyChip(colour: Colour, a: Pt, b: Pt, delay: number, opts: { fade?: boolean; fadeIn?: boolean; onArrive?: () => void } = {}): void {
+export function flyChip(colour: Colour, a: Pt, b: Pt, delay: number, opts: { fade?: boolean; fadeIn?: boolean; onArrive?: () => void; cls?: string; text?: string } = {}): void {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return opts.onArrive?.();
   const dot = document.createElement("div");
-  dot.className = "energy-fly";
+  dot.className = opts.cls ?? "energy-fly";
+  if (opts.text) dot.textContent = opts.text;
   dot.style.setProperty("--pop", css(colour));
   dot.style.opacity = "0";
   document.body.appendChild(dot);
@@ -53,7 +54,7 @@ export function flyChip(colour: Colour, a: Pt, b: Pt, delay: number, opts: { fad
     const o = opts.fade ? (p < 0.1 ? p * 10 : 1 - Math.max(0, (p - 0.5) / 0.5)) : opts.fadeIn ? Math.min(1, p * 3) : p < 0.1 ? p * 10 : 1;
     frames.push({ transform: `translate(${x - 9}px, ${y - 9}px) scale(${1 + 0.3 * Math.sin(Math.PI * p)})`, opacity: o });
   }
-  const anim = dot.animate(frames, { duration: 650, delay, easing: "linear", fill: "both" });
+  const anim = dot.animate(frames, { duration: opts.cls ? 900 : 650, delay, easing: "linear", fill: "both" });
   anim.onfinish = () => {
     dot.remove();
     opts.onArrive?.();
@@ -132,5 +133,34 @@ export function energyFlights(before: GameState, after: GameState): void {
         delay += 90;
       }
     }
+  }
+}
+
+/**
+ * A tile that went to the Trophy pile (a Power Node at Overload End, a
+ * destroyed Omega unit): a small hexagon flies from its sector into the
+ * Mission bar (designer 2026-11-08).
+ */
+export function trophyFlights(before: GameState, after: GameState): void {
+  if (typeof document === "undefined") return;
+  const seq = (s: GameState) => s.events?.[s.events.length - 1]?.seq ?? 0;
+  if (seq(after) < seq(before) || after.mission !== before.mission) return;
+  const had = new Set(before.piles.trophy);
+  const fresh = after.piles.trophy.filter((t) => !had.has(t));
+  if (fresh.length === 0) return;
+  const bar = document.querySelector("[data-mission-bar]");
+  const to = centre(bar);
+  const field = document.querySelector<HTMLElement>(".field");
+  if (!to || !field) return;
+  const r = field.getBoundingClientRect();
+  const centres: Record<string, [number, number]> = JSON.parse(field.dataset.sectors ?? "{}");
+  let delay = 250;
+  for (const t of fresh.slice(0, 8)) {
+    const k = Object.keys(before.field).find((key) => before.field[key]!.includes(t));
+    const c0 = k ? centres[k] : undefined;
+    if (!c0) continue;
+    const unit = after.tiles[t]?.unitId;
+    flyChip("Yellow", { x: r.left + c0[0], y: r.top + c0[1] }, to, delay, { cls: `trophy-fly ${unit === "F_01" ? "node" : "omega"}`, text: unit === "F_01" ? "N" : "Ω" });
+    delay += 160;
   }
 }

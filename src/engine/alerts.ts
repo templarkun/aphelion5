@@ -4,7 +4,10 @@
  */
 
 import { unitEffect } from "../effects/registry.js";
+import { ENERGY_COLOURS } from "../data/units.js";
 import { type Effect, type RunCtx, ask, asEffect, log } from "./effect.js";
+import { gainHeat } from "./heat.js";
+import type { Option } from "./questions.js";
 import { type Ctx, describe, isUnit, isWreck, tile, unitDef, unitType, units } from "./field.js";
 import { commandMecha } from "./mecha.js";
 import { placeWaitingFlareEnergy } from "./moves.js";
@@ -23,17 +26,52 @@ export function discardUnit(c: Ctx, id: TileId, rule: string): void {
   afterTopTileLeaves(c, k);
 }
 
-/** Resolve one unit's Alert token: remove it and carry out the effect (6.5). */
-export function* resolveAlert(c: RunCtx, id: TileId): Effect {
+/**
+ * Trial rule (designer 2026-11-08): a Power Node's energy waits on it from its
+ * Reveal; with the Heat module, energy or 3 Heat (H4) is chosen when its Alert
+ * is resolved, not when it is revealed.
+ */
+export function powerNodeWaits(c: Ctx, id: TileId): boolean {
+  const s = c.state.settings;
+  return !!s.trialFlareEnergy && !s.powerNodeAtReveal && unitDef(c, id).id === "F_01" && !isWreck(c, id) && tile(c.state, id).energy !== undefined;
+}
+
+/** "alert:<tile>" or "alert:<tile>|energy" / "|heat" (a Power Node's choice made on the same tap). */
+export function splitAlertId(rest: string): [TileId, "energy" | "heat" | undefined] {
+  const i = rest.lastIndexOf("|");
+  if (i < 0) return [rest, undefined];
+  const ch = rest.slice(i + 1);
+  return [rest.slice(0, i), ch === "heat" ? "heat" : "energy"];
+}
+
+/** The Alert entries of an action menu on the units (shortcuts): a waiting Power Node offers its energy and, with the Heat module, 3 Heat. */
+export function alertShortcuts(c: Ctx): Option[] {
+  const out: Option[] = [];
+  for (const u of alertedUnits(c)) {
+    if (powerNodeWaits(c, u)) {
+      const e = tile(c.state, u).energy!;
+      const chips = ENERGY_COLOURS.flatMap((col) => Array.from({ length: e[col] }, () => col));
+      const what = chips.length ? chips.join(", ") : "nothing (the Supply was empty)";
+      out.push({ id: c.state.settings.heatModule ? `alert:${u}|energy` : `alert:${u}`, label: `Gain ${what}`, on: { kind: "unit", id: u }, chips });
+      if (c.state.settings.heatModule) out.push({ id: `alert:${u}|heat`, label: "Gain 3 Heat", on: { kind: "unit", id: u }, chips: ["Heat", "Heat", "Heat"] });
+      continue;
+    }
+    out.push({ id: `alert:${u}`, label: `Resolve the Alert${isWreck(c, u) ? " (Wreck)" : ""}`, on: { kind: "unit", id: u } });
+  }
+  return out;
+}
+
+/** Resolve one unit's Alert token: remove it and carry out the effect (6.5). `choice`: a waiting Power Node's energy or Heat, if already chosen. */
+export function* resolveAlert(c: RunCtx, id: TileId, choice?: "energy" | "heat"): Effect {
   const t = tile(c.state, id).tokens;
   if (!t.alert) throw new Error(`${id} has no Alert token`);
   t.alert = false;
   const d = unitDef(c, id);
   log(c, `resolve ${describe(c, id)}`, "6.5");
-  yield* asEffect(c, alertEffect(c, id, d.id));
+  yield* asEffect(c, alertEffect(c, id, d.id, choice));
 }
 
-function* alertEffect(c: RunCtx, id: TileId, unitId: string): Effect {
+function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" | "heat"): Effect {
   // A Wreck: its Destroyed effect, then it leaves (4.8).
   if (isWreck(c, id)) {
     yield* unitEffect(unitId, "destroyed")(c, id);
@@ -58,6 +96,28 @@ function* alertEffect(c: RunCtx, id: TileId, unitId: string): Effect {
       yield* unitEffect(unitId, "activate")(c, id);
       return;
     case "Flare":
+      // Trial rule with the Heat module: a Power Node gives its waiting energy or 3 Heat (H4).
+      if (c.state.settings.heatModule && powerNodeWaits(c, id)) {
+        const pick =
+          choice ??
+          ((yield* ask(c, {
+            kind: "option",
+            prompt: "Power Node: gain its energy or 3 Heat?",
+            rule: "H4",
+            options: [
+              { id: "energy", label: "Gain its energy", on: { kind: "unit", id }, chips: ENERGY_COLOURS.flatMap((col) => Array.from({ length: tile(c.state, id).energy![col] }, () => col)) },
+              { id: "heat", label: "Gain 3 Heat", on: { kind: "unit", id }, chips: ["Heat", "Heat", "Heat"] },
+            ],
+          })).value as string);
+        if (pick === "heat") {
+          const t = tile(c.state, id);
+          for (const col of ENERGY_COLOURS) c.state.supply.energy[col] += t.energy![col];
+          delete t.energy;
+          log(c, `${describe(c, id)}: its energy goes back to the Supply`, "H4");
+          gainHeat(c, 3, "H4");
+          return;
+        }
+      }
       // A Power Node has no effect (4.6). Flares stay until Overload End.
       if (unitDef(c, id).text.activate !== "none") yield* unitEffect(unitId, "activate")(c, id);
       // Trial rule (I2): then its waiting energy is placed.

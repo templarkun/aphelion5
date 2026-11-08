@@ -1,0 +1,71 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 12: PLAY-TEST ROUND 4 (structured)
+# Written 2026-11-08 by Claude from the designer's requests of 2026-11-08. DRAFT, awaiting
+# the designer's agreement; then it goes into the Project as
+# "claude/Test scenarios batch 12.txt". One change to the trial rule (T12_TRY_01); the
+# rest is screen only. Checked by tests/unit/energy.test.ts and scripts/ui-smoke.mjs.
+################################################################################
+
+=== FORMAT SPEC ===
+Same layout as batches 8 and 10. Screen scenarios have no map.
+
+################################################################################
+=== SECTION: TRIAL RULE, POWER NODE ===
+
+id: T12_TRY_01
+title: With the Heat module, a Power Node's energy or Heat is chosen at its Alert
+source: designer 2026-11-08 (F_01); changes H4 only while the trial rule is on
+map: M1
+given: Trial rule on, Heat module on. (0,1): fd:F_01 > fd. Ready Modules as T10_NRG_01.
+when: Reveal (0,1)
+then: no question (no energy-or-Heat choice): 1 Yellow, 1 Red and 1 Blue wait on the Power
+      Node, as T10_TRY_02. Overload starts; the Power Node gets an Alert token.
+when: tap the Power Node
+then: two pop-ups on it: "Gain" with the three energy glyphs, and "Gain 3 Heat".
+when: choose "Gain 3 Heat"
+then: its 3 energy goes back to the Supply and you gain 3 Heat (10 at most, H1).
+when: (instead) choose the energy pop-up
+then: its energy is placed at once as T10_TRY_03.
+note: Games saved before this change (save format 5) still ask at the Reveal.
+
+################################################################################
+=== SECTION: SCREEN ===
+
+id: T12_SCR_01
+title: Energy placed on a chosen Module uses the energy pop-ups
+source: designer 2026-11-08 (Modules point 2)
+given: Salvage Siphon (or Harvest Beacon, Power Relay, F_27...) asks which Module gets energy.
+then: a pop-up with the energy glyph and "+N <colour>" beside each Module it can choose; the
+      Module itself is not the button.
+
+id: T12_SCR_02
+title: Outlines for what a Module, Bay or Order affects
+source: designer 2026-11-08
+given: a Module, Bay or Order selected (its fire outline).
+then: the units and sectors it would affect have the violet outline; Modules it would affect
+      (energy, ready or exhausted) have a violet outline too. Tapped again to use it, the
+      outlines stay while it runs, and go a moment after the action menu is back.
+
+id: T12_SCR_03
+title: The Mission bar
+source: designer 2026-11-08
+given: any mission.
+then: at the right end of the Anomaly row, always in the same place, the same height as an
+      Anomaly bubble: a cell per Trophy needed (Salvage: 5 Power Nodes, then 3 Cleared
+      sectors; Eliminate: the named Omega units). A new Trophy flies from its sector into the
+      bar and its cell pops in. The Anomalies scroll sideways when they do not fit; the bar
+      does not move. Pressing it shows the full objective, the progress and the whole Trophy
+      pile. The old phase / Trophy box under the Modules is gone.
+
+id: T12_SCR_04
+title: Cards for the Anomalies and the Heat bar
+source: designer 2026-11-08
+then: an Anomaly's card shows its text once (with glyphs) and has no close button. On screens
+      900 px wide or more, Anomaly bubbles and the Mission bar are twice as tall. Pressing the
+      Heat bar shows a short card on how the Heat module works.
+
+id: T12_SCR_05
+title: Upgrade points in a bubble
+source: designer 2026-11-08
+then: Upgrade points show as a glyph (a double chevron, placeholder art) and the number in a
+      bubble, under the Bays.

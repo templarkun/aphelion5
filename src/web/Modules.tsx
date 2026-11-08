@@ -14,6 +14,7 @@
  */
 
 import { useLayoutEffect, useState } from "react";
+import { type Anchor, PopCard, anchorOf } from "./PopCard.js";
 import type { ModuleDef } from "../data/modules.js";
 import type { PlanInfo, Slot } from "./modulePlan.js";
 
@@ -125,32 +126,61 @@ export function ModulePops({ id, pops }: { id: number; pops: ModPop[] }) {
   );
 }
 
-/** Heat (H1): a long bar with a cell per token, or a short bubble; `gain` shows Heat a selected Module would add. */
+/** Heat (H1): a long bar with a cell per token, or a short bubble; `gain` shows Heat a selected Module would add. Pressing it explains the Heat module. */
 export function HeatBar({ heat, gain, short }: { heat: number; gain: number; short: boolean }) {
+  const [open, setOpen] = useState<Anchor | undefined>();
   const add = Math.max(0, Math.min(gain, HEAT_MAX - heat));
   const label = `Heat ${heat} of ${HEAT_MAX}${gain ? ` (+${gain} if you run the selected Module)` : ""}`;
-  if (short)
-    return (
-      <span className={`heat-bubble ${add ? "gain" : ""}`} data-heat role="meter" aria-valuenow={heat} aria-valuemax={HEAT_MAX} aria-label={label} title={label}>
-        <Flame />
-        <b>{heat}</b>
-        {add > 0 && <small>+{add}</small>}
-      </span>
-    );
+  const toggle = (e: React.MouseEvent<HTMLElement>) => setOpen(open ? undefined : anchorOf(e.currentTarget));
   return (
-    <span className="heat-long" data-heat role="meter" aria-valuenow={heat} aria-valuemax={HEAT_MAX} aria-label={label} title={label}>
-      <Flame />
-      <span className="heat-cells">
-        {Array.from({ length: HEAT_MAX }, (_, i) => (
-          <i key={i} className={i < heat ? "on" : i < heat + add ? "gain" : ""} />
-        ))}
-      </span>
-      <b>{heat}</b>
-    </span>
+    <>
+      {short ? (
+        <button className={`heat-bubble ${add ? "gain" : ""}`} data-heat role="meter" aria-valuenow={heat} aria-valuemax={HEAT_MAX} aria-label={`${label}. Press to see how Heat works.`} title={label} onClick={toggle}>
+          <Flame />
+          <b>{heat}</b>
+          {add > 0 && <small>+{add}</small>}
+        </button>
+      ) : (
+        <button className="heat-long" data-heat role="meter" aria-valuenow={heat} aria-valuemax={HEAT_MAX} aria-label={`${label}. Press to see how Heat works.`} title={label} onClick={toggle}>
+          <Flame />
+          <span className="heat-cells">
+            {Array.from({ length: HEAT_MAX }, (_, i) => (
+              <i key={i} className={i < heat ? "on" : i < heat + add ? "gain" : ""} />
+            ))}
+          </span>
+          <b>{heat}</b>
+        </button>
+      )}
+      {open && (
+        <PopCard at={open} label="The Heat module" className="heat-card" keepFor="[data-heat]" onClose={() => setOpen(undefined)}>
+          <b>
+            <Flame /> Heat module
+          </b>
+          <p>
+            You start every mission with <b>10 Heat</b>, the most you can hold. Heat is not energy: it never pays a Module.
+          </p>
+          <ul>
+            <li>
+              <b>Heat Wave:</b> pay 1 Heat to deal 1 damage to one Bot (Command phase, no Alerts on the Field; in a Bot&apos;s pop-up).
+            </li>
+            <li>
+              <b>Overclock:</b> when you run a Module, pay 2 more energy of its colour for +1 Heat, then 1 more Yellow for +1 more.
+            </li>
+            <li>
+              <b>Power Node:</b> gain 3 Heat instead of its energy.
+            </li>
+            <li>
+              <b>Meltdown</b> (each Overload End): you pay 1 Heat. With none left, every Bot takes 1 damage, you gain 1 Heat per Bot hit, and your Flagship takes that many + 1 damage.
+            </li>
+          </ul>
+          <p className="small">Heat goes back at Mission End. Playing with it: −2 to your final score.</p>
+        </PopCard>
+      )}
+    </>
   );
 }
 
-function Flame() {
+export function Flame() {
   return (
     <svg className="flame" viewBox="0 0 16 20" aria-hidden>
       <path d="M8 1c1 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 2-7 1.5 1 2 2.5 2 4 1-2 2-5 2-8z" />

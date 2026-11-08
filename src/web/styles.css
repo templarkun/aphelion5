@@ -398,7 +398,11 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 /* An Anomaly's full card, under its bubble. */
 .anomaly .anomaly-text { border: 0; background: none; padding: 0; min-height: 0; font: inherit; color: inherit; cursor: pointer; }
 .anomaly.open { border-color: var(--accent); }
-.anomaly-card { position: fixed; z-index: 18; width: min(300px, calc(100vw - 16px)); box-sizing: border-box; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--accent); background: var(--panel); box-shadow: 0 10px 26px rgb(0 0 0 / 0.25); animation: bubble-in 0.35s ease-out both; }
+.pop-card { position: fixed; z-index: 18; width: min(300px, calc(100vw - 16px)); box-sizing: border-box; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--accent); background: var(--panel); box-shadow: 0 10px 26px rgb(0 0 0 / 0.25); animation: bubble-in 0.35s ease-out both; font-size: 13px; }
+.pop-card p { margin: 6px 0 0; }
+.pop-card ul { margin: 6px 0 0; padding-left: 18px; }
+.pop-card li { margin: 3px 0; }
+.pop-card h4 { margin: 10px 0 2px; font-size: 13px; }
 .anomaly-card p { margin: 6px 0 0; }
 .anomaly-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .anomaly-card-glyphs { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; font-weight: 600; }
@@ -406,3 +410,62 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .bar-btn .ico { display: none; }
 @media (max-width: 480px) { .bar-btn { min-width: 40px; padding: 0 8px; font-size: 18px; } .bar-btn .ico { display: inline; } .bar-btn .lbl { display: none; } }
 .mod-pops .energy-pop { white-space: nowrap; }
+
+/* Play-test round 4 (designer 2026-11-08). */
+/* Anomalies left, the Mission bar always at the right end, the same height. */
+.top-strip { flex: none; display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px 2px; position: relative; z-index: 8; }
+.top-strip .anomaly-strip { flex: 1; min-width: 0; padding: 0; }
+.mission-bar { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 3px 10px 3px 6px; border-radius: 999px; background: var(--panel); border: 1px solid color-mix(in srgb, #d4a017 50%, var(--line)); box-shadow: 0 2px 6px rgb(0 0 0 / 0.08); font: inherit; color: inherit; cursor: pointer; }
+.mission-bar.done { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+.mission-bar.gain { animation: mission-glow 1.4s ease-out; }
+@keyframes mission-glow { 0% { box-shadow: 0 0 0 0 rgb(255 200 0 / 0); } 30% { box-shadow: 0 0 0 4px rgb(255 200 0 / 0.55), 0 0 20px 4px rgb(255 190 0 / 0.5); } 100% { box-shadow: 0 2px 6px rgb(0 0 0 / 0.08); } }
+.trophy-glyph { width: 16px; height: 16px; fill: #c99400; flex: none; }
+.m-group { display: inline-flex; gap: 2px; }
+.m-group + .m-group { padding-left: 6px; border-left: 1px solid var(--line); }
+.m-cell { width: 12px; height: 14px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: color-mix(in srgb, var(--muted) 30%, transparent); position: relative; }
+.m-cell::after { content: ""; position: absolute; inset: 1.5px; clip-path: inherit; background: var(--panel); }
+.m-cell.on::after { display: none; }
+.g-node .m-cell.on { background: repeating-linear-gradient(135deg, #f5c400 0 3px, #fff6cf 3px 5px); box-shadow: inset 0 0 0 1px #c99400; }
+.g-cleared .m-cell.on { background: var(--accent); }
+.g-omega .m-cell.on { background: var(--tile, #be123c); --tile: #be123c; }
+.m-cell.over { opacity: 0.6; }
+.m-cell.new { animation: cell-in 0.7s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes cell-in { 0% { transform: scale(0.2); filter: brightness(2.2); } 60% { transform: scale(1.5); filter: brightness(1.6); } 100% { transform: scale(1); filter: none; } }
+.ug.t-node { background: repeating-linear-gradient(135deg, #f5c400 0 3px, #8a6d00 3px 5px); text-shadow: 0 0 2px #000; }
+.ug.t-omega { --tile: #be123c; }
+.mission-card .m-line { display: flex; align-items: center; gap: 6px; }
+.trophy-list { list-style: none; padding: 0 !important; }
+.trophy-list li { display: flex; align-items: center; gap: 6px; }
+.trophy-fly { position: fixed; left: 0; top: 0; z-index: 30; width: 18px; height: 20px; display: grid; place-items: center; pointer-events: none; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); color: #fff; font-size: 10px; font-weight: 800; }
+.trophy-fly.node { background: repeating-linear-gradient(135deg, #f5c400 0 3px, #8a6d00 3px 5px); filter: drop-shadow(0 0 6px #ffcc00); }
+.trophy-fly.omega { background: #be123c; filter: drop-shadow(0 0 6px #ff5577); }
+/* Bigger screens: Anomaly bubbles and the Mission bar twice as tall. */
+@media (min-width: 900px) {
+  .anomaly, .mission-bar, .anomaly-strip .decline { min-height: 60px; font-size: 14px; }
+  .anomaly { padding: 6px 16px; }
+  .ug { width: 24px; height: 27px; font-size: 13px; }
+  .mission-bar { padding: 6px 16px 6px 12px; gap: 10px; }
+  .trophy-glyph { width: 24px; height: 24px; }
+  .m-cell { width: 20px; height: 23px; }
+  .m-cell::after { inset: 2px; }
+  .anomaly .claim { min-height: 40px; }
+}
+/* The Heat bar is a button: pressing it explains the Heat module. */
+button.heat-long, button.heat-bubble { font: inherit; color: inherit; cursor: pointer; }
+.heat-card b .flame { width: 14px; height: 16px; vertical-align: -2px; }
+/* What a selected Module, Bay or Order affects among the Modules: the violet outline of the Field. */
+.module.affected { outline: 2px solid #9b6bff; outline-offset: 1px; box-shadow: 0 0 12px 1px rgb(155 107 255 / 0.55); animation: affect-pulse 1.6s ease-in-out infinite; }
+@keyframes affect-pulse { 0%, 100% { outline-color: #9b6bff; } 50% { outline-color: #d9c6ff; } }
+@media (prefers-reduced-motion: reduce) { .module.affected, .m-cell.new, .mission-bar.gain { animation: none; } }
+/* A Power Node's Alert pop-ups: "Gain" and glyphs. */
+.chip-label { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+.popup .bubble .chip-label, .chip-label { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; overflow: visible; -webkit-line-clamp: unset; }
+.popup .bubble .chip-label .chips, .chip-label .chips { display: inline-flex; flex-direction: row; align-items: center; gap: 3px; overflow: visible; }
+.popup .bubble .chip-label .glyph { display: inline-grid; }
+.chip-label .glyph { width: 20px; height: 20px; font-size: 11px; }
+.chip-label .flame { width: 14px; height: 18px; }
+/* Upgrade points: a glyph in a bubble. */
+.sheet-line { display: flex; align-items: center; gap: 8px; }
+.upgrade-bubble { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 6px; min-height: 28px; border-radius: 999px; border: 1px solid color-mix(in srgb, #7c3aed 45%, var(--line)); background: color-mix(in srgb, #7c3aed 9%, var(--panel)); }
+.upgrade-bubble b { font-size: 15px; color: #7c3aed; }
+.upgrade-glyph { width: 18px; height: 18px; fill: #7c3aed; }
