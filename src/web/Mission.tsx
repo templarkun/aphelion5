@@ -18,25 +18,28 @@ interface Group {
   glyph: "node" | "cleared" | "omega";
   have: number;
   need: number;
+  /** Tiles of this unit still on the Field, face up or face down (designer 2026-11-08); the deck's make-up is known. */
+  left?: number;
 }
 
 export function missionGroups(c: Ctx): { type: "salvage" | "eliminate"; groups: Group[]; target?: string } {
   const camp = c.data.campaigns.find((x) => x.prefix === c.state.campaign);
   const m = camp?.missionById.get(c.state.mission);
   const trophy = c.state.piles.trophy.map((id) => c.state.tiles[id]!.unitId);
+  const onField = (u: string) => Object.values(c.state.field).reduce((n, st) => n + st.filter((t) => c.state.tiles[t]?.unitId === u).length, 0);
   if (!m || m.objective.type === "salvage") {
     const cleared = sectorKeys(c.state).filter((k) => sectorState(c.state, k) === "cleared").length;
     return {
       type: "salvage",
       groups: [
-        { key: "nodes", label: "Power Nodes", glyph: "node", have: trophy.filter((u) => u === "F_01").length, need: 5 },
+        { key: "nodes", label: "Power Nodes", glyph: "node", have: trophy.filter((u) => u === "F_01").length, need: 5, left: onField("F_01") },
         { key: "cleared", label: "Cleared sectors", glyph: "cleared", have: cleared, need: 3 },
       ],
     };
   }
   const o = m.objective;
   const role = c.data.units.byId.get(o.target)?.role ?? o.target;
-  return { type: "eliminate", target: o.target, groups: [{ key: "omega", label: `${role}s`, glyph: "omega", have: trophy.filter((u) => u === o.target).length, need: o.count }] };
+  return { type: "eliminate", target: o.target, groups: [{ key: "omega", label: `${role}s`, glyph: "omega", have: trophy.filter((u) => u === o.target).length, need: o.count, left: onField(o.target) }] };
 }
 
 function Glyph({ g }: { g: Group["glyph"] }) {
@@ -107,6 +110,7 @@ export function MissionBar({ c, phase }: { c: Ctx; phase: string }) {
             <p key={g.key} className="m-line">
               <Glyph g={g.glyph} /> {g.label}: <b>{g.have}</b> of {g.need}
               {g.have >= g.need ? " ✓" : ""}
+              {g.left !== undefined && <span className="m-left"> · {g.left} still on the Field</span>}
             </p>
           ))}
           <p className="small">It is checked before each Command phase action; once it is met, the mission is won (8.2).</p>

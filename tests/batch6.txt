@@ -46,6 +46,9 @@ given: Command phase. Debris Sifter ready. (0,0): G_38 Wreck [WR][AL] > fd. (0,1
 when: Resolve Alerts (G_38 Destroyed: run a Module free)
 then: Debris Sifter runs with X = 1: look at the top tile of (0,1) (B_01), discard it.
       (0,1) is still Dark; B_02 is now its top tile.
+note: CHANGED 2026-11-08 (designer; Core Rules 5.3 rev 140): a free X-cost Module uses X = 0,
+      and a Module whose X would be 0 cannot be run. G_38 finds no Module to run: Debris Sifter
+      stays ready and (0,1) is unchanged (B_01 on top).
 
 id: T6_PAY_04
 title: An extra payment is all or nothing, offered only when you can pay it

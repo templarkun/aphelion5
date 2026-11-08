@@ -45,6 +45,18 @@ export function payable(c: Ctx, id: number): number {
   return m.energy[col] + c.state.player.reserve[col];
 }
 
+/**
+ * Would its X be 0 (designer 2026-11-08, Core Rules 5.3 changed)? Such a Module cannot be run
+ * (the screen greys it out): X is the energy on it and there is none, or it is run without paying
+ * its cost and its X is a cost (a free X costs X = 0). It is still ready: energy can be placed on it.
+ */
+export function xWouldBeZero(c: Ctx, id: number, free: boolean): boolean {
+  if (!hasModuleEffect(id)) return false;
+  const fx = moduleEffect(id);
+  if (fx.xFromStored && moduleState(c, id).energy[fx.xFromStored] === 0) return true;
+  return free && (fx.x !== undefined || moduleDef(c, id).cost === "X");
+}
+
 /** Can you start running it now (8.1: you can pay its cost)? */
 export function canRunModule(c: Ctx, id: number): boolean {
   const m = moduleState(c, id);
@@ -53,6 +65,7 @@ export function canRunModule(c: Ctx, id: number): boolean {
   const phase = c.state.phase;
   if (d.background === "light" && phase !== "command") return false;
   if (d.background === "red" && phase !== "overload") return false;
+  if (xWouldBeZero(c, id, false)) return false;
   return payable(c, id) >= moduleCost(c, id);
 }
 
@@ -67,7 +80,7 @@ export function* runModule(c: RunCtx, id: number, free = false): Effect {
   m.ready = false;
   const run: ModuleRun = { id, storedBefore };
   if (free) {
-    if (d.cost === "X" || fx.x) run.x = 1; // CLAUDE.md decision: a free X-cost Module uses X = 1 (Core Rules 5.3).
+    if (d.cost === "X" || fx.x) run.x = 0; // Core Rules 5.3 (designer 2026-11-08): a free X-cost Module uses X = 0 (and is not offered, xWouldBeZero).
     log(c, `run ${d.name} without paying its cost`, "5.3");
   } else {
     if (fx.x) {

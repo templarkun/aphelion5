@@ -42,3 +42,9 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
 7. **Speed and acceptance runs.** Undo and loading from checkpoints at each Mission
    Preparation; full Campaign 1 play-throughs with V1 and V2, with and without Heat.
 8. **After version 1.** Wrap the same code for PC (Tauri or Electron) and phones (Capacitor).
+9. **Future rules update: tokens on Dark sectors** (designer 2026-11-08, to be worked on
+   later). The designer plans to let tokens be placed on Dark sectors. Already prepared for it:
+   V1 Bay 3 now chooses "one sector with no tokens" (`sectorsWithNoTokens` in
+   `src/effects/bays.ts` checks a Dark sector's top tile for tokens too). When the rule comes,
+   check every effect that chooses a Dark sector, the Reveal, Moves onto Dark sectors and the
+   screen (tokens drawn on face-down tiles).

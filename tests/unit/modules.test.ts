@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { commandStep, legalActions } from "../../src/engine/command.js";
 import { runEffect } from "../../src/engine/effect.js";
 import { sectorState, tile } from "../../src/engine/field.js";
-import { moduleDef } from "../../src/engine/modules.js";
+import { canRunModule, moduleDef, xWouldBeZero } from "../../src/engine/modules.js";
 import { overloadStep } from "../../src/engine/overload.js";
 import type { Answer } from "../../src/engine/questions.js";
 import type { GameState } from "../../src/engine/state.js";
@@ -41,12 +41,24 @@ describe("batch 6 - PAYING", () => {
     expect(pile(after, "discard").sort()).toEqual(["B_01", "B_02"]);
   });
 
-  it("T6_PAY_03 a free run of an X-cost Module uses X = 1", () => {
+  it("T6_PAY_03 a free run of an X-cost Module uses X = 0, so it cannot be chosen (CHANGED 2026-11-08)", () => {
     const s = board("T6_PAY_03", [[54, true]]);
     const after = act(s, [A.option("resolveAlerts")]);
-    expect(pile(after, "discard")).toEqual(expect.arrayContaining(["B_01", "G_38"]));
-    expect(tile(after, after.field["0,1"]!.at(-1)!).unitId).toBe("B_02");
-    expect(sectorState(after, "0,1")).toBe("dark");
+    expect(pile(after, "discard")).toContain("G_38");
+    expect(pile(after, "discard")).not.toContain("B_01");
+    expect(tile(after, after.field["0,1"]!.at(-1)!).unitId).toBe("B_01");
+    expect(after.player.modules.find((m) => m.id === 54)!.ready).toBe(true);
+  });
+
+  it("T12_X_01 X = the energy on it (changed 2026-11-08): with none on it, it cannot be run (greyed out), and it is still ready", () => {
+    const empty = board("T6_PAY_05", [[48, true]], { Red: 5 });
+    expect(xWouldBeZero(ctx(empty), 48, false)).toBe(true);
+    expect(empty.player.modules.find((m) => m.id === 48)!.ready).toBe(true);
+    const one = board("T6_PAY_05", [[48, true, { Red: 1 }]], { Red: 0 });
+    expect(xWouldBeZero(ctx(one), 48, false)).toBe(false);
+    // Accumulator Beam (light, Command phase): greyed out with no Yellow on it, even with Yellow in the Reserve.
+    expect(canRunModule(ctx(board("T6_PAY_05", [[6, true]], { Yellow: 5 })), 6)).toBe(false);
+    expect(canRunModule(ctx(board("T6_PAY_05", [[6, true, { Yellow: 1 }]], { Yellow: 0 })), 6)).toBe(true);
   });
 
   it("T6_PAY_04 an extra payment is offered only when you can pay it", () => {

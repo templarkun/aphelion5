@@ -140,6 +140,80 @@ export function m03TapTargets(data: GameData, game: Game): DragTarget[] {
   return targetsAfter(data, game, "", [], "attack", 0);
 }
 
+/** One way M_01 can walk (designer 2026-11-08): its Move ability used again and again, in the Command phase. */
+interface Walk {
+  sector: string;
+  answers: Answer[];
+  game: Game;
+}
+
+/**
+ * Every sector M_01 can reach by using its Command "Move to an adjacent Dark sector" one or
+ * more times in a row (Command phase actions, 4.2 and 8.1: no rule change, the screen just plays
+ * the steps for you), shortest first. A step that shows new hidden information, or that does not
+ * come back to the action menu (the mission won, an Alert), ends the walk there.
+ */
+export function m01Walks(data: GameData, game: Game, tile: string): Walk[] {
+  const v0 = game.view;
+  if (v0.status !== "question" || v0.state.phase !== "command" || v0.state.tiles[tile]?.unitId !== "M_01") return [];
+  const from = sectorOf(v0.state, tile);
+  if (!from) return [];
+  const opt = `mecha:${tile}:ability:M_01`;
+  const hidden = v0.state.hiddenInfo;
+  const seen = new Set([from]);
+  const out: Walk[] = [];
+  const queue: Walk[] = [{ sector: from, answers: [], game }];
+  const backOnMenu = (g: Game) => g.view.status === "question" && g.view.question.kind === "option" && !!g.view.question.shortcuts?.some((o) => o.id === opt) && g.view.state.hiddenInfo === hidden;
+  while (queue.length && out.length < 60) {
+    const w = queue.shift()!;
+    const v = w.game.view;
+    if (v.status !== "question" || !v.question.shortcuts?.some((o) => o.id === opt)) continue;
+    const r = playAnswer(data, w.game, { kind: "option", value: opt });
+    if (r.result.status === "illegal" || r.result.status === "blocked" || r.game.view.state.hiddenInfo !== hidden) continue;
+    const steps: { g: Game; answers: Answer[] }[] = [];
+    const q = r.game.view.status === "question" ? r.game.view.question : undefined;
+    if (q && q.kind === "sectors" && q.min === 1 && q.max === 1) {
+      for (const k of q.options) {
+        if (seen.has(k)) continue;
+        const r2 = playAnswer(data, r.game, { kind: "sectors", value: [k] });
+        if (r2.result.status === "illegal" || r2.result.status === "blocked") continue;
+        steps.push({ g: r2.game, answers: [...w.answers, { kind: "option", value: opt }, { kind: "sectors", value: [k] }] });
+      }
+    } else steps.push({ g: r.game, answers: [...w.answers, { kind: "option", value: opt }] });
+    for (const st of steps) {
+      const at = sectorOf(st.g.view.state, tile);
+      if (!at || seen.has(at)) continue;
+      seen.add(at);
+      const walk = { sector: at, answers: st.answers, game: st.g };
+      out.push(walk);
+      if (backOnMenu(st.g)) queue.push(walk);
+    }
+  }
+  return out;
+}
+
+/**
+ * M_01's targets with walking (designer 2026-11-08): "move" = every sector it can walk to;
+ * "attack" = every unit it can Attack from where it stands or from a sector it can walk to
+ * (the shortest walk; the steps play before the Attack).
+ */
+export function m01Targets(data: GameData, game: Game, tile: string, kind: DragKind): DragTarget[] {
+  const walks = m01Walks(data, game, tile);
+  if (kind === "move") return walks.map((w) => ({ sector: w.sector, kind, answers: w.answers, ...(w.answers.filter((a) => a.kind === "option").length > 1 ? { via: true } : {}) }));
+  const out: DragTarget[] = [];
+  const from = sectorOf(game.view.state, tile);
+  for (const w of [{ sector: from ?? "", answers: [] as Answer[], game }, ...walks]) {
+    const v = w.game.view;
+    const atk = `mecha:${tile}:attack`;
+    if (v.status !== "question" || !v.question.shortcuts?.some((o) => o.id === atk)) continue;
+    for (const t of targetsAfter(data, w.game, tile, [{ kind: "option", value: atk }], "attack", 0)) {
+      if (t.kind !== "attack" || out.some((x) => x.sector === t.sector)) continue;
+      out.push({ ...t, answers: [...w.answers, ...t.answers], ...(w.answers.length ? { via: true } : {}) });
+    }
+  }
+  return out;
+}
+
 /** The drag plan for a Mecha on the action menu, or undefined when it cannot be dragged now. */
 export function mechaDragPlan(data: GameData, game: Game, view: Game["view"], tile: string): DragPlan | undefined {
   if (view.status !== "question" || view.question.kind !== "option" || !view.question.shortcuts) return undefined;
@@ -158,6 +232,10 @@ export function mechaDragPlan(data: GameData, game: Game, view: Game["view"], ti
       if (t.sector !== from && !targets.some((x) => x.sector === t.sector)) targets.push(t);
     }
   }
+  // M_01 (designer 2026-11-08): it walks through Dark sectors to where it is dropped, or to Attack.
+  if (view.state.tiles[tile]?.unitId === "M_01")
+    for (const t of [...m01Targets(data, game, tile, "attack"), ...m01Targets(data, game, tile, "move")])
+      if (t.sector !== from && !targets.some((x) => x.sector === t.sector)) targets.push(t);
   if (targets.length === 0) return undefined;
   const st = view.state.tiles[tile];
   return { tile, unitId: st?.unitId ?? "?", from, hit: strength({ data, state: view.state }, tile), targets };

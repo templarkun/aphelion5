@@ -18,7 +18,7 @@ import type { Row } from "../geometry/fieldMap.js";
 import { type Coord, type Facing, fromKey, key, turnClockwise } from "../geometry/hex.js";
 import type { SectorKey, TileId } from "../engine/state.js";
 import { type HitResult, boost, dealHit, placeAlert } from "../engine/tokens.js";
-import { moduleDef } from "../engine/modules.js";
+import { moduleDef, xWouldBeZero } from "../engine/modules.js";
 import { emit } from "../engine/events.js";
 
 export const sectorCoordOf = (c: Ctx, u: TileId): Coord => fromKey(sectorOf(c.state, u)!);
@@ -298,7 +298,7 @@ export { choosableUnits };
  */
 export function couldRunFree(c: Ctx, id: number): boolean {
   const m = c.state.player.modules.find((x) => x.id === id);
-  if (!m || !m.ready) return false;
+  if (!m || !m.ready || xWouldBeZero(c, id, true)) return false;
   const bg = moduleDef(c, id).background;
   return (bg === "light" && c.state.phase === "command") || (bg === "red" && c.state.phase === "overload");
 }

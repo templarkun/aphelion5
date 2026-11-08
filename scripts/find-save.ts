@@ -11,7 +11,7 @@ import { newRng } from "../src/engine/rng.js";
 import { playAnswer, startGame, toSave } from "../src/engine/save.js";
 import { emptyProfile } from "../src/engine/state.js";
 import { randomAnswer } from "../tests/unit/campaignFuzz.js";
-import { mechaDragPlan } from "../src/web/drag.js";
+import { m01Targets, mechaDragPlan } from "../src/web/drag.js";
 import type { Game } from "../src/engine/save.js";
 import { planInfo } from "../src/web/modulePlan.js";
 
@@ -31,7 +31,7 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   drag: (_q, g) => dragPlanOf(g) !== undefined,
   // M_03 (designer 2026-11-08): a red target reached only by moving first.
   m03: (q, g) =>
-    (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.via) ?? false)),
+    (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && g.view.state.tiles[o.on.id]?.unitId === "M_03" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.via) ?? false)),
   // M_03 / M_06: the Passive first, then the Attack, in one drag.
   drag2: (q, g) =>
     (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.some((t) => t.next?.()) ?? false)),
@@ -46,8 +46,10 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
       return planInfo({ data, state: g.view.state }, id, { id, oc: 0, extra: 0 }).ocNext === "two";
     }),
   // M_01 on the action menu with somewhere to move or Attack (its targets light when tapped).
+  // M_01 that can walk through a Dark sector to Attack (designer 2026-11-08).
   m01: (q, g) =>
-    (q.shortcuts ?? []).some((o) => o.id.startsWith("mecha:") && o.on?.kind === "unit" && g.view.state.tiles[o.on.id]?.unitId === "M_01" && (mechaDragPlan(data, g, g.view, o.on.id)?.targets.length ?? 0) > 0),
+    g.view.state.phase === "command" &&
+    (q.shortcuts ?? []).some((o) => o.id.endsWith(":ability:M_01") && o.on?.kind === "unit" && m01Targets(data, g, o.on.id, "attack").some((t) => t.via)),
   // Trial rule + Heat module: a Power Node's Alert offers its energy or 3 Heat on the unit (designer 2026-11-08).
   node: (q) => (q.shortcuts ?? []).some((o) => /^alert:.*\|heat$/.test(o.id)),
   // A Module or card choosing a Module to put energy on (Harvest Beacon...): energy pop-ups.
@@ -81,8 +83,14 @@ for (let seed = 1; seed < 400; seed++) {
         // Beside the save: the Mecha to drag and its targets (for the browser check).
         for (const o of q.shortcuts ?? []) {
           if (!o.id.startsWith("mecha:") || o.on?.kind !== "unit") continue;
-          const plan = mechaDragPlan(data, g, g.view, o.on.id);
-          if (!plan || !(what === "drag" ? plan === dragPlanOf(g) || dragPlanOf(g)?.tile === plan.tile : what === "m03" ? plan.targets.some((t) => t.via) : what === "m01" ? plan.unitId === "M_01" : plan.targets.some((t) => t.next?.()))) continue;
+          const plan =
+            what === "m01"
+              ? g.view.state.tiles[o.on.id]?.unitId === "M_01"
+                ? { unitId: "M_01", tile: o.on.id, from: g.view.state.field && Object.keys(g.view.state.field).find((k) => g.view.state.field[k]!.includes(o.on!.kind === "unit" ? o.on!.id : "")), targets: m01Targets(data, g, o.on.id, "attack").filter((t) => t.via) }
+                : undefined
+              : mechaDragPlan(data, g, g.view, o.on.id);
+          if (what === "m01" && !plan?.targets.length) continue;
+          if (!plan || !(what === "drag" ? plan === dragPlanOf(g) || dragPlanOf(g)?.tile === plan.tile : what === "m03" ? plan.unitId === "M_03" && plan.targets.some((t) => t.via) : what === "m01" ? true : plan.targets.some((t) => t.next?.()))) continue;
           const targets = plan.targets.map((t) => ({ sector: t.sector, kind: t.kind, via: t.via, answers: t.answers, next: t.next?.()?.targets.map((x) => x.sector) }));
           writeFileSync(`${out}.plan.json`, JSON.stringify({ unitId: plan.unitId, from: plan.from, targets }));
           break;

@@ -46,7 +46,7 @@
         "id": "V1_BAY3",
         "number": 3,
         "integrity": 6,
-        "ability": "Choose one Dark sector. Look at its top 3 tiles and put them back in any order. Then Reveal that sector."
+        "ability": "Choose one sector with no tokens. Look at its top 3 tiles and put them back in any order. Then reveal that sector."
       }
     ],
     "upgrades": [

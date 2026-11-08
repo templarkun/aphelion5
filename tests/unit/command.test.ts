@@ -55,8 +55,11 @@ describe("batch 3 - TAKING ACTIONS (8.1)", () => {
   });
 
   it("T3_ACT_05 an action that would do nothing is still legal", () => {
-    const { state } = step(given("T3_ACT_05"), [A.option("useBay"), A.option("V1_BAY3")]);
+    // V1 Bay 3 changed 2026-11-08: a unit with no tokens may be chosen; looking at a lone B_03 changes nothing.
+    const s = given("T3_ACT_05");
+    const { state } = step(s, [A.option("useBay"), A.option("V1_BAY3"), A.sectors("0,0"), A.option([...s.field["0,0"]!].reverse().slice(0, 3).join(">"))]);
     expect(state.flagship).toEqual([6, 6, 5]);
+    expect(stackOf(state, "0,0")).toEqual(stackOf(s, "0,0"));
   });
 
   it("T3_ACT_06 no legal action is a loss", () => {
@@ -234,17 +237,28 @@ describe("batch 3 - BAYS (5.2, 8.7)", () => {
   it("T3_BAY_03 V1 Bay 3 reorders the top tiles, then reveals", () => {
     const s = given("T3_BAY_03");
     const [b01, s12, g05] = [...s.field["0,1"]!].reverse();
-    const { state, asked } = step(s, [A.option("useBay"), A.option("V1_BAY3"), A.option(`${s12}>${g05}>${b01}`)]);
-    expect(optionIds(asked[2])).toHaveLength(6);
+    const { state, asked } = step(s, [A.option("useBay"), A.option("V1_BAY3"), A.sectors("0,1"), A.option(`${s12}>${g05}>${b01}`)]);
+    expect(optionIds(asked[3])).toHaveLength(6);
     expect(stackOf(state, "0,1")).toEqual(["S_12", "fd:G_05", "fd:B_01", "fd:?"]);
     expect(tokensAt(state, "0,1")).toBe("[BAR]");
     expect(state.seen).toEqual(expect.arrayContaining([b01, s12, g05]));
   });
 
+  it("T12_BAY3_01 V1 Bay 3 (changed 2026-11-08): a unit with no tokens may be chosen; put under, the Dark top is revealed", () => {
+    const s = given("T3_BAY_03", "(0,0): B_02 > fd:B_01 > fd. (1,0): B_02[S1] > fd.");
+    const offered = (pending(s, [A.option("useBay"), A.option("V1_BAY3")]).question as { options: string[] }).options;
+    expect(offered).toContain("0,0");
+    expect(offered).toContain("0,1");
+    expect(offered).not.toContain("1,0"); // its unit has a Shield token
+    const [b02, b01, below] = [...s.field["0,0"]!].reverse();
+    const { state } = step(s, [A.option("useBay"), A.option("V1_BAY3"), A.sectors("0,0"), A.option(`${b01}>${b02}>${below}`)]);
+    expect(stackOf(state, "0,0")).toEqual(["B_01", "B_02", "fd:?"]);
+  });
+
   it("T3_BAY_04 a Bay's last Integrity still pays for its ability; then Overhaul is forced", () => {
     const s = given("T3_BAY_04");
     const asLooked = [...s.field["0,1"]!].reverse().join(">"); // put the 2 tiles back as they were
-    const { state } = step(s, [A.option("useBay"), A.option(asLooked)]);
+    const { state } = step(s, [A.option("useBay"), A.sectors("0,1"), A.option(asLooked)]);
     expect(state.flagship).toEqual([0, 0, 0]);
     expect(tile(state, at(state, "0,1")).unitId).toBe("B_01");
     expect(optionIds(pending(state).question)).toEqual(["overhaul", "concede"]);

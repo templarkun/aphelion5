@@ -1,9 +1,9 @@
 /** Flagship Bay abilities and Bay upgrades, from company_vessels_structured.txt. */
 
 import { type Effect, type RunCtx, ask, log } from "../engine/effect.js";
-import { type Ctx, choosableUnits, fieldMap, isUnit, level, sectorOf, sectorState, tile, unitAt } from "../engine/field.js";
+import { type Ctx, canBeChosen, choosableUnits, fieldMap, isUnit, level, sectorKeys, sectorOf, sectorState, tile, unitAt } from "../engine/field.js";
 import { markSeen, move, openNeighbours, reveal, swap, topTiles } from "../engine/moves.js";
-import type { SectorKey, TileId } from "../engine/state.js";
+import { type SectorKey, type TileId, hasAnyToken } from "../engine/state.js";
 import { cancelAlert, checkSleepers, dealHit, placeFuse, removeBarrier } from "../engine/tokens.js";
 import { fromKey, key } from "../geometry/hex.js";
 import { chooseDarkSector, chooseSector, chooseUnit } from "./helpers.js";
@@ -47,9 +47,24 @@ function permutations<T>(xs: T[]): T[][] {
   return xs.flatMap((x, i) => permutations([...xs.slice(0, i), ...xs.slice(i + 1)]).map((p) => [x, ...p]));
 }
 
+/**
+ * V1 Bay 3 (designer 2026-11-08, a rules change): "one sector with no tokens": a Dark sector, or a
+ * sector whose unit has no tokens (and can be chosen: not a Flare or a Wreck, 3.2). A Cleared sector
+ * has no tiles to look at. Later, Dark sectors may carry tokens too (docs/next-sessions.md).
+ */
+export function sectorsWithNoTokens(c: Ctx): SectorKey[] {
+  return sectorKeys(c.state).filter((k) => {
+    const st = sectorState(c.state, k);
+    if (st === "dark") return !hasAnyToken(tile(c.state, c.state.field[k]![c.state.field[k]!.length - 1]!).tokens);
+    if (st !== "occupied") return false;
+    const u = unitAt(c.state, k)!;
+    return canBeChosen(c, u) && !hasAnyToken(tile(c.state, u).tokens);
+  });
+}
+
 /** Look at the top n tiles of a Dark sector (fewer if the stack is shorter). Returns them top first. */
-function* lookAtTop(c: RunCtx, id: string, n: number): Effect<{ sector: SectorKey; tiles: TileId[] } | undefined> {
-  const k = yield* chooseDarkSector(c, `${id}: choose a Dark sector.`, id);
+function* lookAtTop(c: RunCtx, id: string, n: number, anyNoTokens = false): Effect<{ sector: SectorKey; tiles: TileId[] } | undefined> {
+  const k = anyNoTokens ? yield* chooseSector(c, `${id}: choose a sector with no tokens.`, id, sectorsWithNoTokens(c)) : yield* chooseDarkSector(c, `${id}: choose a Dark sector.`, id);
   if (k === undefined) return undefined;
   const tiles = topTiles(c, k, n);
   markSeen(c, tiles);
@@ -79,9 +94,13 @@ damageOne("V1_BAY1", () => () => true, "any unit");
 
 registerAbility("V1_BAY2", (c) => moveOneToAdjacentDark(c, "V1_BAY2"));
 
-/** Choose one Dark sector. Look at its top 3 tiles and put them back in any order. Then Reveal that sector. */
+/**
+ * Choose one sector with no tokens. Look at its top 3 tiles and put them back in any order. Then reveal
+ * that sector (designer 2026-11-08; before: "one Dark sector"). Its top tile is revealed only when it is
+ * face down (8.5); a face-up tile put on top is uncovered, not revealed (Q2).
+ */
 registerAbility("V1_BAY3", function* (c) {
-  const look = yield* lookAtTop(c, "V1_BAY3", 3);
+  const look = yield* lookAtTop(c, "V1_BAY3", 3, true);
   if (!look) return;
   const perms = permutations(look.tiles);
   let order = look.tiles;

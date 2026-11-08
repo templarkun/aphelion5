@@ -65,6 +65,9 @@ map: M1
 given: no Dark sectors (every sector as default).
 when: list legal actions; Use Bay 3
 then: Bay 3 is offered. Using it costs 1 Integrity (Bay 3: 5) and does nothing else.
+note: CHANGED 2026-11-08 (V1 Bay 3 now "one sector with no tokens"): Bay 3 now asks for a
+      sector, since every B_03 has no tokens. Choose (0,0), look at its tiles and put them back
+      as they were: still nothing happens.
 
 id: T3_ACT_06
 title: No legal action is a loss
@@ -249,6 +252,8 @@ given: (0,1): fd:B_01 > fd:S_12 > fd:G_05 > fd.
 when: Use Bay 3 on (0,1); look at B_01, S_12, G_05; put back S_12 on top, then G_05, B_01
 then: Reveal (0,1): S_12[BAR] on top of (0,1). The player remembers G_05 and B_01 beneath.
       With only 2 tiles in the sector, look at both.
+note: CHANGED 2026-11-08: Bay 3 now asks for the sector (any sector with no tokens), so
+      "on (0,1)" is a choice. T3_BAY_04 the same.
 
 id: T3_BAY_04
 title: A Bay's last Integrity still pays for its ability

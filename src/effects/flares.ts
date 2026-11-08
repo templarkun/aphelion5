@@ -2,7 +2,7 @@
 
 import { type Effect, type RunCtx, ask, log } from "../engine/effect.js";
 import { canBeChosen, choosableUnits, describe, fieldMap, level, sectorOf, sectorState, strength, tile, unitType } from "../engine/field.js";
-import { moduleDef, runModule } from "../engine/modules.js";
+import { moduleDef, runModule, xWouldBeZero } from "../engine/modules.js";
 import { bury, reveal } from "../engine/moves.js";
 import type { TileId } from "../engine/state.js";
 import { boost, damageFlagship, dealHit, destroy, repairFlagship } from "../engine/tokens.js";
@@ -168,7 +168,7 @@ flare("F_17", function* (c, self) {
 
 /** F_18 - You may run one ready red-background Module without paying its cost. */
 flare("F_18", function* (c) {
-  const ids = c.state.player.modules.filter((m) => m.ready && moduleDef(c, m.id).background === "red" && c.state.phase === "overload").map((m) => m.id);
+  const ids = c.state.player.modules.filter((m) => m.ready && moduleDef(c, m.id).background === "red" && c.state.phase === "overload" && !xWouldBeZero(c, m.id, true)).map((m) => m.id);
   if (ids.length === 0) {
     log(c, "F_18: no ready red Module", "F_18");
     return;

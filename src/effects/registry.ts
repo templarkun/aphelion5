@@ -52,6 +52,8 @@ export interface ModuleEffects {
   cost?: (c: RunCtx, x: number) => number;
   /** An X chosen as you run it (cost_variable): its smallest value. */
   x?: { min: number };
+  /** X is the energy of this colour on the Module before you ran it (Accumulator Beam, Point-Defense Phaser). */
+  xFromStored?: "Yellow" | "Red" | "Blue";
   /**
    * Its extra payment (8.6 step 3), for the screen to offer before you run it:
    * exactly `n` more energy, or (`upTo`) 1 to `n` more.

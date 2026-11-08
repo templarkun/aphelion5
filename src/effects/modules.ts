@@ -189,6 +189,7 @@ mod(5, {
 
 /** 6 Accumulator Beam - X damage to one unit, X = the Yellow on this Module before you ran it (maximum 5). X = 0 does nothing (Q1). */
 mod(6, {
+  xFromStored: "Yellow",
   run: function* (c, run) {
     const x = Math.min(5, run.storedBefore.Yellow ?? 0);
     const u = yield* chooseUnit(c, `Accumulator Beam: ${x} damage to which unit?`, M(6));
@@ -636,6 +637,7 @@ mod(47, {
 
 /** 48 Point-Defense Phaser - 1 damage to each of X different Sentinels, X = the Red on this Module before you ran it. */
 mod(48, {
+  xFromStored: "Red",
   run: function* (c, run) {
     const x = run.storedBefore.Red ?? 0;
     yield* hitEach(c, yield* chooseUnits(c, `Point-Defense Phaser: 1 damage to which ${x} Sentinels?`, M(48), choosableUnits(c, is(c, "Sentinel")), x), 1, M(48));

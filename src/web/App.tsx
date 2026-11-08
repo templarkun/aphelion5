@@ -9,14 +9,14 @@ import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
 import { alertedUnits } from "../engine/alerts.js";
 import { bayAbilities, orders } from "../engine/command.js";
-import { describe, sectorKeys, sectorOf, tile, unitDef } from "../engine/field.js";
-import { moduleCost, moduleDef } from "../engine/modules.js";
+import { describe, sectorKeys, sectorOf, strength, tile, unitDef } from "../engine/field.js";
+import { moduleCost, moduleDef, xWouldBeZero } from "../engine/modules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
 import { FieldView } from "./FieldView.js";
-import { type DragKind, type DragPlan, type Affects, abilityTargets, actionAffects, mechaDragPlan, m03TapTargets } from "./drag.js";
+import { type DragKind, type DragPlan, type Affects, abilityTargets, actionAffects, mechaDragPlan, m03TapTargets, m01Targets } from "./drag.js";
 import { newEvents } from "../engine/events.js";
 import { energyFlights, paidShown, reserveFlights, trophyFlights } from "./flyers.js";
 import { type ModPlan, normalise, planAnswer, planInfo } from "./modulePlan.js";
@@ -507,6 +507,17 @@ function GameScreen(p: GameProps) {
     setConfirm(undefined);
     if (id.startsWith("way:")) return p.onAnswer(wayAnswers.current.get(id) ?? []);
     if (id.startsWith("heatwave:")) return p.onAnswer(heatWaveBots.get(id.slice("heatwave:".length)) ?? []);
+    // M_01 (designer 2026-11-08): Attack and Move light every target it can walk to (Dark sectors on the way); a tap there plays the steps.
+    const m01 = /^mecha:([^:]+):(attack|ability:M_01)$/.exec(id);
+    if (m01 && s.tiles[m01[1]!]?.unitId === "M_01" && v === game.view && s.phase === "command") {
+      const tile = m01[1]!;
+      const targets = m01Targets(data, game, tile, m01[2] === "attack" ? "attack" : "move");
+      if (targets.length) {
+        setMechaSel({ tile, plan: { tile, unitId: "M_01", from: sectorOf(s, tile)!, hit: strength(c, tile), targets } });
+        setNote({ text: m01[2] === "attack" ? "M_01: tap a red unit to Attack it; it walks there through Dark sectors first (rule 4.2)." : "M_01: tap a blue-green sector; it walks there one sector at a time (rule 4.2).", warn: false, at: Date.now() });
+        return;
+      }
+    }
     send({ kind: "option", value: id });
   };
   const inOverload = s.phase === "overload";
@@ -655,20 +666,12 @@ function GameScreen(p: GameProps) {
       if (t) return p.onAnswer(t.answers);
       return;
     }
-    if (actors && s.tiles[id]?.unitId === "M_01" && v === game.view) {
-      const plan = mechaDragPlan(data, game, v, id);
-      if (plan) {
-        // Its other actions (none with a target on the Field) stay in its pop-up.
-        const covered = new Set(plan.targets.map((t) => (t.answers[0]?.kind === "option" ? t.answers[0].value : "")));
-        const rest = (actors.units.get(id) ?? []).filter((o) => !covered.has(o.id));
-        setMechaSel({ tile: id, plan });
-        if (rest.length) openPopup(describe(c, id), rest, undefined, id);
-        return;
-      }
-    }
     if (actors) {
       const hw = heatWaveBots.get(id) ? [{ id: `heatwave:${id}`, label: "Heat Wave: pay 1 Heat, 1 damage to this Bot (H5)" }] : [];
-      const unitOpts = actors.units.get(id) || hw.length ? [...(actors.units.get(id) ?? []), ...hw] : undefined;
+      let unitOpts = actors.units.get(id) || hw.length ? [...(actors.units.get(id) ?? []), ...hw] : undefined;
+      // M_01 (designer 2026-11-08): Attack also reaches units it can walk to, so it is offered when one exists.
+      if (unitOpts && s.tiles[id]?.unitId === "M_01" && v === game.view && !unitOpts.some((o) => o.id === `mecha:${id}:attack`) && m01Targets(data, game, id, "attack").length)
+        unitOpts = [{ id: `mecha:${id}:attack`, label: `Attack (one hit of ${strength(c, id)})` }, ...unitOpts];
       if (unitOpts) {
         const alerts = alertedUnits(c);
         const last = inOverload && alerts.length === 1 && alerts[0] === id;
@@ -1049,7 +1052,7 @@ function GameScreen(p: GameProps) {
               can={st.can}
               selected={sel}
               dim={dim}
-              extraClass={`${affectedNow.modules.includes(m.id) ? "affected" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`}
+              extraClass={`${m.ready && xWouldBeZero(c, m.id, false) ? "x-zero" : ""} ${affectedNow.modules.includes(m.id) ? "affected" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`}
               onClick={st.onClick}
             >
               {st.count !== undefined && <SplitCount n={st.count} onMinus={() => subSplit(String(m.id))} />}

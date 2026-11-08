@@ -51,7 +51,7 @@ export function ModuleCard(p: {
     <Tag
       data-module={p.id}
       className={`module rim-${d.colour.toLowerCase()} ${d.background === "red" ? "bg-overload" : ""} ${p.ready ? "" : "exhausted"} ${p.can ? "can" : ""} ${p.selected ? "selected" : ""} ${p.dim ? "dim" : ""} ${p.extraClass}`}
-      title={`${d.name}: cost ${d.cost} ${d.colour} · ${d.background === "red" ? "Overload" : "Command phase"}${p.ready ? "" : " · exhausted"}. ${d.effect}${d.extraPayment ? ` Extra: ${d.extraPayment}` : ""}`}
+      title={`${d.name}: cost ${d.cost} ${d.colour} · ${d.background === "red" ? "Overload" : "Command phase"}${p.ready ? "" : " · exhausted"}${p.extraClass.includes("x-zero") ? " · cannot be run: its X would be 0 (put energy on it first)" : ""}. ${d.effect}${d.extraPayment ? ` Extra: ${d.extraPayment}` : ""}`}
       onClick={p.onClick}
     >
       <span className="module-inner">

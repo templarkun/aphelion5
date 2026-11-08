@@ -457,7 +457,7 @@ if (existsSync(`${out}/overclock-save.json`)) {
   await pg.screenshot({ path: `${out}/ui-module-ran.png` });
   await pg.close();
 }
-// M_01 (designer 2026-11-08, I6): a tap lights its targets at once; a tap on one acts.
+// M_01 (designer 2026-11-08): tap = its pop-up; Attack lights units it can walk to; a tap on one walks, then Attacks.
 let m01Check = "skipped (no save)";
 if (existsSync(`${out}/m01-save.json`)) {
   const plan = JSON.parse(readFileSync(`${out}/m01-save.json.plan.json`, "utf8"));
@@ -470,14 +470,22 @@ if (existsSync(`${out}/m01-save.json`)) {
   const before = await logText(pg);
   await pg.mouse.click(at(plan.from).x, at(plan.from).y);
   await pg.waitForTimeout(400);
+  // Its normal pop-up first (designer 2026-11-08), then Attack lights every unit it can walk to.
+  const attackBubble = pg.locator(".popup .bubble", { hasText: "Attack" });
+  const hasAttack = (await attackBubble.count()) > 0;
+  if (hasAttack) await attackBubble.first().click();
+  await pg.waitForTimeout(400);
   const lit = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]").map((h) => h.k);
   const want = plan.targets.map((t) => t.sector);
   const allLit = want.every((k) => lit.includes(k));
   await pg.screenshot({ path: `${out}/ui-m01.png` });
   await pg.mouse.click(at(want[0]).x, at(want[0]).y);
   await pg.waitForTimeout(800);
-  const acted = (await logText(pg)) !== before;
-  m01Check = allLit && acted ? "ok" : `failed (targets lit ${allLit}: ${lit.join(" ")} / ${want.join(" ")}, acted ${acted})`;
+  await pg.waitForTimeout(1500);
+  const after = await logText(pg);
+  const moves = (t) => (t.match(/M_01 moves from/g) ?? []).length;
+  const acted = moves(after) > moves(before) && after.length > before.length;
+  m01Check = hasAttack && allLit && acted ? "ok" : `failed (Attack bubble ${hasAttack}, targets lit ${allLit}: ${lit.join(" ")} / ${want.join(" ")}, walked and Attacked ${acted})`;
   await pg.close();
 }
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });

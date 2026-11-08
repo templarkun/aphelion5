@@ -540,8 +540,53 @@ export function FieldView(p: FieldProps) {
     const out: Step[] = [];
     /** Mecha whose destruction was already shown with their Attack (designer 2026-11-08: Mecha first, then the hit). */
     const attacked = new Set<TileId>();
-    for (const e of events) {
+    for (let i = 0; i < events.length; i++) {
+      const e = events[i]!;
       if (e.kind === "destroyed" && attacked.has(e.tile) && !e.wreck) continue;
+      // A walk (M_01 moving several times in a row, designer 2026-11-08): one step along its path.
+      if (e.kind === "moved" && e.how === "move") {
+        const path = [e.from, e.to];
+        let j = i + 1;
+        for (; j < events.length; j++) {
+          const n = events[j]!;
+          if (n.kind !== "moved" || n.tile !== e.tile || n.how !== "move" || n.from !== path[path.length - 1]) break;
+          path.push(n.to);
+        }
+        if (path.length > 2) {
+          i = j - 1;
+          const last = path[path.length - 1]!;
+          const real = isTop(last, e.tile);
+          const g = real ? undefined : ghost(typeOf(e.unitId), e.unitId);
+          const legs = path.length - 1;
+          out.push({
+            ms: 330 * legs,
+            hides: real ? [last] : [],
+            start: () => g && fx.addChild(g),
+            frame: (p, look) => {
+              const at = Math.min(legs - 1e-6, p * legs);
+              const leg = Math.floor(at);
+              const q = easeInOut(at - leg);
+              const a2 = centre(path[leg]!);
+              const b2 = centre(path[leg + 1]!);
+              const end = centre(last);
+              const x = a2.x + (b2.x - a2.x) * q;
+              const y = a2.y + (b2.y - a2.y) * q;
+              const lift = 1 + 0.08 * Math.sin(Math.PI * q);
+              if (g) {
+                g.position.set(x, y);
+                g.scale.set(lift);
+              } else {
+                const L = look(last);
+                L.dx = x - end.x;
+                L.dy = y - end.y;
+                L.scale = lift;
+              }
+            },
+            end: () => g?.destroy({ children: true }),
+          });
+          continue;
+        }
+      }
       if (e.kind === "attack") {
         const now = sectorOf(s, e.tile);
         const stays = now !== undefined && isTop(now, e.tile); // a Mecha that becomes a Wreck stays
