@@ -14,6 +14,7 @@ import { SIDES, type Side, fromKey, key } from "../geometry/hex.js";
 import { chooseSector } from "./helpers.js";
 import { adjacentTo, chooseOneOf, hitEach, lineOfFireUnits } from "./kit.js";
 import { registerAbility } from "./registry.js";
+import { emit } from "../engine/events.js";
 
 const here = (c: RunCtx, self: TileId) => sectorOf(c.state, self)!;
 
@@ -38,6 +39,7 @@ registerAbility("M_01", function* (c, self) {
   st.splice(st.indexOf(m), 1);
   stack(c.state, to).push(m);
   log(c, `M_01 moves from (${from}) on top of the Mecha in (${to})`, "V1_M01_U1");
+  emit(c, { kind: "moved", tile: m, unitId: "M_01", from, to, how: "move" });
   afterTopTileLeaves(c, from);
 });
 

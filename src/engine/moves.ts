@@ -13,6 +13,7 @@ import { type Ctx, describe, fieldMap, isUnit, isWreck, sectorOf, sectorState, s
 import type { SectorKey, TileId } from "./state.js";
 import { afterTopTileLeaves, checkSleepers, placeAlert, placeBarrier, returnTokens } from "./tokens.js";
 import { powerNodeChoice } from "./heat.js";
+import { emit } from "./events.js";
 
 /** Dark or Cleared: where Move, Teleport and Place may go (glossary "Dark sector"). */
 export function isOpenSector(c: Ctx, k: SectorKey): boolean {
@@ -50,6 +51,7 @@ export function move(c: Ctx, id: TileId, to: SectorKey, rule = "glossary"): void
   lift(c, id);
   stack(c.state, to).push(id);
   log(c, `${tile(c.state, id).unitId} moves from (${from}) to (${to})`, rule);
+  emit(c, { kind: "moved", tile: id, unitId: tile(c.state, id).unitId ?? "?", from, to, how: "move" });
   afterTopTileLeaves(c, from);
 }
 
@@ -60,6 +62,7 @@ export function teleport(c: Ctx, id: TileId, to: SectorKey, rule = "glossary"): 
   lift(c, id);
   stack(c.state, to).push(id);
   log(c, `${tile(c.state, id).unitId} teleports from (${from}) to (${to})`, rule);
+  emit(c, { kind: "moved", tile: id, unitId: tile(c.state, id).unitId ?? "?", from, to, how: "teleport" });
   afterTopTileLeaves(c, from);
 }
 
@@ -73,6 +76,7 @@ export function swap(c: Ctx, a: TileId, b: TileId, rule = "glossary"): void {
   sa[sa.length - 1] = b;
   sb[sb.length - 1] = a;
   log(c, `${tile(c.state, a).unitId} and ${tile(c.state, b).unitId} swap: (${ka}) <-> (${kb})`, rule);
+  emit(c, { kind: "swapped", a, b, from: ka, to: kb });
 }
 
 /**
@@ -133,14 +137,15 @@ export function readyModules(c: Ctx): number[] {
  * itself; with none it stays in the Supply. `toSupply` (trial rule I2) also
  * offers sending each energy back to the Supply.
  */
-export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, number>, rule = "4.6", toSupply = false): Effect {
+export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, number>, rule = "4.6", toSupply = false, from?: TileId): Effect {
   const left = {} as Record<EnergyColour, number>;
   for (const col of ENERGY_COLOURS) left[col] = Math.min(amounts[col] ?? 0, c.state.supply.energy[col]);
-  const put = (col: EnergyColour, mid: number) => {
+  const put = (col: EnergyColour, mid: number, auto: boolean) => {
     c.state.player.modules.find((m) => m.id === mid)!.energy[col] += 1;
     c.state.supply.energy[col] -= 1;
     left[col] -= 1;
     log(c, `1 ${col} energy placed on ${c.data.modules.byId.get(mid)!.name}`, rule);
+    emit(c, { kind: "energy", colour: col, module: mid, from, auto });
   };
   const targets = (col: EnergyColour) => readyModules(c).filter((id) => c.data.modules.byId.get(id)!.colour === col);
   for (const col of ENERGY_COLOURS) {
@@ -149,7 +154,7 @@ export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, n
     if (t.length === 0) {
       log(c, `no ready ${col} Module: ${left[col]} ${col} energy stays in the Supply`, "5.3");
       left[col] = 0;
-    } else if (t.length === 1) while (left[col] > 0) put(col, t[0]!);
+    } else if (t.length === 1) while (left[col] > 0) put(col, t[0]!, true);
   }
   for (;;) {
     const cols = ENERGY_COLOURS.filter((col) => left[col] > 0);
@@ -173,7 +178,7 @@ export function* placeEnergyOnModules(c: RunCtx, amounts: Record<EnergyColour, n
       const col = id.slice(7) as EnergyColour;
       left[col] -= 1;
       log(c, `1 ${col} energy goes back to the Supply`, rule);
-    } else put(energy[id]!, Number(id));
+    } else put(energy[id]!, Number(id), false);
   }
 }
 
@@ -188,7 +193,7 @@ export function* placeWaitingFlareEnergy(c: RunCtx, id: TileId): Effect {
   delete t.energy;
   for (const col of ENERGY_COLOURS) c.state.supply.energy[col] += amounts[col];
   log(c, `${describe(c, id)}: its waiting energy is placed now (trial rule)`, "4.6");
-  yield* placeEnergyOnModules(c, amounts, "4.6", true);
+  yield* placeEnergyOnModules(c, amounts, "4.6", true, id);
 }
 
 /** "Start an Overload" (9.1): after the current effect, and never during an Overload or Overload End. */
@@ -216,7 +221,7 @@ function* flareFires(c: RunCtx, id: TileId): Effect {
       }
       tile(c.state, id).energy = w;
       log(c, `${d.id}: its energy waits on it until its Alert is resolved (trial rule)`, "4.6");
-    } else yield* placeEnergyOnModules(c, d.energyOnReveal, "4.6");
+    } else yield* placeEnergyOnModules(c, d.energyOnReveal, "4.6", false, id);
   }
   if (c.state.phase === "command") requestOverload(c, `${d.id} is revealed`);
   else if (c.state.phase === "overload") placeAlert(c, id, "4.6");
@@ -253,6 +258,7 @@ export function* reveal(c: RunCtx, k: SectorKey, rule = "8.5"): Effect<TileId> {
   if (!isFacing(f)) throw new Error("bad facing");
   t.facing = f;
   log(c, `Reveal (${k}): ${t.unitId}${f ? ` facing ${f}` : ""}`, rule);
+  emit(c, { kind: "revealed", tile: id, unitId: t.unitId ?? "?", type: unitType(c, id), sector: k });
   const type = unitType(c, id);
   if (type === "Sentinel") placeBarrier(c, id, "4.5");
   if (type === "Flare") yield* flareFires(c, id);

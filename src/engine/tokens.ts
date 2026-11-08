@@ -31,6 +31,7 @@ import {
 } from "./field.js";
 import { FEEDBACK_DAMAGE, FUSE_KINDS, FUSE_NAME, type FuseKind, MORTAR_DAMAGE, TICK_DAMAGE } from "./rules.js";
 import { type SectorKey, type TileId, type Tokens, noTokens } from "./state.js";
+import { emit } from "./events.js";
 
 // ---------------------------------------------------------------------------
 // Supply and the Flagship
@@ -271,10 +272,12 @@ export function destroy(c: Ctx, id: TileId, rule = "glossary", strengthBefore?: 
     t.alert = true;
     t.wreck = true;
     log(c, `${describe(c, id)} is destroyed and becomes a Wreck`, "4.8");
+    emit(c, { kind: "destroyed", tile: id, unitId: info.unitId, type: info.type, sector: k, wreck: true });
   } else {
     const pile = pileFor(c, id);
     log(c, `${describe(c, id)} is destroyed (to the ${pile === "trophy" ? "Trophy pile" : "Discard"})`, rule);
     removeFromField(c, id, pile);
+    emit(c, { kind: "destroyed", tile: id, unitId: info.unitId, type: info.type, sector: k, wreck: false });
     afterTopTileLeaves(c, k);
   }
   return info;
@@ -321,6 +324,7 @@ export function* dealHit(c: RunCtx, id: TileId, amount: number, rule = "6.1"): E
     t.barrier = false;
     c.state.supply.barrier += 1;
     log(c, `the Barrier on ${describe(c, id)} cancels a hit of ${amount}`, "6.4");
+    emit(c, { kind: "hit", tile: id, unitId: unitDef(c, id).id, type: unitType(c, id), sector: sectorOf(c.state, id)!, amount, damage: 0, shields: 0, stopped: "barrier" });
     return { kind: "cancelled" };
   }
   const before = strength(c, id)!;
@@ -347,6 +351,7 @@ export function* dealHit(c: RunCtx, id: TileId, amount: number, rule = "6.1"): E
   t.damage += dmg;
   const parts = [shields && `${shields} Shield`, bio && `${bio} Bio-shield`, dmg && `${dmg} Damage`].filter(Boolean);
   log(c, `${describe(c, id)} takes a hit of ${amount}: ${parts.join(", ")}; Strength ${strength(c, id)}`, rule);
+  emit(c, { kind: "hit", tile: id, unitId: unitDef(c, id).id, type: unitType(c, id), sector: sectorOf(c.state, id)!, amount, damage: dmg, shields: removed });
 
   const k = sectorOf(c.state, id)!;
   const type = unitType(c, id);

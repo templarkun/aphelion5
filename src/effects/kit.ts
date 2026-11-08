@@ -19,6 +19,7 @@ import { type Coord, type Facing, fromKey, key, turnClockwise } from "../geometr
 import type { SectorKey, TileId } from "../engine/state.js";
 import { type HitResult, boost, dealHit, placeAlert } from "../engine/tokens.js";
 import { moduleDef } from "../engine/modules.js";
+import { emit } from "../engine/events.js";
 
 export const sectorCoordOf = (c: Ctx, u: TileId): Coord => fromKey(sectorOf(c.state, u)!);
 
@@ -226,6 +227,7 @@ export function* placeOneEnergy(c: RunCtx, moduleId: number, rule: string, colou
   s[col] -= 1;
   c.state.player.modules.find((m) => m.id === moduleId)!.energy[col] += 1;
   log(c, `1 ${col} energy placed on ${moduleDef(c, moduleId).name}`, rule);
+  emit(c, { kind: "energy", colour: col, module: moduleId, auto: false });
   return true;
 }
 
