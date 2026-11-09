@@ -23,6 +23,7 @@ import { type ModPlan, normalise, planAnswer, planInfo } from "./modulePlan.js";
 import { Flame, HeatBar, type ModPop, ModuleCard, ModulePops } from "./Modules.js";
 import { AnomalyStrip } from "./Anomalies.js";
 import { FlareEnergyChips } from "./FlareEnergy.js";
+import { type PickFoot, type PickItem, UnitPicks, sourceOf, verbOf } from "./UnitPicks.js";
 import { RowBubbles } from "./RowBubbles.js";
 import { EndOverload } from "./EndOverload.js";
 import { FlagshipDamage } from "./FlagshipDamage.js";
@@ -836,9 +837,61 @@ function GameScreen(p: GameProps) {
   // Damage to the Flagship (5.2): bubbles by the Bays, not the Bays themselves (designer 2026-11-09).
   const damageQ = !actors && q?.kind === "split" && q.pick === "bays" && /^Your Flagship takes/.test(q.prompt) ? q : undefined;
 
+  const hasField = s.phase !== "setup" && sectorKeys(s).length > 0 && (s.phase !== "preparation" || s.log.some((e) => /^Mission \d/.test(e.text)));
+  // Questions that choose units are answered on bubbles on the units (designer 2026-11-09): no banner.
+  const pickQ =
+    actors || !q || m03.length || rowQ || damageQ || planQ || rotate || !hasField
+      ? undefined
+      : q.kind === "units" || (q.kind === "split" && q.pick === "units")
+        ? q
+        : (q.kind === "option" || q.kind === "order") && !q.energy && !q.takeEnergy && !q.rows && !q.options.some((o) => o.chips)
+          ? q.pick === "units" || (q.pick === undefined && onFieldUnits.length > 0 && onFieldSectors.length === 0 && q.options.every((o) => !o.on || o.on.kind === "unit"))
+            ? q
+            : undefined
+          : undefined;
+  const pickItems: PickItem[] = [];
+  const pickFoot: PickFoot[] = [];
+  let pickPress: (id: string) => void = () => undefined;
+  if (pickQ) {
+    const verb = verbOf(pickQ.prompt);
+    const sub = sourceOf(pickQ.prompt, pickQ.rule);
+    if (pickQ.kind === "units") {
+      const single = pickQ.max === 1;
+      for (const id of pickQ.options) pickItems.push({ id, ...verb, sub, selected: !single && selected.includes(id) });
+      pickPress = (id) => (single ? send({ kind: "units", value: [id] }) : setSelected((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : xs.length < pickQ.max ? [...xs, id] : xs)));
+      if (!single) {
+        const n = selected.length;
+        const what = pickQ.min === pickQ.max ? `${n} of ${pickQ.max}` : `${n}, up to ${pickQ.max}`;
+        pickFoot.push({ id: "confirm", label: n === 0 && pickQ.min === 0 ? "Choose none" : `Confirm (${what})`, primary: n > 0, disabled: n < pickQ.min || n > pickQ.max, onPress: () => send({ kind: "units", value: selected }) });
+      } else if (pickQ.min === 0) pickFoot.push({ id: "skip", label: "Skip", onPress: () => send({ kind: "units", value: [] }) });
+    } else if (pickQ.kind === "split") {
+      for (const b of pickQ.buckets) pickItems.push({ id: b.id, label: verb.tone === "damage" ? "+1 damage" : "+1", sub, tone: verb.tone, count: split[b.id] ?? 0, disabled: (split[b.id] ?? 0) >= b.max });
+      pickPress = addSplit;
+      pickFoot.push({ id: "count", label: `${splitSum} of ${pickQ.total} placed`, disabled: true, onPress: () => undefined });
+      if (splitSum > 0) pickFoot.push({ id: "reset", label: "Start again", onPress: () => setSplit({}) });
+    } else if (pickQ.kind === "option" || pickQ.kind === "order") {
+      const kind = pickQ.kind;
+      const onUnit = new Map<string, Option[]>();
+      for (const o of pickQ.options) {
+        const u = o.on?.kind === "unit" ? o.on.id : pickQ.pick === "units" && s.tiles[o.id] ? o.id : undefined;
+        if (u !== undefined) onUnit.set(u, [...(onUnit.get(u) ?? []), o]);
+        else pickFoot.push({ id: o.id, label: o.label, onPress: () => send({ kind, value: o.id } as Answer) });
+      }
+      for (const [u, os] of onUnit) {
+        const own = os.length === 1 && os[0]!.on ? verbOf(os[0]!.label) : verb;
+        const label = own.label === "Choose" && os.length === 1 && os[0]!.on ? os[0]!.label.replace(/ \(.*\)$/, "") : os.length > 1 ? "Choose…" : own.label;
+        pickItems.push({ id: u, label, tone: own.tone, sub, menu: os.length > 1 });
+      }
+      pickPress = (u) => {
+        const os = onUnit.get(u) ?? [];
+        if (os.length === 1) send({ kind, value: os[0]!.id } as Answer);
+        else pick(u);
+      };
+    }
+  }
+
   const co = data.companies.byId.get(s.player.company)!;
   // The Field shows once a mission is chosen (also while it is empty, to choose sectors at Mission Preparation).
-  const hasField = s.phase !== "setup" && sectorKeys(s).length > 0 && (s.phase !== "preparation" || s.log.some((e) => /^Mission \d/.test(e.text)));
   const crippled = s.flagship.every((x) => x === 0);
 
   const overhaul = actors?.game.get("overhaul");
@@ -1017,6 +1070,7 @@ function GameScreen(p: GameProps) {
         {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
         {look && <LookCard data={data} tiles={look} onClose={() => setLook(undefined)} />}
         {endOverload && <EndOverload onEnd={() => answer(endOverload.id)} />}
+        {pickQ && <UnitPicks items={pickItems} foot={pickFoot} onPress={pickPress} multi={pickQ.kind !== "option" && pickQ.kind !== "order" && !(pickQ.kind === "units" && pickQ.max === 1)} />}
         {rowQ && hasField && !planQ && <RowBubbles rows={rowQ.rows!} selected={rowSel} onSelect={setRowSel} onConfirm={(i) => send({ kind: "option", value: rowQ.options[i]!.id })} />}
         {planQ ? null : rotate ? (
           // Facing (3.7): the turn buttons are on the unit; no card (designer 2026-11-09). "Done" only when needed.
@@ -1031,7 +1085,7 @@ function GameScreen(p: GameProps) {
           </QCard>
         ) : damageQ ? (
           <FlagshipDamage total={damageQ.total} from={/^[A-Z]_\d+$/.test(damageQ.rule) ? `from ${damageQ.rule}` : `rule ${damageQ.rule}`} buckets={damageQ.buckets} split={split} onAdd={addSplit} onReset={() => setSplit({})} />
-        ) : actors || anomalyQ || rowQ ? null : onBoard(q) ? (
+        ) : actors || anomalyQ || rowQ || pickQ ? null : onBoard(q) ? (
           <div className="q-banner">
             <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
           </div>

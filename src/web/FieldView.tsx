@@ -30,6 +30,7 @@ import { arrowSides, fromKey } from "../geometry/hex.js";
 import { type NodeLook, Player, type Step, easeInOut, easeOut, parallel } from "./anim.js";
 import { type ShotLook, type Source, type Target, UNIT_SHOT, edgeOf, fireGlow, shotStep, weaponStep } from "./weapons.js";
 import { BIG_REVEAL, chargeLook, drawOverloadRing, gyroBreak, gyroDrain, revealFxStep, sleeperActivate } from "./revealFx.js";
+import { addUnitMarks } from "./unitMarks.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
@@ -92,10 +93,7 @@ function badgeText(t: GameState["tiles"][string]["tokens"]): string[] {
   const out: string[] = [];
   if (t.wreck) out.push("WRECK");
   if (t.alert) out.push("ALERT");
-  if (t.damage) out.push(`D${t.damage}`);
-  if (t.shield) out.push(`S${t.shield}`);
-  if (t.bioShield) out.push(`BS${t.bioShield}`);
-  // Barriers and Fuse tokens are drawn as pieces (tokensFx.ts), not as text.
+  // Strength, Shields, Damage (unitMarks.ts), Barriers and Fuse tokens (tokensFx.ts) are drawn as pieces.
   return out;
 }
 
@@ -1454,11 +1452,13 @@ export function FieldView(p: FieldProps) {
         const t = tile(state, unit!);
         const str = strength(c, unit!);
         label(t.unitId ?? "?", -size * 0.28, size * 0.28, 0x1d1d1f, true);
-        label(str !== undefined ? `Strength ${str}` : "", size * 0.02, size * 0.17);
+        // Strength pips, Shield and Damage tokens as pieces (designer 2026-11-09, unitMarks.ts).
+        addUnitMarks(node, str, t.tokens, cx, cy, size);
         const b = badgeText(t.tokens);
-        if (b.length) label(b.join(" "), size * 0.26, size * 0.16, t.tokens.alert || t.tokens.wreck ? 0x9b1c1c : 0x1d1d1f, true);
+        const marked = t.tokens.shield + t.tokens.bioShield + t.tokens.damage > 0;
+        if (b.length) label(b.join(" "), t.tokens.wreck ? size * 0.02 : marked ? size * 0.47 : size * 0.27, size * 0.16, 0x9b1c1c, true);
         addFuseTokens(node, t.tokens, cx, cy, size);
-        label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.14);
+        label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.64, size * 0.13);
         // Trial rule (I2): the energy waiting on a Flare, as tokens on its tile (build step 3).
         const waiting = t.energy ? (["Yellow", "Red", "Blue"] as const).flatMap((col) => Array.from({ length: t.energy![col] ?? 0 }, () => col)) : [];
         if (waiting.length) {

@@ -188,6 +188,42 @@ then: the Field's background is black in both themes (empty and Cleared sectors 
       the Overload ends.
 
 ################################################################################
+=== SECTION: PLAY-TEST ROUND 10 (designer 2026-11-09, screen only) ===
+
+id: T13_R10_01
+title: Units are chosen on bubbles on the units
+source: designer 2026-11-09; see batch 9 T9_CHO_04 CHANGED note
+given: "P_15: deal 1 damage to which Gyro?", "O_01: Boost which adjacent non-Mecha unit?", or any
+       effect, Module, Bay, Order, Fuse token or Overload step that chooses units (also "Which
+       Alert do you resolve next?" and Splitter Missiles' 3 damage).
+then: no banner and no card. On each unit that can be chosen, a see-through bubble on the lower
+      half of its tile: what happens to it in bold ("1 damage" red, "Boost" / "Repair" blue,
+      "Swap", "Resolve" ...), its source small below (not on phones). The bubbles spring in one
+      after another, have a running outline and breathe slowly like other ready things. Press
+      one: the others shrink away, the pressed one flashes, then the answer is sent. Several
+      units: presses select (green, ✓) and a "Confirm (n of m)" bubble at the foot of the Field
+      sends them; "Skip" or "Choose none" when the choice may be left out. Splitter Missiles:
+      each press puts 1 damage on that unit (count in a red dot), "n of 3 placed", "Start again";
+      the last one answers. A unit with two answers on it opens its usual pop-up.
+note: Checked by scripts/ui-smoke.mjs (find-save.ts pickmany); find-save.ts pickunit for one unit.
+
+id: T13_R10_02
+title: Strength is shown as pips
+source: designer 2026-11-09; Core Rules 3.3
+then: no "Strength N" text. One gold pip per point of Strength (Level + Shields − Damage), up to
+      4, in a row under the unit's name; Strength 5 or more: one bigger crowned pip with the
+      number in it. Flares and Wrecks have none.
+
+id: T13_R10_03
+title: Shield and Damage tokens are pieces on the unit
+source: designer 2026-11-09; Core Rules 6.1, 6.2, 6.3
+then: no "S2" / "D1" / "BS1" text. Under the Strength pips, on dark round bases: Shield tokens as
+      blue kite shields with a white cross, Bio-shields as green shields with a leaf vein,
+      Damage tokens as red spiked bursts with a crack. Up to 4 tokens in all, one each; more
+      than 4: one big token per kind (gold-rimmed shield, ringed burst) with the number in it.
+      Shields and Damage never show together (3.3).
+
+################################################################################
 === SECTION: DRAGGING MODULES, ORDERS AND FLARE ENERGY (screen only) ===
 
 id: T13_DRAG_01

@@ -161,6 +161,11 @@ given: "Reveal which Dark sector?" from an effect, or an Attack's target.
 when: look at the question panel
 then: only the prompt and "Click a highlighted unit (sector) on the Field."; for several, a
       Confirm button with the count. The answers are on the Field.
+note: CHANGED 2026-11-09 (designer): for units there is no question panel at all. A bubble sits
+      on each unit that can be chosen, saying what happens to it ("1 damage", "Boost", "Swap")
+      and where it comes from ("P_15"); pressing it (or the unit) chooses it. Several units: each
+      press selects (green, ✓), a "Confirm (1 of 2)" bubble at the foot of the Field sends them;
+      a choice that may be skipped has "Skip" / "Choose none" there. Sectors are unchanged.
 
 id: T9_CHO_05
 title: M_03 and M_06: no Passive menu before the Attack

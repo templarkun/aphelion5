@@ -43,7 +43,12 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    Next: the designer tries them; then step 4 (Upgrade sheet).
    2026-11-09 round 9: stand-ins for destroyed units, faster Heat Wave, row bubbles, Flagship
    damage bubbles, Sleeper / Gyro effects, black Field, Overload plasma ring, new End button;
-   Flare energy rule always on (save format 7). Next: the designer tries them; then step 4.
+   Flare energy rule always on (save format 7).
+   2026-11-09 round 10: units chosen on bubbles on the units (no banner), Strength pips, Shield
+   and Damage tokens as pieces. Proposed, waiting for the designer's pick: how a unit's Level
+   is shown (A corner badge, B Roman numeral plate, C notches on the rim, D pip outlines) and
+   how a ready Alert is shown (A Alert token, B pulsing rim, C rising exclamation glyph, D a
+   radar sweep; combinations). Next: the designer tries them; then step 4.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly

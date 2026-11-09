@@ -66,6 +66,16 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
     const tops = sectorKeys(s).filter((k) => sectorState(s, k) === "occupied").map((k) => s.tiles[topTileId(s, k)!]!.tokens);
     return /^Choose an action/.test(q.prompt) && tops.some((t) => t.barrier) && tops.some((t) => t.tick + t.mortar + t.feedback > 0);
   },
+  // Strength pips with Shields or Damage on the Field (designer 2026-11-09, unitMarks.ts).
+  marks: (q, g) => {
+    const s = g.view.state;
+    const tops = sectorKeys(s).filter((k) => sectorState(s, k) === "occupied").map((k) => s.tiles[topTileId(s, k)!]!.tokens);
+    return /^Choose an action/.test(q.prompt) && tops.some((t) => t.shield > 0) && tops.some((t) => t.damage > 0);
+  },
+  // A question that chooses one unit, answered on bubbles on the units (designer 2026-11-09).
+  pickunit: (q) => q.kind === "units" && q.min === 1 && q.max === 1 && q.options.length >= 2 && !/Attacks/.test(q.prompt),
+  // ... or several units, with a Confirm bubble.
+  pickmany: (q) => q.kind === "units" && q.max >= 2 && q.options.length > q.max,
   // Dragging a Mecha (Program Spec "Interaction and animation"): blue and red targets.
   drag: (_q, g) => dragPlanOf(g) !== undefined,
   // M_03 (designer 2026-11-08): a red target reached only by moving first.

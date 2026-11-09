@@ -695,7 +695,30 @@ if (existsSync(`${out}/flagship-save.json`)) {
   damageCheck = big === 1 && card === 0 && pointers >= 1 && after !== before ? "ok" : `failed (bubble ${big}, card ${card}, Bay bubbles ${pointers}, prompt still "${after}")`;
   await pg.close();
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck }));
+// Units chosen on bubbles on the units (designer 2026-11-09): no banner; several units: select, then Confirm.
+let pickCheck = "skipped (no save)";
+if (existsSync(`${out}/pickmany-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/pickmany-save.json`);
+  await pg.locator(".unit-pick").first().waitFor({ timeout: 4000 }).catch(() => {});
+  const bubblesN = await pg.locator(".unit-pick").count();
+  const card = await pg.locator(Q).count();
+  const before = await promptOf(pg);
+  const want = Number(/which (two|three)/.exec(before)?.[1] === "three" ? 3 : 2);
+  for (let i = 0; i < want; i++) {
+    await pg.locator(".unit-pick").nth(i).click();
+    await pg.waitForTimeout(150);
+  }
+  const sel = await pg.locator(".unit-pick.selected").count();
+  await pg.screenshot({ path: `${out}/ui-pick.png` });
+  await pg.locator(".pick-foot .bubble.primary").click();
+  await pg.waitForTimeout(800);
+  const after = await promptOf(pg);
+  pickCheck = bubblesN >= 3 && card === 0 && sel === want && after !== before ? "ok" : `failed (bubbles ${bubblesN}, card ${card}, selected ${sel}, prompt still "${after}")`;
+  await pg.close();
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
