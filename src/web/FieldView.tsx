@@ -23,14 +23,15 @@ import { Application, Container, Graphics, Text } from "pixi.js";
 import { useEffect, useRef } from "react";
 import type { GameData } from "../data/index.js";
 import { type GameEvent, newEvents } from "../engine/events.js";
-import { type Ctx, sectorKeys, sectorOf, sectorState, stack, strength, tile, topTileId, unitDef } from "../engine/field.js";
+import { type Ctx, level, sectorKeys, sectorOf, sectorState, stack, strength, tile, topTileId, unitDef } from "../engine/field.js";
 import type { Answer } from "../engine/questions.js";
 import type { GameState, TileId } from "../engine/state.js";
 import { arrowSides, fromKey } from "../geometry/hex.js";
 import { type NodeLook, Player, type Step, easeInOut, easeOut, parallel } from "./anim.js";
 import { type ShotLook, type Source, type Target, UNIT_SHOT, edgeOf, fireGlow, shotStep, weaponStep } from "./weapons.js";
 import { BIG_REVEAL, chargeLook, drawOverloadRing, gyroBreak, gyroDrain, revealFxStep, sleeperActivate } from "./revealFx.js";
-import { addUnitMarks } from "./unitMarks.js";
+import { addLevel, addUnitMarks } from "./unitMarks.js";
+import { drawAlert } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
@@ -92,7 +93,7 @@ function hexPoints(cx: number, cy: number, size: number): number[] {
 function badgeText(t: GameState["tiles"][string]["tokens"]): string[] {
   const out: string[] = [];
   if (t.wreck) out.push("WRECK");
-  if (t.alert) out.push("ALERT");
+  // A ready Alert: a token or a beacon drawn every frame (alertFx.ts, designer 2026-11-09).
   // Strength, Shields, Damage (unitMarks.ts), Barriers and Fuse tokens (tokensFx.ts) are drawn as pieces.
   return out;
 }
@@ -143,6 +144,8 @@ export function FieldView(p: FieldProps) {
   const drawn = useRef<{ state: GameState | undefined; sig: string }>({ state: undefined, sig: "" });
   /** A Mecha dropped on a move target already sits there: its move plays no glide. */
   const dropped = useRef<{ tile: TileId; to: string } | undefined>(undefined);
+  /** When each ready Alert was first shown (its token pops in). */
+  const alertBorn = useRef(new Map<string, number>());
 
   useEffect(() => {
     const a = new Application();
@@ -1247,6 +1250,24 @@ export function FieldView(p: FieldProps) {
       const v = looks.get(k);
       drawBarrier(au, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, v?.alpha ?? 1, v?.scale ?? 1);
     }
+    // Ready Alerts: a token and a pulsing rim, or a beacon and radar rings (screen trial).
+    const alertLook = st.settings.alertBeacon ? "beacon" : "token";
+    const seenNow = new Set<string>();
+    for (const [k, n] of nodes.current) {
+      if (sectorState(st, k) !== "occupied") continue;
+      const top = topTileId(st, k);
+      if (!top) continue;
+      const tk = tile(st, top).tokens;
+      if (!tk.alert) continue;
+      seenNow.add(top);
+      if (!alertBorn.current.has(top)) alertBorn.current.set(top, player.current.busy ? now + 99999 : now);
+      let born = alertBorn.current.get(top)!;
+      if (born > now && !player.current.busy) alertBorn.current.set(top, (born = now));
+      if (born > now) continue; // placed by an animation still playing: shown when it ends
+      const v = looks.get(k);
+      drawAlert(au, alertLook, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, born, v?.alpha ?? 1, v?.scale ?? 1, tk.wreck);
+    }
+    for (const id of alertBorn.current.keys()) if (!seenNow.has(id)) alertBorn.current.delete(id);
 
     // Glows: the targets only show once the animations before them are done (spec "Timing").
     const g = L.glow;
@@ -1454,6 +1475,14 @@ export function FieldView(p: FieldProps) {
         label(t.unitId ?? "?", -size * 0.28, size * 0.28, 0x1d1d1f, true);
         // Strength pips, Shield and Damage tokens as pieces (designer 2026-11-09, unitMarks.ts).
         addUnitMarks(node, str, t.tokens, cx, cy, size);
+        // Level (3.3): a hexagon badge and notches at the upper left (designer 2026-11-09).
+        let lv: number | undefined;
+        try {
+          lv = level(c, unit!);
+        } catch {
+          lv = undefined;
+        }
+        addLevel(node, lv, cx, cy, size);
         const b = badgeText(t.tokens);
         const marked = t.tokens.shield + t.tokens.bioShield + t.tokens.damage > 0;
         if (b.length) label(b.join(" "), t.tokens.wreck ? size * 0.02 : marked ? size * 0.47 : size * 0.27, size * 0.16, 0x9b1c1c, true);

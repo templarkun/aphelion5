@@ -396,10 +396,72 @@ export function drawOverloadRing(g: Graphics, w: number, h: number, now: number)
     g.circle(head[0], head[1], 6 + 2 * Math.sin(now / 60 + k)).fill({ color: b.col, alpha: 0.5 });
     g.circle(head[0], head[1], 3).fill({ color: 0xffffff, alpha: 0.95 });
   });
+  // Energy flames licking in from the edge towards the Field (designer 2026-11-09).
+  if (now) drawEdgeFlames(g, at, per, now);
   // Sparks drifting in from the edge.
   for (let i = 0; i < 46; i++) {
     const u = (now / 2400 + rnd(i)) % 1;
     const p = at(rnd(i + 100) + now / 60000, 4 + u * 34);
     g.circle(p[0], p[1], 1.2 + 1.6 * (1 - u)).fill({ color: i % 3 ? 0xff8a3a : 0xb07cff, alpha: 0.85 * (1 - u) * (now ? 1 : 0) });
+  }
+}
+
+/**
+ * Tongues of energy fire rooted on the Field's edge, leaning inwards and flickering: each one
+ * grows, licks in and dies back on its own cycle; three layers (red-orange, orange, a white-gold
+ * core), with a few violet ones among them, and embers torn off their tips.
+ */
+function drawEdgeFlames(g: Graphics, at: (t: number, d?: number) => [number, number], per: number, now: number): void {
+  const n = Math.max(14, Math.min(56, Math.round(per / 46)));
+  for (let i = 0; i < n; i++) {
+    const t0 = (i + rnd(i + 300) * 0.6) / n + now / 90000;
+    const cyc = 1300 + rnd(i + 400) * 1300;
+    const u = ((now + rnd(i + 500) * cyc) % cyc) / cyc;
+    // Grow fast, lick, fall back.
+    const life = u < 0.35 ? u / 0.35 : 1 - (u - 0.35) / 0.65;
+    const flick = 0.75 + 0.25 * Math.sin(now / 70 + i * 1.7);
+    const len = (18 + 62 * rnd(i + 600)) * life * flick;
+    if (len < 3) continue;
+    const half = (5 + 6 * rnd(i + 700)) / per;
+    const violet = i % 7 === 3;
+    const layers = violet
+      ? [
+          { w: 1, l: 1, col: 0x8a4dff, a: 0.32 },
+          { w: 0.62, l: 0.78, col: 0xc39bff, a: 0.5 },
+          { w: 0.28, l: 0.5, col: 0xf4ecff, a: 0.75 },
+        ]
+      : [
+          { w: 1, l: 1, col: 0xff3d12, a: 0.34 },
+          { w: 0.64, l: 0.8, col: 0xff8a1f, a: 0.55 },
+          { w: 0.3, l: 0.52, col: 0xfff0b0, a: 0.8 },
+        ];
+    // Along the edge (tangent) and the sway of the tip.
+    const p0 = at(t0, 0);
+    const p1 = at(t0 + 1 / per, 0);
+    const tx = p1[0] - p0[0];
+    const ty = p1[1] - p0[1];
+    const sway = Math.sin(now / 260 + i * 2.3) * 0.35 + Math.sin(now / 110 + i) * 0.12;
+    for (const L of layers) {
+      const m = 7;
+      const left: number[] = [];
+      const right: number[] = [];
+      for (let j = 0; j <= m; j++) {
+        const f = j / m;
+        const c = at(t0, len * L.l * f);
+        const off = sway * len * L.l * f * f;
+        const x = c[0] + tx * off;
+        const y = c[1] + ty * off;
+        const w = half * per * L.w * Math.pow(1 - f, 0.8) * (0.7 + 0.3 * Math.sin(f * Math.PI));
+        left.push(x - tx * w, y - ty * w);
+        right.unshift(x + tx * w, y + ty * w);
+      }
+      g.poly([...left, ...right]).fill({ color: L.col, alpha: L.a * Math.min(1, life * 1.6) });
+    }
+    // An ember torn off the tip.
+    if (u > 0.3 && u < 0.8) {
+      const e = (u - 0.3) / 0.5;
+      const c = at(t0 + sway * 0.004, len + e * 26);
+      g.circle(c[0], c[1], 1.6 * (1 - e) + 0.6).fill({ color: violet ? 0xd8c2ff : 0xffd27a, alpha: 0.9 * (1 - e) });
+    }
   }
 }

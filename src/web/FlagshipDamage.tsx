@@ -21,6 +21,8 @@ export function FlagshipDamage(p: {
   split: Record<string, number>;
   onAdd: (bucket: string) => void;
   onReset: () => void;
+  /** Removing damage (5.2 repair, designer 2026-11-09): the same bubbles in green, "+1". */
+  repair?: boolean;
 }) {
   const [spots, setSpots] = useState<Spot[]>([]);
   useLayoutEffect(() => {
@@ -48,14 +50,14 @@ export function FlagshipDamage(p: {
   const placed = Object.values(p.split).reduce((a, b) => a + b, 0);
   return (
     <>
-      <div className="damage-bubble" role="status">
+      <div className={`damage-bubble ${p.repair ? "repair" : ""}`} role="status">
         <svg aria-hidden="true" width="100%" height="100%" preserveAspectRatio="none">
           <rect x="3" y="3" rx="28" pathLength={100} />
         </svg>
-        <b>Your Flagship takes {p.total} damage</b>
+        <b>{p.repair ? `Repair ${p.total} damage on your Flagship` : `Your Flagship takes ${p.total} damage`}</b>
         <span className="small">{p.from}</span>
         <span>
-          Tap the bubbles by your Bays: {placed} of {p.total} placed
+          Tap the bubbles by your Bays: {placed} of {p.total} {p.repair ? "repaired" : "placed"}
         </span>
         {placed > 0 && (
           <button className="mini" onClick={p.onReset}>
@@ -70,14 +72,14 @@ export function FlagshipDamage(p: {
         return (
           <button
             key={s.n}
-            className={`bay-hit-bubble ${s.side} ${n > 0 ? "has" : ""}`}
+            className={`bay-hit-bubble ${s.side} ${n > 0 ? "has" : ""} ${p.repair ? "repair" : ""}`}
             data-hit-bay={s.n}
             style={{ left: s.x, top: s.y }}
             disabled={full}
             onClick={() => p.onAdd(b.id)}
-            aria-label={`Put 1 damage on Bay ${s.n}`}
+            aria-label={p.repair ? `Remove 1 damage from Bay ${s.n}` : `Put 1 damage on Bay ${s.n}`}
           >
-            <span className="hit">−1</span>
+            <span className="hit">{p.repair ? "+1" : "−1"}</span>
             <span className="small">Bay {s.n}</span>
             {n > 0 && <span className="taken">{n}</span>}
           </button>

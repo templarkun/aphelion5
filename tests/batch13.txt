@@ -210,18 +210,79 @@ note: Checked by scripts/ui-smoke.mjs (find-save.ts pickmany); find-save.ts pick
 id: T13_R10_02
 title: Strength is shown as pips
 source: designer 2026-11-09; Core Rules 3.3
-then: no "Strength N" text. One gold pip per point of Strength (Level + Shields − Damage), up to
-      4, in a row under the unit's name; Strength 5 or more: one bigger crowned pip with the
-      number in it. Flares and Wrecks have none.
+then: no "Strength N" text. One amber power cell (sci-fi, round 11) per point of Strength
+      (Level + Shields − Damage), up to 4, in a row under the unit's name; Strength 5 or more:
+      one reactor core (a ring of lit segments) with the number in it. Flares and Wrecks have
+      none.
 
 id: T13_R10_03
 title: Shield and Damage tokens are pieces on the unit
 source: designer 2026-11-09; Core Rules 6.1, 6.2, 6.3
 then: no "S2" / "D1" / "BS1" text. Under the Strength pips, on dark round bases: Shield tokens as
-      blue kite shields with a white cross, Bio-shields as green shields with a leaf vein,
-      Damage tokens as red spiked bursts with a crack. Up to 4 tokens in all, one each; more
-      than 4: one big token per kind (gold-rimmed shield, ringed burst) with the number in it.
+      cyan hexagonal deflectors with a crest of light (sci-fi, round 11), Bio-shields as the
+      same in green with a double helix, Damage tokens as red spiked bursts with a crack. Up to
+      4 tokens in all, one each; more than 4: one big token per kind (deflector with corner
+      brackets, ringed burst) with the number in it.
       Shields and Damage never show together (3.3).
+
+################################################################################
+=== SECTION: PLAY-TEST ROUND 11 (screen only, designer 2026-11-09) ===
+
+id: T13_R11_01
+title: A unit's Level is a badge and notches
+source: designer 2026-11-09 (Level variants A + C); Core Rules 3.3
+then: every unit with a Level (not Flares) shows, at its tile's upper left corner, a small dark
+      hexagon with the Level number, and one short bright notch per Level cut into the tile's
+      upper left edge towards the top corner (up to 5; Omega's big Levels: the badge only).
+      No word "Level".
+
+id: T13_R11_02
+title: A ready Alert is a token and a pulsing rim
+source: designer 2026-11-09 (Alert variants A + B)
+given: the setup list's "Trial look: ... beacon light and radar ping" left unselected.
+then: no "ALERT" text. A yellow-black warning triangle with "!" at the tile's upper right corner
+      pops in when the Alert is placed; the tile's rim pulses amber-red. Gone once the Alert is
+      resolved or removed.
+
+id: T13_R11_03
+title: A ready Alert as a beacon and radar rings (trial look)
+source: designer 2026-11-09 (Alert variants C + D)
+given: the setup list's "Trial look: a ready Alert shown as a beacon light and radar ping"
+       selected.
+then: instead of the token and rim: a small red warning light at the tile's upper right corner
+      whose beam turns round, and orange radar rings going out from the unit every 1.2 s.
+
+id: T13_R11_04
+title: The Alert look is chosen on the setup list
+source: designer 2026-11-09; see batch 9 T9_SET_01 CHANGED note
+when: game setup, the expansion list
+then: it offers "Heat module (Expansion1)" and "Trial look: a ready Alert shown as a beacon
+      light and radar ping (off: an Alert token and a pulsing rim)". No rule changes with it.
+
+id: T13_R11_05
+title: Overload: energy flames from the edge
+source: designer 2026-11-09
+given: an Overload
+then: besides the plasma ring, tongues of energy fire (red-orange with white-gold cores, a few
+      violet) grow from the Field's edge towards the Field, flicker and die back, throwing
+      embers. With reduced motion: none.
+
+id: T13_R11_06
+title: Removing Flagship damage on bubbles by the Bays
+source: designer 2026-11-09; Core Rules 5.2 (as T13_R9 Flagship damage)
+given: "Remove N damage from your Flagship. Choose Bays." (Anomaly reward 9.3 step 3, Modules,
+       cards that repair the Flagship)
+then: no card. A big see-through green bubble with a running outline in the middle of the Field:
+      "Repair N damage on your Flagship", its source, "Tap the bubbles by your Bays: n of N
+      repaired". A green "+1" bubble points at each damaged Bay; each press removes 1 damage
+      there (count in a dot); the last one answers; "Start again" before that.
+note: Checked by scripts/ui-smoke.mjs (find-save.ts repair).
+
+id: T13_R11_07
+title: Frames per second
+source: designer 2026-11-09
+then: a small counter "NN FPS" in the Field's lower left corner, green at 50 or more, amber from
+      30, red below.
 
 ################################################################################
 === SECTION: DRAGGING MODULES, ORDERS AND FLARE ENERGY (screen only) ===

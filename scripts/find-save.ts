@@ -72,6 +72,11 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
     const tops = sectorKeys(s).filter((k) => sectorState(s, k) === "occupied").map((k) => s.tiles[topTileId(s, k)!]!.tokens);
     return /^Choose an action/.test(q.prompt) && tops.some((t) => t.shield > 0) && tops.some((t) => t.damage > 0);
   },
+  // A ready Alert on the Field (token and pulsing rim, or beacon and radar: designer 2026-11-09).
+  alert: (q, g) => /choose an action/i.test(q.prompt) && alertsOnField(g) >= 2,
+  alertbeacon: (q, g) => /choose an action/i.test(q.prompt) && alertsOnField(g) >= 2,
+  // Removing damage from the Flagship (bubbles by the Bays, designer 2026-11-09).
+  repair: (q) => q.kind === "split" && /^Remove \d+ damage from your Flagship/.test(q.prompt) && q.buckets.length >= 2,
   // A question that chooses one unit, answered on bubbles on the units (designer 2026-11-09).
   pickunit: (q) => q.kind === "units" && q.min === 1 && q.max === 1 && q.options.length >= 2 && !/Attacks/.test(q.prompt),
   // ... or several units, with a Confirm bubble.
@@ -126,6 +131,10 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
     return [...per.values()].some((n) => n >= 3);
   },
 };
+function alertsOnField(g: Game): number {
+  const s = g.view.state;
+  return sectorKeys(s).filter((k) => sectorState(s, k) === "occupied" && s.tiles[topTileId(s, k)!]!.tokens.alert).length;
+}
 /** The first Module on the action menu with drag targets (its plan: no Overclock, no extra), and those targets. */
 function moduleDrag(q: Question, g: Game): { id: number; targets: string[] } | undefined {
   for (const o of q.shortcuts ?? []) {
@@ -178,6 +187,8 @@ for (let seed = 1; seed < 400; seed++) {
       process.exit(0);
     }
     let a = randomAnswer(r, q);
+    // The Alert beacon look is a choice on the setup list.
+    if (what.startsWith("alert") && q.kind === "several" && /expansion/.test(q.prompt)) a = { kind: "several", value: what === "alertbeacon" ? ["heat", "alertBeacon"] : ["heat"] };
     for (let k = 0; k < 30 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, q);
     const res = playAnswer(data, g, a);
     if (res.result.status === "illegal" || res.result.status === "blocked") break;

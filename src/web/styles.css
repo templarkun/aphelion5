@@ -561,6 +561,12 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 .end-overload .eo-burst .ring { position: absolute; width: 20px; height: 20px; margin: -10px; border-radius: 50%; border: 3px solid #ffd27a; animation: eo-ring 0.38s ease-out forwards; }
 @keyframes eo-ring { to { transform: scale(9); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .end-overload, .end-overload .eo-embers i { animation: none; } }
+.damage-bubble.repair { background: radial-gradient(circle at 50% 0%, rgb(60 200 140 / 0.42), rgb(6 50 40 / 0.58)); }
+.damage-bubble.repair rect { stroke: #8af0c4; }
+.bay-hit-bubble.repair { border-color: #b4f5d8; background: linear-gradient(160deg, #2fc58a, #0d7a52); box-shadow: 0 0 14px 3px rgb(40 220 150 / 0.5); animation-name: bay-fix-breathe; }
+.bay-hit-bubble.repair::after { background: #13865c; border-color: #b4f5d8; }
+.bay-hit-bubble.repair .taken { color: #0d7a52; }
+@keyframes bay-fix-breathe { 50% { box-shadow: 0 0 22px 6px rgb(60 240 170 / 0.75); } }
 .damage-bubble .small, .bay-hit-bubble .small { color: rgb(255 255 255 / 0.85); }
 
 /* Units chosen on bubbles on the units (designer 2026-11-09): spring in, running outline, amber breathing. */
@@ -590,3 +596,8 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 .unit-pick.compact { min-height: 24px; padding: 3px 6px; border-radius: 12px; }
 .unit-pick.compact b { font-size: 11px; }
 .unit-pick.compact rect { rx: 11px; stroke-dasharray: 8 5; }
+
+/* Frames per second (designer 2026-11-09). */
+.fps { position: absolute; left: 8px; bottom: 8px; z-index: 13; padding: 2px 7px; border-radius: 8px; font: 700 11px/1.4 ui-monospace, monospace; color: #9dffb0; background: rgb(0 0 0 / 0.55); pointer-events: none; user-select: none; }
+.fps.ok { color: #ffd27a; }
+.fps.bad { color: #ff8a7a; }

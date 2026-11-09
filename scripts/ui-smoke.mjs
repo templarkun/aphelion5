@@ -718,7 +718,26 @@ if (existsSync(`${out}/pickmany-save.json`)) {
   pickCheck = bubblesN >= 3 && card === 0 && sel === want && after !== before ? "ok" : `failed (bubbles ${bubblesN}, card ${card}, selected ${sel}, prompt still "${after}")`;
   await pg.close();
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck }));
+// Removing Flagship damage (designer 2026-11-09): green bubbles by the Bays, no card; and the FPS counter.
+let repairCheck = "skipped (no save)";
+if (existsSync(`${out}/repair-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/repair-save.json`);
+  await pg.locator(".bay-hit-bubble.repair").first().waitFor({ timeout: 4000 }).catch(() => {});
+  const n = await pg.locator(".bay-hit-bubble.repair").count();
+  const big = await pg.locator(".damage-bubble.repair").count();
+  const card = await pg.locator(Q).count();
+  const fps = Number((await pg.locator(".fps").getAttribute("data-fps").catch(() => "0")) ?? 0);
+  const before = await promptOf(pg);
+  await pg.screenshot({ path: `${out}/ui-repair.png` });
+  await pg.locator(".bay-hit-bubble.repair:not([disabled])").first().click();
+  await pg.waitForTimeout(800);
+  const after = await promptOf(pg);
+  repairCheck = n >= 2 && big === 1 && card === 0 && fps > 0 && after !== before ? "ok" : `failed (bubbles ${n}, big ${big}, card ${card}, fps ${fps}, prompt still "${after}")`;
+  await pg.close();
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

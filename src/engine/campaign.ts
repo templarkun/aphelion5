@@ -136,9 +136,11 @@ function* gameSetup(c: RunCtx): Effect {
   // Expansion modules (spec "Scope": chosen at game setup): select any, all or none.
   // Designer 2026-11-09: the Flare energy rule is always on in this program (Core Rules unchanged);
   // games saved before still offer it on the list, so they replay as played.
-  const offered = s.settings.flareEnergyChoice ? [...EXPANSION_MODULES, TRIAL_FLARE_ENERGY] : EXPANSION_MODULES;
+  // Designer 2026-11-09: a screen-only trial (how a ready Alert is shown) on the same list; no rule change.
+  const offered = s.settings.flareEnergyChoice ? [...EXPANSION_MODULES, TRIAL_FLARE_ENERGY] : [...EXPANSION_MODULES, TRIAL_ALERT_BEACON];
   const x = yield* ask(c, { kind: "several", always: true, prompt: "Choose the expansion modules to play with (any, all or none).", rule: "H1", options: offered, min: 0, max: offered.length });
   s.settings.heatModule = (x.value as string[]).includes("heat");
+  if ((x.value as string[]).includes(TRIAL_ALERT_BEACON.id)) s.settings.alertBeacon = true;
   s.settings.trialFlareEnergy = s.settings.flareEnergyChoice ? (x.value as string[]).includes("trialFlareEnergy") : true;
   // 4. Starting energy.
   for (const col of ENERGY_COLOURS) {
@@ -172,6 +174,9 @@ function* gameSetup(c: RunCtx): Effect {
 export const EXPANSION_MODULES = [{ id: "heat", label: "Heat module (Expansion1)" }];
 /** Designer 2026-11-07 (I2): offered on the list only in games saved before format 7; always on since 2026-11-09. */
 const TRIAL_FLARE_ENERGY = { id: "trialFlareEnergy", label: "Trial rule: Flare energy waits on the Flare until its Alert is resolved" };
+
+/** Designer 2026-11-09: a screen trial, the second look for a ready Alert (beacon light and radar ping). */
+export const TRIAL_ALERT_BEACON = { id: "alertBeacon", label: "Trial look: a ready Alert shown as a beacon light and radar ping (off: an Alert token and a pulsing rim)" };
 
 /** "C1" -> "Campaign 1". */
 export function campaignName(prefix: string): string {

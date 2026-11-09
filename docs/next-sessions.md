@@ -49,6 +49,10 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    is shown (A corner badge, B Roman numeral plate, C notches on the rim, D pip outlines) and
    how a ready Alert is shown (A Alert token, B pulsing rim, C rising exclamation glyph, D a
    radar sweep; combinations). Next: the designer tries them; then step 4.
+   2026-11-09 round 11: sci-fi Strength and Shield icons, Level badge + notches (A + C), Alert
+   token + pulsing rim, and a trial look (setup list) beacon + radar rings; Overload edge
+   flames; Flagship repair bubbles; FPS counter. Next: the designer picks one Alert look (the
+   other goes); then step 4.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly

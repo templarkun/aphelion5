@@ -27,6 +27,7 @@ import { type PickFoot, type PickItem, UnitPicks, sourceOf, verbOf } from "./Uni
 import { RowBubbles } from "./RowBubbles.js";
 import { EndOverload } from "./EndOverload.js";
 import { FlagshipDamage } from "./FlagshipDamage.js";
+import { Fps } from "./Fps.js";
 import { MissionBar } from "./Mission.js";
 import { UpgradeBubble } from "./Upgrade.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
@@ -835,7 +836,7 @@ function GameScreen(p: GameProps) {
   const takeQ = !actors && q?.kind === "option" && q.takeEnergy ? q : undefined;
   const baysWanted = splitOn === "bays";
   // Damage to the Flagship (5.2): bubbles by the Bays, not the Bays themselves (designer 2026-11-09).
-  const damageQ = !actors && q?.kind === "split" && q.pick === "bays" && /^Your Flagship takes/.test(q.prompt) ? q : undefined;
+  const damageQ = !actors && q?.kind === "split" && q.pick === "bays" && /^(Your Flagship takes|Remove \d+ damage from your Flagship)/.test(q.prompt) ? q : undefined;
 
   const hasField = s.phase !== "setup" && sectorKeys(s).length > 0 && (s.phase !== "preparation" || s.log.some((e) => /^Mission \d/.test(e.text)));
   // Questions that choose units are answered on bubbles on the units (designer 2026-11-09): no banner.
@@ -1070,6 +1071,7 @@ function GameScreen(p: GameProps) {
         {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
         {look && <LookCard data={data} tiles={look} onClose={() => setLook(undefined)} />}
         {endOverload && <EndOverload onEnd={() => answer(endOverload.id)} />}
+        {hasField && <Fps />}
         {pickQ && <UnitPicks items={pickItems} foot={pickFoot} onPress={pickPress} multi={pickQ.kind !== "option" && pickQ.kind !== "order" && !(pickQ.kind === "units" && pickQ.max === 1)} />}
         {rowQ && hasField && !planQ && <RowBubbles rows={rowQ.rows!} selected={rowSel} onSelect={setRowSel} onConfirm={(i) => send({ kind: "option", value: rowQ.options[i]!.id })} />}
         {planQ ? null : rotate ? (
@@ -1084,7 +1086,7 @@ function GameScreen(p: GameProps) {
             <GameOver state={s} onLeave={p.onLeave} />
           </QCard>
         ) : damageQ ? (
-          <FlagshipDamage total={damageQ.total} from={/^[A-Z]_\d+$/.test(damageQ.rule) ? `from ${damageQ.rule}` : `rule ${damageQ.rule}`} buckets={damageQ.buckets} split={split} onAdd={addSplit} onReset={() => setSplit({})} />
+          <FlagshipDamage total={damageQ.total} from={/^\d/.test(damageQ.rule) ? `rule ${damageQ.rule}` : `from ${damageQ.rule}`} buckets={damageQ.buckets} split={split} onAdd={addSplit} onReset={() => setSplit({})} repair={/^Remove/.test(damageQ.prompt)} />
         ) : actors || anomalyQ || rowQ || pickQ ? null : onBoard(q) ? (
           <div className="q-banner">
             <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
