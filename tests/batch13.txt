@@ -294,3 +294,67 @@ then: its energy sits on the Flare's tile as round tokens. Drag one onto a lit M
       anywhere else, it springs back and a note says to drop it on a lit Module. The pop-ups
       beside the Modules (and "back to the Supply") still work by tapping.
 note: Checked by scripts/ui-smoke.mjs (find-save.ts flarechip).
+
+################################################################################
+=== SECTION: THE UPGRADE SHEET (build step 4, designer 2026-11-09) ===
+
+id: T13_UPG_01
+title: One Upgrade point per answer
+source: Core Rules 10.1 step 2, 10.2; Program Spec "The Upgrade sheet"
+given: Mission ending. Trophy pile: 9 F_01 (V1).
+when: choose V1_M04_U2
+then: one slot of V1_M04_U2 is marked (1/5) and 8 points are left; the same question comes back
+      ("mark the next slot of which upgrade?"). "Mark how many slots?" is never asked. Undo takes
+      back that one point. Saves made before this change (that answered "how many slots?") load
+      with the same marks.
+note: Program change only; the rule is the same. Batch 7 T7_UPG_01 / T7_UPG_02 CHANGED notes.
+
+id: T13_UPG_02
+title: The sheet fills the screen
+source: designer 2026-11-09
+given: Mission End with Upgrade points to spend.
+then: the Company sheet covers everything below the top bar (the Field, the Flagship panel and
+      the Modules are hidden; the top bar keeps the Reserve, Undo and Menu). Three groups, each in
+      its own colour: Flagship (cyan) with a placeholder picture of the ship and its numbered
+      Bays (health under each), each Bay's current ability and its upgrades; Mecha (amber), by
+      Mecha, with its Level, how many are in your deck and its current ability; Requisitions
+      (violet). Each upgrade card shows what kind of ability it gives (New Command, Improves
+      Passive, New Bay ability, Overload ...), its text, its id and one hexagonal slot per point.
+      Upgrades that unlock others are joined by a line (lit once unlocked); a choose-one pair
+      says "Choose one" with "or" between them. Locked: "Locked: fill <id> first"; the other of a
+      choose-one pair after a mark: "Not chosen", crossed out. Points sit at the top right as
+      tokens with the count.
+      A screen 720 px wide or less: tabs Flagship / Mecha / Requisitions (each with the number of
+      upgrades that can take a point), cards cut to two lines; a tap opens a card (whole text,
+      what it unlocks) with "Mark a slot (-1 point)".
+
+id: T13_UPG_03
+title: Marking a slot
+source: designer 2026-11-09
+given: the Upgrade sheet with points.
+then: upgrades that can take a point breathe and their next slot pulses; the rest are dimmed.
+      Wide screens: a tap on the card marks its next slot; or drag a point token from the pool
+      onto the card (cards that can take it stay lit while dragging; dropped elsewhere the token
+      flies back). The point flies from the pool (or from where it was dropped) into the slot
+      with a trail, the slot fills with sparks and a ring, the card jolts and its meter grows.
+note: Checked by scripts/ui-smoke.mjs (find-save.ts upgrade).
+
+id: T13_UPG_04
+title: An upgrade fills up
+source: designer 2026-11-09
+when: the last slot of an upgrade is marked
+then: a flash, two shockwaves, turning light rays and a burst of embers from the card, and a
+      banner "UPGRADE ONLINE" with its id and what it gives (Bay N / the Mecha). The card stays
+      gold-edged with "Online: yours for good" and a slow sheen; the line to the upgrades it
+      unlocks lights up. A Flagship upgrade makes its Bay flare on the ship picture; a Mecha
+      upgrade spins the Mecha's badge. A Requisition says "REQUISITION RECEIVED" (with the
+      Module gained, for Take one Module); a Repeatable one shows full for a moment, then empties.
+
+id: T13_UPG_05
+title: Finishing the sheet
+source: Core Rules 10.1 step 2; designer 2026-11-04
+then: Done with points left: a box says they will be lost: "Keep spending" goes back, "Finish
+      and lose N" closes the sheet. Spending the last point (or no upgrade can take another):
+      the sheet stays with "Continue", so the last effects finish, then Mission End goes on.
+      Developer mode only: Menu -> "Developer: win this mission (+12 points)" goes straight to
+      Mission End with 12 Upgrade points, to try the sheet (a tool, not a rule).

@@ -13,7 +13,7 @@
 
 import type { GameData } from "../data/index.js";
 import { newGame } from "./campaign.js";
-import type { Answer } from "./questions.js";
+import type { Answer, Question } from "./questions.js";
 import { type AnswerResult, type SessionView, answerSession, startSession, view as sessionView } from "./session.js";
 import { type GameState, type Profile, emptyProfile } from "./state.js";
 
@@ -78,13 +78,14 @@ export function replayGame(data: GameData, start: GameStart, answers: readonly A
   for (const [i, a] of answers.entries()) {
     // Saves from before 2026-11-07 answered energy on Modules with one split per colour;
     // energy is now placed one per answer (designer 2026-11-07): replay the split as those answers.
-    const parts =
+    const parts: Answer[] =
       v.status === "question" && v.question.energy && a.kind === "split"
         ? Object.entries(a.value).flatMap(([id, n]) => Array.from({ length: n }, (): Answer => ({ kind: "option", value: id })))
         : // The "Trial look" for Alerts was on the setup list for one day (2026-11-09); it is gone, so drop it.
           v.status === "question" && v.question.kind === "several" && a.kind === "several" && a.value.includes("alertBeacon") && !v.question.options.some((o) => o.id === "alertBeacon")
           ? [{ ...a, value: a.value.filter((x) => x !== "alertBeacon") }]
           : [a];
+    upgradeSlots(v.status === "question" ? v.question : undefined, a, kept, parts);
     // Format 4 saves answered "pay 1 Heat to avoid Meltdown?" (H7); it is no longer asked (2026-11-08).
     if (v.status === "question" && v.question.kind !== "yesno" && a.kind === "yesno") continue;
     for (const p of parts) {
@@ -106,6 +107,18 @@ export function replayGame(data: GameData, start: GameStart, answers: readonly A
   // Old answers replayed as several (energy splits): count the kept ones.
   const st = until !== undefined && until !== start.mechaAttacksMechaUntil ? { ...start, mechaAttacksMechaUntil: until } : start;
   return { start: st, answers: kept, view: v };
+}
+
+/**
+ * Saves from before 2026-11-09 marked several slots of one upgrade with "mark how many slots?";
+ * now each answer marks one slot (the Upgrade sheet): the amount N becomes N - 1 more answers on
+ * the upgrade just chosen (whose answer already marked one).
+ */
+export function upgradeSlots(q: Question | undefined, a: Answer, kept: readonly Answer[], parts: Answer[]): void {
+  if (!q?.upgrade || q.kind !== "option" || a.kind !== "amount") return;
+  const last = kept.at(-1);
+  const id = last?.kind === "option" ? last.value : "";
+  parts.splice(0, parts.length, ...Array.from({ length: a.value - 1 }, (): Answer => ({ kind: "option", value: id })));
 }
 
 /** The same point of the game with the Mecha rule switched to "never a Mecha"; unchanged if the step under way needs the old rule. */

@@ -396,15 +396,23 @@ export function* commandStep(c: RunCtx): Effect {
     }
   }
   const options: Option[] = [...legal, "concede" as const].map((id) => ({ id, label: ACTION_LABEL[id] }));
+  const dev = c.state.settings.developerMode ? [DEV_WIN] : [];
   const a = yield* ask(c, {
     kind: "option",
     prompt: isCrippled(c) ? "Your Flagship is Crippled: you must Overhaul." : "Choose an action.",
     rule: "8.1",
-    options,
-    shortcuts: commandShortcuts(c, legal),
+    options: [...options, ...dev],
+    shortcuts: [...commandShortcuts(c, legal), ...dev],
   });
   if (a.value === "concede") {
     concede(c);
+    return;
+  }
+  if (a.value === DEV_WIN.id) {
+    // Developer tool (not a rule): try the Upgrade sheet at once (designer 2026-11-09, step 4).
+    c.state.sheet.upgradePoints += DEV_POINTS;
+    log(c, `Developer: the mission is won with ${DEV_POINTS} Upgrade points`, "dev");
+    missionWon(c);
     return;
   }
   const id = a.value as string;
@@ -414,6 +422,9 @@ export function* commandStep(c: RunCtx): Effect {
 }
 
 const GAME: Target = { kind: "game" };
+const DEV_POINTS = 12;
+/** Developer mode only: win the mission now with Upgrade points to spend (a tool for trying the Upgrade sheet). */
+export const DEV_WIN: Option = { id: "devWin", label: `Developer: win this mission now (+${DEV_POINTS} Upgrade points)`, on: GAME };
 
 /**
  * Every legal action of the menu spelled out to its target (8.1), for the

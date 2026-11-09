@@ -380,23 +380,24 @@ function* spendUpgradePoints(c: RunCtx): Effect {
     if (s.sheet.upgradePoints <= 0) break;
     const ups = company(c).upgrades.filter((u) => canMark(c, u));
     if (ups.length === 0) break;
+    // One point per answer (Program Spec "The Upgrade sheet", designer 2026-11-09): each answer marks
+    // the next slot of the chosen upgrade. The rule (10.2) is the same.
     const a = yield* ask(c, {
       kind: "option",
-      prompt: `Upgrade: you have ${s.sheet.upgradePoints} Upgrade point${s.sheet.upgradePoints === 1 ? "" : "s"}. Mark slots on which upgrade?`,
+      upgrade: true,
+      prompt: `Upgrade: you have ${s.sheet.upgradePoints} Upgrade point${s.sheet.upgradePoints === 1 ? "" : "s"}. Mark the next slot of which upgrade?`,
       rule: "10.2",
       options: [...ups.map((u) => ({ id: u.id, label: `${u.id} (${marked(c, u.id)}/${u.cost}): ${u.effect}` })), { id: "done", label: "Done (unspent points are lost)" }],
     });
     if (a.value === "done") {
       // Designer, 2026-11-04: warn that unspent points are lost, and ask the player to agree.
-      const ok = yield* ask(c, { kind: "yesno", prompt: `You still have ${s.sheet.upgradePoints} Upgrade point${s.sheet.upgradePoints === 1 ? "" : "s"}. If you finish now, they are lost. Finish anyway?`, rule: "10.1" });
+      const ok = yield* ask(c, { kind: "yesno", upgrade: true, prompt: `You still have ${s.sheet.upgradePoints} Upgrade point${s.sheet.upgradePoints === 1 ? "" : "s"}. If you finish now, they are lost. Finish anyway?`, rule: "10.1" });
       if (ok.value === true) break;
       continue;
     }
     const u = ups.find((x) => x.id === a.value)!;
-    const room = Math.min(u.cost - marked(c, u.id), s.sheet.upgradePoints);
-    const n = room === 1 ? 1 : ((yield* ask(c, { kind: "amount", prompt: `${u.id}: mark how many slots?`, rule: "10.2", min: 1, max: room })).value as number);
-    s.sheet.marks[u.id] = marked(c, u.id) + n;
-    s.sheet.upgradePoints -= n;
+    s.sheet.marks[u.id] = marked(c, u.id) + 1;
+    s.sheet.upgradePoints -= 1;
     log(c, `${u.id}: ${marked(c, u.id)}/${u.cost} slots marked`, "10.2");
     if (isFull(c, u)) {
       if (u.kind === "requisition") {

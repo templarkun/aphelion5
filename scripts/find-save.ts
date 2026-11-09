@@ -76,6 +76,9 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   alert: (q, g) => /choose an action/i.test(q.prompt) && alertsOnField(g) >= 2,
   // Removing damage from the Flagship (bubbles by the Bays, designer 2026-11-09).
   repair: (q) => q.kind === "split" && /^Remove \d+ damage from your Flagship/.test(q.prompt) && q.buckets.length >= 2,
+  // The Upgrade sheet at Mission End with a few points (designer 2026-11-09, step 4).
+  upgrade: (q, g) => q.upgrade === true && q.kind === "option" && g.view.state.sheet.upgradePoints >= 3,
+  "upgrade-V2": (q, g) => q.upgrade === true && q.kind === "option" && g.view.state.sheet.upgradePoints >= 3 && g.view.state.player.company === "V2",
   // A question that chooses one unit, answered on bubbles on the units (designer 2026-11-09).
   pickunit: (q) => q.kind === "units" && q.min === 1 && q.max === 1 && q.options.length >= 2 && !/Attacks/.test(q.prompt),
   // ... or several units, with a Confirm bubble.
@@ -150,7 +153,9 @@ const wanted = WANTED[what];
 if (!wanted) throw new Error(`unknown question kind ${what}`);
 for (let seed = 1; seed < 400; seed++) {
   const r = newRng(seed * 7 + 1);
-  let g = startGame(data, { seed, date: "2026-11-07", profile: emptyProfile(), developerMode: false, autoAnswer: true });
+  // The Upgrade sheet: a Developer-mode game, won at once with the Developer shortcut.
+  const dev = what.startsWith("upgrade");
+  let g = startGame(data, { seed, date: "2026-11-07", profile: emptyProfile(), developerMode: dev, autoAnswer: true });
   for (let n = 0; n < 400 && g.view.status === "question"; n++) {
     const q = g.view.question;
     if (wanted(q, g)) {
@@ -186,6 +191,8 @@ for (let seed = 1; seed < 400; seed++) {
       process.exit(0);
     }
     let a = randomAnswer(r, q);
+    if (dev && q.kind === "option" && /^Choose your Company/.test(q.prompt)) a = { kind: "option", value: what === "upgrade-V2" ? "V2" : "V1" };
+    if (dev && q.kind === "option" && q.options.some((o) => o.id === "devWin")) a = { kind: "option", value: "devWin" };
     for (let k = 0; k < 30 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, q);
     const res = playAnswer(data, g, a);
     if (res.result.status === "illegal" || res.result.status === "blocked") break;

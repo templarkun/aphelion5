@@ -149,6 +149,8 @@ then: 9 Upgrade points. V1_M04_U2 is filled: V1_M04_U2A and V1_M04_U2B become av
       marks are erased (Repeatable).
 assumption: you mark one upgrade at a time, as many of its slots as you like, until you choose
       Done or have no point left.
+note: CHANGED 2026-11-09 (Upgrade sheet, program only): each answer marks one slot; "mark how many
+      slots?" is no longer asked. "Mark V1_M04_U2 5 slots" = choose it 5 times. Same result.
 
 id: T7_UPG_02
 title: Done with Upgrade points left: a warning you must agree to
@@ -158,6 +160,8 @@ given: Mission ending. Trophy pile: 2 F_01.
 when: choose Done with 2 Upgrade points left
 then: the program warns that the 2 points will be lost and asks you to agree. No: back to the
       upgrade choices (mark V1_M02_U1 2/2: nothing is lost). Yes: the points are erased.
+note: CHANGED 2026-11-09 (Upgrade sheet, program only): V1_M02_U1 2/2 = choose it twice (one
+      slot per answer).
 
 ################################################################################
 === SECTION: GAME END AND SCORING (10.3) ===

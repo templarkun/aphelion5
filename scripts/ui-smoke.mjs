@@ -737,7 +737,65 @@ if (existsSync(`${out}/repair-save.json`)) {
   repairCheck = n >= 2 && big === 1 && card === 0 && fps > 0 && after !== before ? "ok" : `failed (bubbles ${n}, big ${big}, card ${card}, fps ${fps}, prompt still "${after}")`;
   await pg.close();
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck }));
+// The Upgrade sheet (designer 2026-11-09, step 4): fills the screen; tap and drag mark slots; a full
+// upgrade says "Upgrade online"; Undo takes back one point; Done asks, then the sheet closes. Phone: tabs.
+let upgradeCheck = "skipped (no save)";
+if (existsSync(`${out}/upgrade-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/upgrade-save.json`);
+  await pg.locator(".upsheet").waitFor({ timeout: 4000 }).catch(() => {});
+  const pts = async () => Number((await pg.locator(".upsheet").getAttribute("data-points")) ?? -1);
+  const sheet = await pg.locator(".upsheet").count();
+  const fieldHidden = await pg.locator(".center").evaluate((el) => getComputedStyle(el).visibility === "hidden").catch(() => false);
+  const open = await pg.locator(".up-card.st-open").count();
+  const p0 = await pts();
+  await pg.locator('[data-upgrade="V1_M02_U1"]').click();
+  await pg.waitForTimeout(700);
+  await pg.locator('[data-upgrade="V1_M02_U1"]').click();
+  const online = await pg.locator(".up-online").waitFor({ timeout: 3000 }).then(() => true).catch(() => false);
+  await pg.waitForTimeout(300);
+  await pg.screenshot({ path: `${out}/ui-upgrade.png` });
+  const gained = await pg.locator('[data-upgrade="V1_M02_U1"].st-gained').count();
+  const p2 = await pts();
+  await pg.getByRole("button", { name: "Undo" }).click();
+  await pg.waitForTimeout(500);
+  const pU = await pts();
+  // Drag a point onto a Requisition.
+  const tok = await pg.locator(".up-token").last().boundingBox();
+  const tgt = await pg.locator('[data-upgrade="V1_T1"]').boundingBox();
+  await dragMouse(pg, { x: tok.x + tok.width / 2, y: tok.y + tok.height / 2 }, { x: tgt.x + tgt.width / 2, y: tgt.y + tgt.height / 2 });
+  await pg.mouse.up();
+  await pg.waitForTimeout(800);
+  const pD = await pts();
+  await pg.locator('[data-upgrade="V1_T1"] .up-slot.on').first().waitFor({ timeout: 2500 }).catch(() => {});
+  const t1 = await pg.locator('[data-upgrade="V1_T1"] .up-slot.on').count();
+  await pg.locator(".up-done").click();
+  await pg.waitForTimeout(300);
+  const ask = await pg.locator(".up-confirm").count();
+  await pg.getByRole("button", { name: /Finish and lose/ }).click();
+  await pg.waitForTimeout(800);
+  const closed = (await pg.locator(".upsheet").count()) === 0;
+  const prompt = await promptOf(pg);
+  await pg.close();
+  // A phone: tabs, short cards, open one and mark a slot.
+  const ph = await browser.newPage({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 1 });
+  ph.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(ph, `${out}/upgrade-save.json`);
+  await ph.locator(".upsheet").waitFor({ timeout: 4000 }).catch(() => {});
+  const tabs = await ph.locator(".up-tabs button").count();
+  const sw = await ph.evaluate(() => document.documentElement.scrollWidth);
+  const q0 = Number((await ph.locator(".upsheet").getAttribute("data-points")) ?? -1);
+  await ph.locator(".up-card.st-open").first().click();
+  await ph.locator(".up-mark").click();
+  await ph.waitForTimeout(800);
+  const q1 = Number((await ph.locator(".upsheet").getAttribute("data-points")) ?? -1);
+  await ph.screenshot({ path: `${out}/ui-upgrade-phone.png` });
+  await ph.close();
+  const ok = sheet === 1 && fieldHidden && open >= 3 && p2 === p0 - 2 && online && gained === 1 && pU === p2 + 1 && pD === pU - 1 && t1 === 1 && ask === 1 && closed && !/^Upgrade/.test(prompt) && tabs === 3 && sw <= 362 && q1 === q0 - 1;
+  upgradeCheck = ok ? "ok" : `failed (sheet ${sheet}, field hidden ${fieldHidden}, open ${open}, points ${p0}>${p2}, online ${online}, gained ${gained}, undo ${pU}, drag ${pD}, T1 slots ${t1}, confirm ${ask}, closed ${closed}, prompt "${prompt}", tabs ${tabs}, phone width ${sw}, phone ${q0}>${q1})`;
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

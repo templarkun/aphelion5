@@ -56,6 +56,8 @@ interface Base {
    * "all" all of it. The screen shows a pop-up with an outward arrow by each such Module.
    */
   takeEnergy?: "one" | "all";
+  /** Mission End upgrades (10.2): the screen answers it on the Upgrade sheet. */
+  upgrade?: boolean;
 }
 
 /** A thing on the screen an option belongs to. */

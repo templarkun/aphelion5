@@ -9,7 +9,7 @@ import { meltdown } from "../../src/engine/heat.js";
 import { mechaAbilities } from "../../src/engine/mecha.js";
 import { overloadEnd, overloadMenu } from "../../src/engine/overload.js";
 import type { Answer, Question } from "../../src/engine/questions.js";
-import { canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../../src/engine/save.js";
+import { canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo, upgradeSlots } from "../../src/engine/save.js";
 import { addTile } from "../../src/engine/scenario.js";
 import { type SessionView, answerSession, startSession } from "../../src/engine/session.js";
 import { type GameState, type Phase, type Profile, emptyProfile } from "../../src/engine/state.js";
@@ -207,6 +207,8 @@ describe("batch 7 - MISSION PREPARATION (7.2) and ALLIED DROP (7.3)", () => {
 });
 
 describe("batch 7 - MISSION END (10.1) and UPGRADES (10.2)", () => {
+  /** One answer per Upgrade point (Upgrade sheet, 2026-11-09). */
+  const times = (id: string, n: number) => Array.from({ length: n }, () => A.option(id));
   function ending(id: string, extra = ""): GameState {
     const s = given(id, extra);
     s.phase = "missionEnd";
@@ -245,14 +247,25 @@ describe("batch 7 - MISSION END (10.1) and UPGRADES (10.2)", () => {
     const r = replay(data(), { ...startRoot(s, "missionEnd"), answers: [A.option("done")] });
     expect(r.status === "question" && r.question).toMatchObject({ kind: "yesno", prompt: expect.stringMatching(/2 Upgrade points.*lost/) });
     // No: back to the upgrade menu; then mark 2 slots and nothing is lost.
-    const after = runEnd(s, [A.option("done"), A.no(), A.option("V1_M02_U1"), A.amount(2)]);
+    const after = runEnd(s, [A.option("done"), A.no(), A.option("V1_M02_U1"), A.option("V1_M02_U1")]);
     expect(after.sheet.filled).toContain("V1_M02_U1");
     expect(after.sheet.upgradePoints).toBe(0);
   });
 
+  it("T7_UPG_03 one point per answer; old saves' slot counts become answers", () => {
+    const s = ending("T7_UPG_01");
+    const r = replay(data(), { ...startRoot(s, "missionEnd"), answers: [A.option("V1_M04_U2")] });
+    const q = r.status === "question" ? r.question : undefined;
+    expect(q).toMatchObject({ kind: "option", upgrade: true, prompt: expect.stringMatching(/8 Upgrade points/) });
+    // An old save answered "V1_M04_U2", then "mark how many slots? 5".
+    const parts: Answer[] = [A.amount(5)];
+    upgradeSlots(q, A.amount(5), [A.option("V1_M04_U2")], parts);
+    expect(parts).toEqual(times("V1_M04_U2", 4));
+  });
+
   it("T7_UPG_01 partial marks, locked, exclusive, Requisitions", () => {
     const s = ending("T7_UPG_01");
-    const after = runEnd(s, [A.option("V1_M04_U2"), A.amount(5), A.option("V1_M04_U2A"), A.amount(3), A.option("V1_T1")]);
+    const after = runEnd(s, [...times("V1_M04_U2", 5), ...times("V1_M04_U2A", 3), A.option("V1_T1")]);
     expect(after.sheet.marks).toMatchObject({ V1_M04_U2: 5, V1_M04_U2A: 3, V1_T1: 1 });
     expect(after.sheet.filled).toContain("V1_M04_U2");
     const c = ctx(after);
@@ -262,7 +275,7 @@ describe("batch 7 - MISSION END (10.1) and UPGRADES (10.2)", () => {
     // Locked before its unlocker is filled.
     expect(canMark(ctx(ending("T7_UPG_01")), u2b)).toBe(false);
     // Variant: a Repeatable Requisition fully filled.
-    const v = runEnd(ending("T7_UPG_01", "Trophy pile: 10 F_01"), [A.option("V1_M04_U2"), A.amount(5), A.option("V1_T1"), A.amount(2), A.option("done"), A.yes()]);
+    const v = runEnd(ending("T7_UPG_01", "Trophy pile: 10 F_01"), [...times("V1_M04_U2", 5), ...times("V1_T1", 2), A.option("done"), A.yes()]);
     expect(v.player.reserve.Yellow).toBe(1);
     expect(v.sheet.marks.V1_T1).toBe(0);
   });
@@ -463,5 +476,21 @@ describe("saves made with the one-day Alert trial look (2026-11-09)", () => {
     const back = replayGame(data(), g.start, answers);
     expect(back.view.state.settings.heatModule).toBe(true);
     expect(back.answers.length).toBe(g.answers.length);
+  });
+});
+
+describe("Developer tool: win the mission to try the Upgrade sheet (2026-11-09)", () => {
+  function toMenu(dev: boolean) {
+    let g = startGame(data(), { seed: 3, date: "2026-11-09", profile: emptyProfile(), developerMode: dev, autoAnswer: true });
+    const r = newRng(9);
+    for (let n = 0; n < 60 && g.view.status === "question" && !/^Choose an action/.test(g.view.question.prompt); n++) g = playAnswer(data(), g, randomAnswer(r, g.view.question)).game;
+    return g;
+  }
+  it("is offered only in Developer mode, and gives 12 points at Mission End", () => {
+    const plain = toMenu(false);
+    expect(plain.view.status === "question" && plain.view.question.kind === "option" && plain.view.question.options.some((o) => o.id === "devWin")).toBe(false);
+    const g = playAnswer(data(), toMenu(true), A.option("devWin")).game;
+    expect(g.view.status === "question" && g.view.question).toMatchObject({ upgrade: true, prompt: expect.stringMatching(/12 Upgrade points/) });
+    expect(replayGame(data(), g.start, g.answers).view.state.sheet.upgradePoints).toBe(12);
   });
 });

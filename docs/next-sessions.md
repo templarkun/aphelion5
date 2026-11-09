@@ -55,8 +55,13 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    2026-11-09 round 12: Level badge in the top corner (no notches); Alert token in the bottom
    corner with the pulsing rim (beacon look dropped); Overload edge effect now faint solar
    loops. The tile's upper right corner is kept for the unit glyph (item 3, Art). Next: step 4.
+   2026-11-09 step 4: the Upgrade sheet (full screen at Mission End, one point per answer, tap or
+   drag, particles, "Upgrade online"; phone tabs). Next: the designer tries it (Developer mode:
+   Menu -> win this mission); then step 5 (remaining events and settings).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
+   The Flagship picture on the Upgrade sheet (`FlagshipArt` in `src/web/UpgradeSheet.tsx`) is a
+   placeholder: a ship seen from above with its Bays numbered on the hull.
    The unit glyph goes in each unit tile's upper right corner (designer 2026-11-09; kept free).
    Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly
    bubbles and the look card (B, S, F, P, G, M, empty hexagon = Cleared sector; `UnitGlyph`,

@@ -30,6 +30,7 @@ import { FlagshipDamage } from "./FlagshipDamage.js";
 import { Fps } from "./Fps.js";
 import { MissionBar } from "./Mission.js";
 import { UpgradeBubble } from "./Upgrade.js";
+import { UpgradeSheet } from "./UpgradeSheet.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 
@@ -427,6 +428,14 @@ function GameScreen(p: GameProps) {
     if (planQ) p.onAnswer([planQ]);
   }, [realQ]); // eslint-disable-line react-hooks/exhaustive-deps
   const [menuOpen, setMenuOpen] = useState(false);
+  // The Upgrade sheet (designer 2026-11-09, step 4): open while Mission End asks for upgrades; after
+  // the last point it stays (with Continue) so its effects can finish.
+  const [upOpen, setUpOpen] = useState(false);
+  useEffect(() => {
+    if (realQ?.upgrade) setUpOpen(true);
+    else if (real.state.phase === "command" || real.state.phase === "overload") setUpOpen(false);
+  }, [realQ, real.state.phase]);
+  const [barH, setBarH] = useState(48);
   // The Heat bar (designer 2026-11-08): long when the top bar has room, else a short bubble.
   const barRef = useRef<HTMLElement>(null);
   const [shortBar, setShortBar] = useState(false);
@@ -434,6 +443,7 @@ function GameScreen(p: GameProps) {
     const el = barRef.current;
     if (!el) return;
     const fit = () => {
+      setBarH(el.getBoundingClientRect().height);
       setShortBar(false);
       requestAnimationFrame(() => barRef.current && setShortBar(barRef.current.scrollWidth > barRef.current.clientWidth + 1));
     };
@@ -959,7 +969,8 @@ function GameScreen(p: GameProps) {
 
   return (
     <div
-      className={`game layout-${layout} ${inOverload ? "is-overload" : ""}`}
+      className={`game layout-${layout} ${inOverload ? "is-overload" : ""} ${upOpen ? "upgrading" : ""}`}
+      style={{ "--bar-h": `${barH}px` } as React.CSSProperties}
       data-prompt={q ? q.prompt : ""}
       onPointerDownCapture={(e) => {
         pointer.current = { x: e.clientX, y: e.clientY };
@@ -1006,6 +1017,11 @@ function GameScreen(p: GameProps) {
                 {s.settings.heatModule ? ` · Heat ${s.player.heat}` : ""}
               </p>
               <button onClick={() => setShowLog((x) => !x)}>{showLog ? "Hide the log" : "Log"}</button>
+              {s.settings.developerMode && q?.shortcuts?.some((o) => o.id === "devWin") && (
+                <button onClick={() => answer("devWin")} title="Developer tool: go straight to Mission End with 12 Upgrade points, to try the Upgrade sheet">
+                  Developer: win this mission (+12 points)
+                </button>
+              )}
               <button onClick={p.onExport} title="Save the game and your Company sheets as text or a file">
                 Export save
               </button>
@@ -1130,6 +1146,18 @@ function GameScreen(p: GameProps) {
 
 
 
+      {upOpen && (
+        <UpgradeSheet
+          data={data}
+          state={real.state}
+          q={realQ}
+          onAnswer={(a) => {
+            if (a.kind === "yesno" && a.value) setUpOpen(false);
+            p.onAnswer([a]);
+          }}
+          onContinue={() => setUpOpen(false)}
+        />
+      )}
       {modSel && <ModulePops id={modSel.id} pops={modPops} />}
       {energyQ && <EnergyPopups q={energyQ} onPick={(id) => send({ kind: "option", value: id })} />}
       {energyQ?.energyFrom && hasField && <FlareEnergyChips q={energyQ} sector={sectorOf(s, energyQ.energyFrom)} onPick={(id) => send({ kind: "option", value: id })} onNote={(text) => setNote({ text, warn: true, at: Date.now() })} />}
