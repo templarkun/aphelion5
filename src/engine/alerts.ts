@@ -8,7 +8,8 @@ import { ENERGY_COLOURS } from "../data/units.js";
 import { type Effect, type RunCtx, ask, asEffect, log } from "./effect.js";
 import { gainHeat } from "./heat.js";
 import type { Option } from "./questions.js";
-import { type Ctx, describe, isUnit, isWreck, tile, unitDef, unitType, units } from "./field.js";
+import { type Ctx, describe, isUnit, isWreck, sectorOf, tile, unitDef, unitType, units } from "./field.js";
+import { emit } from "./events.js";
 import { commandMecha } from "./mecha.js";
 import { placeWaitingFlareEnergy } from "./moves.js";
 import type { TileId } from "./state.js";
@@ -68,6 +69,8 @@ export function* resolveAlert(c: RunCtx, id: TileId, choice?: "energy" | "heat")
   t.alert = false;
   const d = unitDef(c, id);
   log(c, `resolve ${describe(c, id)}`, "6.5");
+  const type = unitType(c, id);
+  emit(c, { kind: "activated", tile: id, unitId: d.id, type, sector: sectorOf(c.state, id)!, how: type === "Gyro" && !isWreck(c, id) ? "drain" : "alert" });
   yield* asEffect(c, alertEffect(c, id, d.id, choice));
 }
 

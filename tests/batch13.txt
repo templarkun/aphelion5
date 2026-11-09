@@ -136,6 +136,58 @@ then: after the tile flips: Sentinel: red chevrons lock on from six sides, then 
 note: Checked by scripts/ui-smoke.mjs (find-save.ts reveal-Omega: the flash over the Field).
 
 ################################################################################
+=== SECTION: PLAY-TEST ROUND 9 (designer 2026-11-09, screen only unless said) ===
+
+id: T13_R9_01
+title: A destroyed unit never blinks out before its burst
+source: designer 2026-11-09
+then: from the first animation of an answer until its own burst, a unit that is destroyed stays
+      drawn where it was (also during a Heat Wave's chip and ray, a Bay's glow, other shots).
+
+id: T13_R9_02
+title: Heat Wave plays at once; Fuse tokens are bigger
+source: designer 2026-11-09; H5
+then: the "−1 Heat" chip floats up while the heat ray flies (not one after the other); the ray
+      takes about half a second. Fuse tokens are about half as big again as before.
+
+id: T13_R9_03
+title: Rows are chosen with bubbles over the rows; no facing card
+source: designer 2026-11-09; see batch 9 T9_CHO_06 and T9_CHO_07 CHANGED notes
+then: see those notes. Labels slide along their row so two never sit on top of each other.
+note: Checked by scripts/ui-smoke.mjs (row check).
+
+id: T13_R9_04
+title: Damage to the Flagship is placed with bubbles
+source: designer 2026-11-09; Core Rules 5.2
+given: "Your Flagship takes 2 damage" (e.g. S_12's Alert), Bays with Integrity left.
+then: no question card. A big see-through red bubble with a running outline in the middle of the
+      Field: "Your Flagship takes 2 damage", where it comes from, "0 of 2 placed". A red bubble
+      "−1 Bay n" points at each Bay that can take damage (beside it on wide screens, above it on
+      phones). Each press puts 1 damage on that Bay (its count shows on the bubble); a full Bay's
+      bubble greys out; the last press answers. "Start again" takes them back. Pressing the Bay
+      itself does nothing. Repairs (Bays chosen to repair) are unchanged.
+note: Checked by scripts/ui-smoke.mjs (find-save.ts flagship).
+
+id: T13_R9_05
+title: Sleepers, drained Gyros and destroyed Gyros have their own effects
+source: designer 2026-11-09
+then: a Sleeper activating (woken when no Dark sector is left, or its Alert resolved): a blue
+      rune circle spins up round it and a column of light rises. A Gyro drained: it spins up,
+      green energy spirals into it and shoots away, and (discarded) it shrinks and fades; its
+      effect's shots come from where it was. A Gyro destroyed: its rings break and fly apart
+      with green sparks.
+
+id: T13_R9_06
+title: The Field is black; an Overload swirls plasma round it
+source: designer 2026-11-09
+then: the Field's background is black in both themes (empty and Cleared sectors dark). During
+      an Overload the page no longer turns pink: beams of red plasma and violet energy race
+      round the edge of the Field and sparks drift in from it (a still outline with reduced
+      motion). "End the Overload" is a proportioned flame button (wider screens up to 250 px)
+      with embers rising from it; pressed, it flashes, bursts into sparks and a shock ring, then
+      the Overload ends.
+
+################################################################################
 === SECTION: DRAGGING MODULES, ORDERS AND FLARE ENERGY (screen only) ===
 
 id: T13_DRAG_01

@@ -29,7 +29,7 @@ import type { GameState, TileId } from "../engine/state.js";
 import { arrowSides, fromKey } from "../geometry/hex.js";
 import { type NodeLook, Player, type Step, easeInOut, easeOut, parallel } from "./anim.js";
 import { type ShotLook, type Source, type Target, UNIT_SHOT, edgeOf, fireGlow, shotStep, weaponStep } from "./weapons.js";
-import { BIG_REVEAL, chargeLook, revealFxStep } from "./revealFx.js";
+import { BIG_REVEAL, chargeLook, drawOverloadRing, gyroBreak, gyroDrain, revealFxStep, sleeperActivate } from "./revealFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
@@ -131,7 +131,7 @@ export function FieldView(p: FieldProps) {
   const props = useRef(p);
   props.current = p;
   const player = useRef(new Player());
-  const layers = useRef<{ root: Container; aura: Graphics; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined } | undefined>(undefined);
+  const layers = useRef<{ root: Container; aura: Graphics; edge: Graphics; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined } | undefined>(undefined);
   /** Each sector's container and centre, from the last draw. */
   const nodes = useRef(new Map<string, { node: Container; cx: number; cy: number }>());
   const geo = useRef({ size: 40 });
@@ -159,6 +159,8 @@ export function FieldView(p: FieldProps) {
       const root = new Container();
       const aura = new Graphics();
       aura.eventMode = "none";
+      const edge = new Graphics();
+      edge.eventMode = "none";
       const glow = new Graphics();
       glow.eventMode = "none";
       const fx = new Container();
@@ -167,8 +169,8 @@ export function FieldView(p: FieldProps) {
       dl.eventMode = "none";
       const tether = new Graphics();
       dl.addChild(tether);
-      a.stage.addChild(root, aura, glow, fx, dl);
-      layers.current = { root, aura, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined };
+      a.stage.addChild(root, aura, edge, glow, fx, dl);
+      layers.current = { root, aura, edge, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined };
       ready.current = true;
       draw();
       a.ticker.add(frame);
@@ -544,11 +546,33 @@ export function FieldView(p: FieldProps) {
     const size = () => geo.current.size;
     const isTop = (k: string, id: TileId) => topTileId(s, k) === id && sectorState(s, k) === "occupied";
     const out: Step[] = [];
+    /**
+     * Units destroyed in these events are already gone from the board shown, so each stays drawn as a
+     * stand-in from the first step until its own burst (designer 2026-11-09: no moment with no unit).
+     * Not for units that appear or move in these events (their own steps show them).
+     */
+    const standIns = new Map<TileId, Container>();
+    events.forEach((e, idx) => {
+      if (e.kind !== "destroyed" || e.wreck || isTop(e.sector, e.tile) || standIns.has(e.tile)) return;
+      const shown = events
+        .slice(0, idx)
+        .some((x) => ((x.kind === "revealed" || x.kind === "moved" || x.kind === "attack") && x.tile === e.tile) || (x.kind === "swapped" && (x.a === e.tile || x.b === e.tile)));
+      if (shown) return;
+      const g = ghost(e.type, e.unitId);
+      const c = centre(e.sector);
+      g.position.set(c.x, c.y);
+      fx.addChild(g);
+      standIns.set(e.tile, g);
+    });
+    const dropStandIn = (t: TileId) => {
+      standIns.get(t)?.destroy({ children: true });
+      standIns.delete(t);
+    };
 
     /** The tile flips; Flares and Omega units charge up first; then each type's own burst (not Bots). */
     function revealSteps(e: GameEvent & { kind: "revealed" }): Step[] {
       const real = isTop(e.sector, e.tile);
-      const back = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: props.current.dark ? 0x3c4f66 : 0x5b7391 });
+      const back = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0x4a6280 });
       const g = real ? undefined : ghost(e.type, e.unitId);
       const flash = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0xffffff });
       const big = BIG_REVEAL.has(e.type);
@@ -608,7 +632,8 @@ export function FieldView(p: FieldProps) {
     /** A hit lands: the tile shakes, a flash and the damage number (a Barrier: its field shatters). */
     function hitStep(e: GameEvent & { kind: "hit" }, quick = false): Step {
       const real = isTop(e.sector, e.tile);
-      const g = real ? undefined : ghost(e.type, e.unitId);
+      const kept = standIns.get(e.tile);
+      const g = real ? undefined : (kept ?? ghost(e.type, e.unitId));
       const flash = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: e.stopped ? 0x9fe3ff : 0xffffff });
       const label = e.stopped ? "Barrier" : `−${e.amount}`;
       const num = new Text({ text: label, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(14, size() * 0.42), fill: e.stopped ? 0x9fd3ff : 0xffffff, fontWeight: "800", stroke: { color: e.stopped ? 0x1d4e7a : 0x9b1c1c, width: 4 } } });
@@ -617,7 +642,7 @@ export function FieldView(p: FieldProps) {
       return {
         ms: quick ? 380 : e.stopped ? 620 : 480,
         start: () => {
-          if (g) fx.addChild(g);
+          if (g && !kept) fx.addChild(g);
           fx.addChild(flash, num);
           if (shards) fx.addChild(shards);
         },
@@ -649,6 +674,50 @@ export function FieldView(p: FieldProps) {
           flash.destroy();
           num.destroy();
           shards?.destroy();
+          if (kept) {
+            // Back in place for the steps that follow.
+            const c = centre(e.sector);
+            if (!kept.destroyed) kept.position.set(c.x, c.y);
+          } else g?.destroy({ children: true });
+        },
+      };
+    }
+
+    /**
+     * A unit acts (designer 2026-11-09): a Sleeper's rune circle and light column; a drained Gyro
+     * spins up, its energy spirals in and shoots away, and (discarded) it fades out.
+     */
+    function activatedStep(e: GameEvent & { kind: "activated" }): Step | undefined {
+      const drain = e.type === "Gyro" && e.how === "drain";
+      if (e.type !== "Sleeper" && !drain) return undefined;
+      const fxg = new Graphics();
+      const real = isTop(e.sector, e.tile);
+      const g = drain && !real ? ghost(e.type, e.unitId) : undefined;
+      return {
+        ms: drain ? 950 : 750,
+        start: () => {
+          if (g) fx.addChild(g);
+          fx.addChild(fxg);
+        },
+        frame: (p, look) => {
+          const c = centre(e.sector);
+          fxg.clear();
+          if (drain) {
+            gyroDrain(fxg, c.x, c.y, size(), p);
+            const spin = easeInOut(Math.min(1, p / 0.7)) * Math.PI * 2;
+            if (g) {
+              g.position.set(c.x, c.y);
+              g.rotation = spin;
+              g.scale.set(1 - 0.6 * Math.max(0, (p - 0.55) / 0.45));
+              g.alpha = 1 - Math.max(0, (p - 0.6) / 0.4);
+            } else look(e.sector).scale = 1 + 0.08 * Math.sin(Math.PI * p);
+          } else {
+            sleeperActivate(fxg, c.x, c.y, size(), p);
+            look(e.sector).scale = 1 + 0.06 * Math.sin(Math.PI * Math.min(1, p * 2));
+          }
+        },
+        end: () => {
+          fxg.destroy();
           g?.destroy({ children: true });
         },
       };
@@ -679,15 +748,23 @@ export function FieldView(p: FieldProps) {
       }
       const g = ghost(e.type, e.unitId);
       const bits = fragments(TYPE_COLOUR[e.type] ?? 0xcccccc);
+      // A Gyro's rings break and fly apart (designer 2026-11-09).
+      const rings = e.type === "Gyro" ? new Graphics() : undefined;
       return {
-        ms: 700,
+        ms: rings ? 900 : 700,
         hides: [e.sector],
         start: () => {
+          dropStandIn(e.tile);
           fx.addChild(g);
           for (const x of bits) fx.addChild(x.b);
+          if (rings) fx.addChild(rings);
         },
         frame: (p, look) => {
           const c = centre(e.sector);
+          if (rings) {
+            rings.clear();
+            gyroBreak(rings, c.x, c.y, size(), Math.max(0, (p - 0.15) / 0.85));
+          }
           const crack = Math.min(1, p / 0.25);
           const burst = Math.max(0, (p - 0.2) / 0.8);
           g.position.set(c.x + Math.sin(p * 60) * (1 - crack) * size() * 0.03, c.y);
@@ -702,8 +779,10 @@ export function FieldView(p: FieldProps) {
           look(e.sector).alpha = easeOut(burst);
         },
         end: () => {
+          dropStandIn(e.tile);
           g.destroy({ children: true });
           for (const x of bits) x.b.destroy();
+          rings?.destroy();
         },
       };
     }
@@ -725,6 +804,8 @@ export function FieldView(p: FieldProps) {
     };
     const from = (rule: string | undefined) => (src && rule === src.rule ? src : undefined);
     const pagePt = (k: string | undefined) => (k ? onPage(k)() : undefined);
+    /** Heat Wave's "−1 Heat" chip, played together with its ray. */
+    let heatChip: Step | undefined;
 
     /** Where a unit is now (or was last seen in the events), by its id. */
     const whereIs = (unitId: string): string | undefined => {
@@ -770,7 +851,7 @@ export function FieldView(p: FieldProps) {
 
     /** While shots fly, units they will destroy (already gone from the board) stay shown where they are. */
     function holding(step: Step, hits: (GameEvent & { kind: "hit" })[]): Step {
-      const gone = hits.filter((h) => !isTop(h.sector, h.tile));
+      const gone = hits.filter((h) => !isTop(h.sector, h.tile) && !standIns.has(h.tile));
       if (!gone.length) return step;
       const ghosts = gone.map((h) => ({ h, g: ghost(h.type, h.unitId) }));
       const hold: Step = {
@@ -787,7 +868,12 @@ export function FieldView(p: FieldProps) {
       const to = onPage(e.sector);
       const used = from(e.rule);
       if (used) return weaponStep(used, "hit", to);
-      if (e.rule === "H5") return shotStep("heat", "#ff7a2f", heatBar, to);
+      if (e.rule === "H5") {
+        const ray = shotStep("heat", "#ff7a2f", heatBar, to);
+        const chip = heatChip;
+        heatChip = undefined;
+        return chip ? parallel([chip, ray]) : ray;
+      }
       if (e.rule === "H7") return shotStep("bomb", "#ff6a2a", sky(0), to);
       if (e.rule === "6.6") {
         const f = lastFuse(events.indexOf(e));
@@ -872,6 +958,11 @@ export function FieldView(p: FieldProps) {
         const shot = oneShot(e);
         if (shot) out.push(holding(shot, [e]));
       }
+      if (e.kind === "activated") {
+        const step = activatedStep(e);
+        if (step) out.push(step);
+        continue;
+      }
       if (e.kind === "fuse" && e.fuse !== "tick") {
         // A Mortar or Feedback token blows on its unit (a Tick's blast plays with its hit).
         out.push(shotStep("fuse", "#ff3b2f", (t) => t, onPage(e.sector)));
@@ -942,6 +1033,11 @@ export function FieldView(p: FieldProps) {
         continue;
       }
       if (e.kind === "heat") {
+        // Heat Wave (designer 2026-11-09: the beam at once): its "−1 Heat" chip floats up while the ray flies.
+        if (e.rule === "H5" && events.slice(i + 1).some((x) => x.kind === "hit" && x.rule === "H5")) {
+          heatChip = heatStep(e.amount, e.rule);
+          continue;
+        }
         out.push(heatStep(e.amount, e.rule));
         continue;
       }
@@ -1056,6 +1152,8 @@ export function FieldView(p: FieldProps) {
         });
       }
     }
+    // Any stand-in left (its burst not played): gone once everything has played or been skipped.
+    if (standIns.size) out.push({ ms: 1, frame: () => {}, end: () => [...standIns.keys()].forEach(dropStandIn) });
     return out;
   }
 
@@ -1066,7 +1164,7 @@ export function FieldView(p: FieldProps) {
     const size = geo.current.size;
     if (kind === "ready") {
       const k = breath(now, 2600);
-      g.poly(hexPoints(cx, cy, size * 0.86)).stroke({ width: 1.5, color: props.current.dark ? 0xffe2a0 : 0xffffff, alpha: (0.35 + 0.6 * k) * 0.9 });
+      g.poly(hexPoints(cx, cy, size * 0.86)).stroke({ width: 1.5, color: 0xffe2a0, alpha: (0.35 + 0.6 * k) * 0.9 });
       g.poly(hexPoints(cx, cy, size * 0.9)).stroke({ width: 1.5, color: READY, alpha: 0.35 + 0.6 * k });
       return;
     }
@@ -1135,6 +1233,10 @@ export function FieldView(p: FieldProps) {
       n.node.alpha = v?.alpha ?? 1;
     }
     host.current?.setAttribute("data-anim", player.current.busy ? "1" : "0");
+
+    // An Overload: a plasma beam swirls round the Field (designer 2026-11-09, instead of a tinted page).
+    L.edge.clear();
+    if (props.current.state.phase === "overload" && host.current) drawOverloadRing(L.edge, host.current.clientWidth, host.current.clientHeight, stillRef.current ? 0 : now);
 
     // Barriers: a force field round their unit, following the tile as it moves.
     const au = L.aura;
@@ -1279,7 +1381,7 @@ export function FieldView(p: FieldProps) {
     const a = app.current;
     const L = layers.current;
     if (!a || !ready.current || !host.current || !L) return;
-    const { data, state, choosable, selected, onPick, onHover, showHidden, dark, rotate } = props.current;
+    const { data, state, choosable, selected, onPick, onHover, showHidden, rotate } = props.current;
     const c: Ctx = { data, state };
     L.root.removeChildren().forEach((x) => x.destroy({ children: true }));
     nodes.current = new Map();
@@ -1299,9 +1401,10 @@ export function FieldView(p: FieldProps) {
     geo.current.size = size;
     const ox = (w - (maxX - minX) * size) / 2 - minX * size;
     const oy = (h - (maxY - minY) * size) / 2 - minY * size;
-    const ink = dark ? 0xe6e6e6 : 0x1d1d1f;
-    const plate = dark ? 0x2b2d31 : 0xd6d3cc;
-    const back = dark ? 0x3c4f66 : 0x5b7391;
+    // The Field is black in both themes (designer 2026-11-09).
+    const ink = 0xe6e6e6;
+    const plate = 0x2b2d31;
+    const back = 0x4a6280;
     const slots = new Graphics();
     slots.eventMode = "none";
     L.root.addChild(slots);
@@ -1313,7 +1416,7 @@ export function FieldView(p: FieldProps) {
       const cx = ox + p.x * size;
       const cy = oy + p.y * size;
       // An empty slot under every sector, seen while its tile is hidden by an animation.
-      slots.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: dark ? 0x1f2125 : 0xe4e1da }).stroke({ width: 1, color: dark ? 0x111111 : 0xc9c4ba });
+      slots.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: 0x15161a }).stroke({ width: 1, color: 0x2a2c31 });
       const node = new Container();
       node.pivot.set(cx, cy);
       node.position.set(cx, cy);
@@ -1329,7 +1432,7 @@ export function FieldView(p: FieldProps) {
       const isSel = selected.includes(p.k) || (unit !== undefined && selected.includes(unit));
       node.label = isChoice && !isSel ? `choice:${p.k}` : `sector:${p.k}`;
       // Selected: a steady thin green rim.
-      g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 2.5 : 1.5, color: isSel ? 0x00a37a : dark ? 0x111111 : 0x77736b });
+      g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 2.5 : 1.5, color: isSel ? 0x00d39e : 0x000000 });
       g.eventMode = "none";
       node.addChild(g);
 

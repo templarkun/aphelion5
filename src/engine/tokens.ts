@@ -201,6 +201,7 @@ export function checkSleepers(c: Ctx): void {
     if (unitType(c, u) === "Sleeper" && !tile(c.state, u).tokens.alert) {
       tile(c.state, u).tokens.alert = true;
       log(c, `no Dark sectors: ${describe(c, u)} is alerted`, "4.4");
+      emit(c, { kind: "activated", tile: u, unitId: unitDef(c, u).id, type: "Sleeper", sector: sectorOf(c.state, u)!, how: "wake" });
     }
   }
 }

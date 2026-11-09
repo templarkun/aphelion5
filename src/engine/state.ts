@@ -188,6 +188,8 @@ export interface GameState {
      * it when its Alert is resolved (designer 2026-11-08).
      */
     powerNodeAtReveal?: boolean;
+    /** Games saved before format 7: the trial rule above was a choice at setup (since 2026-11-09 always on). */
+    flareEnergyChoice?: boolean;
     /** Core Rules as printed: a Mecha may Attack a Mecha (games saved before 2026-11-08 only; the computer version forbids it). */
     mechaAttacksMecha?: boolean;
     /** Developer mode: a game played with it never records a high score (spec "Developer mode"). */

@@ -88,6 +88,13 @@ describe("batch 7 - GAME SETUP (7.1)", () => {
     expect(s.phase).toBe("preparation");
   });
 
+  it("the Flare energy trial rule is always on in new games, off the expansion list (designer 2026-11-09)", () => {
+    const s = go(fresh(), setupV1(), ["preparation"]).state;
+    expect(s.settings.trialFlareEnergy).toBe(true);
+    const old = go(newGame(data(), { seed: 7, date: "2026-11-04", flareEnergyChoice: true }), setupV1(), ["preparation"]).state;
+    expect(old.settings.trialFlareEnergy).toBe(false);
+  });
+
   it("T7_SET_02 Veteran keeps the marks; Fresh erases only this Company's marks", () => {
     const profile: Profile = { sheets: { V1: { V1_M02_U1: 2, V1_M04_U2: 3 }, V2: { V2_P1: 2 } }, highScores: {} };
     const vet = go(fresh(profile), [A.option("C1"), A.option("V1"), A.option("veteran"), several()], ["preparation"]).state;

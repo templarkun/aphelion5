@@ -53,8 +53,8 @@ async function untilAction(pg) {
       await buttons.first().click();
       continue;
     }
-    if (await pg.locator(".module.can, .bay-btn.can").count()) {
-      await pg.locator(".module.can, .bay-btn.can").first().click();
+    if (await pg.locator(".module.can, .bay-btn.can, .bay-hit-bubble:not(:disabled)").count()) {
+      await pg.locator(".module.can, .bay-btn.can, .bay-hit-bubble:not(:disabled)").first().click();
       continue;
     }
     if (await clickField(pg)) {
@@ -166,7 +166,7 @@ for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
   }
   await pg.close();
 }
-// Rows (designer 2026-11-07): click a row on the Field, confirm in the pop-up.
+// Rows (designer 2026-11-09): press a row's bubble to select it, press it again to confirm.
 let rowCheck = "skipped (no row save)";
 const rowSave = `${out}/row-save.json`;
 const { existsSync, readFileSync } = await import("node:fs");
@@ -181,11 +181,30 @@ if (existsSync(rowSave)) {
   const q = pg.locator(Q);
   const listed = await q.locator(".choices button").count();
   const before = await promptOf(pg);
-  await clickField(pg, 0);
-  const commit = pg.locator(".popup [role=menuitem]", { hasText: "Choose this row" });
-  const popupOk = (await commit.count()) === 1;
+  // Designer 2026-11-09: a bubble over each row, no card, no pop-up: a press selects, a second confirms.
+  const bubble = pg.locator(".row-bubble").first();
+  await bubble.waitFor({ timeout: 3000 }).catch(() => {});
+  const nBubbles = await pg.locator(".row-bubble").count();
+  const noCard = (await pg.locator(Q).count()) === 0;
+  // Rows cross: press the bubble where no other lies over it (its end).
+  const pressRow = async (b) => {
+    const pt = await b.evaluate((e) => {
+      const r = e.getBoundingClientRect();
+      for (let k = 0; k <= 40; k++) {
+        const t = k / 40;
+        const x = r.left + r.width * t;
+        const y = r.top + r.height * t;
+        if (document.elementFromPoint(x, y)?.closest(".row-bubble") === e) return { x, y };
+      }
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    await pg.mouse.click(pt.x, pt.y);
+  };
+  if (nBubbles) await pressRow(bubble);
+  await pg.waitForTimeout(200);
+  const popupOk = nBubbles > 0 && noCard && (await pg.locator(".row-bubble.selected").count()) === 1 && (await promptOf(pg)) === before;
   await pg.screenshot({ path: `${out}/ui-row.png` });
-  if (popupOk) await commit.click();
+  if (popupOk) await pressRow(pg.locator(".row-bubble.selected"));
   await pg.waitForTimeout(300);
   const after = await promptOf(pg);
   // A long list of choices (like the Upgrade list) must not slide under the Field (play-test 2026-11-07).
@@ -198,7 +217,7 @@ if (existsSync(rowSave)) {
   const covered = await pg.evaluate(() => [...document.querySelectorAll(".probe")].filter((e) => { const r = e.getBoundingClientRect(); const box = document.querySelector(".q-card, .q-banner"); if (!box) return false; const p = box.getBoundingClientRect(); if (r.top < p.top || r.bottom > p.bottom) return false; return document.elementFromPoint(r.x + 10, r.y + r.height / 2) !== e; }).length);
   await pg.evaluate(() => document.querySelectorAll(".probe").forEach((e) => e.remove()));
   if (covered) rowCheck = `failed (${covered} long choices covered by the Field)`;
-  else rowCheck = listed === 0 && popupOk && after !== before ? "ok" : `failed (list ${listed}, pop-up ${popupOk}, prompt still "${before}")`;
+  else rowCheck = listed === 0 && popupOk && after !== before ? "ok" : `failed (list ${listed}, bubbles ${popupOk}, prompt still "${before}")`;
   await pg.close();
 }
 // Energy pop-ups (designer 2026-11-07): one beside each Module that can take the energy; a tap places one.
@@ -649,7 +668,34 @@ if (existsSync(`${out}/reveal-Omega-save.json`) && existsSync(`${out}/area-save.
   fxCheck = flash && bombs >= 2 ? "ok" : `failed (Omega flash ${flash}, bombs at once ${bombs})`;
   await pg.close();
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck }));
+// Damage to the Flagship (designer 2026-11-09): a bubble in the Field, bubbles by the Bays; no card.
+let damageCheck = "skipped (no save)";
+if (existsSync(`${out}/flagship-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/flagship-save.json`);
+  const tile = JSON.parse(readFileSync(`${out}/flagship-save.json.plan.json`, "utf8")).shortcut.slice("alert:".length);
+  const field = pg.locator(".field");
+  const box = await field.boundingBox();
+  const h = JSON.parse((await field.getAttribute("data-choosable")) ?? "[]").find((x) => x.id === tile);
+  await pg.mouse.click(box.x + h.x, box.y + h.y);
+  await pg.waitForTimeout(400);
+  await pg.locator(".popup [role=menuitem]").first().click();
+  await pg.locator(".damage-bubble").waitFor({ timeout: 4000 }).catch(() => {});
+  const big = await pg.locator(".damage-bubble").count();
+  const card = await pg.locator(Q).count();
+  const pointers = await pg.locator(".bay-hit-bubble").count();
+  const before = await promptOf(pg);
+  for (let i = 0; i < 12 && (await pg.locator(".bay-hit-bubble:not(:disabled)").count()); i++) {
+    await pg.locator(".bay-hit-bubble:not(:disabled)").first().click();
+    await pg.waitForTimeout(150);
+  }
+  await pg.screenshot({ path: `${out}/ui-damage.png` });
+  const after = await promptOf(pg);
+  damageCheck = big === 1 && card === 0 && pointers >= 1 && after !== before ? "ok" : `failed (bubble ${big}, card ${card}, Bay bubbles ${pointers}, prompt still "${after}")`;
+  await pg.close();
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

@@ -48,6 +48,7 @@ const areaHit = (es: GameEvent[]) => {
 };
 const FX: Record<string, (q: Question, g: Game) => string | undefined> = {
   area: (q, g) => shortcutWith(q, g, areaHit, /^(order|bay):/),
+  drain: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "activated" && e.how === "drain"), /^gyro:/),
   heatwave: (q, g) => ((q.shortcuts ?? []).some((o) => o.id === "heatWave") && sectorKeys(g.view.state).some((k) => sectorState(g.view.state, k) === "occupied" && data.units.byId.get(g.view.state.tiles[topTileId(g.view.state, k)!]!.unitId ?? "")?.type === "Bot") ? "heatWave" : undefined),
   // A unit's own effect that hits another unit (designer 2026-11-09: each unit type its own shot).
   unitshot: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "hit" && /^[SFPGO]_\d+$/.test(e.rule ?? ""))),
@@ -57,6 +58,8 @@ for (const t of ["Flare", "Omega", "Sentinel", "Gyro", "Sleeper"]) FX[`reveal-${
 
 const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   ...Object.fromEntries(Object.entries(FX).map(([k, f]) => [k, (q: Question, g: Game) => /choose an action/i.test(q.prompt) && f(q, g) !== undefined])),
+  // End the Overload offered (its button, designer 2026-11-09).
+  endoverload: (q) => (q.shortcuts ?? []).some((o) => o.id === "endOverload"),
   // A Barrier and a Fuse token on the Field at once (drawn as pieces, designer 2026-11-09).
   tokens: (q, g) => {
     const s = g.view.state;

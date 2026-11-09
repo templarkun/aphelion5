@@ -185,6 +185,9 @@ then: no list. The unit shows two round buttons: anticlockwise (left) and clockw
       and the panel says "Your next click keeps this facing." The next action keeps facing 2
       (the log says so) and the buttons are gone. If what comes next would show new hidden
       information, a "Done" button keeps the facing first.
+note: CHANGED 2026-11-09 (designer): no card ("turn it with the buttons on the unit, rule 3.7"
+      and "Your next click keeps this facing" are gone). Only the "Done" button shows, at the
+      bottom of the Field, when it is needed.
 
 id: T9_CHO_07
 title: Rows are chosen on the Field, then confirmed
@@ -199,3 +202,8 @@ then: no list in the question panel. Every sector of every row offered is highli
       its units, with "Choose this row". Clicking outside closes it and nothing is chosen. A
       sector that lies in several rows offers "Next row through this sector (1 of 3)", which
       steps to the next row. "Choose this row" answers.
+note: CHANGED 2026-11-09 (designer): no question card and no pop-up. A long see-through bubble
+      with a running outline lies over every row offered ("Choose this row"). A press on a
+      bubble selects that row: the bubble turns green ("Tap again to confirm") and the row's
+      sectors get the running violet outline. A press on the same bubble again answers. A tap on
+      a sector of a row selects a row through it (the next one on each tap).

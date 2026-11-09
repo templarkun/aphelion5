@@ -47,6 +47,9 @@ given: Game setup, the expansion list.
 when: look at the list
 then: it offers "Trial rule: Flare energy waits on the Flare until its Alert is resolved",
       not selected. Unselected, Flares place their energy when revealed (Core Rules 4.6).
+note: CHANGED 2026-11-09 (designer): the trial rule is always on in this program and is no
+      longer on the expansion list (only the Heat module is). Core Rules 4.6 unchanged. Games
+      saved before (save format 6 or older) still show it on the list and replay as chosen.
 
 id: T10_TRY_02
 title: On Reveal the energy waits on the Flare

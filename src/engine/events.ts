@@ -32,6 +32,11 @@ export type GameEventBody =
   | { kind: "attack"; tile: TileId; unitId: string; from: SectorKey; target: TileId; to: SectorKey }
   /** Your Flagship is about to take damage (5.2), from `rule` (a unit's id, a Fuse token...). Shown before the Bays are chosen. */
   | { kind: "flagship"; amount: number; rule: string }
+  /**
+   * A unit acts (designer 2026-11-09, for its particle effect): a Sleeper wakes (4.4, no Dark sector
+   * left: `wake`) or its Alert is resolved (`alert`); a Gyro is drained (4.3, `drain`), before its effect.
+   */
+  | { kind: "activated"; tile: TileId; unitId: string; type: string; sector: SectorKey; how: "wake" | "alert" | "drain" }
   /** A Fuse token goes off (6.6), before its effect. */
   | { kind: "fuse"; tile: TileId; unitId: string; sector: SectorKey; fuse: FuseKind }
   /** Heat tokens paid back to the Supply (H5, H7). */

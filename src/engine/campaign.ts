@@ -45,6 +45,8 @@ export interface NewGameOptions {
   mechaAttacksMecha?: boolean;
   /** Games saved before format 6: a Power Node's energy-or-Heat choice is made at its Reveal (trial rule). */
   powerNodeAtReveal?: boolean;
+  /** Games saved before format 7: the Flare energy trial rule is still a choice on the expansion list. */
+  flareEnergyChoice?: boolean;
   /** Answer questions with one legal answer automatically (spec "Player choices"); fixed for the whole game. */
   autoAnswer?: boolean;
 }
@@ -61,6 +63,7 @@ export function newGame(data: GameData, o: NewGameOptions): GameState {
   s.settings.autoAnswer = o.autoAnswer ?? true;
   if (o.mechaAttacksMecha) s.settings.mechaAttacksMecha = true;
   if (o.powerNodeAtReveal) s.settings.powerNodeAtReveal = true;
+  if (o.flareEnergyChoice) s.settings.flareEnergyChoice = true;
   s.player.commandTokens = 0;
   // Every tile copy (unit file "copies"): Energy Gyros form the Energy deck, the rest wait in the box.
   for (const u of data.units.units) {
@@ -131,9 +134,12 @@ function* gameSetup(c: RunCtx): Effect {
   s.sheet.overhaulUsed = 0; // erase marked Overhaul slots in both cases
   log(c, `${fresh ? "Fresh" : "Veteran"} campaign with ${co.name}`, "7.1");
   // Expansion modules (spec "Scope": chosen at game setup): select any, all or none.
-  const x = yield* ask(c, { kind: "several", always: true, prompt: "Choose the expansion modules to play with (any, all or none).", rule: "H1", options: EXPANSION_MODULES, min: 0, max: EXPANSION_MODULES.length });
+  // Designer 2026-11-09: the Flare energy rule is always on in this program (Core Rules unchanged);
+  // games saved before still offer it on the list, so they replay as played.
+  const offered = s.settings.flareEnergyChoice ? [...EXPANSION_MODULES, TRIAL_FLARE_ENERGY] : EXPANSION_MODULES;
+  const x = yield* ask(c, { kind: "several", always: true, prompt: "Choose the expansion modules to play with (any, all or none).", rule: "H1", options: offered, min: 0, max: offered.length });
   s.settings.heatModule = (x.value as string[]).includes("heat");
-  s.settings.trialFlareEnergy = (x.value as string[]).includes("trialFlareEnergy");
+  s.settings.trialFlareEnergy = s.settings.flareEnergyChoice ? (x.value as string[]).includes("trialFlareEnergy") : true;
   // 4. Starting energy.
   for (const col of ENERGY_COLOURS) {
     const n = Math.min(co.startingEnergy[col], s.supply.energy[col]);
@@ -163,11 +169,9 @@ function* gameSetup(c: RunCtx): Effect {
 }
 
 /** Expansion modules offered at game setup. Only the Heat module (Expansion1) so far. */
-export const EXPANSION_MODULES = [
-  { id: "heat", label: "Heat module (Expansion1)" },
-  // Designer 2026-11-07 (I2): a rule to try before it goes into the Core Rules.
-  { id: "trialFlareEnergy", label: "Trial rule: Flare energy waits on the Flare until its Alert is resolved" },
-];
+export const EXPANSION_MODULES = [{ id: "heat", label: "Heat module (Expansion1)" }];
+/** Designer 2026-11-07 (I2): offered on the list only in games saved before format 7; always on since 2026-11-09. */
+const TRIAL_FLARE_ENERGY = { id: "trialFlareEnergy", label: "Trial rule: Flare energy waits on the Flare until its Alert is resolved" };
 
 /** "C1" -> "Campaign 1". */
 export function campaignName(prefix: string): string {

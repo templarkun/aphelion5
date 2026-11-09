@@ -120,6 +120,7 @@ export function bioShieldCarriers(c: Ctx): TileId[] {
 /** Drain a Gyro (4.3): its Drain effect, then discard it. */
 export function* drainGyro(c: RunCtx, id: TileId): Effect {
   log(c, `drain ${describe(c, id)}`, "4.3");
+  emit(c, { kind: "activated", tile: id, unitId: unitDef(c, id).id, type: "Gyro", sector: sectorOf(c.state, id)!, how: "drain" });
   yield* unitEffect(unitDef(c, id).id, "drain")(c, id);
   discardUnit(c, id, "4.3");
 }

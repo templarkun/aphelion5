@@ -126,7 +126,7 @@ describe("trial rule: Flare energy waits on the Flare (I2)", () => {
     expect(energyOf(e, 26)).toEqual({ Yellow: 0, Red: 1, Blue: 0 });
   });
 
-  it("off by default: the energy is placed at Reveal as the Core Rules say (4.6)", () => {
+  it("off in scenarios (Core Rules 4.6); new games turn it on at setup (campaign.test.ts)", () => {
     expect(board().settings.trialFlareEnergy).toBeFalsy();
   });
 });

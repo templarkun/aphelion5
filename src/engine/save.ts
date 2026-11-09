@@ -25,7 +25,7 @@ import { type GameState, type Profile, emptyProfile } from "./state.js";
  * A game saved in an older format cannot be replayed (its answers no longer fit),
  * except format 4: it replays, an answer to the Meltdown question (no longer asked) is skipped.
  */
-export const SAVE_FORMAT = 6;
+export const SAVE_FORMAT = 7;
 
 export interface GameStart {
   seed: number;
@@ -37,6 +37,8 @@ export interface GameStart {
   mechaAttacksMechaUntil?: number;
   /** Saved before format 6: with the trial rule, a Power Node asks energy or Heat when revealed (as it did then). */
   powerNodeAtReveal?: boolean;
+  /** Saved before format 7: the Flare energy trial rule was a choice on the expansion list. */
+  flareEnergyChoice?: boolean;
   /** Fixed for the whole game, so replays ask the same questions (default on). */
   autoAnswer?: boolean;
   /** The profile as it was when the game started. */
@@ -61,7 +63,7 @@ export interface Game {
 }
 
 function initial(data: GameData, start: GameStart): GameState {
-  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false, powerNodeAtReveal: start.powerNodeAtReveal ?? false });
+  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false, powerNodeAtReveal: start.powerNodeAtReveal ?? false, flareEnergyChoice: start.flareEnergyChoice ?? false });
 }
 
 export function startGame(data: GameData, start: GameStart): Game {
@@ -157,6 +159,8 @@ export function readSave(text: string): SaveFile {
     out.game = old ? { ...f.game, start: { ...f.game.start, mechaAttacksMecha: true, mechaAttacksMechaUntil: f.game.answers.length } } : f.game;
     // Format 5 or older: a Power Node's choice stays where it was asked then (at its Reveal).
     if (f.formatVersion < 6) out.game = { ...out.game, start: { ...out.game.start, powerNodeAtReveal: true } };
+    // Format 6 or older: the Flare energy trial rule was chosen on the expansion list (always on since 2026-11-09).
+    if (f.formatVersion < 7) out.game = { ...out.game, start: { ...out.game.start, flareEnergyChoice: true } };
   }
   return out;
 }

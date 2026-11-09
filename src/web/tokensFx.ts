@@ -72,9 +72,10 @@ export function drawFuse(g: Graphics, kind: Fuse, x: number, y: number, r: numbe
 export function addFuseTokens(node: Container, t: Tokens, cx: number, cy: number, size: number): void {
   const kinds = FUSE_ORDER.filter((k) => t[k] > 0);
   if (kinds.length === 0) return;
-  const r = size * 0.115;
-  const gap = r * 2.5;
-  const y = cy - size * 0.55;
+  // Big enough to read the glyph (designer 2026-11-09).
+  const r = size * 0.17;
+  const gap = r * 2.25;
+  const y = cy - size * 0.58;
   const g = new Graphics();
   g.eventMode = "none";
   g.label = "fuse-tokens";

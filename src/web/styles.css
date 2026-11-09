@@ -88,7 +88,6 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
 .game .log, .game textarea { user-select: text; -webkit-user-select: text; }
-.game.is-overload { background: var(--overload); }
 .bar { grid-area: bar; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); }
 .bar .phase { font-weight: 700; color: var(--accent); }
 .is-overload .bar .phase { color: var(--warn); }
@@ -98,7 +97,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
 .right { grid-area: right; }
 .center { grid-area: center; display: flex; flex-direction: column; min-height: 0; overflow: hidden; position: relative; }
 .field-area { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
-.field { flex: 1; min-height: 160px; position: relative; overflow: hidden; }
+.field { flex: 1; min-height: 160px; position: relative; overflow: hidden; background: #000; }
 .field canvas { position: absolute; inset: 0; }
 .empty-field { flex: 1; display: grid; place-items: center; color: var(--muted); font-size: 20px; }
 .q-banner .prompt, .q-card .prompt { font-weight: 600; margin: 2px 0 8px; }
@@ -217,7 +216,6 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .info-bubble.above { transform: translateY(-100%); }
 .field-toast { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 12; pointer-events: none; max-width: calc(100% - 24px); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; box-shadow: 0 6px 18px rgb(0 0 0 / 0.2); }
 .field-toast.warn { color: var(--warn); }
-.end-overload { position: absolute; right: 14px; bottom: 14px; z-index: 12; min-height: 48px; padding: 10px 18px; border: 0; border-radius: 999px; font-weight: 800; color: #fff; background: linear-gradient(120deg, #ff3d00, #ff9100, #ffd54f, #ff6d00, #ff3d00); background-size: 300% 100%; text-shadow: 0 1px 2px rgb(0 0 0 / 0.4); box-shadow: 0 0 18px 4px rgb(255 100 0 / 0.55), 0 0 40px 8px rgb(255 60 0 / 0.25); animation: burn 2.2s linear infinite, flicker 1.3s ease-in-out infinite; }
 @keyframes burn { from { background-position: 0% 50%; } to { background-position: 300% 50%; } }
 @keyframes flicker { 0%, 100% { box-shadow: 0 0 16px 3px rgb(255 100 0 / 0.5), 0 0 36px 8px rgb(255 60 0 / 0.22); } 50% { box-shadow: 0 0 24px 6px rgb(255 140 0 / 0.65), 0 0 50px 12px rgb(255 60 0 / 0.3); } }
 .trophy-box { border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; margin: 4px 0 8px; }
@@ -512,3 +510,55 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 .reveal-flash.flare { background: radial-gradient(circle at 50% 50%, rgba(255, 252, 230, 0.95), rgba(255, 210, 63, 0.55) 45%, rgba(255, 140, 40, 0.15) 80%); mix-blend-mode: screen; }
 .reveal-flash.omega { background: radial-gradient(circle at 50% 50%, rgba(176, 124, 255, 0.25), rgba(40, 8, 70, 0.75) 75%); }
 @media (prefers-reduced-motion: reduce) { .fx-shake { animation: none; } }
+
+/* Row bubbles (designer 2026-11-09): one long see-through bubble over each row that can be chosen. */
+.row-bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 11; }
+.row-bubble { position: fixed; pointer-events: auto; box-sizing: border-box; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 999px; background: rgb(155 107 255 / 0.24); color: #fff; font-weight: 800; font-size: 12px; text-shadow: 0 1px 3px rgb(0 0 0 / 0.8); display: grid; place-items: center; cursor: pointer; transition: background 0.2s; }
+.row-bubble:hover { background: rgb(155 107 255 / 0.26); }
+.row-bubble svg { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.row-bubble rect { width: calc(100% - 4px); height: calc(100% - 4px); fill: none; stroke: #d9c9ff; stroke-width: 3; stroke-dasharray: 14 6; animation: row-run 1.6s linear infinite; }
+.row-bubble span { position: relative; white-space: nowrap; padding: 2px 8px; border-radius: 999px; background: rgb(40 20 80 / 0.55); }
+.row-bubble.selected { background: rgb(0 200 140 / 0.28); box-shadow: 0 0 18px 4px rgb(0 220 160 / 0.45); animation: row-pick 0.45s ease-out; }
+.row-bubble.selected rect { stroke: #8fffd8; stroke-width: 3.5; animation-duration: 0.7s; }
+@keyframes row-run { to { stroke-dashoffset: -100; } }
+@keyframes row-pick { 0% { filter: brightness(2.2); } 100% { filter: brightness(1); } }
+.facing-done { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 12; }
+@media (prefers-reduced-motion: reduce) { .row-bubble rect, .row-bubble.selected { animation: none; } }
+
+/* Damage to the Flagship (designer 2026-11-09): a big bubble in the Field, bubbles pointing at the Bays. */
+.damage-bubble { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 12; width: min(380px, calc(100% - 40px)); padding: 22px 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; color: #fff; border-radius: 32px; background: radial-gradient(circle at 50% 0%, rgb(255 70 50 / 0.45), rgb(80 10 10 / 0.55)); backdrop-filter: blur(2px); text-shadow: 0 1px 3px rgb(0 0 0 / 0.7); animation: dmg-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1); }
+.damage-bubble b { font-size: 22px; }
+.damage-bubble svg { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.damage-bubble rect { width: calc(100% - 6px); height: calc(100% - 6px); fill: none; stroke: #ff9c8a; stroke-width: 3; stroke-dasharray: 10 6; animation: row-run 1.4s linear infinite; }
+.damage-bubble .mini { color: #fff; background: rgb(0 0 0 / 0.35); border: 1px solid rgb(255 255 255 / 0.5); }
+@keyframes dmg-in { from { transform: translate(-50%, -50%) scale(0.6); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+.bay-hit-bubble { position: fixed; z-index: 40; min-width: 64px; padding: 6px 12px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; border: 2px solid #ffb3a6; border-radius: 18px; color: #fff; font-weight: 800; background: linear-gradient(160deg, #ff5a3d, #b3160a); box-shadow: 0 0 14px 3px rgb(255 70 40 / 0.55); cursor: pointer; animation: bay-hit-breathe 1.2s ease-in-out infinite; }
+.bay-hit-bubble.right { transform: translate(8px, -50%); }
+.bay-hit-bubble.above { transform: translate(-50%, calc(-100% - 8px)); }
+.bay-hit-bubble::after { content: ""; position: absolute; width: 12px; height: 12px; background: #d8301d; border-left: 2px solid #ffb3a6; border-bottom: 2px solid #ffb3a6; }
+.bay-hit-bubble.right::after { left: -8px; top: calc(50% - 6px); transform: rotate(45deg); }
+.bay-hit-bubble.above::after { bottom: -8px; left: calc(50% - 6px); transform: rotate(-45deg); }
+.bay-hit-bubble .hit { font-size: 18px; }
+.bay-hit-bubble .small { font-size: 11px; font-weight: 600; }
+.bay-hit-bubble .taken { position: absolute; top: -9px; right: -9px; min-width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; font-size: 12px; color: #9b1c1c; background: #fff; }
+.bay-hit-bubble:active { filter: brightness(1.4); }
+.bay-hit-bubble:disabled { opacity: 0.4; animation: none; cursor: default; }
+@keyframes bay-hit-breathe { 50% { box-shadow: 0 0 22px 6px rgb(255 90 40 / 0.75); } }
+@media (prefers-reduced-motion: reduce) { .damage-bubble, .damage-bubble rect, .bay-hit-bubble { animation: none; } }
+
+/* End the Overload (designer 2026-11-09): in proportion with the Field, embers rising, a burst when pressed. */
+.end-overload { position: absolute; right: 14px; bottom: 14px; z-index: 12; width: clamp(140px, 24%, 250px); aspect-ratio: 3.4 / 1; padding: 0 12px; white-space: nowrap; border: 0; border-radius: 999px; font-weight: 800; font-size: clamp(12px, 1.05vw, 16px); color: #fff; background: linear-gradient(120deg, #ff3d00, #ff9100, #ffd54f, #ff6d00, #ff3d00); background-size: 300% 100%; text-shadow: 0 1px 2px rgb(0 0 0 / 0.4); box-shadow: 0 0 18px 4px rgb(255 100 0 / 0.55), 0 0 40px 8px rgb(255 60 0 / 0.25); animation: burn 2.2s linear infinite, flicker 1.3s ease-in-out infinite; overflow: visible; cursor: pointer; }
+.end-overload .eo-label { position: relative; z-index: 2; }
+.end-overload .eo-embers { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.end-overload .eo-embers i { position: absolute; left: var(--x); bottom: 30%; width: 5px; height: 5px; border-radius: 50%; background: #ffe08a; box-shadow: 0 0 6px 2px #ff7a1a; opacity: 0; animation: ember var(--s) ease-out var(--d) infinite; }
+@keyframes ember { 0% { transform: translate(0, 0) scale(1); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(6px, -46px) scale(0.3); opacity: 0; } }
+.end-overload:active { transform: scale(0.95); }
+.end-overload.bursting { animation: eo-flash 0.38s ease-out forwards; }
+@keyframes eo-flash { 0% { filter: brightness(1); } 30% { filter: brightness(2.2); transform: scale(1.08); } 100% { filter: brightness(1.5); transform: scale(0.6); opacity: 0; } }
+.end-overload .eo-burst { position: absolute; left: 50%; top: 50%; pointer-events: none; }
+.end-overload .eo-burst i { position: absolute; width: 7px; height: 7px; margin: -3px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 8px 3px #ff8a1a; animation: spark 0.38s ease-out forwards; }
+@keyframes spark { to { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; } }
+.end-overload .eo-burst .ring { position: absolute; width: 20px; height: 20px; margin: -10px; border-radius: 50%; border: 3px solid #ffd27a; animation: eo-ring 0.38s ease-out forwards; }
+@keyframes eo-ring { to { transform: scale(9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .end-overload, .end-overload .eo-embers i { animation: none; } }
+.damage-bubble .small, .bay-hit-bubble .small { color: rgb(255 255 255 / 0.85); }

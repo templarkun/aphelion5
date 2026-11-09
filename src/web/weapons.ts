@@ -218,9 +218,9 @@ export interface Target extends Pt {
   size: number;
 }
 
-const SHOT_MS: Record<ShotLook, number> = { rail: 420, missile: 560, lob: 620, bomb: 380, heat: 660, plasma: 380, lash: 460, sting: 400, disc: 440, void: 460, shell: 340, fuse: 560 };
+const SHOT_MS: Record<ShotLook, number> = { rail: 420, missile: 560, lob: 620, bomb: 380, heat: 480, plasma: 380, lash: 460, sting: 400, disc: 440, void: 460, shell: 340, fuse: 560 };
 /** When the shot lands (fraction of its time): the hit flash follows the step. */
-const IMPACT: Record<ShotLook, number> = { rail: 0.5, missile: 0.62, lob: 0.66, bomb: 0.55, heat: 0.45, plasma: 0.62, lash: 0.42, sting: 0.5, disc: 0.62, void: 0.15, shell: 0.5, fuse: 0.55 };
+const IMPACT: Record<ShotLook, number> = { rail: 0.5, missile: 0.62, lob: 0.66, bomb: 0.55, heat: 0.4, plasma: 0.62, lash: 0.42, sting: 0.5, disc: 0.62, void: 0.15, shell: 0.5, fuse: 0.55 };
 
 export const isShot = (l: Look): l is ShotLook => l in SHOT_MS;
 

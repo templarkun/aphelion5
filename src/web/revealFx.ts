@@ -258,3 +258,148 @@ const DRAW: Record<string, Draw> = {
     }
   },
 };
+
+// ---------------------------------------------------------------------------
+// Units acting (designer 2026-11-09): a Sleeper activating, a Gyro drained, a Gyro destroyed.
+
+/** A Sleeper activates (wakes, or its Alert is resolved): a blue rune circle spins up and a column of light rises. */
+export function sleeperActivate(g: Graphics, cx: number, cy: number, size: number, p: number): void {
+  const grow = easeOut(clamp01(p / 0.35));
+  const fade = 1 - clamp01((p - 0.6) / 0.4);
+  const R = size * (0.6 + 0.45 * grow);
+  for (const [r, dir, w] of [
+    [R, 1, 3],
+    [R * 0.78, -1, 2],
+  ] as const) {
+    for (let i = 0; i < 12; i++) {
+      const a0 = (i / 12) * Math.PI * 2 + dir * p * 5;
+      g.moveTo(cx + Math.cos(a0) * r, cy + Math.sin(a0) * r)
+        .arc(cx, cy, r, a0, a0 + 0.32)
+        .stroke({ width: w, color: 0x7fb8ff, alpha: 0.9 * fade });
+    }
+  }
+  // Six rune marks on the outer ring.
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + p * 5;
+    const x = cx + Math.cos(a) * R;
+    const y = cy + Math.sin(a) * R;
+    g.poly([x, y - size * 0.07, x + size * 0.05, y, x, y + size * 0.07, x - size * 0.05, y]).fill({ color: 0xdcecff, alpha: fade });
+  }
+  // A column of light rising from the tile.
+  const col = clamp01((p - 0.2) / 0.5);
+  if (col > 0) {
+    const h = size * 2.2 * easeOut(col);
+    g.rect(cx - size * 0.22, cy - h, size * 0.44, h).fill({ color: 0x9fd0ff, alpha: 0.28 * fade });
+    g.rect(cx - size * 0.07, cy - h, size * 0.14, h).fill({ color: 0xffffff, alpha: 0.5 * fade });
+  }
+  for (let i = 0; i < 18; i++) {
+    const u = clamp01(p * 1.3 - rnd(i + 40) * 0.3);
+    if (u <= 0 || u >= 1) continue;
+    const x = cx + (rnd(i + 8) - 0.5) * size * 0.9;
+    const y = cy - u * size * 2;
+    g.circle(x, y, 1.8 + rnd(i) * 2).fill({ color: i % 3 ? 0x6fb0ff : 0xffffff, alpha: 1 - u });
+  }
+}
+
+/** A Gyro drained: green energy spirals in, then shoots up and away. */
+export function gyroDrain(g: Graphics, cx: number, cy: number, size: number, p: number): void {
+  const inP = clamp01(p / 0.6);
+  for (let i = 0; i < 30; i++) {
+    const u = (inP * 1.4 + rnd(i)) % 1;
+    const a = rnd(i + 5) * Math.PI * 2 + u * 5;
+    const d = size * 1.8 * (1 - u);
+    g.circle(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 1.5 + 2.5 * u).fill({ color: i % 3 ? 0x5fd47a : 0xeaffef, alpha: (p < 0.6 ? 1 : 0) * Math.min(1, u * 2) });
+  }
+  g.circle(cx, cy, size * (0.3 + 0.35 * inP)).fill({ color: 0x8dffb0, alpha: 0.35 * inP * (1 - clamp01((p - 0.6) / 0.2)) });
+  const up = clamp01((p - 0.55) / 0.45);
+  if (up > 0 && up < 1) {
+    for (let i = 0; i < 16; i++) {
+      const a = -Math.PI / 2 + (rnd(i + 20) - 0.5) * 1.2;
+      const d = size * (0.3 + 2.5 * easeOut(up)) * (0.6 + 0.4 * rnd(i + 3));
+      g.circle(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 2.5).fill({ color: i % 2 ? 0x5fd47a : 0xffffff, alpha: 1 - up });
+    }
+    g.circle(cx, cy, size * (0.5 + 1.2 * up)).stroke({ width: 3 * (1 - up) + 0.5, color: 0x8dffb0, alpha: 1 - up });
+  }
+}
+
+/** A Gyro destroyed: its spinning rings break and fly apart, green sparks everywhere. */
+export function gyroBreak(g: Graphics, cx: number, cy: number, size: number, p: number): void {
+  const out = easeOut(clamp01(p / 0.8));
+  for (let k = 0; k < 3; k++) {
+    for (let piece = 0; piece < 3; piece++) {
+      const a0 = (piece * 2 * Math.PI) / 3 + k * 0.7 + p * (3 + k) * (k % 2 ? -1 : 1);
+      const dir = a0 + 0.5;
+      const ox = Math.cos(dir) * size * 1.4 * out;
+      const oy = Math.sin(dir) * size * 1.4 * out;
+      const r = size * (0.45 + 0.18 * k);
+      g.moveTo(cx + ox + Math.cos(a0) * r, cy + oy + Math.sin(a0) * r)
+        .arc(cx + ox, cy + oy, r, a0, a0 + 1.4)
+        .stroke({ width: 4 - k, color: k === 1 ? 0xcaffd6 : 0x5fd47a, alpha: 1 - out });
+    }
+  }
+  for (let i = 0; i < 28; i++) {
+    const u = clamp01(p * 1.3 - rnd(i) * 0.3);
+    if (u <= 0 || u >= 1) continue;
+    const a = rnd(i + 50) * Math.PI * 2;
+    const d = size * (0.3 + 2 * easeOut(u)) * (0.5 + 0.5 * rnd(i + 2));
+    g.circle(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 2.2).fill({ color: i % 2 ? 0x5fd47a : 0xffffff, alpha: 1 - u });
+  }
+  g.circle(cx, cy, size * 0.9 * Math.sin(Math.PI * clamp01(p / 0.4))).fill({ color: 0xb8ffcc, alpha: 0.4 * (1 - clamp01(p / 0.4)) });
+}
+
+/**
+ * An Overload under way (designer 2026-11-09): beams of plasma race round the edge of the Field,
+ * with sparks drifting in from it. `w`, `h`: the Field's size; `now` in ms (0 = still).
+ */
+export function drawOverloadRing(g: Graphics, w: number, h: number, now: number): void {
+  const inset = 6;
+  const W = w - 2 * inset;
+  const H = h - 2 * inset;
+  if (W <= 0 || H <= 0) return;
+  const per = 2 * (W + H);
+  /** A point on the edge at t (0..1, clockwise from the top left), pushed inwards by `d`. */
+  const at = (t: number, d = 0): [number, number] => {
+    let s = (((t % 1) + 1) % 1) * per;
+    if (s < W) return [inset + s, inset + d];
+    s -= W;
+    if (s < H) return [inset + W - d, inset + s];
+    s -= H;
+    if (s < W) return [inset + W - s, inset + H - d];
+    s -= W;
+    return [inset + d, inset + H - s];
+  };
+  const pulse = 0.5 + 0.5 * Math.sin(now / 420);
+  g.rect(inset, inset, W, H).stroke({ width: 14, color: 0xff3b1a, alpha: 0.08 + 0.06 * pulse });
+  g.rect(inset, inset, W, H).stroke({ width: 2, color: 0xff7a3a, alpha: 0.35 + 0.2 * pulse });
+  // Four beams: two of red plasma one way, two of violet energy the other way.
+  const beams = [
+    { t: now / 5200, col: 0xff5a1f, core: 0xffe0a0 },
+    { t: now / 5200 + 0.5, col: 0xff5a1f, core: 0xffe0a0 },
+    { t: -now / 7400 + 0.25, col: 0xb07cff, core: 0xf0e6ff },
+    { t: -now / 7400 + 0.75, col: 0xb07cff, core: 0xf0e6ff },
+  ];
+  beams.forEach((b, k) => {
+    const dir = k < 2 ? 1 : -1;
+    const n = 28;
+    const len = 0.11;
+    let prev = at(b.t);
+    for (let i = 1; i <= n; i++) {
+      const tt = b.t - dir * (len * i) / n;
+      const wave = Math.sin(i * 0.8 + now / 90) * 3 * (i / n);
+      const pt = at(tt, 2 + wave);
+      const f = 1 - i / n;
+      g.moveTo(prev[0], prev[1]).lineTo(pt[0], pt[1]).stroke({ width: 2 + 9 * f, color: b.col, alpha: 0.25 * f });
+      g.moveTo(prev[0], prev[1]).lineTo(pt[0], pt[1]).stroke({ width: 1 + 2.5 * f, color: b.core, alpha: 0.9 * f });
+      prev = pt;
+    }
+    const head = at(b.t, 2);
+    g.circle(head[0], head[1], 6 + 2 * Math.sin(now / 60 + k)).fill({ color: b.col, alpha: 0.5 });
+    g.circle(head[0], head[1], 3).fill({ color: 0xffffff, alpha: 0.95 });
+  });
+  // Sparks drifting in from the edge.
+  for (let i = 0; i < 46; i++) {
+    const u = (now / 2400 + rnd(i)) % 1;
+    const p = at(rnd(i + 100) + now / 60000, 4 + u * 34);
+    g.circle(p[0], p[1], 1.2 + 1.6 * (1 - u)).fill({ color: i % 3 ? 0xff8a3a : 0xb07cff, alpha: 0.85 * (1 - u) * (now ? 1 : 0) });
+  }
+}

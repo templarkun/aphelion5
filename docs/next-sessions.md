@@ -41,6 +41,9 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    go off with their own looks; effects on "all" units one fast bombing; Fuse tokens and
    Barriers drawn as pieces; a reveal burst per unit type (Flares and Omega the biggest).
    Next: the designer tries them; then step 4 (Upgrade sheet).
+   2026-11-09 round 9: stand-ins for destroyed units, faster Heat Wave, row bubbles, Flagship
+   damage bubbles, Sleeper / Gyro effects, black Field, Overload plasma ring, new End button;
+   Flare energy rule always on (save format 7). Next: the designer tries them; then step 4.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly

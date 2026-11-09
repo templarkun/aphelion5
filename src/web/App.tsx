@@ -23,6 +23,9 @@ import { type ModPlan, normalise, planAnswer, planInfo } from "./modulePlan.js";
 import { Flame, HeatBar, type ModPop, ModuleCard, ModulePops } from "./Modules.js";
 import { AnomalyStrip } from "./Anomalies.js";
 import { FlareEnergyChips } from "./FlareEnergy.js";
+import { RowBubbles } from "./RowBubbles.js";
+import { EndOverload } from "./EndOverload.js";
+import { FlagshipDamage } from "./FlagshipDamage.js";
 import { MissionBar } from "./Mission.js";
 import { UpgradeBubble } from "./Upgrade.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
@@ -713,23 +716,10 @@ function GameScreen(p: GameProps) {
       return openPopup(`${describe(c, id)}: move where first?`, ways.map((w) => ({ id: `way:${w.sector}`, label: `Move to (${w.sector}), then Attack` })), undefined, id);
     }
     if (rowQ && rowSectors.includes(id)) {
-      // The rows through this sector: the first is selected; "Next row" steps through the others.
+      // A tap on a sector selects a row through it (the next one on each tap); its bubble confirms it.
       const through = rowQ.rows!.flatMap((r, i) => (r.includes(id) ? [i] : []));
-      const { x, y } = centreOf(id);
-      const show = (n: number) => {
-        const i = through[n % through.length]!;
-        setRowSel(i);
-        setPopup({
-          x,
-          y,
-          at: id,
-          title: rowQ.options[i]!.label,
-          options: [{ id: rowQ.options[i]!.id, label: "Choose this row" }],
-          commit: true,
-          next: through.length > 1 ? { label: `Next row through this sector (${(n % through.length) + 1} of ${through.length})`, go: () => show(n + 1) } : undefined,
-        });
-      };
-      return show(0);
+      const at = rowSel !== undefined ? through.indexOf(rowSel) : -1;
+      return setRowSel(through[(at + 1) % through.length]!);
     }
     const here = onField.get(id);
     if (here && (q.kind === "option" || q.kind === "order")) {
@@ -810,7 +800,8 @@ function GameScreen(p: GameProps) {
     return () => window.clearTimeout(t);
   }, [backToMenu, game.answers.length]);
   const affectedNow: Affects = modSel ? modAffects : thingSel.length ? thingAffects : (kept?.aff ?? { sectors: [], modules: [] });
-  const affected = affectedNow.sectors;
+  // A row chosen by its bubble: its sectors get the running violet outline (designer 2026-11-09).
+  const affected = rowQ && rowSel !== undefined ? rowQ.rows![rowSel]! : affectedNow.sectors;
   const modPops: ModPop[] = [];
   if (modSel && selInfo) {
     const d = moduleDef(c, modSel.id);
@@ -842,6 +833,8 @@ function GameScreen(p: GameProps) {
   const anomalyQ = q?.kind === "option" && q.options.some((o) => o.on?.kind === "anomaly");
   const takeQ = !actors && q?.kind === "option" && q.takeEnergy ? q : undefined;
   const baysWanted = splitOn === "bays";
+  // Damage to the Flagship (5.2): bubbles by the Bays, not the Bays themselves (designer 2026-11-09).
+  const damageQ = !actors && q?.kind === "split" && q.pick === "bays" && /^Your Flagship takes/.test(q.prompt) ? q : undefined;
 
   const co = data.companies.byId.get(s.player.company)!;
   // The Field shows once a mission is chosen (also while it is empty, to choose sectors at Mission Preparation).
@@ -885,8 +878,8 @@ function GameScreen(p: GameProps) {
       cur: s.flagship[i]!,
       max: b.integrity,
       abilities: abilities.filter((a) => a.bay === i + 1).map((a) => ({ id: a.id, text: a.text, opt: actors?.bays.get(a.id), noUnits: inPlay && a.overload === inOverload && noUnitToTarget(c, a.id) })),
-      split: inSplit ? { count: split[bucket] ?? 0, onAdd: () => addSplit(bucket), onSub: () => subSplit(bucket) } : undefined,
-      dim: baysWanted && !inSplit,
+      split: inSplit && !damageQ ? { count: split[bucket] ?? 0, onAdd: () => addSplit(bucket), onSub: () => subSplit(bucket) } : undefined,
+      dim: baysWanted && !inSplit && !damageQ,
     };
   });
   const orderViews: OrderView[] = s.mission
@@ -1023,29 +1016,22 @@ function GameScreen(p: GameProps) {
         {hover && !popup && hasField && <InfoBubble data={data} state={s} sector={hover} />}
         {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
         {look && <LookCard data={data} tiles={look} onClose={() => setLook(undefined)} />}
-        {endOverload && (
-          <button className="end-overload" onClick={() => answer(endOverload.id)} title="No Alert tokens remain (9.2)">
-            End the Overload
-          </button>
-        )}
+        {endOverload && <EndOverload onEnd={() => answer(endOverload.id)} />}
+        {rowQ && hasField && !planQ && <RowBubbles rows={rowQ.rows!} selected={rowSel} onSelect={setRowSel} onConfirm={(i) => send({ kind: "option", value: rowQ.options[i]!.id })} />}
         {planQ ? null : rotate ? (
-          <div className="q-banner">
-            <p className="prompt">
-              {describe({ data, state: real.state }, rotate.tile)}: turn it with the ⟲ ⟳ buttons on the unit. <span className="rule">rule 3.7</span>
-            </p>
-            {rotate.done ? (
-              <button className="primary" onClick={rotate.done}>
-                Done
-              </button>
-            ) : (
-              <span className="small">Your next tap keeps this facing.</span>
-            )}
-          </div>
+          // Facing (3.7): the turn buttons are on the unit; no card (designer 2026-11-09). "Done" only when needed.
+          rotate.done ? (
+            <button className="primary facing-done" onClick={rotate.done}>
+              Done
+            </button>
+          ) : null
         ) : !q ? (
           <QCard>
             <GameOver state={s} onLeave={p.onLeave} />
           </QCard>
-        ) : actors || anomalyQ ? null : onBoard(q) ? (
+        ) : damageQ ? (
+          <FlagshipDamage total={damageQ.total} from={/^[A-Z]_\d+$/.test(damageQ.rule) ? `from ${damageQ.rule}` : `rule ${damageQ.rule}`} buckets={damageQ.buckets} split={split} onAdd={addSplit} onReset={() => setSplit({})} />
+        ) : actors || anomalyQ || rowQ ? null : onBoard(q) ? (
           <div className="q-banner">
             <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
           </div>
