@@ -229,43 +229,27 @@ then: no "S2" / "D1" / "BS1" text. Under the Strength pips, on dark round bases:
 === SECTION: PLAY-TEST ROUND 11 (screen only, designer 2026-11-09) ===
 
 id: T13_R11_01
-title: A unit's Level is a badge and notches
-source: designer 2026-11-09 (Level variants A + C); Core Rules 3.3
-then: every unit with a Level (not Flares) shows, at its tile's upper left corner, a small dark
-      hexagon with the Level number, and one short bright notch per Level cut into the tile's
-      upper left edge towards the top corner (up to 5; Omega's big Levels: the badge only).
-      No word "Level".
+title: A unit's Level is a badge in the top corner
+source: designer 2026-11-09; Core Rules 3.3
+then: every unit with a Level (not Flares) shows a small dark hexagon with the Level number in
+      its tile's top corner. No word "Level", no notches. Fuse tokens sit just below it.
 
 id: T13_R11_02
 title: A ready Alert is a token and a pulsing rim
 source: designer 2026-11-09 (Alert variants A + B)
-given: the setup list's "Trial look: ... beacon light and radar ping" left unselected.
-then: no "ALERT" text. A yellow-black warning triangle with "!" at the tile's upper right corner
-      pops in when the Alert is placed; the tile's rim pulses amber-red. Gone once the Alert is
-      resolved or removed.
-
-id: T13_R11_03
-title: A ready Alert as a beacon and radar rings (trial look)
-source: designer 2026-11-09 (Alert variants C + D)
-given: the setup list's "Trial look: a ready Alert shown as a beacon light and radar ping"
-       selected.
-then: instead of the token and rim: a small red warning light at the tile's upper right corner
-      whose beam turns round, and orange radar rings going out from the unit every 1.2 s.
-
-id: T13_R11_04
-title: The Alert look is chosen on the setup list
-source: designer 2026-11-09; see batch 9 T9_SET_01 CHANGED note
-when: game setup, the expansion list
-then: it offers "Heat module (Expansion1)" and "Trial look: a ready Alert shown as a beacon
-      light and radar ping (off: an Alert token and a pulsing rim)". No rule changes with it.
+then: no "ALERT" text. A yellow-black warning triangle with "!" in the tile's bottom corner
+      (under "+N beneath") pops in when the Alert is placed; the tile's rim pulses amber-red.
+      Gone once the Alert is resolved or removed. No other look and nothing to choose at setup.
+note: The tile's upper right corner is kept free for the unit glyph (a future update).
 
 id: T13_R11_05
-title: Overload: energy flames from the edge
+title: Overload: energy waves from the edge
 source: designer 2026-11-09
 given: an Overload
-then: besides the plasma ring, tongues of energy fire (red-orange with white-gold cores, a few
-      violet) grow from the Field's edge towards the Field, flicker and die back, throwing
-      embers. With reduced motion: none.
+then: besides the plasma ring, faint loops of energy (orange, a few violet), like the magnetic
+      loops on a sun, rise from fixed places on the Field's edge towards the Field and slowly
+      sink back (5-9 s each). They do not move along the edge or wiggle. With reduced motion:
+      none.
 
 id: T13_R11_06
 title: Removing Flagship damage on bubbles by the Bays

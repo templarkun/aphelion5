@@ -72,9 +72,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
     const tops = sectorKeys(s).filter((k) => sectorState(s, k) === "occupied").map((k) => s.tiles[topTileId(s, k)!]!.tokens);
     return /^Choose an action/.test(q.prompt) && tops.some((t) => t.shield > 0) && tops.some((t) => t.damage > 0);
   },
-  // A ready Alert on the Field (token and pulsing rim, or beacon and radar: designer 2026-11-09).
+  // Ready Alerts on the Field (token at the bottom corner and a pulsing rim, designer 2026-11-09).
   alert: (q, g) => /choose an action/i.test(q.prompt) && alertsOnField(g) >= 2,
-  alertbeacon: (q, g) => /choose an action/i.test(q.prompt) && alertsOnField(g) >= 2,
   // Removing damage from the Flagship (bubbles by the Bays, designer 2026-11-09).
   repair: (q) => q.kind === "split" && /^Remove \d+ damage from your Flagship/.test(q.prompt) && q.buckets.length >= 2,
   // A question that chooses one unit, answered on bubbles on the units (designer 2026-11-09).
@@ -187,8 +186,6 @@ for (let seed = 1; seed < 400; seed++) {
       process.exit(0);
     }
     let a = randomAnswer(r, q);
-    // The Alert beacon look is a choice on the setup list.
-    if (what.startsWith("alert") && q.kind === "several" && /expansion/.test(q.prompt)) a = { kind: "several", value: what === "alertbeacon" ? ["heat", "alertBeacon"] : ["heat"] };
     for (let k = 0; k < 30 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, q);
     const res = playAnswer(data, g, a);
     if (res.result.status === "illegal" || res.result.status === "blocked") break;

@@ -30,10 +30,9 @@ then: "Choose a Campaign." with "Campaign 1" (asked even though it is the only o
 note: CHANGED 2026-11-07 (designer, open question I2) - the list also holds "Trial rule: Flare
       energy waits on the Flare until its Alert is resolved" (see batch 10, T10_TRY_01). The
       Project copy needs the same note.
-note: CHANGED 2026-11-09 (designer, round 11) - the list now holds "Heat module (Expansion1)"
-      and "Trial look: a ready Alert shown as a beacon light and radar ping (off: an Alert token
-      and a pulsing rim)". A screen trial only, no rule change (see batch 13, T13_R11_04). The
-      Flare energy trial rule is no longer on the list (batch 10, T10_TRY_01).
+note: CHANGED 2026-11-09 (designer) - the list holds only "Heat module (Expansion1)": the Flare
+      energy trial rule left it (batch 10, T10_TRY_01), and the "Trial look" for Alerts offered
+      for one round is gone too (batch 13, T13_R11_02).
 
 id: T9_SET_02
 title: Extra tiles are placed by the program

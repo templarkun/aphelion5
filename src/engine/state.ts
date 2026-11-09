@@ -192,8 +192,6 @@ export interface GameState {
     flareEnergyChoice?: boolean;
     /** Core Rules as printed: a Mecha may Attack a Mecha (games saved before 2026-11-08 only; the computer version forbids it). */
     mechaAttacksMecha?: boolean;
-    /** Screen trial (designer 2026-11-09): a ready Alert shown as a beacon light and radar ping, not a token and pulsing rim. */
-    alertBeacon?: boolean;
     /** Developer mode: a game played with it never records a high score (spec "Developer mode"). */
     developerMode: boolean;
   };

@@ -448,3 +448,20 @@ describe("random play-throughs of whole campaigns", () => {
   }, 120000);
 });
 
+
+describe("saves made with the one-day Alert trial look (2026-11-09)", () => {
+  it("replay with the dropped list entry ignored", () => {
+    let g = startGame(data(), { seed: 5, date: "2026-11-09", profile: emptyProfile(), developerMode: false, autoAnswer: true });
+    const answers: Answer[] = [];
+    for (let n = 0; n < 12 && g.view.status === "question"; n++) {
+      const q = g.view.question;
+      const a: Answer = q.kind === "several" && /expansion/.test(q.prompt) ? { kind: "several", value: ["heat"] } : randomAnswer(newRng(n + 1), q);
+      g = playAnswer(data(), g, a).game;
+      answers.push(a.kind === "several" && /expansion/.test(q.prompt) ? { kind: "several", value: ["heat", "alertBeacon"] } : a);
+    }
+    expect(answers.some((a) => a.kind === "several" && a.value.includes("alertBeacon"))).toBe(true);
+    const back = replayGame(data(), g.start, answers);
+    expect(back.view.state.settings.heatModule).toBe(true);
+    expect(back.answers.length).toBe(g.answers.length);
+  });
+});

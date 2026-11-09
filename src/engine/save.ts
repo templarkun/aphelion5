@@ -81,7 +81,10 @@ export function replayGame(data: GameData, start: GameStart, answers: readonly A
     const parts =
       v.status === "question" && v.question.energy && a.kind === "split"
         ? Object.entries(a.value).flatMap(([id, n]) => Array.from({ length: n }, (): Answer => ({ kind: "option", value: id })))
-        : [a];
+        : // The "Trial look" for Alerts was on the setup list for one day (2026-11-09); it is gone, so drop it.
+          v.status === "question" && v.question.kind === "several" && a.kind === "several" && a.value.includes("alertBeacon") && !v.question.options.some((o) => o.id === "alertBeacon")
+          ? [{ ...a, value: a.value.filter((x) => x !== "alertBeacon") }]
+          : [a];
     // Format 4 saves answered "pay 1 Heat to avoid Meltdown?" (H7); it is no longer asked (2026-11-08).
     if (v.status === "question" && v.question.kind !== "yesno" && a.kind === "yesno") continue;
     for (const p of parts) {

@@ -51,10 +51,13 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    radar sweep; combinations). Next: the designer tries them; then step 4.
    2026-11-09 round 11: sci-fi Strength and Shield icons, Level badge + notches (A + C), Alert
    token + pulsing rim, and a trial look (setup list) beacon + radar rings; Overload edge
-   flames; Flagship repair bubbles; FPS counter. Next: the designer picks one Alert look (the
-   other goes); then step 4.
+   flames; Flagship repair bubbles; FPS counter.
+   2026-11-09 round 12: Level badge in the top corner (no notches); Alert token in the bottom
+   corner with the pulsing rim (beacon look dropped); Overload edge effect now faint solar
+   loops. The tile's upper right corner is kept for the unit glyph (item 3, Art). Next: step 4.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
+   The unit glyph goes in each unit tile's upper right corner (designer 2026-11-09; kept free).
    Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly
    bubbles and the look card (B, S, F, P, G, M, empty hexagon = Cleared sector; `UnitGlyph`,
    `typeGlyph`), the Bay pictures (`Icon` in `src/web/Flagship.tsx`), the energy glyphs.

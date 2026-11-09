@@ -1250,8 +1250,7 @@ export function FieldView(p: FieldProps) {
       const v = looks.get(k);
       drawBarrier(au, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, v?.alpha ?? 1, v?.scale ?? 1);
     }
-    // Ready Alerts: a token and a pulsing rim, or a beacon and radar rings (screen trial).
-    const alertLook = st.settings.alertBeacon ? "beacon" : "token";
+    // Ready Alerts: a token at the bottom corner and a pulsing rim (alertFx.ts).
     const seenNow = new Set<string>();
     for (const [k, n] of nodes.current) {
       if (sectorState(st, k) !== "occupied") continue;
@@ -1265,7 +1264,7 @@ export function FieldView(p: FieldProps) {
       if (born > now && !player.current.busy) alertBorn.current.set(top, (born = now));
       if (born > now) continue; // placed by an animation still playing: shown when it ends
       const v = looks.get(k);
-      drawAlert(au, alertLook, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, born, v?.alpha ?? 1, v?.scale ?? 1, tk.wreck);
+      drawAlert(au, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, born, v?.alpha ?? 1, v?.scale ?? 1, tk.wreck);
     }
     for (const id of alertBorn.current.keys()) if (!seenNow.has(id)) alertBorn.current.delete(id);
 
@@ -1487,7 +1486,8 @@ export function FieldView(p: FieldProps) {
         const marked = t.tokens.shield + t.tokens.bioShield + t.tokens.damage > 0;
         if (b.length) label(b.join(" "), t.tokens.wreck ? size * 0.02 : marked ? size * 0.47 : size * 0.27, size * 0.16, 0x9b1c1c, true);
         addFuseTokens(node, t.tokens, cx, cy, size);
-        label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.64, size * 0.13);
+        // Above the Alert token's place at the bottom corner (designer 2026-11-09).
+        label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.13);
         // Trial rule (I2): the energy waiting on a Flare, as tokens on its tile (build step 3).
         const waiting = t.energy ? (["Yellow", "Red", "Blue"] as const).flatMap((col) => Array.from({ length: t.energy![col] ?? 0 }, () => col)) : [];
         if (waiting.length) {

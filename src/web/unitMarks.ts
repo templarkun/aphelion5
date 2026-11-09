@@ -7,8 +7,8 @@
  * - Shield tokens (6.2): small cyan hexagonal deflectors with a crest of light, up to 4; more: one big
  *   deflector with corner brackets and the number. Bio-shields (6.3) are the same in green with
  *   a helix.
- * - Level (3.3, designer 2026-11-09): a small dark hexagon badge with the number at the tile's
- *   upper left corner, and 1 to 5 bright notches along its upper left edge (`addLevel`).
+ * - Level (3.3, designer 2026-11-09): a small dark hexagon badge with the number in the tile's
+ *   top corner (`addLevel`).
  * - Damage tokens (6.1): small red spiked bursts with a dark crack, up to 4; more: one big burst
  *   with a dark ring and the number.
  * Shields and Damage never sit on a unit together (3.3), so they share one row.
@@ -196,41 +196,17 @@ export function addUnitMarks(node: Container, strength: number | undefined, t: T
   });
 }
 
-/**
- * Level (3.3), designer 2026-11-09 (variants A + C): a small dark hexagon badge with the number at
- * the tile's upper left corner, and one bright notch per Level (up to 5; Omega's big Levels: the
- * badge only) along the upper left edge towards the top corner, like rank stripes.
- */
+/** Level (3.3), designer 2026-11-09: a small dark hexagon badge with the number in the tile's top corner (no notches). */
 export function addLevel(node: Container, level: number | undefined, cx: number, cy: number, size: number): void {
   if (level === undefined) return;
   const g = new Graphics();
   g.eventMode = "none";
   g.label = "unit-level";
   node.addChild(g);
-  // The tile's upper left corner (150°) and top corner (90°), on the tile's rim (0.9).
-  const lx = cx - Math.cos(Math.PI / 6) * size * 0.9;
-  const ly = cy - Math.sin(Math.PI / 6) * size * 0.9;
-  const tx = cx;
-  const ty = cy - size * 0.9;
-  if (level <= 5) {
-    const ex = tx - lx;
-    const ey = ty - ly;
-    const len = Math.hypot(ex, ey);
-    // Inward normal of that edge.
-    const nx = -ey / len;
-    const ny = ex / len;
-    const depth = size * 0.1;
-    for (let i = 0; i < level; i++) {
-      const f = 0.36 + i * 0.075;
-      const x = lx + ex * f;
-      const y = ly + ey * f;
-      g.moveTo(x, y).lineTo(x + nx * depth, y + ny * depth).stroke({ width: Math.max(3, size * 0.045), color: 0x101216, alpha: 0.85 });
-      g.moveTo(x, y).lineTo(x + nx * depth, y + ny * depth).stroke({ width: Math.max(1.5, size * 0.022), color: 0xfff1c2 });
-    }
-  }
-  const bx = cx - size * 0.6;
-  const by = cy - size * 0.37;
-  const r = size * 0.13;
+  // In the tile's top corner (designer 2026-11-09).
+  const bx = cx;
+  const by = cy - size * 0.78;
+  const r = size * 0.1;
   g.poly(hexPts(bx, by, r * 1.12)).fill({ color: 0x000000, alpha: 0.3 });
   g.poly(hexPts(bx, by, r)).fill({ color: 0x15161a }).stroke({ width: Math.max(1, size * 0.018), color: 0xfff1c2, alpha: 0.9 });
   number(node, level, bx, by + r * 0.04, r * (level > 9 ? 0.95 : 1.2), 0xfff1c2);
