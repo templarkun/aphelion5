@@ -83,6 +83,7 @@ export function* damageFlagship(c: RunCtx, n: number, rule = "5.2"): Effect {
   }
   const f = c.state.flagship;
   const total = Math.min(n, f.reduce((a, b) => a + b, 0));
+  emit(c, { kind: "flagship", amount: total, rule });
   const a = yield* ask(c, {
     kind: "split",
     pick: "bays",
@@ -550,6 +551,7 @@ export function* setOffFuses(c: RunCtx): Effect {
     tile(c.state, pick.tile).tokens[pick.kind] -= 1;
     c.state.supply[pick.kind] += 1;
     log(c, `${pick.label} goes off`, "6.6");
+    emit(c, { kind: "fuse", tile: pick.tile, unitId: unitDef(c, pick.tile).id, sector: sectorOf(c.state, pick.tile)!, fuse: pick.kind });
     yield* asEffect(c, fuseEffect(c, pick.tile, pick.kind));
   }
 }

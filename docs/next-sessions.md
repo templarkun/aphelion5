@@ -36,6 +36,11 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    2026-11-08 round 7: I9 (Bays and Orders greyed out when no unit fits). Step 3 done: Modules
    drag onto their one target, Flare energy tokens drag onto Modules. Left in step 3: tune the
    weapon looks after the designer's play-test. Next: step 4 (Upgrade sheet).
+   2026-11-09 round 8 (designer's look play-test): only V1 Bay 1 keeps the laser; other Bays a
+   rail slug, Orders a missile, each unit type its own shot, Heat Wave a heat ray, Fuse tokens
+   go off with their own looks; effects on "all" units one fast bombing; Fuse tokens and
+   Barriers drawn as pieces; a reveal burst per unit type (Flares and Omega the biggest).
+   Next: the designer tries them; then step 4 (Upgrade sheet).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    Placeholders to replace with real images (designer 2026-11-08): the unit glyphs in Anomaly

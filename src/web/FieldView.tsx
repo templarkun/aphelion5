@@ -27,8 +27,10 @@ import { type Ctx, sectorKeys, sectorOf, sectorState, stack, strength, tile, top
 import type { Answer } from "../engine/questions.js";
 import type { GameState, TileId } from "../engine/state.js";
 import { arrowSides, fromKey } from "../geometry/hex.js";
-import { type NodeLook, Player, type Step, easeInOut, easeOut } from "./anim.js";
-import { type Source, fireGlow, weaponStep } from "./weapons.js";
+import { type NodeLook, Player, type Step, easeInOut, easeOut, parallel } from "./anim.js";
+import { type ShotLook, type Source, type Target, UNIT_SHOT, edgeOf, fireGlow, shotStep, weaponStep } from "./weapons.js";
+import { BIG_REVEAL, chargeLook, revealFxStep } from "./revealFx.js";
+import { addFuseTokens, drawBarrier } from "./tokensFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
 export interface FieldProps {
@@ -93,10 +95,7 @@ function badgeText(t: GameState["tiles"][string]["tokens"]): string[] {
   if (t.damage) out.push(`D${t.damage}`);
   if (t.shield) out.push(`S${t.shield}`);
   if (t.bioShield) out.push(`BS${t.bioShield}`);
-  if (t.barrier) out.push("BAR");
-  if (t.tick) out.push(`TICK${t.tick > 1 ? t.tick : ""}`);
-  if (t.mortar) out.push(`MOR${t.mortar > 1 ? t.mortar : ""}`);
-  if (t.feedback) out.push(`FB${t.feedback > 1 ? t.feedback : ""}`);
+  // Barriers and Fuse tokens are drawn as pieces (tokensFx.ts), not as text.
   return out;
 }
 
@@ -132,10 +131,12 @@ export function FieldView(p: FieldProps) {
   const props = useRef(p);
   props.current = p;
   const player = useRef(new Player());
-  const layers = useRef<{ root: Container; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined } | undefined>(undefined);
+  const layers = useRef<{ root: Container; aura: Graphics; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined } | undefined>(undefined);
   /** Each sector's container and centre, from the last draw. */
   const nodes = useRef(new Map<string, { node: Container; cx: number; cy: number }>());
   const geo = useRef({ size: 40 });
+  /** Reduced motion: the Barrier field is drawn still. */
+  const stillRef = useRef(false);
   const lastState = useRef<GameState | undefined>(undefined);
   const drag = useRef<DragState | undefined>(undefined);
   const press = useRef<{ k: string | undefined; unit: TileId | undefined; x: number; y: number; touch: boolean; held: boolean } | undefined>(undefined);
@@ -151,10 +152,13 @@ export function FieldView(p: FieldProps) {
     let gone = false;
     const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (still) player.current.speed = 0;
+    stillRef.current = !!still;
     void a.init({ antialias: true, backgroundAlpha: 0, resizeTo: host.current!, autoDensity: true, resolution: window.devicePixelRatio || 1 }).then(() => {
       if (gone) return a.destroy(true);
       host.current!.appendChild(a.canvas);
       const root = new Container();
+      const aura = new Graphics();
+      aura.eventMode = "none";
       const glow = new Graphics();
       glow.eventMode = "none";
       const fx = new Container();
@@ -163,8 +167,8 @@ export function FieldView(p: FieldProps) {
       dl.eventMode = "none";
       const tether = new Graphics();
       dl.addChild(tether);
-      a.stage.addChild(root, glow, fx, dl);
-      layers.current = { root, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined };
+      a.stage.addChild(root, aura, glow, fx, dl);
+      layers.current = { root, aura, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined };
       ready.current = true;
       draw();
       a.ticker.add(frame);
@@ -540,6 +544,169 @@ export function FieldView(p: FieldProps) {
     const size = () => geo.current.size;
     const isTop = (k: string, id: TileId) => topTileId(s, k) === id && sectorState(s, k) === "occupied";
     const out: Step[] = [];
+
+    /** The tile flips; Flares and Omega units charge up first; then each type's own burst (not Bots). */
+    function revealSteps(e: GameEvent & { kind: "revealed" }): Step[] {
+      const real = isTop(e.sector, e.tile);
+      const back = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: props.current.dark ? 0x3c4f66 : 0x5b7391 });
+      const g = real ? undefined : ghost(e.type, e.unitId);
+      const flash = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0xffffff });
+      const big = BIG_REVEAL.has(e.type);
+      const charge = big ? new Graphics() : undefined;
+      // Share of the step spent charging (big reveals only).
+      const pre = big ? 0.45 : 0;
+      const flip: Step = {
+        ms: 450 / (1 - pre),
+        hides: [e.sector],
+        start: () => {
+          fx.addChild(back);
+          if (g) fx.addChild(g);
+          fx.addChild(flash);
+          if (charge) fx.addChild(charge);
+        },
+        frame: (p0, look) => {
+          const c = centre(e.sector);
+          if (p0 < pre) {
+            const shake = chargeLook(charge!, e.type, c.x, c.y, size(), p0 / pre);
+            back.position.set(c.x + shake, c.y);
+            back.visible = true;
+            back.scale.set(1);
+            if (g) g.visible = false;
+            else look(e.sector).alpha = 0;
+            flash.alpha = 0;
+            return;
+          }
+          charge?.clear();
+          const p = (p0 - pre) / (1 - pre);
+          const lift = 1 + 0.07 * Math.sin(Math.PI * p);
+          for (const x of [back, flash, g]) x?.position.set(c.x, c.y);
+          back.visible = p < 0.5;
+          back.scale.set(Math.max(0.001, 1 - 2 * p) * lift, lift);
+          const sx = p < 0.5 ? 0 : 2 * p - 1;
+          if (g) {
+            g.visible = p >= 0.5;
+            g.scale.set(Math.max(0.001, sx) * lift, lift);
+          } else {
+            const L = look(e.sector);
+            L.alpha = p < 0.5 ? 0 : 1;
+            L.scaleX = Math.max(0.001, sx);
+            L.scale = lift;
+          }
+          flash.alpha = p > 0.8 ? (1 - p) * 2.5 : 0;
+        },
+        end: () => {
+          back.destroy();
+          flash.destroy();
+          charge?.destroy();
+          g?.destroy({ children: true });
+        },
+      };
+      const burst = revealFxStep(e.type, e.sector, { fx, centre, size, keys: () => [...nodes.current.keys()], host: () => host.current });
+      return burst ? [flip, burst] : [flip];
+    }
+
+    /** A hit lands: the tile shakes, a flash and the damage number (a Barrier: its field shatters). */
+    function hitStep(e: GameEvent & { kind: "hit" }, quick = false): Step {
+      const real = isTop(e.sector, e.tile);
+      const g = real ? undefined : ghost(e.type, e.unitId);
+      const flash = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: e.stopped ? 0x9fe3ff : 0xffffff });
+      const label = e.stopped ? "Barrier" : `−${e.amount}`;
+      const num = new Text({ text: label, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(14, size() * 0.42), fill: e.stopped ? 0x9fd3ff : 0xffffff, fontWeight: "800", stroke: { color: e.stopped ? 0x1d4e7a : 0x9b1c1c, width: 4 } } });
+      num.anchor.set(0.5);
+      const shards = e.stopped ? new Graphics() : undefined;
+      return {
+        ms: quick ? 380 : e.stopped ? 620 : 480,
+        start: () => {
+          if (g) fx.addChild(g);
+          fx.addChild(flash, num);
+          if (shards) fx.addChild(shards);
+        },
+        frame: (p, look) => {
+          const c = centre(e.sector);
+          const shake = Math.sin(p * 46) * (1 - p) * size() * 0.07;
+          if (g) g.position.set(c.x + shake, c.y);
+          else look(e.sector).dx = shake;
+          flash.position.set(c.x + shake, c.y);
+          flash.alpha = (1 - p) ** 2 * 0.75;
+          num.position.set(c.x, c.y - size() * (0.15 + 0.55 * easeOut(p)));
+          num.alpha = 1 - p ** 3;
+          if (shards) {
+            // The Barrier's force field flares up and breaks into pieces.
+            shards.clear();
+            const R = size() * (0.98 + 0.25 * easeOut(Math.min(1, p * 3)));
+            shards.circle(c.x, c.y, R).stroke({ width: 4 * (1 - p) + 0.5, color: 0xbff0ff, alpha: Math.max(0, 1 - p * 2.2) });
+            for (let i = 0; i < 12; i++) {
+              const a = (i / 12) * Math.PI * 2 + 0.2;
+              const d = R + size() * 0.9 * easeOut(p);
+              const x = c.x + Math.cos(a) * d;
+              const y = c.y + Math.sin(a) * d + p * p * size() * 0.4;
+              const w = size() * 0.1;
+              shards.poly([x, y - w, x + w * 0.7, y + w * 0.5, x - w * 0.7, y + w * 0.5]).fill({ color: 0x9fe3ff, alpha: 1 - p });
+            }
+          }
+        },
+        end: () => {
+          flash.destroy();
+          num.destroy();
+          shards?.destroy();
+          g?.destroy({ children: true });
+        },
+      };
+    }
+
+    /** A unit is destroyed: it cracks and bursts (a Wreck: dimmed and stamped). */
+    function destroyStep(e: GameEvent & { kind: "destroyed" }): Step {
+      if (e.wreck) {
+        const dim = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0x1d1d1f });
+        const stamp = new Text({ text: "WRECK", style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(12, size() * 0.3), fill: 0xffffff, fontWeight: "900", stroke: { color: 0x9b1c1c, width: 4 } } });
+        stamp.anchor.set(0.5);
+        return {
+          ms: 500,
+          start: () => fx.addChild(dim, stamp),
+          frame: (p) => {
+            const c = centre(e.sector);
+            dim.position.set(c.x, c.y);
+            dim.alpha = Math.sin(Math.PI * p) * 0.55;
+            stamp.position.set(c.x, c.y);
+            stamp.scale.set(1.8 - 0.8 * easeOut(Math.min(1, p * 1.6)));
+            stamp.alpha = Math.min(1, p * 2) * (1 - Math.max(0, p - 0.7) / 0.3);
+          },
+          end: () => {
+            dim.destroy();
+            stamp.destroy();
+          },
+        };
+      }
+      const g = ghost(e.type, e.unitId);
+      const bits = fragments(TYPE_COLOUR[e.type] ?? 0xcccccc);
+      return {
+        ms: 700,
+        hides: [e.sector],
+        start: () => {
+          fx.addChild(g);
+          for (const x of bits) fx.addChild(x.b);
+        },
+        frame: (p, look) => {
+          const c = centre(e.sector);
+          const crack = Math.min(1, p / 0.25);
+          const burst = Math.max(0, (p - 0.2) / 0.8);
+          g.position.set(c.x + Math.sin(p * 60) * (1 - crack) * size() * 0.03, c.y);
+          g.scale.set(1 + 0.05 * crack - 0.4 * burst);
+          g.alpha = 1 - burst;
+          for (const x of bits) {
+            const d = size() * x.r * easeOut(burst);
+            x.b.position.set(c.x + Math.cos(x.a) * d, c.y + Math.sin(x.a) * d);
+            x.b.rotation = x.spin * burst;
+            x.b.alpha = burst === 0 ? 0 : 1 - burst;
+          }
+          look(e.sector).alpha = easeOut(burst);
+        },
+        end: () => {
+          g.destroy({ children: true });
+          for (const x of bits) x.b.destroy();
+        },
+      };
+    }
     /** Mecha whose destruction was already shown with their Attack (designer 2026-11-08: Mecha first, then the hit). */
     const attacked = new Set<TileId>();
     /** The Bay, Order or Module whose effect is playing (its hits, moves and looks start from it). */
@@ -557,6 +724,117 @@ export function FieldView(p: FieldProps) {
       return { x: r.left + c0.x, y: r.top + c0.y, size: size() };
     };
     const from = (rule: string | undefined) => (src && rule === src.rule ? src : undefined);
+    const pagePt = (k: string | undefined) => (k ? onPage(k)() : undefined);
+
+    /** Where a unit is now (or was last seen in the events), by its id. */
+    const whereIs = (unitId: string): string | undefined => {
+      for (const k of sectorKeys(s)) {
+        const t = topTileId(s, k);
+        if (t && sectorState(s, k) === "occupied" && tile(s, t).unitId === unitId) return k;
+      }
+      const all = s.events ?? [];
+      for (let j = all.length - 1; j >= 0; j--) {
+        const x = all[j]!;
+        if (!("unitId" in x) || x.unitId !== unitId) continue;
+        if (x.kind === "moved") return x.to;
+        if (x.kind === "attack") return x.from;
+        if ("sector" in x) return x.sector;
+      }
+      return undefined;
+    };
+    /** The unit whose own effect a rule names (S_01, M_07, a Mecha upgrade V1_M03_U2 = M_03...). */
+    const unitOfRule = (rule: string | undefined): { look: ShotLook; colour: string; sector: string } | undefined => {
+      if (!rule) return undefined;
+      const up = /^V\d_M(\d\d)_/.exec(rule);
+      const id = up ? `M_${up[1]}` : /^[A-Z]_\d+$/.test(rule) ? rule : undefined;
+      if (!id) return undefined;
+      const type = props.current.data.units.byId.get(id)?.type;
+      const sector = whereIs(id);
+      const look = type ? UNIT_SHOT[type] : undefined;
+      return look && sector ? { ...look, sector } : undefined;
+    };
+    /** The last Fuse token to go off up to event i (a Mortar's hit comes an answer later). */
+    const lastFuse = (i: number) => {
+      for (let j = i; j >= 0; j--) {
+        const x = events[j]!;
+        if (x.kind === "fuse") return x;
+      }
+      const first = events[0]?.seq ?? Infinity;
+      const prev = [...(s.events ?? [])].reverse().find((x) => x.seq < first && x.kind === "fuse");
+      return prev?.kind === "fuse" ? prev : undefined;
+    };
+    const heatBar = (t: Target) => edgeOf(document.querySelector("[data-heat]"), t);
+    /** From high above the target: the shells of a bombing. */
+    const sky = (k: number) => (t: Target) => ({ x: t.x + t.size * (0.6 + 0.3 * Math.sin(k * 2.3)), y: Math.max(-20, t.y - window.innerHeight * 0.55) });
+    const BOMB: Record<string, string> = { bay: "#7af4ff", order: "#ffb347", Yellow: "#f2c230", Red: "#ff4d3d", Blue: "#3d8bff" };
+
+    /** While shots fly, units they will destroy (already gone from the board) stay shown where they are. */
+    function holding(step: Step, hits: (GameEvent & { kind: "hit" })[]): Step {
+      const gone = hits.filter((h) => !isTop(h.sector, h.tile));
+      if (!gone.length) return step;
+      const ghosts = gone.map((h) => ({ h, g: ghost(h.type, h.unitId) }));
+      const hold: Step = {
+        ms: step.ms,
+        start: () => ghosts.forEach((x) => fx.addChild(x.g)),
+        frame: () => ghosts.forEach((x) => x.g.position.set(centre(x.h.sector).x, centre(x.h.sector).y)),
+        end: () => ghosts.forEach((x) => x.g.destroy({ children: true })),
+      };
+      return parallel([hold, step]);
+    }
+
+    /** The shot before a single hit, by what dealt it (designer 2026-11-09: each source its own look). */
+    function oneShot(e: GameEvent & { kind: "hit" }): Step | undefined {
+      const to = onPage(e.sector);
+      const used = from(e.rule);
+      if (used) return weaponStep(used, "hit", to);
+      if (e.rule === "H5") return shotStep("heat", "#ff7a2f", heatBar, to);
+      if (e.rule === "H7") return shotStep("bomb", "#ff6a2a", sky(0), to);
+      if (e.rule === "6.6") {
+        const f = lastFuse(events.indexOf(e));
+        if (f?.fuse === "mortar") return shotStep("lob", "#ff4a3a", () => pagePt(f.sector), to);
+        return shotStep("fuse", "#ff3b2f", (t) => t, to);
+      }
+      const u = unitOfRule(e.rule);
+      if (u && u.sector !== e.sector) return shotStep(u.look, u.colour, () => pagePt(u.sector), to);
+      return undefined;
+    }
+
+    /** One of the shots of an effect on "all" units: shells from above for Bays, Orders and Modules; a unit's own look from it. */
+    function areaShot(e: GameEvent & { kind: "hit" }, k: number): Step | undefined {
+      const to = onPage(e.sector);
+      const used = from(e.rule);
+      if (used) {
+        const colour = BOMB[used.what === "module" ? (used.colour ?? "") : used.what] ?? "#ffffff";
+        return shotStep("bomb", used.rule === "V1_BAY1" ? "#ff5a5a" : colour, sky(k), to, k === 0 ? { onStart: () => fireGlow(used) } : {});
+      }
+      if (e.rule === "H7") return shotStep("bomb", "#ff6a2a", sky(k), to);
+      const u = unitOfRule(e.rule);
+      if (u && u.sector !== e.sector) return shotStep(u.look, u.colour, () => pagePt(u.sector), to, { seed: k * 7 + 1 });
+      return undefined;
+    }
+
+    /** Damage coming at your Flagship (5.2): a shot from its source to the Flagship panel, which shakes. */
+    function flagshipShot(rule: string, i: number): Step {
+      const panel = () => document.querySelector<HTMLElement>(".flagship");
+      const to = (): Target | undefined => {
+        const r = panel()?.getBoundingClientRect();
+        return r && r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2, size: Math.max(20, Math.min(r.width, r.height) / 3) } : undefined;
+      };
+      const shake = () => {
+        const el = panel();
+        if (!el) return;
+        el.classList.remove("fx-shake");
+        void el.offsetWidth;
+        el.classList.add("fx-shake");
+        window.setTimeout(() => el.classList.remove("fx-shake"), 600);
+      };
+      const f = rule === "6.6" ? lastFuse(i) : undefined;
+      if (f) return shotStep("void", "#ff3b3b", () => pagePt(f.sector), to, { onHit: shake });
+      if (rule === "H7") return shotStep("heat", "#ff7a2f", heatBar, to, { onHit: shake });
+      const u = unitOfRule(rule);
+      if (u) return shotStep(u.look, u.colour, () => pagePt(u.sector), to, { onHit: shake });
+      return { ms: 300, start: shake, frame: () => {}, end: () => {} };
+    }
     for (let i = 0; i < events.length; i++) {
       const e = events[i]!;
       if (e.kind === "used") {
@@ -566,8 +844,43 @@ export function FieldView(p: FieldProps) {
         out.push({ ms: 160, start: () => fireGlow(used), frame: () => {}, end: () => {} });
         continue;
       }
-      // Weapon and aura looks (build step 3): the shot, the tractor beam or the scan comes first.
-      if (e.kind === "hit" && from(e.rule)) out.push(weaponStep(src!, "hit", onPage(e.sector)));
+      // Effects on "all" units (designer 2026-11-09): every target is shot at once, every hit lands
+      // at once, then every unit destroyed bursts at once ("field bombing"), instead of one by one.
+      if (e.kind === "hit") {
+        const hits: (GameEvent & { kind: "hit" })[] = [];
+        const gone: (GameEvent & { kind: "destroyed" })[] = [];
+        const struck = new Set<TileId>();
+        let j = i;
+        for (; j < events.length; j++) {
+          const n = events[j]!;
+          if (n.kind === "hit" && n.rule === e.rule) {
+            hits.push(n);
+            struck.add(n.tile);
+          } else if (n.kind === "destroyed" && struck.has(n.tile)) gone.push(n);
+          else break;
+        }
+        if (hits.length >= 2) {
+          i = j - 1;
+          const shots = hits.map((h, k) => areaShot(h, k)).filter((x): x is Step => x !== undefined);
+          if (shots.length) out.push(holding(parallel(shots, 40), hits));
+          out.push(parallel(hits.map((h) => hitStep(h, true))));
+          const bursts = gone.filter((d) => !(attacked.has(d.tile) && !d.wreck)).map((d) => destroyStep(d));
+          if (bursts.length) out.push(parallel(bursts, 30));
+          continue;
+        }
+        // Weapon and aura looks (build step 3): the shot comes first.
+        const shot = oneShot(e);
+        if (shot) out.push(holding(shot, [e]));
+      }
+      if (e.kind === "fuse" && e.fuse !== "tick") {
+        // A Mortar or Feedback token blows on its unit (a Tick's blast plays with its hit).
+        out.push(shotStep("fuse", "#ff3b2f", (t) => t, onPage(e.sector)));
+        continue;
+      }
+      if (e.kind === "flagship") {
+        out.push(flagshipShot(e.rule, i));
+        continue;
+      }
       if ((e.kind === "moved" || e.kind === "swapped") && from(e.rule)) out.push(weaponStep(src!, "move", onPage(e.from)));
       if (e.kind === "looked" && from(e.rule)) {
         const k = e.tiles.find((t) => t.sector)?.sector;
@@ -697,127 +1010,11 @@ export function FieldView(p: FieldProps) {
           end: () => {},
         });
       } else if (e.kind === "revealed") {
-        const real = isTop(e.sector, e.tile);
-        const back = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: props.current.dark ? 0x3c4f66 : 0x5b7391 });
-        const g = real ? undefined : ghost(e.type, e.unitId);
-        const flash = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0xffffff });
-        out.push({
-          ms: 450,
-          hides: [e.sector],
-          start: () => {
-            fx.addChild(back);
-            if (g) fx.addChild(g);
-            fx.addChild(flash);
-          },
-          frame: (p, look) => {
-            const c = centre(e.sector);
-            const lift = 1 + 0.07 * Math.sin(Math.PI * p);
-            for (const x of [back, flash, g]) x?.position.set(c.x, c.y);
-            back.visible = p < 0.5;
-            back.scale.set(Math.max(0.001, 1 - 2 * p) * lift, lift);
-            const sx = p < 0.5 ? 0 : 2 * p - 1;
-            if (g) {
-              g.visible = p >= 0.5;
-              g.scale.set(Math.max(0.001, sx) * lift, lift);
-            } else {
-              const L = look(e.sector);
-              L.alpha = p < 0.5 ? 0 : 1;
-              L.scaleX = Math.max(0.001, sx);
-              L.scale = lift;
-            }
-            flash.alpha = p > 0.8 ? (1 - p) * 2.5 : 0;
-          },
-          end: () => {
-            back.destroy();
-            flash.destroy();
-            g?.destroy({ children: true });
-          },
-        });
+        out.push(...revealSteps(e));
       } else if (e.kind === "hit") {
-        const real = isTop(e.sector, e.tile);
-        const g = real ? undefined : ghost(e.type, e.unitId);
-        const flash = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0xffffff });
-        const label = e.stopped ? "Barrier" : `−${e.amount}`;
-        const num = new Text({ text: label, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(14, size() * 0.42), fill: e.stopped ? 0x9fd3ff : 0xffffff, fontWeight: "800", stroke: { color: 0x9b1c1c, width: 4 } } });
-        num.anchor.set(0.5);
-        out.push({
-          ms: 480,
-          start: () => {
-            if (g) fx.addChild(g);
-            fx.addChild(flash, num);
-          },
-          frame: (p, look) => {
-            const c = centre(e.sector);
-            const shake = Math.sin(p * 46) * (1 - p) * size() * 0.07;
-            if (g) g.position.set(c.x + shake, c.y);
-            else look(e.sector).dx = shake;
-            flash.position.set(c.x + shake, c.y);
-            flash.alpha = (1 - p) ** 2 * 0.75;
-            num.position.set(c.x, c.y - size() * (0.15 + 0.55 * easeOut(p)));
-            num.alpha = 1 - p ** 3;
-          },
-          end: () => {
-            flash.destroy();
-            num.destroy();
-            g?.destroy({ children: true });
-          },
-        });
+        out.push(hitStep(e));
       } else if (e.kind === "destroyed") {
-        if (e.wreck) {
-          const dim = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0x1d1d1f });
-          const stamp = new Text({ text: "WRECK", style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(12, size() * 0.3), fill: 0xffffff, fontWeight: "900", stroke: { color: 0x9b1c1c, width: 4 } } });
-          stamp.anchor.set(0.5);
-          out.push({
-            ms: 500,
-            start: () => fx.addChild(dim, stamp),
-            frame: (p) => {
-              const c = centre(e.sector);
-              dim.position.set(c.x, c.y);
-              dim.alpha = Math.sin(Math.PI * p) * 0.55;
-              stamp.position.set(c.x, c.y);
-              stamp.scale.set(1.8 - 0.8 * easeOut(Math.min(1, p * 1.6)));
-              stamp.alpha = Math.min(1, p * 2) * (1 - Math.max(0, p - 0.7) / 0.3);
-            },
-            end: () => {
-              dim.destroy();
-              stamp.destroy();
-            },
-          });
-          continue;
-        }
-        const g = ghost(e.type, e.unitId);
-        const colour = TYPE_COLOUR[e.type] ?? 0xcccccc;
-        const bits = Array.from({ length: 10 }, (_, i) => {
-          const b = new Graphics().poly([0, -size() * 0.16, size() * 0.12, size() * 0.1, -size() * 0.12, size() * 0.1]).fill({ color: i % 3 === 0 ? 0xfff1c4 : colour });
-          return { b, a: (i / 10) * Math.PI * 2 + (i % 2) * 0.3, r: 0.7 + ((i * 37) % 10) / 20, spin: (i % 2 ? 1 : -1) * (2 + (i % 3)) };
-        });
-        out.push({
-          ms: 700,
-          hides: [e.sector],
-          start: () => {
-            fx.addChild(g);
-            for (const x of bits) fx.addChild(x.b);
-          },
-          frame: (p, look) => {
-            const c = centre(e.sector);
-            const crack = Math.min(1, p / 0.25);
-            const burst = Math.max(0, (p - 0.2) / 0.8);
-            g.position.set(c.x + Math.sin(p * 60) * (1 - crack) * size() * 0.03, c.y);
-            g.scale.set(1 + 0.05 * crack - 0.4 * burst);
-            g.alpha = 1 - burst;
-            for (const x of bits) {
-              const d = size() * x.r * easeOut(burst);
-              x.b.position.set(c.x + Math.cos(x.a) * d, c.y + Math.sin(x.a) * d);
-              x.b.rotation = x.spin * burst;
-              x.b.alpha = burst === 0 ? 0 : 1 - burst;
-            }
-            look(e.sector).alpha = easeOut(burst);
-          },
-          end: () => {
-            g.destroy({ children: true });
-            for (const x of bits) x.b.destroy();
-          },
-        });
+        out.push(destroyStep(e));
       } else if (e.kind === "energy") {
         // An energy token flies in an arc to its Module (0.4 s); by itself (one Module only): half speed (I1).
         let dot: HTMLDivElement | undefined;
@@ -938,6 +1135,18 @@ export function FieldView(p: FieldProps) {
       n.node.alpha = v?.alpha ?? 1;
     }
     host.current?.setAttribute("data-anim", player.current.busy ? "1" : "0");
+
+    // Barriers: a force field round their unit, following the tile as it moves.
+    const au = L.aura;
+    au.clear();
+    const st = props.current.state;
+    for (const [k, n] of nodes.current) {
+      if (sectorState(st, k) !== "occupied") continue;
+      const top = topTileId(st, k);
+      if (!top || !tile(st, top).tokens.barrier) continue;
+      const v = looks.get(k);
+      drawBarrier(au, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, v?.alpha ?? 1, v?.scale ?? 1);
+    }
 
     // Glows: the targets only show once the animations before them are done (spec "Timing").
     const g = L.glow;
@@ -1145,6 +1354,7 @@ export function FieldView(p: FieldProps) {
         label(str !== undefined ? `Strength ${str}` : "", size * 0.02, size * 0.17);
         const b = badgeText(t.tokens);
         if (b.length) label(b.join(" "), size * 0.26, size * 0.16, t.tokens.alert || t.tokens.wreck ? 0x9b1c1c : 0x1d1d1f, true);
+        addFuseTokens(node, t.tokens, cx, cy, size);
         label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.14);
         // Trial rule (I2): the energy waiting on a Flare, as tokens on its tile (build step 3).
         const waiting = t.energy ? (["Yellow", "Red", "Blue"] as const).flatMap((col) => Array.from({ length: t.energy![col] ?? 0 }, () => col)) : [];

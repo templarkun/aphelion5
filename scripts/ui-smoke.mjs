@@ -592,6 +592,7 @@ if (existsSync(`${out}/flarechip-save.json`)) {
   await pasteSave(pg, `${out}/flarechip-save.json`);
   await pg.waitForTimeout(1200);
   const chip = pg.locator(`.flare-chip.${plan.colour.toLowerCase()}`).first();
+  await chip.waitFor({ timeout: 5000 }).catch(() => {});
   const chips = await pg.locator(".flare-chip").count();
   const before = await promptOf(pg);
   const placedIn = (t) => (t.match(new RegExp(`1 ${plan.colour} energy placed on`, "g")) ?? []).length;
@@ -614,7 +615,41 @@ if (existsSync(`${out}/flarechip-save.json`)) {
   flareChipCheck = chips >= 1 && stayed && placed ? "ok" : `failed (chips ${chips}, stayed ${stayed}, placed ${placed})`;
   await pg.close();
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck }));
+// Effects (designer 2026-11-09): an Omega reveal flashes over the Field; an Order on "all" units bombs them all at once.
+let fxCheck = "skipped (no save)";
+if (existsSync(`${out}/reveal-Omega-save.json`) && existsSync(`${out}/area-save.json`)) {
+  let pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  const plan = (f) => JSON.parse(readFileSync(`${out}/${f}.plan.json`, "utf8")).shortcut;
+  await pasteSave(pg, `${out}/reveal-Omega-save.json`);
+  const p = await sectorPoint(pg, plan("reveal-Omega-save.json").slice(7));
+  await pg.mouse.click(p.x, p.y);
+  await pg.waitForTimeout(400);
+  await pg.locator(".popup [role=menuitem]", { hasText: "Reveal" }).click();
+  let flash = false;
+  for (let i = 0; i < 40 && !flash; i++) {
+    flash = (await pg.locator(".reveal-flash.omega").count()) > 0;
+    await pg.waitForTimeout(50);
+  }
+  await pg.close();
+  pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/area-save.json`);
+  const order = pg.locator(`[data-order="${plan("area-save.json").slice(6)}"]`);
+  await order.click();
+  await pg.waitForTimeout(300);
+  const act = pg.locator(".popup [role=menuitem], .popup button", { hasText: /Activate/ });
+  if (await act.count()) await act.first().click();
+  else await order.click();
+  let bombs = 0;
+  for (let i = 0; i < 40; i++) {
+    bombs = Math.max(bombs, await pg.locator("svg.look-bomb").count());
+    await pg.waitForTimeout(25);
+  }
+  fxCheck = flash && bombs >= 2 ? "ok" : `failed (Omega flash ${flash}, bombs at once ${bombs})`;
+  await pg.close();
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

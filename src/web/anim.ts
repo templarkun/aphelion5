@@ -86,3 +86,45 @@ export const easeOut = (p: number) => 1 - (1 - p) ** 3;
 export const easeInOut = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - (-2 * p + 2) ** 3 / 2);
 /** A small settle at the end (overshoot then back). */
 export const easeOutBack = (p: number) => 1 + 2.2 * (p - 1) ** 3 + 1.2 * (p - 1) ** 2;
+
+/**
+ * Several steps at once, as one step (designer 2026-11-09: effects on "all" units play together,
+ * fast). `stagger`: ms between the starts. Sectors a step hides stay hidden until that step starts.
+ */
+export function parallel(steps: Step[], stagger = 0): Step {
+  const started = steps.map(() => false);
+  const done = steps.map(() => false);
+  const ms = Math.max(1, ...steps.map((s, i) => s.ms + i * stagger));
+  const hides = [...new Set(steps.flatMap((s) => s.hides ?? []))];
+  return {
+    ms,
+    hides,
+    frame: (p, look) => {
+      const t = p * ms;
+      steps.forEach((s, i) => {
+        if (done[i]) return;
+        const t0 = i * stagger;
+        if (t < t0) {
+          for (const k of s.hides ?? []) look(k).alpha = 0;
+          return;
+        }
+        if (!started[i]) {
+          started[i] = true;
+          s.start?.();
+        }
+        const q = Math.min(1, (t - t0) / s.ms);
+        s.frame(q, look);
+        if (q >= 1) {
+          done[i] = true;
+          s.end();
+        }
+      });
+    },
+    end: () =>
+      steps.forEach((s, i) => {
+        if (done[i]) return;
+        done[i] = true;
+        s.end();
+      }),
+  };
+}

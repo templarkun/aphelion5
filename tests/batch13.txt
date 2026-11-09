@@ -61,6 +61,10 @@ then: using V1 Bay 1 on a unit: Bay 1 glows, a thin bright laser runs from Bay 1
       and holds for a moment, then the hit (flash, "−1"). V1 Bay 2: a pale wavy tractor beam
       grips the unit, then it moves. V1 Bay 3: a ring of light travels to the sector and wraps
       it, then the look card shows the tiles. An Order uses the same looks from its button.
+note: CHANGED 2026-11-09 (designer): only V1 Bay 1 keeps the laser. Every other Bay that deals
+      damage fires a rail slug (it charges, a slug with a spiral trail, two shock rings); an
+      Order that deals damage fires a missile (a curved flight with smoke, a fireball). Moves and
+      looks keep the tractor beam and the scan.
 
 id: T13_FX_02
 title: A Module's shot starts at the Module, in its colour
@@ -69,6 +73,8 @@ then: the Module card glows as it runs. Yellow: a quick bolt with a short trail 
       Red: a wide red beam with a shimmer. Blue: a wave that travels and spreads over the target.
       A Module that moves units or looks at tiles uses the tractor beam or the scan in its colour.
       Several targets: one shot per hit, one after the other.
+note: CHANGED 2026-11-09 (designer): an effect that hits "all" units (all units, all Level 3
+      units, all adjacent units...) plays as one fast bombing, see T13_FX_04.
 
 id: T13_FX_03
 title: Energy waiting on a Flare shows on its tile
@@ -76,6 +82,58 @@ source: trial rule "Flare energy waits" (I2); build step 3
 given: trial rule on.
 then: a revealed Flare shows one small round token per energy waiting on it, in its colour.
       When the energy is placed, each token flies from the Flare to its Module.
+
+id: T13_FX_04
+title: An effect on "all" units is one fast bombing
+source: designer 2026-11-09; Mission 1 Order "Deal 1 damage to all units"
+when: an effect hits two or more units at once (an Order or Bay on all units, a Module, a card
+      such as "Deal 1 damage to all Level 3 units" or "to all adjacent units", Meltdown)
+then: every target is shot at the same moment: Bays, Orders, Modules and Meltdown drop shells
+      from above onto every target; a unit's own effect fires its own shot (T13_FX_05) at all of
+      them at once. Then every hit lands at once (flash and "−1" on each), then every unit
+      destroyed bursts at once. About 1.5 s in all, whatever the number of units.
+note: Checked by scripts/ui-smoke.mjs (find-save.ts area: shells at the same time).
+
+id: T13_FX_05
+title: Damage dealt by a unit's own effect starts at that unit, in a look of its type
+source: designer 2026-11-09
+then: Sentinel: two red plasma balls. Flare: a fiery whip. Sleeper: a thin blue needle, then
+      ripples. Gyro: a spinning green blade disc on a curve. Omega: violet lightning, then an
+      implosion. Mecha (its abilities and upgrades): a muzzle flash and a fast shell. Damage to
+      your Flagship comes the same way to the Flagship panel, which shakes and flashes red (shown
+      before you choose the Bays).
+
+id: T13_FX_06
+title: Heat Wave and Fuse tokens have their own looks
+source: designer 2026-11-09; H5, 6.6
+then: Heat Wave: the "−1 Heat" chip, then a shimmering heat ray from the Heat bar to the Bot,
+      heat haze and rising embers on it, then the hit. A Tick going off: a spark runs round a
+      shrinking spiral on its unit, then it blows. A Mortar: it blows on its unit, then (once the
+      target is chosen) a shell is lobbed high onto the adjacent unit. A Feedback: it blows,
+      then red lightning runs to the Flagship panel, which shakes.
+
+id: T13_FX_07
+title: Fuse tokens and Barriers are pieces on the tile
+source: designer 2026-11-09; 6.4, 6.6
+then: Fuse tokens are red pieces in a row near the top of the unit's tile, each its own shape
+      with a white glyph: Tick a round token with a clock face and clamps, Mortar a six-sided
+      token with a mortar round, Feedback a diamond with a lightning bolt; a small number when
+      there are several of one kind. A Barrier is a pale blue force field round the unit:
+      a shimmering bubble with arcs sliding round it and particles circling inside (still when
+      reduced motion is on). A hit stopped by the Barrier: the field flares and breaks into
+      shards, "Barrier" floats up. The text badges "BAR", "TICK", "MOR", "FB" are gone.
+
+id: T13_FX_08
+title: Each unit type has its own reveal (not Bots); Flares and Omega units the biggest
+source: designer 2026-11-09
+then: after the tile flips: Sentinel: red chevrons lock on from six sides, then its Barrier
+      snaps up. Sleeper: slow blue ripples, motes rising, two eyes open. Gyro: arcs spin up and
+      fling green sparks. Mecha: a scan line runs down the tile, sparks fly. Bot: the flip only.
+      Flare: the dark tile trembles and gathers light first; then a blinding sunburst over the
+      Field, rays, two shock rings, embers, and the whole Field shakes. Omega: it trembles and
+      gathers violet light first; then a vortex sucks light in, violet lightning leaps to every
+      sector around, the Field darkens and quakes, three shock rings.
+note: Checked by scripts/ui-smoke.mjs (find-save.ts reveal-Omega: the flash over the Field).
 
 ################################################################################
 === SECTION: DRAGGING MODULES, ORDERS AND FLARE ENERGY (screen only) ===

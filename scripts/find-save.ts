@@ -15,6 +15,8 @@ import { abilityTargets, m01Targets, mechaDragPlan } from "../src/web/drag.js";
 import type { Game } from "../src/engine/save.js";
 import { normalise, planAnswer, planInfo } from "../src/web/modulePlan.js";
 import { noUnitToTarget } from "../src/engine/command.js";
+import { type GameEvent, newEvents } from "../src/engine/events.js";
+import { sectorKeys, sectorState, topTileId } from "../src/engine/field.js";
 
 const data = loadGameData();
 /** A Mecha that can be dragged both to a move target and to an Attack target. */
@@ -27,7 +29,40 @@ function dragPlanOf(g: Game) {
   }
   return undefined;
 }
+/** The events one shortcut answer would make (tried on a copy; nothing past it). */
+function eventsOf(g: Game, id: string): GameEvent[] {
+  const res = playAnswer(data, g, { kind: "option", value: id });
+  if (res.result.status === "illegal" || res.result.status === "blocked") return [];
+  return newEvents(g.view.state.events, res.game.view.state.events);
+}
+/** The first shortcut whose answer makes events that pass the test (designer 2026-11-09 effects). */
+function shortcutWith(q: Question, g: Game, test: (es: GameEvent[]) => boolean, pick: RegExp = /./): string | undefined {
+  return (q.shortcuts ?? []).find((o) => pick.test(o.id) && test(eventsOf(g, o.id)))?.id;
+}
+const revealOf = (type: string) => (q: Question, g: Game) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "revealed" && e.type === type), /^reveal:/) !== undefined;
+/** An Order or Bay that hits three or more units at once. */
+const areaHit = (es: GameEvent[]) => {
+  const n = new Map<string, number>();
+  for (const e of es) if (e.kind === "hit") n.set(e.rule ?? "", (n.get(e.rule ?? "") ?? 0) + 1);
+  return [...n.values()].some((x) => x >= 3);
+};
+const FX: Record<string, (q: Question, g: Game) => string | undefined> = {
+  area: (q, g) => shortcutWith(q, g, areaHit, /^(order|bay):/),
+  heatwave: (q, g) => ((q.shortcuts ?? []).some((o) => o.id === "heatWave") && sectorKeys(g.view.state).some((k) => sectorState(g.view.state, k) === "occupied" && data.units.byId.get(g.view.state.tiles[topTileId(g.view.state, k)!]!.unitId ?? "")?.type === "Bot") ? "heatWave" : undefined),
+  // A unit's own effect that hits another unit (designer 2026-11-09: each unit type its own shot).
+  unitshot: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "hit" && /^[SFPGO]_\d+$/.test(e.rule ?? ""))),
+  flagship: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "flagship" && /^[A-Z]_\d+$/.test(e.rule))),
+};
+for (const t of ["Flare", "Omega", "Sentinel", "Gyro", "Sleeper"]) FX[`reveal-${t}`] = (q, g) => (revealOf(t)(q, g) ? shortcutWith(q, g, (es) => es.some((e) => e.kind === "revealed" && e.type === t), /^reveal:/) : undefined);
+
 const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
+  ...Object.fromEntries(Object.entries(FX).map(([k, f]) => [k, (q: Question, g: Game) => /choose an action/i.test(q.prompt) && f(q, g) !== undefined])),
+  // A Barrier and a Fuse token on the Field at once (drawn as pieces, designer 2026-11-09).
+  tokens: (q, g) => {
+    const s = g.view.state;
+    const tops = sectorKeys(s).filter((k) => sectorState(s, k) === "occupied").map((k) => s.tiles[topTileId(s, k)!]!.tokens);
+    return /^Choose an action/.test(q.prompt) && tops.some((t) => t.barrier) && tops.some((t) => t.tick + t.mortar + t.feedback > 0);
+  },
   // Dragging a Mecha (Program Spec "Interaction and animation"): blue and red targets.
   drag: (_q, g) => dragPlanOf(g) !== undefined,
   // M_03 (designer 2026-11-08): a red target reached only by moving first.
@@ -120,6 +155,7 @@ for (let seed = 1; seed < 400; seed++) {
         const id = q.options.find((o) => /^\d+$/.test(o.id))!.id;
         writeFileSync(`${out}.plan.json`, JSON.stringify({ module: id, colour: q.energy![id] }));
       }
+      if (FX[what]) writeFileSync(`${out}.plan.json`, JSON.stringify({ shortcut: FX[what]!(q, g) }));
       if (what === "moddrag") writeFileSync(`${out}.plan.json`, JSON.stringify(moduleDrag(q, g)));
       if (what === "orderdrag") {
         const o = (q.shortcuts ?? []).find((x) => x.on?.kind === "order" && abilityTargets(data, g, { kind: "option", value: x.id }).length > 0)!;

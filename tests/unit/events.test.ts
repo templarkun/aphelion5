@@ -7,13 +7,22 @@ import { describe, expect, it } from "vitest";
 import { commandStep } from "../../src/engine/command.js";
 import { type GameEvent, newEvents } from "../../src/engine/events.js";
 import { move, openNeighbours } from "../../src/engine/moves.js";
-import { dealHit } from "../../src/engine/tokens.js";
+import { dealHit, setOffFuses } from "../../src/engine/tokens.js";
 import { topTileId } from "../../src/engine/field.js";
 import { A, at, data, given, play, withModules } from "./helpers.js";
 
 const kinds = (es: readonly GameEvent[] | undefined) => (es ?? []).map((e) => e.kind);
 
 describe("engine events", () => {
+  it("a Feedback token going off reports it, then the damage coming at the Flagship (designer 2026-11-09, screen only)", () => {
+    const s0 = given("T_TOK_01", "(0,0): B_02[FB]");
+    const id = at(s0, "0,0");
+    const { state } = play(s0, (c) => setOffFuses(c), [A.split({ bay1: 1 })]);
+    expect(kinds(state.events)).toEqual(["fuse", "flagship"]);
+    expect(state.events![0]).toMatchObject({ tile: id, sector: "0,0", fuse: "feedback" });
+    expect(state.events![1]).toMatchObject({ amount: 1, rule: "6.6" });
+  });
+
   it("a hit reports the damage placed and the Shields removed", () => {
     const s0 = given("T_TOK_01");
     const id = at(s0, "0,0");

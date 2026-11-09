@@ -495,3 +495,20 @@ button.heat-long, button.heat-bubble { font: inherit; color: inherit; cursor: po
 .flare-chip.over { box-shadow: 0 0 0 4px var(--accent), 0 6px 14px rgb(0 0 0 / 0.35); }
 .flare-chip.back { transition: left 0.3s cubic-bezier(0.2, 1.4, 0.4, 1), top 0.3s cubic-bezier(0.2, 1.4, 0.4, 1); }
 body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .module.energy-target.red, body.energy-drag-blue .module.energy-target.blue { box-shadow: 0 0 0 3px var(--accent); }
+
+/* Damage coming at the Flagship (designer 2026-11-09): the panel shakes and flashes red. */
+.fx-shake { animation: fx-shake 0.55s ease-out; }
+@keyframes fx-shake {
+  0% { transform: translate(0, 0); box-shadow: 0 0 0 0 rgba(255, 60, 60, 0); }
+  15% { transform: translate(-6px, 2px); box-shadow: 0 0 18px 4px rgba(255, 60, 60, 0.7); }
+  30% { transform: translate(5px, -2px); }
+  45% { transform: translate(-4px, 1px); }
+  60% { transform: translate(3px, 0); box-shadow: 0 0 10px 2px rgba(255, 60, 60, 0.35); }
+  80% { transform: translate(-1px, 0); }
+  100% { transform: translate(0, 0); box-shadow: 0 0 0 0 rgba(255, 60, 60, 0); }
+}
+/* A Flare or an Omega unit revealed: a flash over the whole Field. */
+.reveal-flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; z-index: 2; }
+.reveal-flash.flare { background: radial-gradient(circle at 50% 50%, rgba(255, 252, 230, 0.95), rgba(255, 210, 63, 0.55) 45%, rgba(255, 140, 40, 0.15) 80%); mix-blend-mode: screen; }
+.reveal-flash.omega { background: radial-gradient(circle at 50% 50%, rgba(176, 124, 255, 0.25), rgba(40, 8, 70, 0.75) 75%); }
+@media (prefers-reduced-motion: reduce) { .fx-shake { animation: none; } }

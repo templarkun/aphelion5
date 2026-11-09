@@ -11,6 +11,7 @@
 import type { Ctx } from "./field.js";
 import type { EnergyColour } from "../data/units.js";
 import type { SectorKey, TileId } from "./state.js";
+import type { FuseKind } from "./rules.js";
 
 export type GameEventBody =
   /** A unit went from one sector to another (Move, Teleport, Jump...). */
@@ -29,6 +30,10 @@ export type GameEventBody =
   | { kind: "destroyed"; tile: TileId; unitId: string; type: string; sector: SectorKey; wreck: boolean }
   /** A Mecha Attacks (4.2): reported before the hit, so the screen can show the Mecha go first. */
   | { kind: "attack"; tile: TileId; unitId: string; from: SectorKey; target: TileId; to: SectorKey }
+  /** Your Flagship is about to take damage (5.2), from `rule` (a unit's id, a Fuse token...). Shown before the Bays are chosen. */
+  | { kind: "flagship"; amount: number; rule: string }
+  /** A Fuse token goes off (6.6), before its effect. */
+  | { kind: "fuse"; tile: TileId; unitId: string; sector: SectorKey; fuse: FuseKind }
   /** Heat tokens paid back to the Supply (H5, H7). */
   | { kind: "heat"; amount: number; rule: string }
   /** H7 Meltdown happens: no Heat token left to prevent it. `bots`: Bots it hits. */
