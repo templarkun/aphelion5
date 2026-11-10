@@ -11,7 +11,7 @@ import { canBeChosen, choosableUnits, describe, fieldMap, level, sectorOf, secto
 import { moduleDef, runModule } from "../engine/modules.js";
 import { reveal, requestOverload } from "../engine/moves.js";
 import type { TileId } from "../engine/state.js";
-import { afterTopTileLeaves, damageFlagship, gainEnergy, loseEnergy, placeFuse, removeFromField, repairFlagship } from "../engine/tokens.js";
+import { afterTopTileLeaves, damageFlagship, gainEnergy, loseEnergy, placeFuse, removeFromField, repairFlagship, tokenEvent } from "../engine/tokens.js";
 import { ENERGY_COLOURS } from "../data/units.js";
 import { fromKey, key } from "../geometry/hex.js";
 import {
@@ -326,6 +326,7 @@ gyro(
     for (const u of choosableUnits(c, (x) => unitType(c, x) === "Sentinel" && tile(c.state, x).tokens.barrier)) {
       tile(c.state, u).tokens.barrier = false;
       c.state.supply.barrier += 1;
+      tokenEvent(c, u, "barrierGone", "G_32");
       log(c, `G_32: ${describe(c, u)} loses its Barrier`, "G_32");
     }
   },

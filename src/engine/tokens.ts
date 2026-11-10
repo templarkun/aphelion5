@@ -31,7 +31,30 @@ import {
 } from "./field.js";
 import { FEEDBACK_DAMAGE, FUSE_KINDS, FUSE_NAME, type FuseKind, MORTAR_DAMAGE, TICK_DAMAGE } from "./rules.js";
 import { type SectorKey, type TileId, type Tokens, noTokens } from "./state.js";
-import { emit } from "./events.js";
+import { type TokenChange, emit } from "./events.js";
+
+/** Tell the screen that a unit's tokens changed (step 5 looks; no rule). */
+export function tokenEvent(c: Ctx, id: TileId, change: TokenChange, rule?: string, n = 1, boost = false): void {
+  const k = sectorOf(c.state, id);
+  if (k === undefined || n <= 0) return;
+  emit(c, { kind: "tokens", tile: id, unitId: tile(c.state, id).unitId ?? "?", sector: k, change, n, ...(boost ? { boost } : {}), ...(rule ? { rule } : {}) });
+}
+
+/** A unit turned from facing `before` to its facing now; `by`: clockwise sides (default: the short way). */
+export function turnedEvent(c: Ctx, id: TileId, before: number, rule?: string, by?: number): void {
+  const k = sectorOf(c.state, id);
+  const now = tile(c.state, id).facing;
+  let d = by ?? (((now - before) % 6) + 6) % 6;
+  if (by === undefined && d > 3) d -= 6;
+  if (k === undefined || d === 0) return;
+  emit(c, { kind: "turned", tile: id, unitId: tile(c.state, id).unitId ?? "?", sector: k, by: d, ...(rule ? { rule } : {}) });
+}
+
+/** Remove one Damage token from a unit (an effect that "removes 1 damage"); the caller logs it. */
+export function removeDamage(c: Ctx, id: TileId, rule?: string): void {
+  tile(c.state, id).tokens.damage -= 1;
+  tokenEvent(c, id, "repair", rule);
+}
 
 // ---------------------------------------------------------------------------
 // Supply and the Flagship
@@ -210,7 +233,10 @@ export function checkSleepers(c: Ctx): void {
 export function afterTopTileLeaves(c: Ctx, k: SectorKey): void {
   const top = topTileId(c.state, k);
   if (top === undefined) log(c, `(${k}) is Cleared`, "3.4");
-  else if (tile(c.state, top).faceUp) log(c, `${describe(c, top)} is uncovered`, "3.4");
+  else if (tile(c.state, top).faceUp) {
+    log(c, `${describe(c, top)} is uncovered`, "3.4");
+    if (isUnit(c.state, top)) emit(c, { kind: "uncovered", tile: top, unitId: tile(c.state, top).unitId ?? "?", type: unitType(c, top), sector: k });
+  }
   else log(c, `(${k}) is Dark`, "3.4");
   checkSleepers(c);
 }
@@ -413,6 +439,7 @@ export function* boost(c: RunCtx, ids: readonly TileId[], rule = "6.2"): Effect 
     const t = tile(c.state, u).tokens;
     if (t.damage > 0) {
       t.damage -= 1;
+      tokenEvent(c, u, "repair", rule, 1, true);
       log(c, `Boost ${describe(c, u)}: 1 Damage removed; Strength ${strength(c, u)}`, rule);
     } else needShield.push(u);
   }
@@ -435,6 +462,7 @@ export function* boost(c: RunCtx, ids: readonly TileId[], rule = "6.2"): Effect 
   for (const u of get) {
     tile(c.state, u).tokens.shield += 1;
     c.state.supply.shield -= 1;
+    tokenEvent(c, u, "shield", rule, 1, true);
     log(c, `Boost ${describe(c, u)}: 1 Shield; Strength ${strength(c, u)}`, rule);
   }
   const missing = needShield.length - get.length;
@@ -454,11 +482,13 @@ export function placeBioShield(c: Ctx, id: TileId): boolean {
   }
   if (t.damage > 0) {
     t.damage -= 1;
+    tokenEvent(c, id, "repair", "6.3");
     log(c, `Bio-shield on ${describe(c, id)} cancels 1 Damage and returns to the Supply`, "6.3");
     return true;
   }
   t.bioShield += 1;
   c.state.supply.bioShield -= 1;
+  tokenEvent(c, id, "bioShield", "6.3");
   log(c, `${describe(c, id)} gets a Bio-shield; Strength ${strength(c, id)}`, "6.3");
   return true;
 }
@@ -478,6 +508,7 @@ export function placeBarrier(c: Ctx, id: TileId, rule = "6.4"): boolean {
   }
   t.barrier = true;
   c.state.supply.barrier -= 1;
+  tokenEvent(c, id, "barrier", rule);
   log(c, `${describe(c, id)} gets a Barrier`, rule);
   return true;
 }
@@ -488,6 +519,7 @@ export function removeBarrier(c: Ctx, id: TileId, rule = "6.4"): boolean {
   if (!t.barrier) return false;
   t.barrier = false;
   c.state.supply.barrier += 1;
+  tokenEvent(c, id, "barrierGone", rule);
   log(c, `${describe(c, id)} loses its Barrier`, rule);
   return true;
 }
@@ -511,6 +543,7 @@ export function cancelAlert(c: Ctx, id: TileId, rule = "6.5"): boolean {
   const t = tile(c.state, id).tokens;
   if (!t.alert) return false;
   t.alert = false;
+  tokenEvent(c, id, "alertGone", rule);
   log(c, `${describe(c, id)} loses its Alert token; its effect is cancelled`, rule);
   return true;
 }
@@ -524,6 +557,7 @@ export function placeFuse(c: Ctx, id: TileId, kind: FuseKind, rule = "6.6"): boo
   }
   tile(c.state, id).tokens[kind] += 1;
   c.state.supply[kind] -= 1;
+  tokenEvent(c, id, kind, rule);
   log(c, `${describe(c, id)} gets a ${FUSE_NAME[kind]}`, rule);
   return true;
 }

@@ -45,8 +45,23 @@ export type GameEventBody =
   | { kind: "meltdown"; bots: number }
   /** The player looked at face-down tiles (a Bay, a Module...): shown to them, in this order (top first). */
   | { kind: "looked"; rule?: string; tiles: { tile: TileId; unitId: string; sector?: SectorKey | undefined }[] }
+  /** A unit turned (E10, 3.7): `by` sides, clockwise when positive (step 5, screen only). */
+  | { kind: "turned"; tile: TileId; unitId: string; sector: SectorKey; by: number; rule?: string }
+  /**
+   * Tokens on a unit changed (step 5, screen only): a Shield or Bio-shield gained, a Damage token removed
+   * ("repair"), a Barrier or Fuse token placed or removed, an Alert cancelled. `boost`: by a Boost (6.2).
+   */
+  | { kind: "tokens"; tile: TileId; unitId: string; sector: SectorKey; change: TokenChange; n: number; boost?: boolean; rule?: string }
+  /** An Overload starts (9.1) or ends (9.2, before Overload End's steps). */
+  | { kind: "overload"; how: "start" | "end" }
+  /** An Overhaul (8.8): the Flagship is repaired and the Reserve refilled. */
+  | { kind: "overhaul" }
+  /** A face-up tile is uncovered (3.4): the tile above left, no Reveal. */
+  | { kind: "uncovered"; tile: TileId; unitId: string; type: string; sector: SectorKey }
   /** One energy went onto a Module (4.6, 5.3). `auto`: it went there by itself (only one Module could take it). */
   | { kind: "energy"; colour: EnergyColour; module: number; from?: TileId | undefined; auto: boolean };
+
+export type TokenChange = "shield" | "bioShield" | "repair" | "barrier" | "barrierGone" | "tick" | "mortar" | "feedback" | "fuseGone" | "alertGone";
 
 export type GameEvent = GameEventBody & { seq: number };
 

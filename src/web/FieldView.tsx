@@ -33,6 +33,8 @@ import { BIG_REVEAL, chargeLook, drawOverloadRing, gyroBreak, gyroDrain, revealF
 import { addLevel, addUnitMarks } from "./unitMarks.js";
 import { drawAlert } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
+import { overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
+import { isStill, onMotion, speedFactor } from "./motion.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
 export interface FieldProps {
@@ -132,7 +134,7 @@ export function FieldView(p: FieldProps) {
   const player = useRef(new Player());
   const layers = useRef<{ root: Container; aura: Graphics; edge: Graphics; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined } | undefined>(undefined);
   /** Each sector's container and centre, from the last draw. */
-  const nodes = useRef(new Map<string, { node: Container; cx: number; cy: number }>());
+  const nodes = useRef(new Map<string, { node: Container; cx: number; cy: number; arrows?: Container }>());
   const geo = useRef({ size: 40 });
   /** Reduced motion: the Barrier field is drawn still. */
   const stillRef = useRef(false);
@@ -151,9 +153,14 @@ export function FieldView(p: FieldProps) {
     const a = new Application();
     app.current = a;
     let gone = false;
-    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (still) player.current.speed = 0;
-    stillRef.current = !!still;
+    // Animation settings (build step 5): speed and reduced motion, from the Menu.
+    const applyMotion = () => {
+      player.current.speed = speedFactor();
+      player.current.reduced = isStill();
+      stillRef.current = isStill();
+    };
+    applyMotion();
+    const offMotion = onMotion(applyMotion);
     void a.init({ antialias: true, backgroundAlpha: 0, resizeTo: host.current!, autoDensity: true, resolution: window.devicePixelRatio || 1 }).then(() => {
       if (gone) return a.destroy(true);
       host.current!.appendChild(a.canvas);
@@ -197,6 +204,7 @@ export function FieldView(p: FieldProps) {
     window.addEventListener("pointercancel", up);
     return () => {
       gone = true;
+      offMotion();
       document.removeEventListener("pointerdown", skip, true);
       window.removeEventListener("keydown", key);
       window.removeEventListener("pointermove", move);
@@ -730,9 +738,10 @@ export function FieldView(p: FieldProps) {
         const dim = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0x1d1d1f });
         const stamp = new Text({ text: "WRECK", style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(12, size() * 0.3), fill: 0xffffff, fontWeight: "900", stroke: { color: 0x9b1c1c, width: 4 } } });
         stamp.anchor.set(0.5);
+        const smoke = new Graphics();
         return {
           ms: 500,
-          start: () => fx.addChild(dim, stamp),
+          start: () => fx.addChild(dim, smoke, stamp),
           frame: (p) => {
             const c = centre(e.sector);
             dim.position.set(c.x, c.y);
@@ -740,9 +749,18 @@ export function FieldView(p: FieldProps) {
             stamp.position.set(c.x, c.y);
             stamp.scale.set(1.8 - 0.8 * easeOut(Math.min(1, p * 1.6)));
             stamp.alpha = Math.min(1, p * 2) * (1 - Math.max(0, p - 0.7) / 0.3);
+            // Smoke wisps rise from it (build step 5).
+            smoke.clear();
+            for (let i = 0; i < 5; i++) {
+              const q = Math.min(1, Math.max(0, p * 1.3 - i * 0.07));
+              const x = c.x + (i - 2) * size() * 0.18 + Math.sin(q * 5 + i) * size() * 0.06;
+              const y = c.y - size() * (0.1 + 0.9 * q);
+              smoke.circle(x, y, size() * (0.08 + 0.12 * q)).fill({ color: 0x8a8a8a, alpha: 0.45 * Math.sin(Math.PI * q) });
+            }
           },
           end: () => {
             dim.destroy();
+            smoke.destroy();
             stamp.destroy();
           },
         };
@@ -922,6 +940,7 @@ export function FieldView(p: FieldProps) {
       if (u) return shotStep(u.look, u.colour, () => pagePt(u.sector), to, { onHit: shake });
       return { ms: 300, start: shake, frame: () => {}, end: () => {} };
     }
+    const env = { fx, centre, size, keys: () => [...nodes.current.keys()], host: () => host.current };
     for (let i = 0; i < events.length; i++) {
       const e = events[i]!;
       if (e.kind === "used") {
@@ -971,6 +990,48 @@ export function FieldView(p: FieldProps) {
       }
       if (e.kind === "flagship") {
         out.push(flagshipShot(e.rule, i));
+        continue;
+      }
+      // Build step 5: turns, tokens, uncovered tiles, Overload start and end, Overhaul.
+      if (e.kind === "turned") {
+        out.push(turnStep(e, isTop(e.sector, e.tile)));
+        continue;
+      }
+      if (e.kind === "tokens") {
+        // The same change by one effect on several units plays together, like the "all" hits.
+        const group: (GameEvent & { kind: "tokens" })[] = [e];
+        let j = i + 1;
+        for (; j < events.length; j++) {
+          const n = events[j]!;
+          if (n.kind === "tokens" && n.rule === e.rule && n.change === e.change && n.boost === e.boost) group.push(n);
+          else break;
+        }
+        i = j - 1;
+        const steps = group.map((t) => tokenStep(t, env));
+        out.push(steps.length > 1 ? parallel(steps, 40) : steps[0]!);
+        continue;
+      }
+      if (e.kind === "uncovered") {
+        out.push(uncoverStep(e, env));
+        continue;
+      }
+      if (e.kind === "overload") {
+        const step = overloadStep(e.how, env);
+        if (e.how === "start") {
+          // Then the Alert tokens drop on one by one.
+          const end = step.end;
+          step.end = () => {
+            end();
+            const t = performance.now();
+            let n = 0;
+            for (const [id, born] of alertBorn.current) if (born > t + 50000) alertBorn.current.set(id, t + 90 * n++);
+          };
+        }
+        out.push(step);
+        continue;
+      }
+      if (e.kind === "overhaul") {
+        out.push(overhaulStep());
         continue;
       }
       if ((e.kind === "moved" || e.kind === "swapped") && from(e.rule)) out.push(weaponStep(src!, "move", onPage(e.from)));
@@ -1213,7 +1274,7 @@ export function FieldView(p: FieldProps) {
     const looks = new Map<string, NodeLook>();
     const look = (k: string): NodeLook => {
       let v = looks.get(k);
-      if (!v) looks.set(k, (v = { dx: 0, dy: 0, scale: 1, scaleX: 1, alpha: 1 }));
+      if (!v) looks.set(k, (v = { dx: 0, dy: 0, scale: 1, scaleX: 1, alpha: 1, rot: 0 }));
       return v;
     };
     for (const k of player.current.hidden()) look(k).alpha = 0;
@@ -1232,6 +1293,7 @@ export function FieldView(p: FieldProps) {
       n.node.position.set(n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0));
       n.node.scale.set((v?.scale ?? 1) * (v?.scaleX ?? 1), v?.scale ?? 1);
       n.node.alpha = v?.alpha ?? 1;
+      if (n.arrows) n.arrows.rotation = v?.rot ?? 0;
     }
     host.current?.setAttribute("data-anim", player.current.busy ? "1" : "0");
 
@@ -1261,7 +1323,7 @@ export function FieldView(p: FieldProps) {
       seenNow.add(top);
       if (!alertBorn.current.has(top)) alertBorn.current.set(top, player.current.busy ? now + 99999 : now);
       let born = alertBorn.current.get(top)!;
-      if (born > now && !player.current.busy) alertBorn.current.set(top, (born = now));
+      if (born > now + 50000 && !player.current.busy) alertBorn.current.set(top, (born = now));
       if (born > now) continue; // placed by an animation still playing: shown when it ends
       const v = looks.get(k);
       drawAlert(au, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, born, v?.alpha ?? 1, v?.scale ?? 1, tk.wreck);
@@ -1506,6 +1568,13 @@ export function FieldView(p: FieldProps) {
         // Arrows on their sides, turned by the tile's facing (3.8).
         const turning = rotate?.tile === unit;
         const sides = arrowSides(unitDef(c, unit!).arrows, turning ? (rotate!.facing as typeof t.facing) : t.facing);
+        // In their own layer, turned round the tile's centre when the unit turns (build step 5).
+        const arrows = new Container();
+        arrows.eventMode = "none";
+        arrows.pivot.set(cx, cy);
+        arrows.position.set(cx, cy);
+        node.addChild(arrows);
+        nodes.current.get(p.k)!.arrows = arrows;
         for (const s of sides) {
           const ang = SIDE_ANGLE[s]!;
           const ex = cx + Math.cos(ang) * size * 0.82;
@@ -1517,7 +1586,7 @@ export function FieldView(p: FieldProps) {
           const arr = new Graphics();
           arr.poly([ex, ey, bx + px, by + py, bx - px, by - py]).fill({ color: 0x1d1d1f });
           arr.eventMode = "none";
-          node.addChild(arr);
+          arrows.addChild(arr);
         }
         if (turning) {
           // Two round buttons inside the hex: anticlockwise (left), clockwise (right).

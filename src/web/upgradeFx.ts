@@ -9,7 +9,9 @@ type P = { x: number; y: number; vx: number; vy: number; life: number; max: numb
 type Ring = { x: number; y: number; r: number; speed: number; life: number; max: number; colour: string; width: number };
 type Rays = { x: number; y: number; life: number; max: number; colour: string; n: number; spin: number; len: number };
 
-const still = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+import { noFlying } from "./motion.js";
+
+const still = () => noFlying();
 
 export class UpgradeFx {
   private ctx: CanvasRenderingContext2D | null;

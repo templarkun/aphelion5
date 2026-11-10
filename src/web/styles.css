@@ -140,7 +140,7 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: 
   0%, 100% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--can) 30%, transparent); }
   50% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--can) 85%, transparent), 0 0 8px color-mix(in srgb, var(--can) 18%, transparent); }
 }
-@media (prefers-reduced-motion: reduce) { .can { animation: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--can) 65%, transparent); } }
+html.still .can { animation: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--can) 65%, transparent); }
 .dim { opacity: 0.4; }
 button.module { display: block; width: 100%; text-align: left; font: inherit; color: inherit; min-height: 0; }
 .bay { padding: 4px 6px; border-radius: 8px; }
@@ -173,7 +173,7 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .glyph.yellow { background: var(--yellow); } .glyph.red { background: var(--red); } .glyph.blue { background: var(--blue); }
 .module.energy-target { box-shadow: 0 0 0 2px var(--pop), 0 0 14px color-mix(in srgb, var(--pop) 45%, transparent); }
 .module.energy-target.yellow { --pop: var(--yellow); } .module.energy-target.red { --pop: var(--red); } .module.energy-target.blue { --pop: var(--blue); }
-@media (prefers-reduced-motion: reduce) { .energy-pop { animation: none; } }
+html.still .energy-pop { animation: none; }
 
 /* Unit pop-ups as bubbles (designer 2026-11-07): one standard width, side by side, centred on the unit. */
 .popup.bubbles { background: transparent; border: 0; box-shadow: none; padding: 0; max-width: calc(100vw - 16px); min-width: 0; align-items: center; gap: 6px; }
@@ -190,7 +190,7 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 /* ease-out elastic: overshoot, then settle */
 @keyframes bubble-in { 0% { opacity: 0; transform: scale(0.3); } 35% { opacity: 1; transform: scale(1.12); } 55% { transform: scale(0.94); } 72% { transform: scale(1.04); } 86% { transform: scale(0.99); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes bubble-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.6); } }
-@media (prefers-reduced-motion: reduce) { .popup .bubble, .popup.bubbles .popup-title { animation: none; } }
+html.still .popup .bubble, html.still .popup.bubbles .popup-title { animation: none; }
 .popup .bubble span.two { display: flex; flex-direction: column; gap: 2px; -webkit-line-clamp: unset; }
 .popup .bubble span.two b { font-size: 13px; }
 .popup .bubble span.two small { font-size: 10px; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -304,7 +304,7 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .thing-btn.selected::before { content: ""; position: absolute; z-index: -2; left: 50%; top: 50%; width: 200%; aspect-ratio: 1; transform: translate(-50%, -50%); background: conic-gradient(from 0deg, #ff3d00, #ffb300, #fff3c4, #ff6d00, #ff1744, #ff9100, #ff3d00); animation: fire-spin 1.3s linear infinite; }
 .thing-btn.selected::after { content: ""; position: absolute; z-index: -1; inset: 3px; border-radius: inherit; background: var(--panel); }
 @keyframes fire-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .thing-btn.selected::before { animation: none; } }
+html.still .thing-btn.selected::before { animation: none; }
 /* Health meters: V1 pips, V2 notched bar. */
 .hp { --hp: #22a06b; }
 .hp.mid { --hp: #e0a100; } .hp.low { --hp: #e5484d; } .hp.dead { --hp: var(--muted); }
@@ -374,7 +374,7 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 .module.selected { position: relative; isolation: isolate; overflow: hidden; border-color: transparent; box-shadow: 0 0 16px 2px rgb(255 110 0 / 0.45); animation: none; }
 .module.selected::before { content: ""; position: absolute; z-index: -2; left: 50%; top: 50%; width: 200%; aspect-ratio: 1; transform: translate(-50%, -50%); background: conic-gradient(from 0deg, #ff3d00, #ffb300, #fff3c4, #ff6d00, #ff1744, #ff9100, #ff3d00); animation: fire-spin 1.3s linear infinite; }
 .module.selected::after { content: ""; position: absolute; z-index: -1; inset: 3px; border-radius: 6px; background: var(--panel); border-left: 4px solid var(--rim); }
-@media (prefers-reduced-motion: reduce) { .module.selected::before, .ebar .slot { animation: none; } }
+html.still .module.selected::before, html.still .ebar .slot { animation: none; }
 /* Pop-ups beside a selected Module: Overclock, X, its extra payment. */
 .mod-pops { position: fixed; z-index: 14; display: flex; flex-direction: column; gap: 6px; }
 .mod-pops.left { transform: translateY(-50%); }
@@ -456,7 +456,7 @@ button.heat-long, button.heat-bubble { font: inherit; color: inherit; cursor: po
 /* What a selected Module, Bay or Order affects among the Modules: the violet outline of the Field. */
 .module.affected { outline: 2px solid #9b6bff; outline-offset: 1px; box-shadow: 0 0 12px 1px rgb(155 107 255 / 0.55); animation: affect-pulse 1.6s ease-in-out infinite; }
 @keyframes affect-pulse { 0%, 100% { outline-color: #9b6bff; } 50% { outline-color: #d9c6ff; } }
-@media (prefers-reduced-motion: reduce) { .module.affected, .m-cell.new, .mission-bar.gain { animation: none; } }
+html.still .module.affected, html.still .m-cell.new, html.still .mission-bar.gain { animation: none; }
 /* A Power Node's Alert pop-ups: "Gain" and glyphs. */
 .chip-label { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
 .popup .bubble .chip-label, .chip-label { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; overflow: visible; -webkit-line-clamp: unset; }
@@ -480,7 +480,7 @@ button.heat-long, button.heat-bubble { font: inherit; color: inherit; cursor: po
   20% { box-shadow: 0 0 18px 6px var(--fire, #ffd27a); transform: scale(1.06); }
   100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
 }
-@media (prefers-reduced-motion: reduce) { .fx-fire { animation: none; } }
+html.still .fx-fire { animation: none; }
 /* Bays and Orders that target units, with no unit on the Field: greyed out (designer 2026-11-08). */
 .bay-thing.no-units .bay-btn, .order-thing.no-units .order-btn { filter: grayscale(1); opacity: 0.45; }
 .thing-text .why { font-style: normal; opacity: 0.8; }
@@ -509,7 +509,7 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 .reveal-flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; z-index: 2; }
 .reveal-flash.flare { background: radial-gradient(circle at 50% 50%, rgba(255, 252, 230, 0.95), rgba(255, 210, 63, 0.55) 45%, rgba(255, 140, 40, 0.15) 80%); mix-blend-mode: screen; }
 .reveal-flash.omega { background: radial-gradient(circle at 50% 50%, rgba(176, 124, 255, 0.25), rgba(40, 8, 70, 0.75) 75%); }
-@media (prefers-reduced-motion: reduce) { .fx-shake { animation: none; } }
+html.still .fx-shake { animation: none; }
 
 /* Row bubbles (designer 2026-11-09): one long see-through bubble over each row that can be chosen. */
 .row-bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 11; }
@@ -523,7 +523,7 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 @keyframes row-run { to { stroke-dashoffset: -100; } }
 @keyframes row-pick { 0% { filter: brightness(2.2); } 100% { filter: brightness(1); } }
 .facing-done { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 12; }
-@media (prefers-reduced-motion: reduce) { .row-bubble rect, .row-bubble.selected { animation: none; } }
+html.still .row-bubble rect, html.still .row-bubble.selected { animation: none; }
 
 /* Damage to the Flagship (designer 2026-11-09): a big bubble in the Field, bubbles pointing at the Bays. */
 .damage-bubble { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 12; width: min(380px, calc(100% - 40px)); padding: 22px 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; color: #fff; border-radius: 32px; background: radial-gradient(circle at 50% 0%, rgb(255 70 50 / 0.45), rgb(80 10 10 / 0.55)); backdrop-filter: blur(2px); text-shadow: 0 1px 3px rgb(0 0 0 / 0.7); animation: dmg-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1); }
@@ -544,7 +544,7 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 .bay-hit-bubble:active { filter: brightness(1.4); }
 .bay-hit-bubble:disabled { opacity: 0.4; animation: none; cursor: default; }
 @keyframes bay-hit-breathe { 50% { box-shadow: 0 0 22px 6px rgb(255 90 40 / 0.75); } }
-@media (prefers-reduced-motion: reduce) { .damage-bubble, .damage-bubble rect, .bay-hit-bubble { animation: none; } }
+html.still .damage-bubble, html.still .damage-bubble rect, html.still .bay-hit-bubble { animation: none; }
 
 /* End the Overload (designer 2026-11-09): in proportion with the Field, embers rising, a burst when pressed. */
 .end-overload { position: absolute; right: 14px; bottom: 14px; z-index: 12; width: clamp(140px, 24%, 250px); aspect-ratio: 3.4 / 1; padding: 0 12px; white-space: nowrap; border: 0; border-radius: 999px; font-weight: 800; font-size: clamp(12px, 1.05vw, 16px); color: #fff; background: linear-gradient(120deg, #ff3d00, #ff9100, #ffd54f, #ff6d00, #ff3d00); background-size: 300% 100%; text-shadow: 0 1px 2px rgb(0 0 0 / 0.4); box-shadow: 0 0 18px 4px rgb(255 100 0 / 0.55), 0 0 40px 8px rgb(255 60 0 / 0.25); animation: burn 2.2s linear infinite, flicker 1.3s ease-in-out infinite; overflow: visible; cursor: pointer; }
@@ -560,7 +560,7 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 @keyframes spark { to { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; } }
 .end-overload .eo-burst .ring { position: absolute; width: 20px; height: 20px; margin: -10px; border-radius: 50%; border: 3px solid #ffd27a; animation: eo-ring 0.38s ease-out forwards; }
 @keyframes eo-ring { to { transform: scale(9); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .end-overload, .end-overload .eo-embers i { animation: none; } }
+html.still .end-overload, html.still .end-overload .eo-embers i { animation: none; }
 .damage-bubble.repair { background: radial-gradient(circle at 50% 0%, rgb(60 200 140 / 0.42), rgb(6 50 40 / 0.58)); }
 .damage-bubble.repair rect { stroke: #8af0c4; }
 .bay-hit-bubble.repair { border-color: #b4f5d8; background: linear-gradient(160deg, #2fc58a, #0d7a52); box-shadow: 0 0 14px 3px rgb(40 220 150 / 0.5); animation-name: bay-fix-breathe; }
@@ -592,7 +592,7 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 .pick-foot .bubble { min-height: 40px; padding: 8px 16px; border-radius: 18px; border: 2px solid var(--accent); background: var(--panel); font-weight: 700; box-shadow: 0 8px 20px rgb(0 0 0 / 0.35); animation: bubble-in 0.5s ease-out both; }
 .pick-foot .bubble.primary { background: var(--accent); color: var(--accent-ink); }
 .pick-foot .bubble:disabled { opacity: 0.75; }
-@media (prefers-reduced-motion: reduce) { .unit-pick, .unit-pick rect, .pick-foot .bubble, .unit-picks.leaving .unit-pick { animation: none; } }
+html.still .unit-pick, html.still .unit-pick rect, html.still .pick-foot .bubble, html.still .unit-picks.leaving .unit-pick { animation: none; }
 .unit-pick.compact { min-height: 24px; padding: 3px 6px; border-radius: 12px; }
 .unit-pick.compact b { font-size: 11px; }
 .unit-pick.compact rect { rx: 11px; stroke-dasharray: 8 5; }
@@ -806,9 +806,7 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 .upsheet.compact .up-hint { font-size: 11px; }
 .upsheet.compact .up-done { min-width: 96px; }
 .upsheet.compact .up-none { margin-left: 0; }
-@media (prefers-reduced-motion: reduce) {
-  .upsheet, .up-token, .up-card, .up-slot, .up-engine, .up-scan, .up-hard .ring, .up-online, .up-card.st-gained::after { animation: none !important; }
-}
+html.still .upsheet, html.still .up-token, html.still .up-card, html.still .up-slot, html.still .up-engine, html.still .up-scan, html.still .up-hard .ring, html.still .up-online, html.still .up-card.st-gained::after { animation: none !important; }
 .up-unlocks { font-size: 11px; color: color-mix(in srgb, var(--up) 70%, #fff); margin-top: 2px; }
 .up-tabs button:focus { outline: none; }
 .up-tabs button:focus-visible { outline: 1px solid var(--up); outline-offset: -3px; }
@@ -820,3 +818,17 @@ body.energy-drag-yellow .module.energy-target.yellow, body.energy-drag-red .modu
 .up-online-title { animation: up-online-title 0.5s cubic-bezier(.2, .9, .3, 1) both; }
 @keyframes up-online-title { from { letter-spacing: 0.6em; } to { letter-spacing: 0.24em; } }
 .up-tabs button, .up-tabs button:focus { box-shadow: none; }
+
+/* Overhaul (8.8, build step 5): repair sparks run over the Flagship panel. */
+.fx-repair { position: relative; animation: fx-repair 0.9s ease-out; }
+.fx-repair::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(100deg, transparent 30%, rgb(124 242 160 / 0.45) 45%, rgb(255 214 110 / 0.6) 50%, rgb(124 242 160 / 0.45) 55%, transparent 70%) no-repeat; background-size: 250% 100%; animation: fx-repair-sweep 0.9s ease-in-out; }
+@keyframes fx-repair { 0% { box-shadow: 0 0 0 0 rgb(124 242 160 / 0); } 30% { box-shadow: 0 0 22px 4px rgb(124 242 160 / 0.65); } 100% { box-shadow: 0 0 0 0 rgb(124 242 160 / 0); } }
+@keyframes fx-repair-sweep { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+html.still .fx-repair, html.still .fx-repair::after { animation: none; }
+
+/* Animation settings in the Menu (build step 5). */
+.motion-set { display: grid; gap: 4px; margin: 6px 0; }
+.motion-set .ms-title { font-size: 12px; opacity: 0.75; }
+.motion-set .ms-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.motion-set .ms-row button { flex: 1 1 auto; min-height: 32px; padding: 4px 8px; font-size: 12px; }
+.motion-set .ms-row button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }

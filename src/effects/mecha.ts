@@ -9,7 +9,7 @@ import { canBeChosen, choosableUnits, describe, fieldMap, level, sectorKeys, sec
 import { hasUpgrade, setAfterMechaHit } from "../engine/mecha.js";
 import { bury, isOpenSector, move, openNeighbours, reveal, teleport } from "../engine/moves.js";
 import { type TileId, hasAnyToken } from "../engine/state.js";
-import { afterTopTileLeaves, dealHit } from "../engine/tokens.js";
+import { afterTopTileLeaves, dealHit, turnedEvent } from "../engine/tokens.js";
 import { SIDES, type Side, fromKey, key } from "../geometry/hex.js";
 import { chooseSector } from "./helpers.js";
 import { adjacentTo, chooseOneOf, hitEach, lineOfFireUnits } from "./kit.js";
@@ -102,7 +102,9 @@ registerAbility("M_07", function* (c, self) {
 registerAbility("V1_M02_U1", function* (c, self) {
   const t = tile(c.state, self!);
   const a = yield* ask(c, { kind: "option", prompt: "V1_M02_U1: turn M_02 to which facing?", rule: "V1_M02_U1", facing: { tile: self!, start: t.facing }, options: [0, 1, 2, 3, 4, 5].map((f) => ({ id: String(f), label: f === t.facing ? `${f} (as now)` : String(f) })) });
+  const was = t.facing;
   t.facing = Number(a.value) as 0;
+  turnedEvent(c, self!, was, "V1_M02_U1");
   log(c, `M_02 now faces ${t.facing}`, "V1_M02_U1");
 });
 

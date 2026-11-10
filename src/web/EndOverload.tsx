@@ -4,13 +4,14 @@
  */
 
 import { useState } from "react";
+import { noFlying } from "./motion.js";
 
 const EMBERS = 14;
 const SPARKS = 26;
 
 export function EndOverload(p: { onEnd: () => void }) {
   const [burst, setBurst] = useState(false);
-  const still = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const still = noFlying();
   return (
     <button
       className={`end-overload ${burst ? "bursting" : ""}`}

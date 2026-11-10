@@ -4,7 +4,7 @@ import { type Effect, type RunCtx, ask, log } from "../engine/effect.js";
 import { type Ctx, canBeChosen, choosableUnits, fieldMap, isUnit, level, sectorKeys, sectorOf, sectorState, tile, unitAt } from "../engine/field.js";
 import { markSeen, move, openNeighbours, reveal, swap, topTiles } from "../engine/moves.js";
 import { type SectorKey, type TileId, hasAnyToken } from "../engine/state.js";
-import { cancelAlert, checkSleepers, dealHit, placeFuse, removeBarrier } from "../engine/tokens.js";
+import { cancelAlert, checkSleepers, dealHit, placeFuse, removeBarrier, removeDamage } from "../engine/tokens.js";
 import { fromKey, key } from "../geometry/hex.js";
 import { chooseDarkSector, chooseSector, chooseUnit } from "./helpers.js";
 import { registerAbility } from "./registry.js";
@@ -194,7 +194,7 @@ registerAbility(
   function* (c) {
     const u = yield* chooseUnit(c, "V2_BAY5: remove 1 damage from which unit?", "V2_BAY5", damaged(c));
     if (u !== undefined) {
-      tile(c.state, u).tokens.damage -= 1;
+      removeDamage(c, u, "V2_BAY5");
       log(c, `V2_BAY5: 1 Damage removed from ${tile(c.state, u).unitId}`, "V2_BAY5");
     }
   },

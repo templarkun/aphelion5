@@ -15,6 +15,8 @@ export interface NodeLook {
   scale: number;
   scaleX: number;
   alpha: number;
+  /** Turn of the unit's arrows, in radians (clockwise positive). */
+  rot: number;
 }
 
 export interface Step {
@@ -34,6 +36,8 @@ export class Player {
   private cur: { step: Step; t0: number } | undefined;
   /** 1 = normal. 0 = instant. */
   speed = 1;
+  /** Reduced motion (spec "Timing"): each answer's steps become one short fade of the tiles they show. */
+  reduced = false;
 
   get busy(): boolean {
     return this.cur !== undefined || this.queue.length > 0;
@@ -42,6 +46,12 @@ export class Player {
   add(steps: Step[]): void {
     if (this.speed === 0) {
       for (const s of steps) s.end();
+      return;
+    }
+    if (this.reduced) {
+      for (const s of steps) s.end();
+      const hides = [...new Set(steps.flatMap((s) => s.hides ?? []))];
+      if (hides.length) this.queue.push(fadeIn(hides));
       return;
     }
     this.queue.push(...steps);
@@ -80,6 +90,17 @@ export class Player {
       this.cur = undefined;
     }
   }
+}
+
+/** Reduced motion: the tiles fade in where they now are (0.2 s). */
+function fadeIn(keys: string[]): Step {
+  return {
+    ms: 200,
+    frame: (p, look) => {
+      for (const k of keys) look(k).alpha = p;
+    },
+    end: () => {},
+  };
 }
 
 export const easeOut = (p: number) => 1 - (1 - p) ** 3;

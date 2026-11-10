@@ -5,7 +5,7 @@ import { canBeChosen, choosableUnits, describe, fieldMap, level, sectorKeys, sec
 import { moduleDef } from "../engine/modules.js";
 import { bury, isOpenSector, putAtBottom, reveal, teleport } from "../engine/moves.js";
 import type { TileId } from "../engine/state.js";
-import { damageFlagship, destroy, placeBarrier, placeBioShield, returnTokens } from "../engine/tokens.js";
+import { damageFlagship, destroy, placeBarrier, placeBioShield, removeDamage, returnTokens, turnedEvent } from "../engine/tokens.js";
 import { ENERGY_COLOURS } from "../data/units.js";
 import { fromKey, key } from "../geometry/hex.js";
 import { chooseSector } from "./helpers.js";
@@ -45,7 +45,7 @@ sentinel("S_01", (c) => damageFlagship(c, 1, "S_01"));
 /** S_02 - Remove 1 damage from each adjacent unit. */
 sentinel("S_02", function* (c, self) {
   for (const u of chooseAdj(c, self, (x) => tile(c.state, x).tokens.damage > 0)) {
-    tile(c.state, u).tokens.damage -= 1;
+    removeDamage(c, u, "S_02");
     log(c, `S_02: 1 Damage removed from ${describe(c, u)}`, "S_02");
   }
 });
@@ -235,7 +235,9 @@ sentinel("S_25", function* (c, self) {
     facing: { tile: self, start: tile(c.state, self).facing },
     options: [0, 1, 2, 3, 4, 5].map((f) => ({ id: String(f), label: f === tile(c.state, self).facing ? `${f} (keep)` : String(f) })),
   });
+  const was = tile(c.state, self).facing;
   tile(c.state, self).facing = Number(a.value) as 0;
+  turnedEvent(c, self, was, "S_25");
   yield* boostEach(c, targetedUnits(c, self), "S_25");
 });
 

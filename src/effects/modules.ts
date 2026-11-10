@@ -15,7 +15,7 @@ import { type Ctx, canBeChosen, choosableUnits, darkSectors, describe, fieldMap,
 import { moduleDef } from "../engine/modules.js";
 import { reveal } from "../engine/moves.js";
 import type { SectorKey, TileId } from "../engine/state.js";
-import { type HitResult, cancelAlert, dealHit, destroy, gainEnergy, placeBioShield, placeFuse } from "../engine/tokens.js";
+import { type HitResult, cancelAlert, dealHit, destroy, gainEnergy, placeBioShield, placeFuse, tokenEvent } from "../engine/tokens.js";
 import { fromKey } from "../geometry/hex.js";
 import { chooseUnit } from "./helpers.js";
 import { adjacentTo, best, boostEach, chooseOneOf, chooseRow, chooseUnits, countType, hitEach, horizontalRows, ofType, unitsIn } from "./kit.js";
@@ -695,6 +695,7 @@ mod(78, {
     for (const u of choosableUnits(c, (x) => tile(c.state, x).tokens.barrier)) {
       tile(c.state, u).tokens.barrier = false;
       c.state.supply.barrier += 1;
+      tokenEvent(c, u, "barrierGone", M(78));
       log(c, `Signal Jammer: ${describe(c, u)} loses its Barrier`, M(78));
     }
   },

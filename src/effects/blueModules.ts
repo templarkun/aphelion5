@@ -5,7 +5,7 @@ import { type Ctx, choosableUnits, darkSectors, describe, fieldMap, level, secto
 import { moduleDef } from "../engine/modules.js";
 import { markSeen, requestOverload, reveal, swap } from "../engine/moves.js";
 import type { SectorKey, TileId } from "../engine/state.js";
-import { afterTopTileLeaves, checkSleepers, damageFlagship, destroy, placeFuse, repairFlagship } from "../engine/tokens.js";
+import { afterTopTileLeaves, checkSleepers, damageFlagship, destroy, placeFuse, removeDamage, repairFlagship, tokenEvent } from "../engine/tokens.js";
 import { fromKey, key } from "../geometry/hex.js";
 import { chooseUnit } from "./helpers.js";
 import { boostEach, chooseOneOf, chooseRow, chooseUnits, countType, hitEach, horizontalRows, placeOneEnergy, readyIds, revealUnits, unitsIn } from "./kit.js";
@@ -150,6 +150,7 @@ mod(58, {
       else {
         tile(c.state, u).tokens.barrier = false;
         c.state.supply.barrier += 1;
+        tokenEvent(c, u, "barrierGone", M(58));
         log(c, `Ion Mine: ${describe(c, u)} loses its Barrier`, M(58));
       }
     }
@@ -162,7 +163,7 @@ mod(59, {
     const us = choosableUnits(c, (u) => is(c, "Bot", "Mecha")(u) && tile(c.state, u).tokens.damage > 0);
     for (const u of us) placeFuse(c, u, "tick", M(59));
     for (const u of us) {
-      tile(c.state, u).tokens.damage -= 1;
+      removeDamage(c, u, M(59));
       log(c, `Trojan Patch: 1 Damage removed from ${describe(c, u)}`, M(59));
     }
   },
@@ -403,7 +404,7 @@ mod(73, {
 mod(74, {
   run: function* (c) {
     for (const u of choosableUnits(c, (x) => tile(c.state, x).tokens.damage > 0)) {
-      tile(c.state, u).tokens.damage -= 1;
+      removeDamage(c, u, M(74));
       log(c, `Repair Field: 1 Damage removed from ${describe(c, u)}`, M(74));
     }
     yield* repairFlagship(c, 1, M(74));
@@ -423,6 +424,9 @@ mod(76, {
   run: function* (c) {
     for (const u of choosableUnits(c)) {
       const t = tile(c.state, u).tokens;
+      tokenEvent(c, u, "repair", M(76), t.damage);
+      if (t.barrier) tokenEvent(c, u, "barrierGone", M(76));
+      tokenEvent(c, u, "fuseGone", M(76), t.tick + t.mortar + t.feedback);
       c.state.supply.barrier += t.barrier ? 1 : 0;
       c.state.supply.tick += t.tick;
       c.state.supply.mortar += t.mortar;

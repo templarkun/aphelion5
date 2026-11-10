@@ -7,7 +7,7 @@ import { moduleDef, runModule } from "../engine/modules.js";
 import { markSeen, putAtBottom, requestOverload } from "../engine/moves.js";
 import type { TileId } from "../engine/state.js";
 import { hasAnyToken } from "../engine/state.js";
-import { damageFlagship, placeBarrier, placeFuse, repairFlagship, returnTokens } from "../engine/tokens.js";
+import { damageFlagship, placeBarrier, placeFuse, removeDamage, repairFlagship, returnTokens } from "../engine/tokens.js";
 import {
   adjacentTo,
   best,
@@ -120,7 +120,7 @@ sleeper("P_11", function* (c) {
 /** P_12 - Remove 1 damage from every unit on the Field. */
 sleeper("P_12", function* (c) {
   for (const u of choosableUnits(c, (x) => tile(c.state, x).tokens.damage > 0)) {
-    tile(c.state, u).tokens.damage -= 1;
+    removeDamage(c, u, "P_12");
     log(c, `P_12: 1 Damage removed from ${describe(c, u)}`, "P_12");
   }
 });

@@ -7,7 +7,9 @@ import { describe, expect, it } from "vitest";
 import { commandStep } from "../../src/engine/command.js";
 import { type GameEvent, newEvents } from "../../src/engine/events.js";
 import { move, openNeighbours } from "../../src/engine/moves.js";
-import { dealHit, setOffFuses } from "../../src/engine/tokens.js";
+import { boost, dealHit, placeBarrier, placeFuse, setOffFuses } from "../../src/engine/tokens.js";
+import { startOverload } from "../../src/engine/command.js";
+import { turn } from "../../src/effects/kit.js";
 import { topTileId } from "../../src/engine/field.js";
 import { A, at, data, given, play, withModules } from "./helpers.js";
 
@@ -78,10 +80,11 @@ describe("engine events", () => {
     ]);
     const { state } = play(s, (c) => commandStep(c), [A.option("reveal"), A.option("52"), A.option("1")]);
     const flare = topTileId(s, "0,1")!;
-    expect(kinds(state.events)).toEqual(["revealed", "energy", "energy", "energy"]);
+    // A Flare Reveal also starts an Overload (4.6, 9.1), reported last (step 5).
+    expect(kinds(state.events)).toEqual(["revealed", "energy", "energy", "energy", "overload"]);
     expect(state.events![0]).toMatchObject({ kind: "revealed", tile: flare, sector: "0,1", type: "Flare" });
     // Red goes to the one ready Red Module by itself; then Blue and Yellow in the player's order.
-    expect(state.events!.slice(1)).toMatchObject([
+    expect(state.events!.slice(1, 4)).toMatchObject([
       { colour: "Red", module: 26, from: flare, auto: true },
       { colour: "Blue", module: 52, from: flare, auto: false },
       { colour: "Yellow", module: 1, from: flare, auto: false },
@@ -96,5 +99,46 @@ describe("engine events", () => {
     expect(newEvents(a.events, b.events).map((e) => e.seq)).toEqual([2]);
     expect(newEvents(b.events, a.events)).toEqual([]);
     expect(newEvents(undefined, a.events)).toHaveLength(1);
+  });
+
+  it("a Boost reports a Shield gained, or a Damage token removed (step 5, screen only)", () => {
+    const s0 = given("T_TOK_01");
+    const id = at(s0, "0,0");
+    const a = play(s0, (c) => boost(c, [id], "6.2")).state;
+    expect(a.events).toEqual([{ seq: 1, kind: "tokens", tile: id, unitId: "B_02", sector: "0,0", change: "shield", n: 1, boost: true, rule: "6.2" }]);
+    const hurt = play(s0, (c) => dealHit(c, id, 2)).state;
+    const b = play(hurt, (c) => boost(c, [id], "6.2")).state;
+    expect(newEvents(hurt.events, b.events)).toMatchObject([{ kind: "tokens", change: "repair", boost: true }]);
+  });
+
+  it("Barriers and Fuse tokens placed are reported", () => {
+    const s0 = given("T_TOK_01");
+    const id = at(s0, "0,0");
+    const { state } = play(s0, function* (c) {
+      placeBarrier(c, id, "4.5");
+      placeFuse(c, id, "mortar", "X");
+    });
+    expect(state.events).toMatchObject([
+      { kind: "tokens", change: "barrier", rule: "4.5" },
+      { kind: "tokens", change: "mortar", rule: "X" },
+    ]);
+  });
+
+  it("a turn reports the sides turned, clockwise", () => {
+    const s0 = given("T_TOK_01");
+    const id = at(s0, "0,0");
+    const { state } = play(s0, function* (c) {
+      turn(c, id, 2, "E10");
+    });
+    expect(state.events).toEqual([{ seq: 1, kind: "turned", tile: id, unitId: "B_02", sector: "0,0", by: 2, rule: "E10" }]);
+  });
+
+  it("an Overload start is reported before its Alert tokens", () => {
+    const s0 = given("T_TOK_01");
+    const { state } = play(s0, function* (c) {
+      startOverload(c);
+    });
+    expect(kinds(state.events)[0]).toBe("overload");
+    expect(state.events![0]).toMatchObject({ how: "start" });
   });
 });

@@ -53,6 +53,12 @@ const FX: Record<string, (q: Question, g: Game) => string | undefined> = {
   // A unit's own effect that hits another unit (designer 2026-11-09: each unit type its own shot).
   unitshot: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "hit" && /^[SFPGO]_\d+$/.test(e.rule ?? ""))),
   flagship: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "flagship" && /^[A-Z]_\d+$/.test(e.rule))),
+  // Build step 5 looks: a Reveal that starts an Overload, a Boost, tokens placed, an uncovered tile, an Overhaul.
+  overloadstart: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "overload" && e.how === "start"), /^reveal:/),
+  boost: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "tokens" && e.boost === true)),
+  fuses: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "tokens" && (e.change === "tick" || e.change === "mortar" || e.change === "feedback"))),
+  uncover: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "uncovered")),
+  overhaul: (q, g) => ((q.shortcuts ?? []).some((o) => o.id === "overhaul") ? "overhaul" : undefined),
 };
 for (const t of ["Flare", "Omega", "Sentinel", "Gyro", "Sleeper"]) FX[`reveal-${t}`] = (q, g) => (revealOf(t)(q, g) ? shortcutWith(q, g, (es) => es.some((e) => e.kind === "revealed" && e.type === t), /^reveal:/) : undefined);
 

@@ -668,6 +668,51 @@ if (existsSync(`${out}/reveal-Omega-save.json`) && existsSync(`${out}/area-save.
   fxCheck = flash && bombs >= 2 ? "ok" : `failed (Omega flash ${flash}, bombs at once ${bombs})`;
   await pg.close();
 }
+// Build step 5: a Reveal that starts an Overload plays its ripple; the Menu's animation settings
+// (Instant: nothing plays; Reduced motion On: the page goes still) are kept in this browser.
+let motionCheck = "skipped (no save)";
+if (existsSync(`${out}/overloadstart-save.json`)) {
+  const k = JSON.parse(readFileSync(`${out}/overloadstart-save.json.plan.json`, "utf8")).shortcut.slice(7);
+  const reveal = async (pg) => {
+    const p = await sectorPoint(pg, k);
+    await pg.mouse.click(p.x, p.y);
+    await pg.waitForTimeout(400);
+    await pg.locator(".popup [role=menuitem]", { hasText: "Reveal" }).click();
+  };
+  let pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/overloadstart-save.json`);
+  await reveal(pg);
+  const played = await pg.waitForFunction(() => document.querySelector(".field")?.getAttribute("data-anim") === "1", null, { timeout: 1500 }).then(() => true).catch(() => false);
+  await pg.waitForTimeout(1500);
+  await pg.screenshot({ path: `${out}/ui-overload-start.png` });
+  const settled = await pg.waitForFunction(() => document.querySelector(".field")?.getAttribute("data-anim") === "0", null, { timeout: 8000 }).then(() => true).catch(() => false);
+  // Menu: Instant, then a fresh load of the same save: the Reveal plays nothing.
+  await pg.getByRole("button", { name: "Menu" }).click();
+  await pg.locator('.motion-set [data-speed="instant"]').click();
+  const menuOpen = (await pg.locator(".motion-set").count()) > 0;
+  await pg.screenshot({ path: `${out}/ui-motion-settings.png` });
+  const stored = await pg.evaluate(() => localStorage.getItem("aphelion5.motion") ?? "");
+  await pg.close();
+  pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(url);
+  await pg.evaluate((v) => localStorage.setItem("aphelion5.motion", v), stored);
+  await pasteSave(pg, `${out}/overloadstart-save.json`);
+  await reveal(pg);
+  let anim = false;
+  for (let i = 0; i < 20; i++) {
+    anim ||= (await pg.locator(".field").getAttribute("data-anim")) === "1";
+    await pg.waitForTimeout(50);
+  }
+  await pg.getByRole("button", { name: "Menu" }).click();
+  await pg.locator('.motion-set [data-reduced="on"]').click();
+  const still = await pg.evaluate(() => document.documentElement.classList.contains("still"));
+  await pg.locator('.motion-set [data-reduced="auto"]').click();
+  await pg.locator('.motion-set [data-speed="normal"]').click();
+  await pg.close();
+  motionCheck = played && settled && menuOpen && stored.includes("instant") && !anim && still ? "ok" : `failed (played ${played}, settled ${settled}, menu kept open ${menuOpen}, stored ${stored}, instant still animated ${anim}, still class ${still})`;
+}
 // Damage to the Flagship (designer 2026-11-09): a bubble in the Field, bubbles by the Bays; no card.
 let damageCheck = "skipped (no save)";
 if (existsSync(`${out}/flagship-save.json`)) {
@@ -795,7 +840,7 @@ if (existsSync(`${out}/upgrade-save.json`)) {
   const ok = sheet === 1 && fieldHidden && open >= 3 && p2 === p0 - 2 && online && gained === 1 && pU === p2 + 1 && pD === pU - 1 && t1 === 1 && ask === 1 && closed && !/^Upgrade/.test(prompt) && tabs === 3 && sw <= 362 && q1 === q0 - 1;
   upgradeCheck = ok ? "ok" : `failed (sheet ${sheet}, field hidden ${fieldHidden}, open ${open}, points ${p0}>${p2}, online ${online}, gained ${gained}, undo ${pU}, drag ${pD}, T1 slots ${t1}, confirm ${ask}, closed ${closed}, prompt "${prompt}", tabs ${tabs}, phone width ${sw}, phone ${q0}>${q1})`;
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck }));
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

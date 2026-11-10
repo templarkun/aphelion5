@@ -8,6 +8,7 @@
  * - "overloadEnd": Overload End steps 1-5 (9.3), then back to the Command phase.
  */
 
+import { emit } from "./events.js";
 import type { AnomalyDef, AnomalyTerm } from "../data/anomalies.js";
 import { type Effect, type RunCtx, ask, asEffect, log, registerRoot } from "./effect.js";
 import { alertShortcuts, alertedUnits, resolveAlert, splitAlertId } from "./alerts.js";
@@ -109,6 +110,7 @@ export function* overloadStep(c: RunCtx): Effect {
   if (id === "endOverload") {
     c.state.phase = "overloadEnd";
     log(c, "you end the Overload: Overload End", "9.2");
+    emit(c, { kind: "overload", how: "end" });
     return;
   }
   yield* asEffect(c, options.some((o) => o.id === id) ? doOverloadAction(c, id) : doOverloadShortcut(c, id));

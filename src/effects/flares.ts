@@ -5,7 +5,7 @@ import { canBeChosen, choosableUnits, describe, fieldMap, level, sectorOf, secto
 import { moduleDef, runModule, xWouldBeZero } from "../engine/modules.js";
 import { bury, reveal } from "../engine/moves.js";
 import type { TileId } from "../engine/state.js";
-import { boost, damageFlagship, dealHit, destroy, repairFlagship } from "../engine/tokens.js";
+import { boost, damageFlagship, dealHit, destroy, removeDamage, repairFlagship, tokenEvent } from "../engine/tokens.js";
 import { fromKey, key } from "../geometry/hex.js";
 import { chooseDarkSector } from "./helpers.js";
 import {
@@ -49,6 +49,7 @@ flare("F_02", function* (c, self) {
     if (t.barrier) {
       t.barrier = false;
       c.state.supply.barrier += 1;
+      tokenEvent(c, u, "barrierGone", "F_02");
       log(c, `F_02: ${describe(c, u)} loses its Barrier`, "F_02");
     }
     if (!t.alert) {
@@ -86,7 +87,7 @@ flare("F_06", function* (c) {
   const inRow = unitsIn(c, row!.sectors).filter((u) => canBeChosen(c, u));
   const damaged = inRow.filter((u) => tile(c.state, u).tokens.damage > 0);
   for (const u of damaged) {
-    tile(c.state, u).tokens.damage -= 1;
+    removeDamage(c, u, "F_06");
     log(c, `F_06: 1 Damage removed from ${describe(c, u)}`, "F_06");
   }
   yield* hitEach(c, inRow.filter((u) => !damaged.includes(u)), 1, "F_06");

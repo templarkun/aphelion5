@@ -154,6 +154,7 @@ export function* overhaul(c: RunCtx): Effect {
   // 1. Mark one empty slot.
   c.state.sheet.overhaulUsed += 1;
   log(c, `Overhaul (slot ${c.state.sheet.overhaulUsed} of ${co.overhaulSlots})`, "8.8");
+  emit(c, { kind: "overhaul" });
   // 2. Remove all damage from the Flagship.
   c.state.flagship = printedIntegrity(c);
   // 3. Refill each colour up to the starting amount (never reduce it).
@@ -253,6 +254,7 @@ export function startOverload(c: Ctx): void {
   c.state.overloadPending = false;
   c.state.phase = "overload";
   log(c, "an Overload starts", "9.1");
+  emit(c, { kind: "overload", how: "start" });
   for (const u of units(c.state)) {
     const type = unitType(c, u);
     if (type === "Flare" || type === "Sentinel" || hasAtOverload(c, u)) {

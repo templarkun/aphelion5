@@ -1,4 +1,4 @@
-# Next sessions (plan, updated 2026-11-07, evening)
+# Next sessions (plan, updated 2026-11-10)
 
 All 8 build stages are built and all test batches (1-9) are agreed and in the Project. What
 is left for version 1 (spec "Scope", "Acceptance") and after:
@@ -58,6 +58,9 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    2026-11-09 step 4: the Upgrade sheet (full screen at Mission End, one point per answer, tap or
    drag, particles, "Upgrade online"; phone tabs). Next: the designer tries it (Developer mode:
    Menu -> win this mission); then step 5 (remaining events and settings).
+   2026-11-10 step 5: the remaining event looks (turn, Boost / Shield / repair, Barrier and Fuse
+   tokens, uncover, Overload start and end, Overhaul, Wreck smoke) and Menu settings (animation
+   speed, reduced motion). Next: the designer tries them; then step 6 (phone check of every drag).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    The Flagship picture on the Upgrade sheet (`FlagshipArt` in `src/web/UpgradeSheet.tsx`) is a

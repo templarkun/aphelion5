@@ -358,3 +358,65 @@ then: Done with points left: a box says they will be lost: "Keep spending" goes 
       the sheet stays with "Continue", so the last effects finish, then Mission End goes on.
       Developer mode only: Menu -> "Developer: win this mission (+12 points)" goes straight to
       Mission End with 12 Upgrade points, to try the sheet (a tool, not a rule).
+
+################################################################################
+=== SECTION: THE REMAINING EVENT LOOKS AND THE ANIMATION SETTINGS (build step 5) ===
+# Written 2026-11-10. Screen only; no rule changes. The engine reports a few more events for the
+# looks (turned, tokens, uncovered, overload, overhaul); every earlier test still passes.
+
+id: T13_S5_01
+title: A unit turns
+source: Program Spec "How things look when they happen" (Turn); E10, 3.7
+when: an effect turns a unit (for example "turn this unit clockwise by 2")
+then: its arrows sweep round to the new facing, 0.15 s per side, clockwise for a clockwise turn.
+note: Checked by tests/unit/events.test.ts.
+
+id: T13_S5_02
+title: Boost, Shields, Bio-shields and Damage removed
+source: Program Spec (Boost, Hit stopped); Core Rules 6.2, 6.3
+then: a Boost: a rising gold light with chevrons and "+1"; a Shield it gives forms as a cyan hex
+      bubble round the unit (a Bio-shield: green). Damage removed by an effect (not a Boost):
+      green repair sparks rise with "+1" (more at once, e.g. EMP Burst: "+N"). The same change by
+      one effect on several units plays at once.
+note: Checked by tests/unit/events.test.ts.
+
+id: T13_S5_03
+title: Barriers and Fuse tokens placed or removed; an Alert cancelled
+source: Program Spec (Tick, Mortar, Feedback and other tokens); Core Rules 6.4-6.6
+then: a Barrier placed: its force field drops onto the unit; removed by an effect: the field
+      fades up and away (a Barrier stopping a hit still shatters, as before). A Tick, Mortar or
+      Feedback token drops on with a small bounce; Fuse tokens removed fade up and away. An Alert
+      cancelled by an effect: its warning triangle fades up and away.
+note: Checked by tests/unit/events.test.ts.
+
+id: T13_S5_04
+title: A tile is uncovered
+source: Program Spec (Uncover); Core Rules 3.4
+when: the top unit leaves a sector and the tile beneath is face up
+then: a face-down-coloured tile slides away and the uncovered unit is simply there: no flip, no
+      flash, so it reads differently from a Reveal.
+
+id: T13_S5_05
+title: Overload start and end
+source: Program Spec (Overload starts, Overload End); Core Rules 9.1, 9.2
+then: an Overload starts: the Field tints red and a ripple crosses it from the centre (0.8 s);
+      then the Alert tokens pop in one by one; the plasma ring stays round the Field.
+      The Overload ended: the ripple runs back in while the red tint and the plasma ring fade.
+note: Checked by tests/unit/events.test.ts and scripts/ui-smoke.mjs (find-save.ts overloadstart).
+
+id: T13_S5_06
+title: Overhaul
+source: Program Spec (Overhaul); Core Rules 8.8
+then: green-gold repair light sweeps over the Flagship panel and it glows green; the Reserve's
+      energy chips fly in as before.
+
+id: T13_S5_07
+title: Animation settings
+source: Program Spec "Timing"
+then: Menu -> Animation speed: Slow (half speed), Normal, Fast (double), Instant (nothing plays,
+      the board shows the result). Reduced motion: "As the device" (default), On, Off. On: shakes,
+      flashes and flying pieces become a short fade of the tiles; glows and rings are drawn still;
+      the screen's other animations stop. Both are kept in this browser. Slow and Fast change the
+      Field's animations; the energy chips and Upgrade points keep their own speed (Instant and
+      Reduced motion skip them).
+note: Checked by scripts/ui-smoke.mjs.

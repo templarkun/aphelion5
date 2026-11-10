@@ -33,6 +33,7 @@ import { UpgradeBubble } from "./Upgrade.js";
 import { UpgradeSheet } from "./UpgradeSheet.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
+import { MotionSettings } from "./MotionSettings.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const PHASE: Record<GameState["phase"], string> = {
@@ -1017,6 +1018,7 @@ function GameScreen(p: GameProps) {
                 {s.settings.heatModule ? ` · Heat ${s.player.heat}` : ""}
               </p>
               <button onClick={() => setShowLog((x) => !x)}>{showLog ? "Hide the log" : "Log"}</button>
+              <MotionSettings />
               {s.settings.developerMode && q?.shortcuts?.some((o) => o.id === "devWin") && (
                 <button onClick={() => answer("devWin")} title="Developer tool: go straight to Mission End with 12 Upgrade points, to try the Upgrade sheet">
                   Developer: win this mission (+12 points)

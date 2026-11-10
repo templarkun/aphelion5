@@ -25,13 +25,14 @@ import type { Answer, Question } from "../engine/questions.js";
 import type { GameState } from "../engine/state.js";
 import { UpgradeGlyph } from "./Upgrade.js";
 import { UpgradeFx } from "./upgradeFx.js";
+import { noFlying } from "./motion.js";
 
 type Group = "flagship" | "mecha" | "req";
 const COLOUR: Record<Group, string> = { flagship: "#38d9ff", mecha: "#ffb547", req: "#b98bff" };
 const TITLE: Record<Group, string> = { flagship: "Flagship", mecha: "Mecha", req: "Requisitions" };
 
 const groupOf = (u: UpgradeDef): Group => (u.kind === "requisition" ? "req" : u.appliesTo.some((a) => a.startsWith("flagship_bay_")) ? "flagship" : "mecha");
-const still = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+const still = () => noFlying();
 
 /** What kind of ability an upgrade gives, and its text without the tags. */
 export function readEffect(u: UpgradeDef): { tags: string[]; text: string } {

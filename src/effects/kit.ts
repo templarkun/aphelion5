@@ -17,7 +17,7 @@ import { reveal } from "../engine/moves.js";
 import type { Row } from "../geometry/fieldMap.js";
 import { type Coord, type Facing, fromKey, key, turnClockwise } from "../geometry/hex.js";
 import type { SectorKey, TileId } from "../engine/state.js";
-import { type HitResult, boost, dealHit, placeAlert } from "../engine/tokens.js";
+import { type HitResult, boost, dealHit, placeAlert, turnedEvent } from "../engine/tokens.js";
 import { moduleDef, xWouldBeZero } from "../engine/modules.js";
 import { emit } from "../engine/events.js";
 
@@ -69,6 +69,7 @@ export function turn(c: Ctx, self: TileId, n: number, rule: string): void {
   const t = tile(c.state, self);
   const before = t.facing;
   t.facing = turnClockwise(t.facing, ((n % 6) + 6) % 6) as Facing;
+  turnedEvent(c, self, before, rule, ((n % 6) + 6) % 6);
   log(c, `${describe(c, self)} turns clockwise by ${n} side${n === 1 ? "" : "s"} (facing ${before} -> ${t.facing})`, rule);
 }
 

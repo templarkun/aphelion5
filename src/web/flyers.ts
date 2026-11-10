@@ -6,6 +6,7 @@
  */
 
 import type { GameState } from "../engine/state.js";
+import { noFlying } from "./motion.js";
 
 type Colour = "Yellow" | "Red" | "Blue";
 type Pt = { x: number; y: number };
@@ -37,7 +38,7 @@ function pulse(el: Element | null | undefined, colour: Colour): void {
 
 /** One chip from a to b along an arc; `fade`: it fades out on the way (into the Supply). */
 export function flyChip(colour: Colour, a: Pt, b: Pt, delay: number, opts: { fade?: boolean; fadeIn?: boolean; onArrive?: () => void; cls?: string; text?: string } = {}): void {
-  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return opts.onArrive?.();
+  if (noFlying()) return opts.onArrive?.();
   const dot = document.createElement("div");
   dot.className = opts.cls ?? "energy-fly";
   if (opts.text) dot.textContent = opts.text;
