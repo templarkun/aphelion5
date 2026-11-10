@@ -236,6 +236,9 @@ title: A unit's Level is a badge in the top corner
 source: designer 2026-11-09; Core Rules 3.3
 then: every unit with a Level (not Flares) shows a small dark hexagon with the Level number in
       its tile's top corner. No word "Level", no notches. Fuse tokens sit just below it.
+note: CHANGED 2026-11-10 (designer): the badge is bigger (about a fifth of the tile's width
+      across, never under 18 px on a phone) with a gold rim, so it reads on every screen
+      (T13_R14_04).
 
 id: T13_R11_02
 title: A ready Alert is a token and a pulsing rim
@@ -490,22 +493,32 @@ then: no banner. A bubble on each sector that can be chosen: "Reveal", "Move", "
       chooses it. Several: select, "Confirm" at the foot of the Field; "Skip" when allowed.
 
 id: T13_R13_06
-title: Overload: sun energy tongues and slower beams
+title: Overload: coronal waves round the edge and slower beams
 source: designer 2026-11-10 (T13_R11_05 and T13_R9_06 CHANGED)
 given: an Overload
-then: from fixed places all round the Field's edge, semi-transparent tongues of sun energy
-      (orange with a pale core, a few violet) lick in towards the Field: each slowly grows and
-      sinks back (4-7 s), its tip sways a little and it flickers softly. The four beams round
-      the edge go half as fast as before. With reduced motion: still.
+then: the "coronal waves effect" round the Field's edge: glowing arcs of solar plasma (coronal
+      loops) rooted on the edge, with plasma streaming slowly along them; each arc rises,
+      billows, stretches and sinks over 9-15 s and dissolves and forms again in place; a soft
+      glowing band along the edge, and wisps that drift out from it, expand and fade. Colours
+      from deep orange through amber to white-hot where the light overlaps (it adds up, as
+      light does). No flames, no flicker, nothing falling or rising like a candle. It fades in
+      when the Overload starts and out when it ends. The four beams round the edge go half as
+      fast as before. With reduced motion: none.
+note: CHANGED 2026-11-10 (designer, second request): coronal waves instead of sun tongues.
 
 id: T13_R13_07
-title: "End the Overload" is a small round sun
+title: "End the Overload" is a small round sun with a plasma wave
 source: designer 2026-11-10; Core Rules 9.2
 given: an Overload with no Alert left
-then: in the Field's lower right corner a round, see-through button "End the Overload" (about
-      100-150 px), glowing orange like a small sun, with soft energy tongues glowing out of its
-      rim, each growing and sinking. Pressed: it flashes, bursts into sparks and a shock ring,
-      then the Overload ends. With reduced motion: the tongues stand still.
+then: in the Field's lower right corner a round, see-through button "End the Overload",
+      glowing like a small sun. Round it a slow plasma wave like stellar wind: soft wisps of
+      golden-yellow and white energy leave its rim, drift outwards, swell, bend and fade, and
+      a soft corona round the rim breathes slowly; no flicker. The glow stays inside the Field.
+      Size: about 64 px on a phone (under 600 px wide), 100-150 px on a tablet, 110-172 px on a
+      PC (1280 px wide or more). Pressed: it flashes, bursts into sparks and a shock ring, then
+      the Overload ends. With reduced motion: the glow stands still.
+note: CHANGED 2026-11-10 (designer, second request): the plasma wave instead of the tongues;
+      smaller on phones, a little bigger on PCs.
 
 id: T13_R13_08
 title: An Alert with no effect fizzles
@@ -517,3 +530,38 @@ then: a fizzle on the unit: a spark at its heart sputters and gutters out, a few
       above it and out (1 s). Not for a Mecha's Alert (you Command it) or an Omega. No rule
       change: the engine reports a display event ("fizzled") when the board did not change.
 note: tests/unit/events.test.ts (find-save.ts fizzle makes a save one tap before one).
+
+################################################################################
+=== SECTION: PLAY-TEST ROUND 14 (designer 2026-11-10, screen only) ===
+
+id: T13_R14_01
+title: Heat chips show below the top bar
+source: designer 2026-11-10; Heat module H1, H5-H7
+given: the Heat module; Heat is paid (Heat Wave, Meltdown avoided) or gained (Overclock, a
+       Power Node, Meltdown)
+then: paid: a "−N Heat (rule)" chip leaves the Heat counter and sinks into the Field as it
+      fades. Gained: a "+N Heat (rule)" chip (amber) rises out of the Field into the Heat
+      counter. Both stay below the top bar and on the screen; neither is hidden by the bar.
+note: No rule change: the engine now also reports Heat gained (a display event).
+
+id: T13_R14_02
+title: A unit's card text shows above "End the Overload"
+source: designer 2026-11-10
+given: an Overload with no Alert left, a phone
+when: hold a unit next to "End the Overload"
+then: the card text bubble shows on top of the button, not under it.
+
+id: T13_R14_03
+title: Smaller unit pop-ups on phones
+source: designer 2026-11-10 (batch 11 pop-up bubbles)
+given: a screen under 600 px wide
+when: tap a unit or Dark sector with actions
+then: its pop-up bubbles are 96 px wide (120 px on tablets and PCs, as before), with the text a
+      little smaller to match.
+
+id: T13_R14_04
+title: Level badges read on every screen
+source: designer 2026-11-10 (T13_R11_01 CHANGED)
+then: the Level badge in each unit's top corner is about a fifth of the tile's width across
+      (never under 18 px), with a bright gold rim and a bigger number. Fuse tokens sit lower,
+      under it.

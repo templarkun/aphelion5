@@ -203,11 +203,12 @@ export function addLevel(node: Container, level: number | undefined, cx: number,
   g.eventMode = "none";
   g.label = "unit-level";
   node.addChild(g);
-  // In the tile's top corner (designer 2026-11-09).
+  // In the tile's top corner (designer 2026-11-09); bigger, and never under 9 px across on phones
+  // (designer 2026-11-10: too small on big screens, almost invisible on phones).
+  const r = Math.max(9, size * 0.16);
   const bx = cx;
-  const by = cy - size * 0.78;
-  const r = size * 0.1;
-  g.poly(hexPts(bx, by, r * 1.12)).fill({ color: 0x000000, alpha: 0.3 });
-  g.poly(hexPts(bx, by, r)).fill({ color: 0x15161a }).stroke({ width: Math.max(1, size * 0.018), color: 0xfff1c2, alpha: 0.9 });
-  number(node, level, bx, by + r * 0.04, r * (level > 9 ? 0.95 : 1.2), 0xfff1c2);
+  const by = cy - size * 0.9 + r * 1.15;
+  g.poly(hexPts(bx, by, r * 1.18)).fill({ color: 0x000000, alpha: 0.45 });
+  g.poly(hexPts(bx, by, r)).fill({ color: 0x15161a }).stroke({ width: Math.max(1.5, r * 0.16), color: 0xffd36b, alpha: 1 });
+  number(node, level, bx, by + r * 0.04, r * (level > 9 ? 1.05 : 1.35), 0xfff1c2);
 }

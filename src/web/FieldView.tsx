@@ -35,6 +35,7 @@ import { drawAlert } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
 import { fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
 import { isStill, onMotion, speedFactor } from "./motion.js";
+import { CoronalWaves } from "./coronalFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
 export interface FieldProps {
@@ -138,6 +139,7 @@ export function FieldView(p: FieldProps) {
   const geo = useRef({ size: 40 });
   /** Reduced motion: the Barrier field is drawn still. */
   const stillRef = useRef(false);
+  const corona = useRef<CoronalWaves | undefined>(undefined);
   const lastState = useRef<GameState | undefined>(undefined);
   const drag = useRef<DragState | undefined>(undefined);
   const press = useRef<{ k: string | undefined; unit: TileId | undefined; x: number; y: number; touch: boolean; held: boolean } | undefined>(undefined);
@@ -177,7 +179,10 @@ export function FieldView(p: FieldProps) {
       dl.eventMode = "none";
       const tether = new Graphics();
       dl.addChild(tether);
-      a.stage.addChild(root, aura, edge, glow, fx, dl);
+      // Coronal waves round the edge during an Overload (designer 2026-11-10).
+      const coronal = new CoronalWaves();
+      corona.current = coronal;
+      a.stage.addChild(root, aura, coronal.view, edge, glow, fx, dl);
       layers.current = { root, aura, edge, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined };
       ready.current = true;
       draw();
@@ -506,24 +511,32 @@ export function FieldView(p: FieldProps) {
     };
   }
 
-  /** Heat paid back to the Supply: a Heat chip floats up from the Heat counter (H7: slowly, with a word why). */
-  function heatStep(amount: number, rule: string): Step {
+  /**
+   * Heat paid back to the Supply: a Heat chip leaves the Heat counter and sinks into the Field (H7:
+   * slowly, with a word why). Heat gained: a "+N Heat" chip rises from the Field into the counter.
+   * Designer 2026-11-10: below the top bar, so the bar never hides it.
+   */
+  function heatStep(amount: number, rule: string, gain = false): Step {
     let chip: HTMLDivElement | undefined;
     let a = { x: 0, y: 0 };
     return {
-      ms: rule === "H7" ? 1600 : 700,
+      ms: rule === "H7" && !gain ? 1600 : 900,
       start: () => {
         const el = document.querySelector<HTMLElement>("[data-heat]")?.getBoundingClientRect();
         const r = host.current?.getBoundingClientRect();
-        a = el ? { x: el.left + el.width / 2, y: el.top + el.height / 2 } : { x: (r?.left ?? 0) + (r?.width ?? 0) / 2, y: (r?.top ?? 0) + 40 };
+        a = el ? { x: el.left + el.width / 2, y: el.bottom + 4 } : { x: (r?.left ?? 0) + (r?.width ?? 0) / 2, y: (r?.top ?? 0) + 8 };
         chip = document.createElement("div");
-        chip.className = "heat-fly";
-        chip.textContent = rule === "H7" ? `−${amount} Heat: Meltdown avoided (H7)` : `−${amount} Heat (${rule})`;
+        chip.className = `heat-fly ${gain ? "gain" : ""}`;
+        chip.textContent = gain ? `+${amount} Heat (${rule})` : rule === "H7" ? `−${amount} Heat: Meltdown avoided (H7)` : `−${amount} Heat (${rule})`;
         document.body.appendChild(chip);
+        // Kept on screen (a long H7 chip near the right edge).
+        const half = chip.offsetWidth / 2 + 6;
+        a.x = Math.max(half, Math.min(window.innerWidth - half, a.x));
       },
       frame: (p) => {
         if (!chip) return;
-        chip.style.transform = `translate(calc(${a.x}px - 50%), ${a.y - 14 - 70 * easeOut(p)}px) scale(${1 + 0.1 * Math.sin(Math.PI * Math.min(1, p * 3))})`;
+        const d = gain ? 70 * (1 - easeOut(p)) : 70 * easeOut(p);
+        chip.style.transform = `translate(calc(${a.x}px - 50%), ${a.y + d}px) scale(${1 + 0.1 * Math.sin(Math.PI * Math.min(1, p * 3))})`;
         chip.style.opacity = String(p < 0.15 ? p / 0.15 : p > 0.75 ? (1 - p) / 0.25 : 1);
       },
       end: () => chip?.remove(),
@@ -1104,7 +1117,7 @@ export function FieldView(p: FieldProps) {
           heatChip = heatStep(e.amount, e.rule);
           continue;
         }
-        out.push(heatStep(e.amount, e.rule));
+        out.push(heatStep(e.amount, e.rule, e.gain));
         continue;
       }
       if (e.kind === "meltdown") {
@@ -1304,6 +1317,7 @@ export function FieldView(p: FieldProps) {
     // An Overload: a plasma beam swirls round the Field (designer 2026-11-09, instead of a tinted page).
     L.edge.clear();
     if (props.current.state.phase === "overload" && host.current) drawOverloadRing(L.edge, host.current.clientWidth, host.current.clientHeight, stillRef.current ? 0 : now);
+    corona.current?.update(host.current?.clientWidth ?? 0, host.current?.clientHeight ?? 0, now, props.current.state.phase === "overload" && !stillRef.current);
 
     // Barriers: a force field round their unit, following the tile as it moves.
     const au = L.aura;

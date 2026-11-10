@@ -20,6 +20,7 @@ export function gainHeat(c: Ctx, n: number, rule: string): void {
   p.heat += x;
   c.state.supply.heat -= x;
   log(c, `gain ${x} Heat${x < n ? ` (${n - x} lost)` : ""}; Heat ${p.heat}`, rule);
+  if (x > 0) emit(c, { kind: "heat", amount: x, rule, gain: true });
 }
 
 export function payHeat(c: Ctx, n: number, rule: string): void {

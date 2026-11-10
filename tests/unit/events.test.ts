@@ -12,11 +12,29 @@ import { startOverload } from "../../src/engine/command.js";
 import { turn } from "../../src/effects/kit.js";
 import { topTileId } from "../../src/engine/field.js";
 import { resolveAlert } from "../../src/engine/alerts.js";
+import { gainHeat, payHeat } from "../../src/engine/heat.js";
 import { A, at, data, given, play, withModules } from "./helpers.js";
 
 const kinds = (es: readonly GameEvent[] | undefined) => (es ?? []).map((e) => e.kind);
 
 describe("engine events", () => {
+  it("Heat gained and paid are reported, gains marked (designer 2026-11-10, screen only); none when no Heat is gained", () => {
+    const s0 = given("T_TOK_01");
+    s0.settings.heatModule = true;
+    s0.player.heat = 8;
+    s0.supply.heat = 2;
+    // eslint-disable-next-line require-yield
+    const { state } = play(s0, function* (c) {
+      gainHeat(c, 3, "H4");
+      gainHeat(c, 1, "H6");
+      payHeat(c, 1, "H5");
+    });
+    expect(state.events!.map((e) => (e.kind === "heat" ? [e.amount, e.rule, e.gain ?? false] : e.kind))).toEqual([
+      [2, "H4", true],
+      [1, "H5", false],
+    ]);
+  });
+
   it("a Feedback token going off reports it, then the damage coming at the Flagship (designer 2026-11-09, screen only)", () => {
     const s0 = given("T_TOK_01", "(0,0): B_02[FB]");
     const id = at(s0, "0,0");

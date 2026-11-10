@@ -42,7 +42,8 @@ export type GameEventBody =
   /** A Fuse token goes off (6.6), before its effect. */
   | { kind: "fuse"; tile: TileId; unitId: string; sector: SectorKey; fuse: FuseKind }
   /** Heat tokens paid back to the Supply (H5, H7). */
-  | { kind: "heat"; amount: number; rule: string }
+  /** Heat paid back to the Supply; with `gain`, Heat gained (H1). */
+  | { kind: "heat"; amount: number; rule: string; gain?: true }
   /** H7 Meltdown happens: no Heat token left to prevent it. `bots`: Bots it hits. */
   | { kind: "meltdown"; bots: number }
   /** The player looked at face-down tiles (a Bay, a Module...): shown to them, in this order (top first). */

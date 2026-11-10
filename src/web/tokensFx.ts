@@ -75,8 +75,8 @@ export function addFuseTokens(node: Container, t: Tokens, cx: number, cy: number
   // Big enough to read the glyph (designer 2026-11-09).
   const r = size * 0.155;
   const gap = r * 2.25;
-  // Below the Level badge in the top corner (designer 2026-11-09).
-  const y = cy - size * 0.53;
+  // Below the Level badge in the top corner (designer 2026-11-09; lower for the bigger badge, 2026-11-10).
+  const y = cy - size * 0.4;
   const g = new Graphics();
   g.eventMode = "none";
   g.label = "fuse-tokens";

@@ -694,9 +694,12 @@ function GameScreen(p: GameProps) {
     return best?.id;
   };
   const openPopup = (title: string, options: Option[], note?: string, at?: string) => setPopup({ ...(at ? centreOf(at) : pointer.current), title, options, note, at });
-  /** Bubble width (designer 2026-11-08): at least 120 px, and at least 2/3 of a tile's width on big screens. */
+  /**
+   * Bubble width (designer 2026-11-08): at least 120 px, and at least 2/3 of a tile's width on big
+   * screens; on phones (under 600 px wide) 96 px (designer 2026-11-10: a bit smaller there).
+   */
   const tileH = Number(document.querySelector<HTMLElement>(".field")?.dataset.tile ?? 0);
-  const bubbleW = Math.max(120, Math.round(tileH * 0.866 * (2 / 3)));
+  const bubbleW = window.innerWidth < 600 ? 96 : Math.max(120, Math.round(tileH * 0.866 * (2 / 3)));
   const pick = (id: string) => {
     if (mechaSel) {
       const t = mechaSel.plan.targets.find((x) => x.sector === id && x.answers.length);
