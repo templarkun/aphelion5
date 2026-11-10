@@ -750,8 +750,8 @@ dev_price: 0.8
 drain: Gain 1 Blue energy.
 destroyed: Gain 3 Blue energy.
 
-# ---- Other Gyros (G_10..G_38) ----
-SUBSECTION_DEFAULTS (G_10..G_38):
+# ---- Other Gyros (G_10..G_36) ----
+SUBSECTION_DEFAULTS (G_10..G_36):
   energy_gyro: false
   border: dark
   energy_deck_member: false
@@ -800,8 +800,8 @@ destroyed: Place 1 energy on each of three different ready Modules.
 
 id: G_17
 level: 2
-dev_price: -1.0
-drain: Lose 3 energy.
+dev_price: -0.5
+drain: Lose 1 Command token.
 destroyed: Gain 1 Command token.
 
 id: G_18
@@ -812,121 +812,109 @@ destroyed: Remove 1 damage from your Flagship.
 
 id: G_19
 level: 1
-dev_price: -1.0
-drain: Remove 1 energy from each of three different Modules that have energy (as many as possible).
-destroyed: Place 1 energy on each of three different ready Modules.
-
-id: G_20
-level: 1
-dev_price: -0.5
-drain: Lose 1 Command token.
-destroyed: Gain 1 Command token.
-
-id: G_21
-level: 1
 arrows: 1,3,5
 dev_price: 2.6
 drain: Deal 1 damage to every Targeted unit.
 destroyed: Deal 1 damage to all adjacent units.
 
-id: G_22
+id: G_20
 level: 1
 dev_price: 1.8
 drain: Deal 1 damage to all other Level 1 units in a row through this unit.
 destroyed: Deal 2 damage to all Level 2 units in a row through this unit.
 
-id: G_23
+id: G_21
 level: 1
 arrows: 1,3,5
 dev_price: 2.5
 drain: Deal 1 damage to every Targeted unit.
 destroyed: Deal 2 damage to every Targeted unit.
 
-id: G_24
+id: G_22
 level: 1
 dev_price: 1.9
 drain: Deal 1 damage to all Bots in a row through this unit.
 destroyed: Deal 1 damage to all Bots in one horizontal row of your choice.
 
-id: G_25
+id: G_23
 level: 1
 dev_price: 2.5
 drain: Deal 1 damage to all other damaged units in a row through this unit.
 destroyed: Deal 2 damage to all damaged units in a row through this unit.
 
-id: G_26
+id: G_24
 level: 1
 dev_price: 1.6
 drain: Boost all other units in a row through this unit.
 destroyed: Deal 1 damage to all units in a row through this unit.
 
-id: G_27
+id: G_25
 level: 2
 dev_price: 1.0
 drain: Boost all other units in a row through this unit and place a Tick on each of them.
 destroyed: Place a Tick on every unit in a row through this unit.
 
-id: G_28
+id: G_26
 level: 3
 dev_price: 0.6
 drain: Place a Tick on every Mecha.
 destroyed: Place a Tick on every Sentinel.
 
-id: G_29
+id: G_27
 level: 2
 dev_price: -1.0
 drain: [1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Mecha just revealed.
 destroyed: [1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Bot just revealed.
 
-id: G_30
+id: G_28
 level: 2
 dev_price: 0.5
 drain: [1] Reveal three units. [2] Deal 2 damage to each unit just revealed.
 destroyed: [1] Reveal three units. [2] Deal 2 damage to any number of the units just revealed, your choice.
 
-id: G_31
+id: G_29
 level: 2
 dev_price: 2.1
 drain: Deal 1 damage to all other units in one horizontal row of your choice that has at least one Mecha.
 destroyed: Deal 1 damage to all units in one horizontal row of your choice.
 
-id: G_32
+id: G_30
 level: 1
 dev_price: 1.4
 drain: Remove the Barrier from every Sentinel.
 destroyed: Deal 1 damage to all Sentinels.
 
-id: G_33
+id: G_31
 level: 1
 dev_price: 2.5
 drain: Deal 1 damage to all other damaged units in the horizontal row through this unit.
 destroyed: Deal 1 damage to all undamaged units in one horizontal row of your choice.
 
-id: G_34
+id: G_32
 level: 2
 dev_price: 1.7
 drain: Lose 1 energy for each Bot on the Field.
 destroyed: Place 1 energy on your ready Modules for each Bot on the Field, split as you choose.
 
-id: G_35
+id: G_33
 level: 1
 dev_price: 0.0
 drain: Exhaust one ready Module and remove all energy from it.
 destroyed: Make one exhausted Module ready.
 
-id: G_36
+id: G_34
 level: 3
 dev_price: 0.5
 drain: Reveal every Dark sector on the Field, one at a time.
 destroyed: [1] Reveal any number of units. [2] Gain 1 energy for each Bot just revealed.
 
-id: G_37
+id: G_35
 level: 2
 dev_price: 0.0
 drain: Deal 1 damage to all Level 3 units in one horizontal row of your choice.
 destroyed: Place a Tick on every Level 3 unit in one horizontal row of your choice.
 
-id: G_38
+id: G_36
 level: 2
 dev_price: 0.0
 drain: Run one ready Module that costs 3 or less and that you could run right now (light in the Command phase, red during an Overload), without paying its cost.

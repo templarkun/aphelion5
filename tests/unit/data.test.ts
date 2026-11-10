@@ -56,9 +56,9 @@ describe("spec data checks", () => {
 describe("unit file", () => {
   it("reads every unit with its type", () => {
     const count = (t: string) => d.units.units.filter((u) => u.type === t).length;
-    expect(d.units.units).toHaveLength(133);
+    expect(d.units.units).toHaveLength(131);
     expect([count("Bot"), count("Mecha"), count("Omega"), count("Sentinel"), count("Flare"), count("Sleeper"), count("Gyro")]).toEqual([
-      3, 7, 3, 27, 28, 27, 38,
+      3, 7, 3, 27, 28, 27, 36,
     ]);
   });
 

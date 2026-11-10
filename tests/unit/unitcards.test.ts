@@ -340,95 +340,88 @@ describe("Gyros", () => {
     expect(drain("(0,0): G_16 > fd.", [], mods([26, { Red: 1 }], [1, { Yellow: 1 }])).player.modules.every((m) => m.energy.Red + m.energy.Yellow === 0)).toBe(true);
     expect(wreck("G_16", "", [], mods([26], [1])).player.modules.map((m) => m.energy.Red + m.energy.Yellow)).toEqual([1, 1]);
   });
-  card("G_17", "Drain: lose 3 energy. Destroyed: gain 1 Command token", () => {
-    const s = drain("Reserve Red 3, Blue 1. (0,0): G_17 > fd.", [A.split({ Red: 3, Blue: 0 })]);
-    expect(s.player.reserve).toEqual({ Yellow: 0, Red: 0, Blue: 1 });
-    expect(wreck("G_17", "5 Command tokens.").player.commandTokens).toBe(6);
-    expect(wreck("G_17", "").player.commandTokens).toBe(6); // never more than 6
-  });
   card("G_18", "Drain: gain 1 energy. Destroyed: repair 1", () => {
     expect(drain("(0,0): G_18 > fd.", [A.split({ Yellow: 0, Red: 1, Blue: 0 })]).player.reserve.Red).toBe(1);
     expect(wreck("G_18", "Flagship 6/6/5.").flagship).toEqual([6, 6, 6]);
   });
-  card("G_19", "as G_16", () => expect(drain("(0,0): G_19 > fd.", [], mods([26, { Red: 1 }])).player.modules[0]!.energy.Red).toBe(0));
-  card("G_20", "Drain: lose 1 Command token. Destroyed: gain 1", () => {
-    expect(drain("(0,0): G_20 > fd.").player.commandTokens).toBe(5);
-    expect(wreck("G_20", "4 Command tokens.").player.commandTokens).toBe(5);
+  card("G_17", "Drain: lose 1 Command token. Destroyed: gain 1", () => {
+    expect(drain("(0,0): G_17 > fd.").player.commandTokens).toBe(5);
+    expect(wreck("G_17", "4 Command tokens.").player.commandTokens).toBe(5);
   });
-  card("G_21", "Drain: Targeted units. Destroyed: all adjacent units", () => {
-    gone(drain("(0,0): G_21 > fd. (0,-1): B_01 > fd."), "0,-1");
-    gone(wreck("G_21", "(0,1): B_01 > fd."), "0,1");
+  card("G_19", "Drain: Targeted units. Destroyed: all adjacent units", () => {
+    gone(drain("(0,0): G_19 > fd. (0,-1): B_01 > fd."), "0,-1");
+    gone(wreck("G_19", "(0,1): B_01 > fd."), "0,1");
   });
-  card("G_22", "Level 1 units (Drain) / Level 2 units (Destroyed) in a row through it", () => {
+  card("G_20", "Level 1 units (Drain) / Level 2 units (Destroyed) in a row through it", () => {
+    gone(drain("(0,0): G_20 > fd. (0,1): B_01 > fd.", [A.option("0")]), "0,1");
+    gone(wreck("G_20", "(0,1): B_02 > fd.", [A.option("0")]), "0,1");
+  });
+  card("G_21", "Targeted units: 1 (Drain) / 2 (Destroyed)", () => {
+    expect(tokensAt(drain("(0,0): G_21 > fd. (0,-1): B_02 > fd."), "0,-1")).toBe("[D1]");
+    gone(wreck("G_21", "(0,-1): B_02 > fd."), "0,-1");
+  });
+  card("G_22", "Bots in a row through it / in a horizontal row of your choice", () => {
     gone(drain("(0,0): G_22 > fd. (0,1): B_01 > fd.", [A.option("0")]), "0,1");
-    gone(wreck("G_22", "(0,1): B_02 > fd.", [A.option("0")]), "0,1");
+    gone(wreck("G_22", "(0,1): B_01 > fd.", [A.option("1")]), "0,1");
   });
-  card("G_23", "Targeted units: 1 (Drain) / 2 (Destroyed)", () => {
-    expect(tokensAt(drain("(0,0): G_23 > fd. (0,-1): B_02 > fd."), "0,-1")).toBe("[D1]");
-    gone(wreck("G_23", "(0,-1): B_02 > fd."), "0,-1");
+  card("G_23", "damaged units in a row through it", () => {
+    gone(drain("(0,0): G_23 > fd. (0,1): B_02[D1] > fd.", [A.option("0")]), "0,1");
+    gone(wreck("G_23", "(0,1): B_02[D1] > fd.", [A.option("0")]), "0,1");
   });
-  card("G_24", "Bots in a row through it / in a horizontal row of your choice", () => {
-    gone(drain("(0,0): G_24 > fd. (0,1): B_01 > fd.", [A.option("0")]), "0,1");
-    gone(wreck("G_24", "(0,1): B_01 > fd.", [A.option("1")]), "0,1");
+  card("G_24", "Drain: Boost the others in a row. Destroyed: 1 damage to the row", () => {
+    expect(tokensAt(drain("(0,0): G_24 > fd. (0,1): B_01 > fd.", [A.option("0")]), "0,1")).toBe("[S1]");
+    gone(wreck("G_24", "(0,1): B_01 > fd.", [A.option("0")]), "0,1");
   });
-  card("G_25", "damaged units in a row through it", () => {
-    gone(drain("(0,0): G_25 > fd. (0,1): B_02[D1] > fd.", [A.option("0")]), "0,1");
-    gone(wreck("G_25", "(0,1): B_02[D1] > fd.", [A.option("0")]), "0,1");
+  card("G_25", "Drain: Boost and Tick the others in a row. Destroyed: Tick the row", () => {
+    expect(tokensAt(drain("(0,0): G_25 > fd. (0,1): B_01 > fd.", [A.option("0")]), "0,1")).toBe("[S1][TICK]");
+    expect(tokensAt(wreck("G_25", "(0,1): B_01 > fd.", [A.option("0")]), "0,1")).toBe("[TICK]");
   });
-  card("G_26", "Drain: Boost the others in a row. Destroyed: 1 damage to the row", () => {
-    expect(tokensAt(drain("(0,0): G_26 > fd. (0,1): B_01 > fd.", [A.option("0")]), "0,1")).toBe("[S1]");
-    gone(wreck("G_26", "(0,1): B_01 > fd.", [A.option("0")]), "0,1");
+  card("G_26", "Ticks on every Mecha / every Sentinel", () => {
+    expect(tokensAt(drain("(0,0): G_26 > fd. (0,1): M_01 > fd."), "0,1")).toBe("[TICK]");
+    expect(tokensAt(wreck("G_26", "(0,1): S_01 > fd."), "0,1")).toBe("[TICK]");
   });
-  card("G_27", "Drain: Boost and Tick the others in a row. Destroyed: Tick the row", () => {
-    expect(tokensAt(drain("(0,0): G_27 > fd. (0,1): B_01 > fd.", [A.option("0")]), "0,1")).toBe("[S1][TICK]");
-    expect(tokensAt(wreck("G_27", "(0,1): B_01 > fd.", [A.option("0")]), "0,1")).toBe("[TICK]");
+  card("G_27", "reveal adjacent Dark sectors; 1 damage to Mecha / Bots just revealed", () => {
+    gone(drain("(0,0): G_27 > fd. (0,1): fd:M_01 > fd."), "0,1");
+    gone(wreck("G_27", "(0,1): fd:B_01 > fd."), "0,1");
   });
-  card("G_28", "Ticks on every Mecha / every Sentinel", () => {
-    expect(tokensAt(drain("(0,0): G_28 > fd. (0,1): M_01 > fd."), "0,1")).toBe("[TICK]");
-    expect(tokensAt(wreck("G_28", "(0,1): S_01 > fd."), "0,1")).toBe("[TICK]");
+  card("G_28", "Drain: reveal three, 2 damage to each (do as much as you can)", () => gone(drain("(0,0): G_28 > fd. (0,1): fd:B_02 > fd."), "0,1"));
+  card("G_29", "horizontal row with a Mecha (Drain) / of your choice (Destroyed)", () => {
+    gone(drain("(1,0): G_29 > fd. (0,1): M_01 > fd."), "0,1");
+    gone(wreck("G_29", "(0,1): M_01 > fd.", [A.option("1")]), "0,1");
   });
-  card("G_29", "reveal adjacent Dark sectors; 1 damage to Mecha / Bots just revealed", () => {
-    gone(drain("(0,0): G_29 > fd. (0,1): fd:M_01 > fd."), "0,1");
-    gone(wreck("G_29", "(0,1): fd:B_01 > fd."), "0,1");
+  card("G_30", "Drain: every Sentinel loses its Barrier. Destroyed: 1 damage to all Sentinels", () => {
+    expect(tokensAt(drain("(0,0): G_30 > fd. (0,1): S_01[BAR] > fd."), "0,1")).toBe("");
+    gone(wreck("G_30", "(0,1): S_01 > fd."), "0,1");
   });
-  card("G_30", "Drain: reveal three, 2 damage to each (do as much as you can)", () => gone(drain("(0,0): G_30 > fd. (0,1): fd:B_02 > fd."), "0,1"));
-  card("G_31", "horizontal row with a Mecha (Drain) / of your choice (Destroyed)", () => {
-    gone(drain("(1,0): G_31 > fd. (0,1): M_01 > fd."), "0,1");
-    gone(wreck("G_31", "(0,1): M_01 > fd.", [A.option("1")]), "0,1");
-  });
-  card("G_32", "Drain: every Sentinel loses its Barrier. Destroyed: 1 damage to all Sentinels", () => {
-    expect(tokensAt(drain("(0,0): G_32 > fd. (0,1): S_01[BAR] > fd."), "0,1")).toBe("");
-    gone(wreck("G_32", "(0,1): S_01 > fd."), "0,1");
-  });
-  card("G_33", "Drain: damaged others in its horizontal row. Destroyed: undamaged units in a row", () => {
-    gone(drain("(0,0): G_33 > fd. (0,1): B_02[D1] > fd."), "0,1");
-    const s = wreck("G_33", "(0,1): B_01 > fd. (0,-1): B_02[D1] > fd.", [A.option("1")]);
+  card("G_31", "Drain: damaged others in its horizontal row. Destroyed: undamaged units in a row", () => {
+    gone(drain("(0,0): G_31 > fd. (0,1): B_02[D1] > fd."), "0,1");
+    const s = wreck("G_31", "(0,1): B_01 > fd. (0,-1): B_02[D1] > fd.", [A.option("1")]);
     gone(s, "0,1");
     expect(tokensAt(s, "0,-1")).toBe("[D1]");
   });
-  card("G_34", "lose / place 1 energy per Bot", () => {
-    expect(drain("Reserve Red 2. (0,0): G_34 > fd. (0,1): B_01 > fd. (1,0): B_01 > fd.").player.reserve.Red).toBe(0);
+  card("G_32", "lose / place 1 energy per Bot", () => {
+    expect(drain("Reserve Red 2. (0,0): G_32 > fd. (0,1): B_01 > fd. (1,0): B_01 > fd.").player.reserve.Red).toBe(0);
     // Q9: the energy is the Module's own colour (Red), no colour question.
-    expect(wreck("G_34", "(0,1): B_01 > fd.", [], mods([26])).player.modules[0]!.energy.Red).toBe(1);
+    expect(wreck("G_32", "(0,1): B_01 > fd.", [], mods([26])).player.modules[0]!.energy.Red).toBe(1);
   });
-  card("G_35", "Drain: exhaust a Module and empty it. Destroyed: make one ready", () => {
-    const s = drain("(0,0): G_35 > fd.", [], mods([26, { Red: 1 }]));
+  card("G_33", "Drain: exhaust a Module and empty it. Destroyed: make one ready", () => {
+    const s = drain("(0,0): G_33 > fd.", [], mods([26, { Red: 1 }]));
     expect(s.player.modules[0]).toMatchObject({ ready: false, energy: { Red: 0 } });
-    expect(wreck("G_35", "", [], (st) => void withModules(st, [[26, false]])).player.modules[0]!.ready).toBe(true);
+    expect(wreck("G_33", "", [], (st) => void withModules(st, [[26, false]])).player.modules[0]!.ready).toBe(true);
   });
-  card("G_36", "Destroyed: reveal any number; 1 energy per Bot just revealed", () => {
-    const s = wreck("G_36", "(0,1): fd:B_01 > fd.", [A.yes(), A.split({ Yellow: 1, Red: 0, Blue: 0 })]);
+  card("G_34", "Destroyed: reveal any number; 1 energy per Bot just revealed", () => {
+    const s = wreck("G_34", "(0,1): fd:B_01 > fd.", [A.yes(), A.split({ Yellow: 1, Red: 0, Blue: 0 })]);
     expect(s.player.reserve.Yellow).toBe(1);
   });
-  card("G_37", "Level 3 units in a horizontal row: 1 damage / a Tick", () => {
-    expect(tokensAt(drain("(0,0): G_37 > fd. (0,1): B_03 > fd.", [A.option("1")]), "0,1")).toBe("[D1]");
-    expect(tokensAt(wreck("G_37", "(0,1): B_03 > fd.", [A.option("1")]), "0,1")).toBe("[TICK]");
+  card("G_35", "Level 3 units in a horizontal row: 1 damage / a Tick", () => {
+    expect(tokensAt(drain("(0,0): G_35 > fd. (0,1): B_03 > fd.", [A.option("1")]), "0,1")).toBe("[D1]");
+    expect(tokensAt(wreck("G_35", "(0,1): B_03 > fd.", [A.option("1")]), "0,1")).toBe("[TICK]");
   });
-  card("G_38", "runs a Module you could run now, for free", () => {
-    const s = wreck("G_38", "(0,1): B_01 > fd.", [], mods([1]));
+  card("G_36", "runs a Module you could run now, for free", () => {
+    const s = wreck("G_36", "(0,1): B_01 > fd.", [], mods([1]));
     gone(s, "0,1");
     expect(s.player.modules[0]!.ready).toBe(false);
-    const s2 = board(CMD + "(0,0): G_38 > fd. (0,1): B_01 > fd.");
+    const s2 = board(CMD + "(0,0): G_36 > fd. (0,1): B_01 > fd.");
     withModules(s2, [[1, true]]);
     const d = play(s2, (c) => commandStep(c), [A.option("drainGyro"), A.units(at(s2, "0,1"))]).state;
     gone(d, "0,1");
@@ -511,7 +504,7 @@ const COVERED_ELSEWHERE = [
   "S_01", "S_05", "S_12", "S_16", "S_20", "S_21", "S_22", "S_25", "S_27",
   "F_02", "F_04", "F_06", "F_08", "F_13", "F_17", "F_24", "F_25",
   "P_05", "P_07", "P_08", "P_15", "P_19", "P_25",
-  "G_10", "G_11", "G_14", "G_30", "G_36",
+  "G_10", "G_11", "G_14", "G_28", "G_34",
   "O_01", "O_02", "O_03",
   "M_01", "M_02", "M_03", "M_04", "M_05", "M_06", "M_07",
   "V1_M02_U2", "V1_M04_U2", "V1_M04_U2A", "V1_M03_U3",

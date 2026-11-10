@@ -1,5 +1,5 @@
 /**
- * Gyro effects G_10-G_38 (the Energy Gyros G_01-G_09 are in units.ts).
+ * Gyro effects G_10-G_36 (the Energy Gyros G_01-G_09 are in units.ts).
  * Drain: a Command phase action, or an Alert from an effect that Drains it;
  * the Gyro is discarded afterwards. A Drain effect never affects that Gyro
  * itself (unit file, Gyro drain_self_rule). Destroyed: resolved from the
@@ -150,9 +150,8 @@ function* threeModules(c: RunCtx, rule: string, options: number[], act: (m: numb
 const drain3 = (rule: string) => (c: RunCtx) => threeModules(c, rule, modulesWithEnergy(c), (m) => removeOneEnergy(c, m, rule));
 const place3 = (rule: string) => (c: RunCtx) => threeModules(c, rule, readyIds(c), (m) => placeOneEnergy(c, m, rule), true);
 
-// G_16, G_19 - Drain: remove 1 energy from each of three different Modules that have energy. Destroyed: place 1 energy on each of three different ready Modules.
+// G_16 - Drain: remove 1 energy from each of three different Modules that have energy. Destroyed: place 1 energy on each of three different ready Modules.
 gyro("G_16", drain3("G_16"), place3("G_16"));
-gyro("G_19", drain3("G_19"), place3("G_19"));
 
 /** Command tokens: never more than 6 held, limited by the Supply (5.6, 6.7). */
 function changeCommandTokens(c: RunCtx, n: number, rule: string): void {
@@ -164,15 +163,6 @@ function changeCommandTokens(c: RunCtx, n: number, rule: string): void {
   log(c, d >= 0 ? `gain ${d} Command token${d === 1 ? "" : "s"}` : `lose ${-d} Command token${d === -1 ? "" : "s"}`, rule);
 }
 
-// G_17 - Drain: Lose 3 energy. Destroyed: Gain 1 Command token.
-gyro(
-  "G_17",
-  (c) => loseEnergy(c, 3, undefined, "G_17"),
-  function* (c) {
-    changeCommandTokens(c, 1, "G_17");
-  },
-);
-
 // G_18 - Drain: Gain 1 energy. Destroyed: Remove 1 damage from your Flagship.
 gyro(
   "G_18",
@@ -180,235 +170,235 @@ gyro(
   (c) => repairFlagship(c, 1, "G_18"),
 );
 
-// G_20 - Drain: Lose 1 Command token. Destroyed: Gain 1 Command token.
+// G_17 - Drain: Lose 1 Command token. Destroyed: Gain 1 Command token.
 gyro(
-  "G_20",
+  "G_17",
   function* (c) {
-    changeCommandTokens(c, -1, "G_20");
+    changeCommandTokens(c, -1, "G_17");
   },
   function* (c) {
-    changeCommandTokens(c, 1, "G_20");
+    changeCommandTokens(c, 1, "G_17");
   },
 );
 
-// G_21 - Drain: 1 damage to every Targeted unit. Destroyed: 1 damage to all adjacent units.
+// G_19 - Drain: 1 damage to every Targeted unit. Destroyed: 1 damage to all adjacent units.
+gyro(
+  "G_19",
+  function* (c, self) {
+    yield* hitEach(c, targetedUnits(c, self), 1, "G_19");
+  },
+  function* (c, self) {
+    yield* hitEach(c, adjacentTo(c, here(c, self)), 1, "G_19");
+  },
+);
+
+// G_20 - Drain: 1 damage to all other Level 1 units in a row through this unit. Destroyed: 2 damage to all Level 2 units in a row through this unit.
+gyro(
+  "G_20",
+  function* (c, self) {
+    yield* hitEach(c, (yield* rowThrough(c, self, "G_20")).filter((u) => u !== self && level(c, u) === 1), 1, "G_20");
+  },
+  function* (c, self) {
+    yield* hitEach(c, (yield* rowThrough(c, self, "G_20")).filter((u) => level(c, u) === 2), 2, "G_20");
+  },
+);
+
+// G_21 - Drain: 1 damage to every Targeted unit. Destroyed: 2 damage to every Targeted unit.
 gyro(
   "G_21",
   function* (c, self) {
     yield* hitEach(c, targetedUnits(c, self), 1, "G_21");
   },
   function* (c, self) {
-    yield* hitEach(c, adjacentTo(c, here(c, self)), 1, "G_21");
+    yield* hitEach(c, targetedUnits(c, self), 2, "G_21");
   },
 );
 
-// G_22 - Drain: 1 damage to all other Level 1 units in a row through this unit. Destroyed: 2 damage to all Level 2 units in a row through this unit.
+// G_22 - Drain: 1 damage to all Bots in a row through this unit. Destroyed: 1 damage to all Bots in one horizontal row of your choice.
 gyro(
   "G_22",
   function* (c, self) {
-    yield* hitEach(c, (yield* rowThrough(c, self, "G_22")).filter((u) => u !== self && level(c, u) === 1), 1, "G_22");
+    yield* hitEach(c, (yield* rowThrough(c, self, "G_22")).filter(is(c, "Bot")), 1, "G_22");
   },
-  function* (c, self) {
-    yield* hitEach(c, (yield* rowThrough(c, self, "G_22")).filter((u) => level(c, u) === 2), 2, "G_22");
+  function* (c) {
+    yield* hitEach(c, ((yield* horizontalRow(c, "G_22")) ?? []).filter(is(c, "Bot")), 1, "G_22");
   },
 );
 
-// G_23 - Drain: 1 damage to every Targeted unit. Destroyed: 2 damage to every Targeted unit.
+// G_23 - Drain: 1 damage to all other damaged units in a row through this unit. Destroyed: 2 damage to all damaged units in a row through this unit.
 gyro(
   "G_23",
   function* (c, self) {
-    yield* hitEach(c, targetedUnits(c, self), 1, "G_23");
+    yield* hitEach(c, (yield* rowThrough(c, self, "G_23")).filter((u) => u !== self && damaged(c)(u)), 1, "G_23");
   },
   function* (c, self) {
-    yield* hitEach(c, targetedUnits(c, self), 2, "G_23");
+    yield* hitEach(c, (yield* rowThrough(c, self, "G_23")).filter(damaged(c)), 2, "G_23");
   },
 );
 
-// G_24 - Drain: 1 damage to all Bots in a row through this unit. Destroyed: 1 damage to all Bots in one horizontal row of your choice.
+// G_24 - Drain: Boost all other units in a row through this unit. Destroyed: 1 damage to all units in a row through this unit.
 gyro(
   "G_24",
   function* (c, self) {
-    yield* hitEach(c, (yield* rowThrough(c, self, "G_24")).filter(is(c, "Bot")), 1, "G_24");
+    yield* boostEach(c, (yield* rowThrough(c, self, "G_24")).filter(notSelf(self)), "G_24");
   },
-  function* (c) {
-    yield* hitEach(c, ((yield* horizontalRow(c, "G_24")) ?? []).filter(is(c, "Bot")), 1, "G_24");
+  function* (c, self) {
+    yield* hitEach(c, yield* rowThrough(c, self, "G_24"), 1, "G_24");
   },
 );
 
-// G_25 - Drain: 1 damage to all other damaged units in a row through this unit. Destroyed: 2 damage to all damaged units in a row through this unit.
+// G_25 - Drain: Boost all other units in a row through this unit and place a Tick on each of them. Destroyed: a Tick on every unit in a row through this unit.
 gyro(
   "G_25",
   function* (c, self) {
-    yield* hitEach(c, (yield* rowThrough(c, self, "G_25")).filter((u) => u !== self && damaged(c)(u)), 1, "G_25");
+    const us = (yield* rowThrough(c, self, "G_25")).filter((u) => u !== self && canBeChosen(c, u));
+    yield* boostEach(c, us, "G_25");
+    for (const u of us) placeFuse(c, u, "tick", "G_25");
   },
   function* (c, self) {
-    yield* hitEach(c, (yield* rowThrough(c, self, "G_25")).filter(damaged(c)), 2, "G_25");
+    for (const u of yield* rowThrough(c, self, "G_25")) placeFuse(c, u, "tick", "G_25");
   },
 );
 
-// G_26 - Drain: Boost all other units in a row through this unit. Destroyed: 1 damage to all units in a row through this unit.
+// G_26 - Drain: a Tick on every Mecha. Destroyed: a Tick on every Sentinel.
 gyro(
   "G_26",
-  function* (c, self) {
-    yield* boostEach(c, (yield* rowThrough(c, self, "G_26")).filter(notSelf(self)), "G_26");
-  },
-  function* (c, self) {
-    yield* hitEach(c, yield* rowThrough(c, self, "G_26"), 1, "G_26");
-  },
-);
-
-// G_27 - Drain: Boost all other units in a row through this unit and place a Tick on each of them. Destroyed: a Tick on every unit in a row through this unit.
-gyro(
-  "G_27",
-  function* (c, self) {
-    const us = (yield* rowThrough(c, self, "G_27")).filter((u) => u !== self && canBeChosen(c, u));
-    yield* boostEach(c, us, "G_27");
-    for (const u of us) placeFuse(c, u, "tick", "G_27");
-  },
-  function* (c, self) {
-    for (const u of yield* rowThrough(c, self, "G_27")) placeFuse(c, u, "tick", "G_27");
-  },
-);
-
-// G_28 - Drain: a Tick on every Mecha. Destroyed: a Tick on every Sentinel.
-gyro(
-  "G_28",
   function* (c) {
-    for (const u of choosableUnits(c, is(c, "Mecha"))) placeFuse(c, u, "tick", "G_28");
+    for (const u of choosableUnits(c, is(c, "Mecha"))) placeFuse(c, u, "tick", "G_26");
   },
   function* (c) {
-    for (const u of choosableUnits(c, is(c, "Sentinel"))) placeFuse(c, u, "tick", "G_28");
+    for (const u of choosableUnits(c, is(c, "Sentinel"))) placeFuse(c, u, "tick", "G_26");
   },
 );
 
-// G_29 - [1] Reveal all adjacent Dark sectors. [2] 1 damage to each Mecha (Drain) / Bot (Destroyed) just revealed.
+// G_27 - [1] Reveal all adjacent Dark sectors. [2] 1 damage to each Mecha (Drain) / Bot (Destroyed) just revealed.
 const revealAdjacentAndHit = (type: string) =>
   function* (c: RunCtx, self: TileId) {
     const dark = fieldMap(c.state)
       .adjacent(fromKey(here(c, self)))
       .map(key)
       .filter((k) => sectorState(c.state, k) === "dark");
-    const r = yield* revealSectors(c, dark, "G_29");
-    yield* hitEach(c, r.filter(is(c, type)), 1, "G_29");
+    const r = yield* revealSectors(c, dark, "G_27");
+    yield* hitEach(c, r.filter(is(c, type)), 1, "G_27");
   };
-gyro("G_29", revealAdjacentAndHit("Mecha"), revealAdjacentAndHit("Bot"));
+gyro("G_27", revealAdjacentAndHit("Mecha"), revealAdjacentAndHit("Bot"));
 
-// G_30 - Drain: [1] Reveal three units. [2] 2 damage to each unit just revealed. Destroyed: 2 damage to any number of them, your choice.
+// G_28 - Drain: [1] Reveal three units. [2] 2 damage to each unit just revealed. Destroyed: 2 damage to any number of them, your choice.
+gyro(
+  "G_28",
+  function* (c) {
+    yield* hitEach(c, yield* revealUnits(c, 3, "G_28"), 2, "G_28");
+  },
+  function* (c) {
+    const r = (yield* revealUnits(c, 3, "G_28")).filter((u) => canBeChosen(c, u));
+    if (r.length === 0) return;
+    const a = yield* ask(c, { kind: "units", prompt: "G_28: deal 2 damage to which of the units just revealed?", rule: "G_28", options: r, min: 0, max: r.length });
+    yield* hitEach(c, a.value as TileId[], 2, "G_28");
+  },
+);
+
+// G_29 - Drain: 1 damage to all other units in one horizontal row of your choice that has at least one Mecha. Destroyed: 1 damage to all units in one horizontal row of your choice.
+gyro(
+  "G_29",
+  function* (c, self) {
+    const us = yield* horizontalRow(c, "G_29", (xs) => xs.some(is(c, "Mecha")));
+    if (us) yield* hitEach(c, us.filter(notSelf(self)), 1, "G_29");
+  },
+  function* (c) {
+    yield* hitEach(c, (yield* horizontalRow(c, "G_29")) ?? [], 1, "G_29");
+  },
+);
+
+// G_30 - Drain: Remove the Barrier from every Sentinel. Destroyed: 1 damage to all Sentinels.
 gyro(
   "G_30",
-  function* (c) {
-    yield* hitEach(c, yield* revealUnits(c, 3, "G_30"), 2, "G_30");
-  },
-  function* (c) {
-    const r = (yield* revealUnits(c, 3, "G_30")).filter((u) => canBeChosen(c, u));
-    if (r.length === 0) return;
-    const a = yield* ask(c, { kind: "units", prompt: "G_30: deal 2 damage to which of the units just revealed?", rule: "G_30", options: r, min: 0, max: r.length });
-    yield* hitEach(c, a.value as TileId[], 2, "G_30");
-  },
-);
-
-// G_31 - Drain: 1 damage to all other units in one horizontal row of your choice that has at least one Mecha. Destroyed: 1 damage to all units in one horizontal row of your choice.
-gyro(
-  "G_31",
-  function* (c, self) {
-    const us = yield* horizontalRow(c, "G_31", (xs) => xs.some(is(c, "Mecha")));
-    if (us) yield* hitEach(c, us.filter(notSelf(self)), 1, "G_31");
-  },
-  function* (c) {
-    yield* hitEach(c, (yield* horizontalRow(c, "G_31")) ?? [], 1, "G_31");
-  },
-);
-
-// G_32 - Drain: Remove the Barrier from every Sentinel. Destroyed: 1 damage to all Sentinels.
-gyro(
-  "G_32",
   function* (c) {
     for (const u of choosableUnits(c, (x) => unitType(c, x) === "Sentinel" && tile(c.state, x).tokens.barrier)) {
       tile(c.state, u).tokens.barrier = false;
       c.state.supply.barrier += 1;
-      tokenEvent(c, u, "barrierGone", "G_32");
-      log(c, `G_32: ${describe(c, u)} loses its Barrier`, "G_32");
+      tokenEvent(c, u, "barrierGone", "G_30");
+      log(c, `G_30: ${describe(c, u)} loses its Barrier`, "G_30");
     }
   },
   function* (c) {
-    yield* hitEach(c, ofType(c, "Sentinel"), 1, "G_32");
+    yield* hitEach(c, ofType(c, "Sentinel"), 1, "G_30");
   },
 );
 
-// G_33 - Drain: 1 damage to all other damaged units in the horizontal row through this unit. Destroyed: 1 damage to all undamaged units in one horizontal row of your choice.
+// G_31 - Drain: 1 damage to all other damaged units in the horizontal row through this unit. Destroyed: 1 damage to all undamaged units in one horizontal row of your choice.
 gyro(
-  "G_33",
+  "G_31",
   function* (c, self) {
     const row = fieldMap(c.state).row(fromKey(here(c, self)), "horizontal");
-    yield* hitEach(c, unitsIn(c, row.sectors).filter((u) => u !== self && damaged(c)(u)), 1, "G_33");
+    yield* hitEach(c, unitsIn(c, row.sectors).filter((u) => u !== self && damaged(c)(u)), 1, "G_31");
   },
   function* (c) {
-    yield* hitEach(c, ((yield* horizontalRow(c, "G_33")) ?? []).filter((u) => !damaged(c)(u)), 1, "G_33");
+    yield* hitEach(c, ((yield* horizontalRow(c, "G_31")) ?? []).filter((u) => !damaged(c)(u)), 1, "G_31");
   },
 );
 
-// G_34 - Drain: Lose 1 energy for each Bot. Destroyed: Place 1 energy on your ready Modules for each Bot, split as you choose.
+// G_32 - Drain: Lose 1 energy for each Bot. Destroyed: Place 1 energy on your ready Modules for each Bot, split as you choose.
 gyro(
-  "G_34",
-  (c) => loseEnergy(c, countType(c, "Bot"), undefined, "G_34"),
-  (c) => placeEnergySplit(c, countType(c, "Bot"), "G_34"),
+  "G_32",
+  (c) => loseEnergy(c, countType(c, "Bot"), undefined, "G_32"),
+  (c) => placeEnergySplit(c, countType(c, "Bot"), "G_32"),
 );
 
-// G_35 - Drain: Exhaust one ready Module and remove all energy from it. Destroyed: Make one exhausted Module ready.
+// G_33 - Drain: Exhaust one ready Module and remove all energy from it. Destroyed: Make one exhausted Module ready.
 gyro(
-  "G_35",
+  "G_33",
   function* (c) {
     const ready = readyIds(c);
-    if (ready.length === 0) return log(c, "G_35: no ready Module", "G_35");
-    const id = ready.length === 1 ? ready[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_35: exhaust which ready Module?", rule: "G_35", options: ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    if (ready.length === 0) return log(c, "G_33: no ready Module", "G_33");
+    const id = ready.length === 1 ? ready[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_33: exhaust which ready Module?", rule: "G_33", options: ready.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     const m = c.state.player.modules.find((x) => x.id === id)!;
     m.ready = false;
     for (const k of ENERGY_COLOURS) {
       c.state.supply.energy[k] += m.energy[k];
       m.energy[k] = 0;
     }
-    log(c, `G_35: ${moduleDef(c, id).name} is exhausted and loses its energy`, "G_35");
+    log(c, `G_33: ${moduleDef(c, id).name} is exhausted and loses its energy`, "G_33");
   },
   function* (c) {
     const ex = c.state.player.modules.filter((m) => !m.ready).map((m) => m.id);
-    if (ex.length === 0) return log(c, "G_35: no exhausted Module", "G_35");
-    const id = ex.length === 1 ? ex[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_35: make which Module ready?", rule: "G_35", options: ex.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    if (ex.length === 0) return log(c, "G_33: no exhausted Module", "G_33");
+    const id = ex.length === 1 ? ex[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_33: make which Module ready?", rule: "G_33", options: ex.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     c.state.player.modules.find((x) => x.id === id)!.ready = true;
-    log(c, `G_35: ${moduleDef(c, id).name} is ready`, "G_35");
+    log(c, `G_33: ${moduleDef(c, id).name} is ready`, "G_33");
   },
 );
 
-// G_36 - Drain: Reveal every Dark sector on the Field, one at a time. Destroyed: [1] Reveal any number of units. [2] Gain 1 energy for each Bot just revealed.
+// G_34 - Drain: Reveal every Dark sector on the Field, one at a time. Destroyed: [1] Reveal any number of units. [2] Gain 1 energy for each Bot just revealed.
 gyro(
-  "G_36",
+  "G_34",
   function* (c) {
-    yield* revealSectors(c, Object.keys(c.state.field), "G_36");
+    yield* revealSectors(c, Object.keys(c.state.field), "G_34");
   },
   function* (c) {
-    const r = yield* revealUnits(c, Number.MAX_SAFE_INTEGER, "G_36", true);
-    yield* gainEnergy(c, r.filter(is(c, "Bot")).length, undefined, "G_36");
+    const r = yield* revealUnits(c, Number.MAX_SAFE_INTEGER, "G_34", true);
+    yield* gainEnergy(c, r.filter(is(c, "Bot")).length, undefined, "G_34");
   },
 );
 
-// G_37 - Drain: 1 damage to all Level 3 units in one horizontal row of your choice. Destroyed: a Tick on every Level 3 unit in one horizontal row of your choice.
+// G_35 - Drain: 1 damage to all Level 3 units in one horizontal row of your choice. Destroyed: a Tick on every Level 3 unit in one horizontal row of your choice.
 gyro(
-  "G_37",
+  "G_35",
   function* (c, self) {
-    yield* hitEach(c, ((yield* horizontalRow(c, "G_37")) ?? []).filter((u) => u !== self && level(c, u) === 3), 1, "G_37");
+    yield* hitEach(c, ((yield* horizontalRow(c, "G_35")) ?? []).filter((u) => u !== self && level(c, u) === 3), 1, "G_35");
   },
   function* (c) {
-    for (const u of ((yield* horizontalRow(c, "G_37")) ?? []).filter((x) => level(c, x) === 3)) placeFuse(c, u, "tick", "G_37");
+    for (const u of ((yield* horizontalRow(c, "G_35")) ?? []).filter((x) => level(c, x) === 3)) placeFuse(c, u, "tick", "G_35");
   },
 );
 
-/** G_38 - Run one ready Module (Drain: that costs 3 or less) that you could run right now, without paying its cost. */
+/** G_36 - Run one ready Module (Drain: that costs 3 or less) that you could run right now, without paying its cost. */
 const runFree = (max: number) =>
   function* (c: RunCtx) {
     const ids = readyIds(c).filter((m) => couldRunFree(c, m) && printedCost(c, m) <= max);
-    if (ids.length === 0) return log(c, "G_38: no Module you could run now", "G_38");
-    const id = ids.length === 1 ? ids[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_38: run which Module without paying its cost?", rule: "G_38", options: ids.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
+    if (ids.length === 0) return log(c, "G_36: no Module you could run now", "G_36");
+    const id = ids.length === 1 ? ids[0]! : Number((yield* ask(c, { kind: "option", pick: "modules", prompt: "G_36: run which Module without paying its cost?", rule: "G_36", options: ids.map((m) => ({ id: String(m), label: moduleDef(c, m).name })) })).value);
     yield* runModule(c, id, true);
   };
-gyro("G_38", runFree(3), runFree(Number.MAX_SAFE_INTEGER));
+gyro("G_36", runFree(3), runFree(Number.MAX_SAFE_INTEGER));
 
 

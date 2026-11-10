@@ -579,7 +579,7 @@ html.still .end-overload, html.still .end-overload .eo-core { animation: none; }
 .end-overload .eo-plasma { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 0; }
 /* Size by screen (designer 2026-11-10): tablets as before, a little bigger on PCs, much smaller on phones. */
 @media (min-width: 1280px) { .end-overload { --eo: clamp(110px, 15vmin, 172px); font-size: clamp(14px, 1.05vw, 17px); } }
-@media (max-width: 599px) { .end-overload { --eo: 64px; font-size: 10px; right: 36px; bottom: 36px; } }
+@media (max-width: 599px) { .end-overload { --eo: 64px; font-size: 10px; right: 4px; bottom: 4px; } }
 .damage-bubble.repair { background: radial-gradient(circle at 50% 0%, rgb(60 200 140 / 0.42), rgb(6 50 40 / 0.58)); }
 .damage-bubble.repair rect { stroke: #8af0c4; }
 .bay-hit-bubble.repair { border-color: #b4f5d8; background: linear-gradient(160deg, #2fc58a, #0d7a52); box-shadow: 0 0 14px 3px rgb(40 220 150 / 0.5); animation-name: bay-fix-breathe; }

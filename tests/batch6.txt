@@ -39,16 +39,17 @@ assumption: X may be 0 (E11: "Pathfinder Array = 3" is its smallest cost).
 
 id: T6_PAY_03
 title: A free run of an X-cost Module uses X = 1
-source: CLAUDE.md decision; Core Rules 5.3; G_38; Debris Sifter (54)
+source: CLAUDE.md decision; Core Rules 5.3; G_36; Debris Sifter (54)
 map: M1
-given: Command phase. Debris Sifter ready. (0,0): G_38 Wreck [WR][AL] > fd. (0,1): fd:B_01 >
+given: Command phase. Debris Sifter ready. (0,0): G_36 Wreck [WR][AL] > fd. (0,1): fd:B_01 >
        fd:B_02 > fd. Every other sector cleared.
-when: Resolve Alerts (G_38 Destroyed: run a Module free)
+when: Resolve Alerts (G_36 Destroyed: run a Module free)
 then: Debris Sifter runs with X = 1: look at the top tile of (0,1) (B_01), discard it.
       (0,1) is still Dark; B_02 is now its top tile.
 note: CHANGED 2026-11-08 (designer; Core Rules 5.3 rev 140): a free X-cost Module uses X = 0,
-      and a Module whose X would be 0 cannot be run. G_38 finds no Module to run: Debris Sifter
+      and a Module whose X would be 0 cannot be run. G_36 finds no Module to run: Debris Sifter
       stays ready and (0,1) is unchanged (B_01 on top).
+      CHANGED 2026-11-10 (designer): Gyros renumbered (G_17 and G_19 removed, the rest moved down; old G_37 / G_38 are G_35 / G_36); same cards, new ids.
 
 id: T6_PAY_04
 title: An extra payment is all or nothing, offered only when you can pay it

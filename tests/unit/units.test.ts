@@ -201,7 +201,7 @@ describe("batch 5 - GYROS", () => {
     expect(tokensAt(state, "0,1")).toBe("[AL]");
   });
 
-  it("T5_GYR_04 G_30 destroyed: damage any number of the revealed units", () => {
+  it("T5_GYR_04 G_28 destroyed: damage any number of the revealed units", () => {
     const s = given("T5_GYR_04");
     const r = runEffect(data(), s, (c) => commandStep(c), [A.option("resolveAlerts"), A.sectors("0,1"), A.sectors("1,0")]);
     expect(r.status).toBe("question");
@@ -214,7 +214,7 @@ describe("batch 5 - GYROS", () => {
     expect(m01).toBe(at(done, "1,0"));
   });
 
-  it("T5_GYR_05 G_36 Drain reveals every Dark sector; the Flare's Overload waits", () => {
+  it("T5_GYR_05 G_34 Drain reveals every Dark sector; the Flare's Overload waits", () => {
     const { state } = cmd(given("T5_GYR_05"), [A.option("drainGyro"), A.sectors("0,1")]);
     expect(state.phase).toBe("overload");
     expect(tokensAt(state, "0,1")).toBe("[AL]");

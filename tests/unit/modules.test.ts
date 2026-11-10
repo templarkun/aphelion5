@@ -44,7 +44,7 @@ describe("batch 6 - PAYING", () => {
   it("T6_PAY_03 a free run of an X-cost Module uses X = 0, so it cannot be chosen (CHANGED 2026-11-08)", () => {
     const s = board("T6_PAY_03", [[54, true]]);
     const after = act(s, [A.option("resolveAlerts")]);
-    expect(pile(after, "discard")).toContain("G_38");
+    expect(pile(after, "discard")).toContain("G_36");
     expect(pile(after, "discard")).not.toContain("B_01");
     expect(tile(after, after.field["0,1"]!.at(-1)!).unitId).toBe("B_01");
     expect(after.player.modules.find((m) => m.id === 54)!.ready).toBe(true);

@@ -243,25 +243,27 @@ then: G_14's Destroyed effect asks for an Overload; G_14 goes to the Discard; th
       starts: S_01 [AL].
 
 id: T5_GYR_04
-title: G_30 destroyed - damage any number of the revealed units
-source: G_30
+title: G_28 destroyed - damage any number of the revealed units
+source: G_28
 map: M1
-given: Command phase. (0,0): G_30 Wreck [WR][AL] > fd. (0,1): fd:B_01 > fd. (1,0): fd:M_01 > fd.
+given: Command phase. (0,0): G_28 Wreck [WR][AL] > fd. (0,1): fd:B_01 > fd. (1,0): fd:M_01 > fd.
        (1,1): fd:B_02 > fd.
 when: Resolve Alerts; reveal (0,1), (1,0), (1,1); choose B_01 and B_02
 then: B_01 destroyed, B_02 destroyed; M_01 (your Mecha) spared.
+note: CHANGED 2026-11-10 (designer): Gyros renumbered (G_17 and G_19 removed, the rest moved down; old G_37 / G_38 are G_35 / G_36); same cards, new ids.
 
 id: T5_GYR_05
-title: G_36 Drain reveals every Dark sector; a Flare starts an Overload afterwards
-source: G_36; Core Rules 4.6, 9.1, 4.4
+title: G_34 Drain reveals every Dark sector; a Flare starts an Overload afterwards
+source: G_34; Core Rules 4.6, 9.1, 4.4
 map: M1
-given: Command phase. (0,0): G_36 > fd. (0,1): fd:F_01 > fd. (1,0): fd:P_12 > fd. Every other
+given: Command phase. (0,0): G_34 > fd. (0,1): fd:F_01 > fd. (1,0): fd:P_12 > fd. Every other
        sector as default.
-when: Drain G_36
+when: Drain G_34
 then: (0,1) and (1,0) are revealed, one at a time, in your order. F_01 has no ready Module for
       its energy (it stays in the Supply). Once both are revealed no Dark sector is left: P_12
-      gets [AL] at once. Then G_36 is discarded and (0,0) is Dark again; P_12 keeps its Alert.
+      gets [AL] at once. Then G_34 is discarded and (0,0) is Dark again; P_12 keeps its Alert.
       After the Drain, the Overload starts: F_01 [AL]; P_12's Alert carries into it.
+note: CHANGED 2026-11-10 (designer): Gyros renumbered (G_17 and G_19 removed, the rest moved down; old G_37 / G_38 are G_35 / G_36); same cards, new ids.
 
 ################################################################################
 === SECTION: OMEGA UNITS ===

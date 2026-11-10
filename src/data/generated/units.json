@@ -2858,7 +2858,7 @@
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Lose 3 energy.",
+      "drain": "Lose 1 Command token.",
       "destroyed": "Gain 1 Command token."
     },
     "fields": {
@@ -2872,11 +2872,11 @@
       "energy_deck_member": "false",
       "id": "G_17",
       "level": "2",
-      "dev_price": "-1.0",
-      "drain": "Lose 3 energy.",
+      "dev_price": "-0.5",
+      "drain": "Lose 1 Command token.",
       "destroyed": "Gain 1 Command token."
     },
-    "devPrice": -1,
+    "devPrice": -0.5,
     "energyGyro": false
   },
   {
@@ -2912,10 +2912,14 @@
     "type": "Gyro",
     "level": 1,
     "copies": 4,
-    "arrows": [],
+    "arrows": [
+      1,
+      3,
+      5
+    ],
     "text": {
-      "drain": "Remove 1 energy from each of three different Modules that have energy (as many as possible).",
-      "destroyed": "Place 1 energy on each of three different ready Modules."
+      "drain": "Deal 1 damage to every Targeted unit.",
+      "destroyed": "Deal 1 damage to all adjacent units."
     },
     "fields": {
       "type": "Gyro",
@@ -2928,11 +2932,12 @@
       "energy_deck_member": "false",
       "id": "G_19",
       "level": "1",
-      "dev_price": "-1.0",
-      "drain": "Remove 1 energy from each of three different Modules that have energy (as many as possible).",
-      "destroyed": "Place 1 energy on each of three different ready Modules."
+      "arrows": "1,3,5",
+      "dev_price": "2.6",
+      "drain": "Deal 1 damage to every Targeted unit.",
+      "destroyed": "Deal 1 damage to all adjacent units."
     },
-    "devPrice": -1,
+    "devPrice": 2.6,
     "energyGyro": false
   },
   {
@@ -2942,8 +2947,8 @@
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Lose 1 Command token.",
-      "destroyed": "Gain 1 Command token."
+      "drain": "Deal 1 damage to all other Level 1 units in a row through this unit.",
+      "destroyed": "Deal 2 damage to all Level 2 units in a row through this unit."
     },
     "fields": {
       "type": "Gyro",
@@ -2956,11 +2961,11 @@
       "energy_deck_member": "false",
       "id": "G_20",
       "level": "1",
-      "dev_price": "-0.5",
-      "drain": "Lose 1 Command token.",
-      "destroyed": "Gain 1 Command token."
+      "dev_price": "1.8",
+      "drain": "Deal 1 damage to all other Level 1 units in a row through this unit.",
+      "destroyed": "Deal 2 damage to all Level 2 units in a row through this unit."
     },
-    "devPrice": -0.5,
+    "devPrice": 1.8,
     "energyGyro": false
   },
   {
@@ -2975,7 +2980,7 @@
     ],
     "text": {
       "drain": "Deal 1 damage to every Targeted unit.",
-      "destroyed": "Deal 1 damage to all adjacent units."
+      "destroyed": "Deal 2 damage to every Targeted unit."
     },
     "fields": {
       "type": "Gyro",
@@ -2989,11 +2994,11 @@
       "id": "G_21",
       "level": "1",
       "arrows": "1,3,5",
-      "dev_price": "2.6",
+      "dev_price": "2.5",
       "drain": "Deal 1 damage to every Targeted unit.",
-      "destroyed": "Deal 1 damage to all adjacent units."
+      "destroyed": "Deal 2 damage to every Targeted unit."
     },
-    "devPrice": 2.6,
+    "devPrice": 2.5,
     "energyGyro": false
   },
   {
@@ -3003,8 +3008,8 @@
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Deal 1 damage to all other Level 1 units in a row through this unit.",
-      "destroyed": "Deal 2 damage to all Level 2 units in a row through this unit."
+      "drain": "Deal 1 damage to all Bots in a row through this unit.",
+      "destroyed": "Deal 1 damage to all Bots in one horizontal row of your choice."
     },
     "fields": {
       "type": "Gyro",
@@ -3017,11 +3022,11 @@
       "energy_deck_member": "false",
       "id": "G_22",
       "level": "1",
-      "dev_price": "1.8",
-      "drain": "Deal 1 damage to all other Level 1 units in a row through this unit.",
-      "destroyed": "Deal 2 damage to all Level 2 units in a row through this unit."
+      "dev_price": "1.9",
+      "drain": "Deal 1 damage to all Bots in a row through this unit.",
+      "destroyed": "Deal 1 damage to all Bots in one horizontal row of your choice."
     },
-    "devPrice": 1.8,
+    "devPrice": 1.9,
     "energyGyro": false
   },
   {
@@ -3029,14 +3034,10 @@
     "type": "Gyro",
     "level": 1,
     "copies": 4,
-    "arrows": [
-      1,
-      3,
-      5
-    ],
+    "arrows": [],
     "text": {
-      "drain": "Deal 1 damage to every Targeted unit.",
-      "destroyed": "Deal 2 damage to every Targeted unit."
+      "drain": "Deal 1 damage to all other damaged units in a row through this unit.",
+      "destroyed": "Deal 2 damage to all damaged units in a row through this unit."
     },
     "fields": {
       "type": "Gyro",
@@ -3049,10 +3050,9 @@
       "energy_deck_member": "false",
       "id": "G_23",
       "level": "1",
-      "arrows": "1,3,5",
       "dev_price": "2.5",
-      "drain": "Deal 1 damage to every Targeted unit.",
-      "destroyed": "Deal 2 damage to every Targeted unit."
+      "drain": "Deal 1 damage to all other damaged units in a row through this unit.",
+      "destroyed": "Deal 2 damage to all damaged units in a row through this unit."
     },
     "devPrice": 2.5,
     "energyGyro": false
@@ -3064,8 +3064,8 @@
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Deal 1 damage to all Bots in a row through this unit.",
-      "destroyed": "Deal 1 damage to all Bots in one horizontal row of your choice."
+      "drain": "Boost all other units in a row through this unit.",
+      "destroyed": "Deal 1 damage to all units in a row through this unit."
     },
     "fields": {
       "type": "Gyro",
@@ -3078,22 +3078,22 @@
       "energy_deck_member": "false",
       "id": "G_24",
       "level": "1",
-      "dev_price": "1.9",
-      "drain": "Deal 1 damage to all Bots in a row through this unit.",
-      "destroyed": "Deal 1 damage to all Bots in one horizontal row of your choice."
+      "dev_price": "1.6",
+      "drain": "Boost all other units in a row through this unit.",
+      "destroyed": "Deal 1 damage to all units in a row through this unit."
     },
-    "devPrice": 1.9,
+    "devPrice": 1.6,
     "energyGyro": false
   },
   {
     "id": "G_25",
     "type": "Gyro",
-    "level": 1,
+    "level": 2,
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Deal 1 damage to all other damaged units in a row through this unit.",
-      "destroyed": "Deal 2 damage to all damaged units in a row through this unit."
+      "drain": "Boost all other units in a row through this unit and place a Tick on each of them.",
+      "destroyed": "Place a Tick on every unit in a row through this unit."
     },
     "fields": {
       "type": "Gyro",
@@ -3105,23 +3105,23 @@
       "border": "dark",
       "energy_deck_member": "false",
       "id": "G_25",
-      "level": "1",
-      "dev_price": "2.5",
-      "drain": "Deal 1 damage to all other damaged units in a row through this unit.",
-      "destroyed": "Deal 2 damage to all damaged units in a row through this unit."
+      "level": "2",
+      "dev_price": "1.0",
+      "drain": "Boost all other units in a row through this unit and place a Tick on each of them.",
+      "destroyed": "Place a Tick on every unit in a row through this unit."
     },
-    "devPrice": 2.5,
+    "devPrice": 1,
     "energyGyro": false
   },
   {
     "id": "G_26",
     "type": "Gyro",
-    "level": 1,
+    "level": 3,
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Boost all other units in a row through this unit.",
-      "destroyed": "Deal 1 damage to all units in a row through this unit."
+      "drain": "Place a Tick on every Mecha.",
+      "destroyed": "Place a Tick on every Sentinel."
     },
     "fields": {
       "type": "Gyro",
@@ -3133,12 +3133,12 @@
       "border": "dark",
       "energy_deck_member": "false",
       "id": "G_26",
-      "level": "1",
-      "dev_price": "1.6",
-      "drain": "Boost all other units in a row through this unit.",
-      "destroyed": "Deal 1 damage to all units in a row through this unit."
+      "level": "3",
+      "dev_price": "0.6",
+      "drain": "Place a Tick on every Mecha.",
+      "destroyed": "Place a Tick on every Sentinel."
     },
-    "devPrice": 1.6,
+    "devPrice": 0.6,
     "energyGyro": false
   },
   {
@@ -3148,8 +3148,8 @@
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Boost all other units in a row through this unit and place a Tick on each of them.",
-      "destroyed": "Place a Tick on every unit in a row through this unit."
+      "drain": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Mecha just revealed.",
+      "destroyed": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Bot just revealed."
     },
     "fields": {
       "type": "Gyro",
@@ -3162,22 +3162,22 @@
       "energy_deck_member": "false",
       "id": "G_27",
       "level": "2",
-      "dev_price": "1.0",
-      "drain": "Boost all other units in a row through this unit and place a Tick on each of them.",
-      "destroyed": "Place a Tick on every unit in a row through this unit."
+      "dev_price": "-1.0",
+      "drain": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Mecha just revealed.",
+      "destroyed": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Bot just revealed."
     },
-    "devPrice": 1,
+    "devPrice": -1,
     "energyGyro": false
   },
   {
     "id": "G_28",
     "type": "Gyro",
-    "level": 3,
+    "level": 2,
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Place a Tick on every Mecha.",
-      "destroyed": "Place a Tick on every Sentinel."
+      "drain": "[1] Reveal three units. [2] Deal 2 damage to each unit just revealed.",
+      "destroyed": "[1] Reveal three units. [2] Deal 2 damage to any number of the units just revealed, your choice."
     },
     "fields": {
       "type": "Gyro",
@@ -3189,12 +3189,12 @@
       "border": "dark",
       "energy_deck_member": "false",
       "id": "G_28",
-      "level": "3",
-      "dev_price": "0.6",
-      "drain": "Place a Tick on every Mecha.",
-      "destroyed": "Place a Tick on every Sentinel."
+      "level": "2",
+      "dev_price": "0.5",
+      "drain": "[1] Reveal three units. [2] Deal 2 damage to each unit just revealed.",
+      "destroyed": "[1] Reveal three units. [2] Deal 2 damage to any number of the units just revealed, your choice."
     },
-    "devPrice": 0.6,
+    "devPrice": 0.5,
     "energyGyro": false
   },
   {
@@ -3204,8 +3204,8 @@
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Mecha just revealed.",
-      "destroyed": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Bot just revealed."
+      "drain": "Deal 1 damage to all other units in one horizontal row of your choice that has at least one Mecha.",
+      "destroyed": "Deal 1 damage to all units in one horizontal row of your choice."
     },
     "fields": {
       "type": "Gyro",
@@ -3218,22 +3218,22 @@
       "energy_deck_member": "false",
       "id": "G_29",
       "level": "2",
-      "dev_price": "-1.0",
-      "drain": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Mecha just revealed.",
-      "destroyed": "[1] Reveal all adjacent Dark sectors. [2] Deal 1 damage to each Bot just revealed."
+      "dev_price": "2.1",
+      "drain": "Deal 1 damage to all other units in one horizontal row of your choice that has at least one Mecha.",
+      "destroyed": "Deal 1 damage to all units in one horizontal row of your choice."
     },
-    "devPrice": -1,
+    "devPrice": 2.1,
     "energyGyro": false
   },
   {
     "id": "G_30",
     "type": "Gyro",
-    "level": 2,
+    "level": 1,
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "[1] Reveal three units. [2] Deal 2 damage to each unit just revealed.",
-      "destroyed": "[1] Reveal three units. [2] Deal 2 damage to any number of the units just revealed, your choice."
+      "drain": "Remove the Barrier from every Sentinel.",
+      "destroyed": "Deal 1 damage to all Sentinels."
     },
     "fields": {
       "type": "Gyro",
@@ -3245,23 +3245,23 @@
       "border": "dark",
       "energy_deck_member": "false",
       "id": "G_30",
-      "level": "2",
-      "dev_price": "0.5",
-      "drain": "[1] Reveal three units. [2] Deal 2 damage to each unit just revealed.",
-      "destroyed": "[1] Reveal three units. [2] Deal 2 damage to any number of the units just revealed, your choice."
+      "level": "1",
+      "dev_price": "1.4",
+      "drain": "Remove the Barrier from every Sentinel.",
+      "destroyed": "Deal 1 damage to all Sentinels."
     },
-    "devPrice": 0.5,
+    "devPrice": 1.4,
     "energyGyro": false
   },
   {
     "id": "G_31",
     "type": "Gyro",
-    "level": 2,
+    "level": 1,
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Deal 1 damage to all other units in one horizontal row of your choice that has at least one Mecha.",
-      "destroyed": "Deal 1 damage to all units in one horizontal row of your choice."
+      "drain": "Deal 1 damage to all other damaged units in the horizontal row through this unit.",
+      "destroyed": "Deal 1 damage to all undamaged units in one horizontal row of your choice."
     },
     "fields": {
       "type": "Gyro",
@@ -3273,23 +3273,23 @@
       "border": "dark",
       "energy_deck_member": "false",
       "id": "G_31",
-      "level": "2",
-      "dev_price": "2.1",
-      "drain": "Deal 1 damage to all other units in one horizontal row of your choice that has at least one Mecha.",
-      "destroyed": "Deal 1 damage to all units in one horizontal row of your choice."
+      "level": "1",
+      "dev_price": "2.5",
+      "drain": "Deal 1 damage to all other damaged units in the horizontal row through this unit.",
+      "destroyed": "Deal 1 damage to all undamaged units in one horizontal row of your choice."
     },
-    "devPrice": 2.1,
+    "devPrice": 2.5,
     "energyGyro": false
   },
   {
     "id": "G_32",
     "type": "Gyro",
-    "level": 1,
+    "level": 2,
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Remove the Barrier from every Sentinel.",
-      "destroyed": "Deal 1 damage to all Sentinels."
+      "drain": "Lose 1 energy for each Bot on the Field.",
+      "destroyed": "Place 1 energy on your ready Modules for each Bot on the Field, split as you choose."
     },
     "fields": {
       "type": "Gyro",
@@ -3301,12 +3301,12 @@
       "border": "dark",
       "energy_deck_member": "false",
       "id": "G_32",
-      "level": "1",
-      "dev_price": "1.4",
-      "drain": "Remove the Barrier from every Sentinel.",
-      "destroyed": "Deal 1 damage to all Sentinels."
+      "level": "2",
+      "dev_price": "1.7",
+      "drain": "Lose 1 energy for each Bot on the Field.",
+      "destroyed": "Place 1 energy on your ready Modules for each Bot on the Field, split as you choose."
     },
-    "devPrice": 1.4,
+    "devPrice": 1.7,
     "energyGyro": false
   },
   {
@@ -3316,8 +3316,8 @@
     "copies": 4,
     "arrows": [],
     "text": {
-      "drain": "Deal 1 damage to all other damaged units in the horizontal row through this unit.",
-      "destroyed": "Deal 1 damage to all undamaged units in one horizontal row of your choice."
+      "drain": "Exhaust one ready Module and remove all energy from it.",
+      "destroyed": "Make one exhausted Module ready."
     },
     "fields": {
       "type": "Gyro",
@@ -3330,62 +3330,6 @@
       "energy_deck_member": "false",
       "id": "G_33",
       "level": "1",
-      "dev_price": "2.5",
-      "drain": "Deal 1 damage to all other damaged units in the horizontal row through this unit.",
-      "destroyed": "Deal 1 damage to all undamaged units in one horizontal row of your choice."
-    },
-    "devPrice": 2.5,
-    "energyGyro": false
-  },
-  {
-    "id": "G_34",
-    "type": "Gyro",
-    "level": 2,
-    "copies": 4,
-    "arrows": [],
-    "text": {
-      "drain": "Lose 1 energy for each Bot on the Field.",
-      "destroyed": "Place 1 energy on your ready Modules for each Bot on the Field, split as you choose."
-    },
-    "fields": {
-      "type": "Gyro",
-      "copies": "4",
-      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
-      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
-      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
-      "energy_gyro": "false",
-      "border": "dark",
-      "energy_deck_member": "false",
-      "id": "G_34",
-      "level": "2",
-      "dev_price": "1.7",
-      "drain": "Lose 1 energy for each Bot on the Field.",
-      "destroyed": "Place 1 energy on your ready Modules for each Bot on the Field, split as you choose."
-    },
-    "devPrice": 1.7,
-    "energyGyro": false
-  },
-  {
-    "id": "G_35",
-    "type": "Gyro",
-    "level": 1,
-    "copies": 4,
-    "arrows": [],
-    "text": {
-      "drain": "Exhaust one ready Module and remove all energy from it.",
-      "destroyed": "Make one exhausted Module ready."
-    },
-    "fields": {
-      "type": "Gyro",
-      "copies": "4",
-      "drain_rule": "Command phase action (or an effect that Drains it). Resolve the drain effect, then discard the Gyro.",
-      "drain_self_rule": "A Gyro's Drain effect never affects that Gyro itself (it cannot damage, Boost or place tokens on it).",
-      "destroyed_rule": "When destroyed, it becomes a Wreck (Wreck marker and Alert token); resolve the destroyed effect, then discard it.",
-      "energy_gyro": "false",
-      "border": "dark",
-      "energy_deck_member": "false",
-      "id": "G_35",
-      "level": "1",
       "dev_price": "0.0",
       "drain": "Exhaust one ready Module and remove all energy from it.",
       "destroyed": "Make one exhausted Module ready."
@@ -3394,7 +3338,7 @@
     "energyGyro": false
   },
   {
-    "id": "G_36",
+    "id": "G_34",
     "type": "Gyro",
     "level": 3,
     "copies": 4,
@@ -3412,7 +3356,7 @@
       "energy_gyro": "false",
       "border": "dark",
       "energy_deck_member": "false",
-      "id": "G_36",
+      "id": "G_34",
       "level": "3",
       "dev_price": "0.5",
       "drain": "Reveal every Dark sector on the Field, one at a time.",
@@ -3422,7 +3366,7 @@
     "energyGyro": false
   },
   {
-    "id": "G_37",
+    "id": "G_35",
     "type": "Gyro",
     "level": 2,
     "copies": 4,
@@ -3440,7 +3384,7 @@
       "energy_gyro": "false",
       "border": "dark",
       "energy_deck_member": "false",
-      "id": "G_37",
+      "id": "G_35",
       "level": "2",
       "dev_price": "0.0",
       "drain": "Deal 1 damage to all Level 3 units in one horizontal row of your choice.",
@@ -3450,7 +3394,7 @@
     "energyGyro": false
   },
   {
-    "id": "G_38",
+    "id": "G_36",
     "type": "Gyro",
     "level": 2,
     "copies": 4,
@@ -3468,7 +3412,7 @@
       "energy_gyro": "false",
       "border": "dark",
       "energy_deck_member": "false",
-      "id": "G_38",
+      "id": "G_36",
       "level": "2",
       "dev_price": "0.0",
       "drain": "Run one ready Module that costs 3 or less and that you could run right now (light in the Command phase, red during an Overload), without paying its cost.",

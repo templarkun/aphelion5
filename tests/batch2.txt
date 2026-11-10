@@ -218,25 +218,27 @@ then: G_14's Destroyed effect starts an Overload once it has finished; G_14 goes
       Variant: if G_14 becomes a Wreck during an Overload, its effect does nothing.
 
 id: T2_GYR_04
-title: G_22 Drain never hits itself
-source: G_22; unit file drain_self_rule
+title: G_20 Drain never hits itself
+source: G_20; unit file drain_self_rule
 map: M1
-given: (0,0): G_22. (0,-1): B_01. (0,1): M_01. (0,2): B_02.
-when: Drain G_22; choose: the horizontal row q=0
-then: B_01 and M_01 are destroyed. B_02 is unaffected (Level 2). G_22 (Level 1) is not hit,
+given: (0,0): G_20. (0,-1): B_01. (0,1): M_01. (0,2): B_02.
+when: Drain G_20; choose: the horizontal row q=0
+then: B_01 and M_01 are destroyed. B_02 is unaffected (Level 2). G_20 (Level 1) is not hit,
       then is discarded.
+note: CHANGED 2026-11-10 (designer): Gyros renumbered (G_17 and G_19 removed, the rest moved down; old G_37 / G_38 are G_35 / G_36); same cards, new ids.
 
 id: T2_GYR_05
-title: G_36 reveals the whole Field; a Flare waits for the end of the Drain
-source: G_36; Core Rules 4.4, 9.1
+title: G_34 reveals the whole Field; a Flare waits for the end of the Drain
+source: G_34; Core Rules 4.4, 9.1
 map: M1
-given: (0,0): G_36 (nothing beneath). (0,1): fd:F_09 > fd. (0,2): fd:B_01 > fd.
+given: (0,0): G_34 (nothing beneath). (0,1): fd:F_09 > fd. (0,2): fd:B_01 > fd.
        (-1,0): P_12 > fd. No other Dark sectors. Tactical Scan ready.
-when: Drain G_36; choose: F_09's Yellow on Tactical Scan
+when: Drain G_34; choose: F_09's Yellow on Tactical Scan
 then: Reveal (0,1): F_09 places 1 Yellow on Tactical Scan at once; revealing continues.
       Reveal (0,2): B_01. No Dark sectors remain -> P_12 gets an Alert at once.
-      G_36 is discarded; (0,0) is Cleared. Then the Overload starts: F_09 gets an Alert;
+      G_34 is discarded; (0,0) is Cleared. Then the Overload starts: F_09 gets an Alert;
       P_12 keeps its Alert and is resolved in the Overload.
+note: CHANGED 2026-11-10 (designer): Gyros renumbered (G_17 and G_19 removed, the rest moved down; old G_37 / G_38 are G_35 / G_36); same cards, new ids.
 
 ################################################################################
 === SECTION: MECHA ===
@@ -420,12 +422,12 @@ then: F_11 places 1 Red on Charged Beam (Phantom Recon is not ready while it res
       and S_01 (Barrier cancels the 2). B_02 is not damaged.
 
 id: T2_MOD_16
-title: G_38 Drain runs a cheap Module for free
-source: G_38; Core Rules 5.3; unit file E11
+title: G_36 Drain runs a cheap Module for free
+source: G_36; Core Rules 5.3; unit file E11
 map: M1
 given: Ready: Tactical Scan (Blue 3), Signal Jammer (Red 3), Heavy Plasma Cannon (Yellow 4),
-       Debris Sifter (Blue X). (0,0): G_38.
-when: Drain G_38
+       Debris Sifter (Blue X). (0,0): G_36.
+when: Drain G_36
 then: Legal choices: Tactical Scan and Debris Sifter (X counts as 1). Not Signal Jammer
       (red, Command phase) and not Heavy Plasma Cannon (costs 4).
       Choosing Tactical Scan: it runs without payment, then is exhausted.
@@ -433,6 +435,7 @@ then: Legal choices: Tactical Scan and Debris Sifter (X counts as 1). Not Signal
 rule: a Module with an X cost run for free uses X = 1 (Core Rules 5.3). Pathfinder Array run
       for free through P_19 also uses X = 1: it reveals 1 unit.
 note: RESOLVED 2026-11-03.
+      CHANGED 2026-11-10 (designer): Gyros renumbered (G_17 and G_19 removed, the rest moved down; old G_37 / G_38 are G_35 / G_36); same cards, new ids.
 
 id: T2_MOD_17
 title: Accumulator Beam stops at 5

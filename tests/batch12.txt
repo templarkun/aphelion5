@@ -96,8 +96,9 @@ given: Point-Defense Phaser and Accumulator Beam ready, no energy on them, energ
 then: neither can be run: both are greyed out (still ready: energy can be placed on them).
 when: 1 Yellow is placed on Accumulator Beam
 then: it can be run (X = 1).
-note: A free run (G_38, P_19, F_18) of an X-cost Module would use X = 0, so such a Module is
+note: A free run (G_36, P_19, F_18) of an X-cost Module would use X = 0, so such a Module is
       not offered there (Pathfinder Array, Debris Sifter).
+      CHANGED 2026-11-10 (designer): Gyros renumbered (G_17 and G_19 removed, the rest moved down; old G_37 / G_38 are G_35 / G_36); same cards, new ids.
 
 id: T12_M01_01
 title: M_01 walks through Dark sectors (screen only, no rule change)
