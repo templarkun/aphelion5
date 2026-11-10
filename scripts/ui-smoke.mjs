@@ -11,7 +11,8 @@ const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 // Questions sit inside the Field (designer 2026-11-08): a banner, or a card; the action menu shows none.
-const Q = ".q-card, .q-banner";
+// Questions in a card (setup) or, during a mission, in the big bubble inside the Field (designer 2026-11-10).
+const Q = ".q-card, .q-banner, .ask-bubble";
 const panel = page.locator(Q);
 const clickIn = async (pg, name) => pg.locator(Q).getByRole("button", { name }).first().click();
 /** The Log is in the Menu (designer 2026-11-08). */
@@ -48,13 +49,13 @@ async function untilAction(pg) {
   for (let i = 0; i < 30; i++) {
     const prompt = await promptOf(pg);
     if (/^Choose an action/.test(prompt)) return prompt;
-    const buttons = q.locator(".choices button");
+    const buttons = q.locator(".choices button, .ask-choices button:not(:disabled)");
     if (await buttons.count()) {
       await buttons.first().click();
       continue;
     }
-    if (await pg.locator(".module.can, .bay-btn.can, .bay-hit-bubble:not(:disabled)").count()) {
-      await pg.locator(".module.can, .bay-btn.can, .bay-hit-bubble:not(:disabled)").first().click();
+    if (await pg.locator(".point-bubble:not(:disabled), .module.can, .bay-btn.can, .bay-hit-bubble:not(:disabled)").count()) {
+      await pg.locator(".point-bubble:not(:disabled), .module.can, .bay-btn.can, .bay-hit-bubble:not(:disabled)").first().click();
       continue;
     }
     if (await clickField(pg)) {
@@ -71,7 +72,7 @@ await page.goto(url);
 await page.getByRole("button", { name: "Start" }).click();
 await setup(page);
 await untilAction(page);
-const noMenu = (await panel.locator(".choices button").count()) === 0;
+const noMenu = (await panel.locator(".choices button, .ask-choices button").count()) === 0;
 await page.screenshot({ path: `${out}/ui-command.png` });
 // The Allied Drop's Mecha is on the Field: nothing greyed out for want of a unit.
 const greyAtStart = await page.locator(".no-units").count();
@@ -118,7 +119,7 @@ const canModules = await page.locator(".module.can").count();
 // Overhaul asks to confirm while the Flagship is not Crippled.
 let overhaulConfirm = false;
 if (/^Choose an action/.test(afterReveal)) {
-  await page.locator(".overhaul button").click();
+  await page.locator("[data-overhaul]").first().click();
   overhaulConfirm = (await page.getByRole("dialog", { name: "Overhaul now?" }).count()) === 1;
   await page.getByRole("button", { name: "Cancel" }).click();
 }
@@ -840,7 +841,46 @@ if (existsSync(`${out}/upgrade-save.json`)) {
   const ok = sheet === 1 && fieldHidden && open >= 3 && p2 === p0 - 2 && online && gained === 1 && pU === p2 + 1 && pD === pU - 1 && t1 === 1 && ask === 1 && closed && !/^Upgrade/.test(prompt) && tabs === 3 && sw <= 362 && q1 === q0 - 1;
   upgradeCheck = ok ? "ok" : `failed (sheet ${sheet}, field hidden ${fieldHidden}, open ${open}, points ${p0}>${p2}, online ${online}, gained ${gained}, undo ${pU}, drag ${pD}, T1 slots ${t1}, confirm ${ask}, closed ${closed}, prompt "${prompt}", tabs ${tabs}, phone width ${sw}, phone ${q0}>${q1})`;
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck }));
+// Questions inside the Field (designer 2026-11-10): Crippled points at Overhaul; Overhaul's Module is chosen on bubbles beside the Modules.
+let askCheck = "skipped (no save)";
+if (existsSync(`${out}/crippled-save.json`)) {
+  const res = [];
+  for (const [w, h] of [[1400, 900], [390, 844]]) {
+    const pg = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+    pg.on("pageerror", (e) => errors.push(e.message));
+    await pasteSave(pg, `${out}/crippled-save.json`);
+    await pg.waitForTimeout(600);
+    const big = await pg.locator(".ask-bubble.alert").count();
+    const must = await pg.locator(".overhaul-btn.must").count();
+    const point = pg.locator('.point-bubble[data-point="overhaul"]');
+    await point.waitFor({ timeout: 3000 }).catch(() => {});
+    const pointed = await point.count();
+    // The bubble sits beside the button and points at it.
+    const near = await pg.evaluate(() => {
+      const a = document.querySelector('.point-bubble[data-point="overhaul"]')?.getBoundingClientRect();
+      const b = [...document.querySelectorAll("[data-overhaul]")].map((e) => e.getBoundingClientRect()).find((r) => r.width > 0);
+      return a && b ? Math.hypot(a.x + a.width / 2 - (b.x + b.width / 2), a.y + a.height / 2 - (b.y + b.height / 2)) < 160 : false;
+    });
+    await pg.screenshot({ path: `${out}/ui-crippled-${w}.png` });
+    if (pointed) await point.click();
+    await pg.waitForTimeout(700);
+    const p1 = await promptOf(pg);
+    // Overhaul's Module: no card or banner; a bubble beside each Module; a press answers.
+    const cards = await pg.locator(".q-card, .q-banner").count();
+    // Modules scrolled out of the panel get their bubble when scrolled in.
+    const mods = await pg.evaluate(() => [...document.querySelectorAll(".module[data-module]")].filter((e) => { const r = e.getBoundingClientRect(); const p = e.closest(".panel")?.getBoundingClientRect(); const y = r.top + r.height / 2; return r.width > 0 && (!p || (y >= p.top && y <= p.bottom)); }).length);
+    const pops = await pg.locator(".point-bubble").count();
+    await pg.screenshot({ path: `${out}/ui-overhaul-module-${w}.png` });
+    if (pops) await pg.locator(".point-bubble").first().click();
+    await pg.waitForTimeout(600);
+    const p2 = await promptOf(pg);
+    await pg.close();
+    const ok = big === 1 && must === 1 && pointed === 1 && near && /^Overhaul: put one/.test(p1) && cards === 0 && pops === mods && p2 !== p1;
+    res.push(ok ? "ok" : `${w}px: big bubble ${big}, burning button ${must}, pointer ${pointed}, beside it ${near}, then "${p1}", cards ${cards}, Module bubbles ${pops} of ${mods}, then "${p2}"`);
+  }
+  askCheck = res.every((x) => x === "ok") ? "ok" : `failed (${res.filter((x) => x !== "ok").join("; ")})`;
+}
+console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

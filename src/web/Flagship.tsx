@@ -188,6 +188,8 @@ export function FlagshipDock(p: {
   drag: DragApi;
   /** Extra things below the Bays (Overhaul...), in layouts A and B. */
   children?: React.ReactNode;
+  /** Layout C: the Overhaul button, after the Bays along the bottom of the Field (designer 2026-11-10). */
+  dockExtra?: React.ReactNode;
 }) {
   const [sel, setSel] = useState<Sel | undefined>();
   useEffect(() => setSel(undefined), [p.q]);
@@ -304,7 +306,10 @@ export function FlagshipDock(p: {
   if (p.layout === "C")
     return (
       <div className="field-dock">
-        <div className="dock-bays">{bays}</div>
+        <div className="dock-bays">
+          {bays}
+          {p.dockExtra}
+        </div>
         <div className="dock-orders">
           <CommandMeter n={p.commandTokens} />
           <div className="dock-order-row">{orders}</div>
@@ -425,4 +430,45 @@ export function useAbilityPress(api: DragApi, onTap: (key: string, el: HTMLEleme
       }
     },
   });
+}
+
+/**
+ * Overhaul (8.8) as a Flagship button like the Bays (designer 2026-11-10): a square button with a
+ * placeholder picture (a wrench over a gear), "Overhaul" under it, and above it one hexagonal cell
+ * per Overhaul slot (used ones lit). Crippled (5.2): Overhaul is the only action, so the button
+ * burns with a red running outline (`must`) and the screen points at it (FieldAsk.tsx).
+ */
+export function OverhaulButton(p: { layout: Layout; used: number; slots: number; can: boolean; must: boolean; onPress: () => void }) {
+  const left = p.slots - p.used;
+  return (
+    <div className={`thing overhaul-thing ${p.must ? "must" : ""}`}>
+      {p.layout === "A" && (
+        <div className="thing-text">
+          <p className={p.can ? "" : "small"}>Overhaul: repair the Flagship, refill your energy, swap a Module, reset up to 2 units.</p>
+          <p className="small">
+            {left} of {p.slots} slot{p.slots === 1 ? "" : "s"} left
+          </p>
+        </div>
+      )}
+      <div className="thing-col">
+        <div className="oh-slots" role="meter" aria-valuenow={p.used} aria-valuemax={p.slots} aria-label={`Overhaul slots used ${p.used} of ${p.slots}`} title={`Overhaul slots used: ${p.used} of ${p.slots}`}>
+          {Array.from({ length: p.slots }, (_, i) => (
+            <i key={i} className={i < p.used ? "used" : ""} />
+          ))}
+        </div>
+        <button data-overhaul className={`thing-btn overhaul-btn ${p.can ? "can" : ""} ${p.must ? "must" : ""}`} disabled={!p.can} onClick={p.onPress} aria-label="Overhaul: repair the Flagship, refill energy, swap a Module (8.8)" title="Repair the Flagship, refill energy, swap a Module (8.8)">
+          <span className="thing-inner">
+            <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden>
+              <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="16" cy="16" r="5" />
+                <path d="M16 4v3M16 25v3M4 16h3M25 16h3M7.5 7.5l2.1 2.1M22.4 22.4l2.1 2.1M7.5 24.5l2.1-2.1M22.4 9.6l2.1-2.1" />
+                <path d="M21 27l5.5-5.5a3.5 3.5 0 0 0 4-4.6l-2.2 2.2-2.2-.6-.6-2.2 2.2-2.2a3.5 3.5 0 0 0-4.6 4L17.6 23.6" strokeWidth="1.8" />
+              </g>
+            </svg>
+            <small>Overhaul</small>
+          </span>
+        </button>
+      </div>
+    </div>
+  );
 }

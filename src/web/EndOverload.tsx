@@ -1,12 +1,13 @@
 /**
- * End the Overload (9.2), designer 2026-11-09: a button in proportion with the Field, with embers
- * rising from it; pressed, it bursts into sparks and a shock ring, then the Overload ends.
+ * End the Overload (9.2), designer 2026-11-09 / 2026-11-10: a round, see-through button like a
+ * small sun, with energy tongues glowing out of its rim; pressed, it bursts into sparks and a
+ * shock ring, then the Overload ends.
  */
 
 import { useState } from "react";
 import { noFlying } from "./motion.js";
 
-const EMBERS = 14;
+const TONGUES = 14;
 const SPARKS = 26;
 
 export function EndOverload(p: { onEnd: () => void }) {
@@ -23,12 +24,17 @@ export function EndOverload(p: { onEnd: () => void }) {
         window.setTimeout(p.onEnd, 380);
       }}
     >
-      <span className="eo-embers" aria-hidden="true">
-        {Array.from({ length: EMBERS }, (_, i) => (
-          <i key={i} style={{ "--x": `${(i * 37) % 100}%`, "--d": `${(i * 0.29) % 2.2}s`, "--s": `${1.6 + ((i * 13) % 10) / 10}s` } as React.CSSProperties} />
+      <span className="eo-tongues" aria-hidden="true">
+        {Array.from({ length: TONGUES }, (_, i) => (
+          <i key={i} style={{ "--a": `${(360 / TONGUES) * i + ((i * 7) % 11)}deg`, "--d": `${-((i * 0.37) % 2.4)}s`, "--s": `${1.7 + ((i * 13) % 10) / 9}s`, "--h": `${0.75 + ((i * 5) % 7) / 12}` } as React.CSSProperties} />
         ))}
       </span>
-      <span className="eo-label">End the Overload</span>
+      <span className="eo-core" aria-hidden="true" />
+      <span className="eo-label">
+        End the
+        <br />
+        Overload
+      </span>
       {burst && (
         <span className="eo-burst" aria-hidden="true">
           <b className="ring" />

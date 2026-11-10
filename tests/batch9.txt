@@ -156,6 +156,11 @@ given: "Overhaul: put one of your Modules on the bottom of the Module deck." (or
 when: click a highlighted Module / unit
 then: that answers. Choices that are not things on the screen ("Run none", "Place none")
       stay as buttons in the question panel.
+note: CHANGED 2026-11-10 (designer): no question panel during a mission. A big see-through
+      bubble in the middle of the Field says what is asked ("Put one of your Modules on the
+      bottom of the Module deck.", "Overhaul · rule 8.8"); beside each Module that can be chosen
+      a bubble points at it ("To the bottom"); pressing the bubble (or the Module) answers.
+      Choices that are not things on the screen are bubbles inside the big bubble.
 
 id: T9_CHO_04
 title: Questions about units or sectors have no list
@@ -169,6 +174,10 @@ note: CHANGED 2026-11-09 (designer): for units there is no question panel at all
       and where it comes from ("P_15"); pressing it (or the unit) chooses it. Several units: each
       press selects (green, ✓), a "Confirm (1 of 2)" bubble at the foot of the Field sends them;
       a choice that may be skipped has "Skip" / "Choose none" there. Sectors are unchanged.
+note: CHANGED 2026-11-10 (designer): sectors too. A bubble sits on each sector that can be
+      chosen ("Reveal", "Move", "Teleport", "Look", "Take", "Put here", "Choose" and the source);
+      pressing it (or the sector) chooses it; several sectors: select, then "Confirm" at the
+      foot of the Field.
 
 id: T9_CHO_05
 title: M_03 and M_06: no Passive menu before the Attack

@@ -186,6 +186,9 @@ then: the Field's background is black in both themes (empty and Cleared sectors 
       motion). "End the Overload" is a proportioned flame button (wider screens up to 250 px)
       with embers rising from it; pressed, it flashes, bursts into sparks and a shock ring, then
       the Overload ends.
+note: CHANGED 2026-11-10 (designer): the beams go round half as fast (one lap about 10 s and
+      15 s), and "End the Overload" is round and see-through, like a small sun with energy
+      tongues glowing out of its rim (T13_R13_07).
 
 ################################################################################
 === SECTION: PLAY-TEST ROUND 10 (designer 2026-11-09, screen only) ===
@@ -250,6 +253,8 @@ then: besides the plasma ring, faint loops of energy (orange, a few violet), lik
       loops on a sun, rise from fixed places on the Field's edge towards the Field and slowly
       sink back (5-9 s each). They do not move along the edge or wiggle. With reduced motion:
       none.
+note: CHANGED 2026-11-10 (designer): semi-transparent sun energy tongues instead of the loops
+      (T13_R13_06).
 
 id: T13_R11_06
 title: Removing Flagship damage on bubbles by the Bays
@@ -420,3 +425,95 @@ then: Menu -> Animation speed: Slow (half speed), Normal, Fast (double), Instant
       Field's animations; the energy chips and Upgrade points keep their own speed (Instant and
       Reduced motion skip them).
 note: Checked by scripts/ui-smoke.mjs.
+
+################################################################################
+=== SECTION: PLAY-TEST ROUND 13 (designer 2026-11-10, screen only) ===
+
+id: T13_R13_01
+title: Overhaul is a Flagship button like the Bays
+source: designer 2026-11-10; Core Rules 8.8
+given: the Command phase, any layout
+then: Overhaul is a square button like a Bay's (a wrench over a gear, "Overhaul" under it),
+      below the Bays; above it one hexagonal cell per Overhaul slot, used ones dimmed. Wide
+      screens: its text to the left ("Overhaul: repair the Flagship, refill your energy, swap a
+      Module, reset up to 2 units." and "1 of 2 slots left"). Phones: it sits after the Bays
+      along the bottom of the Field. Pressed while not Crippled: the "Overhaul now?" question as
+      before (T9 Overhaul confirm).
+
+id: T13_R13_02
+title: A Crippled Flagship must Overhaul: the screen makes it obvious
+source: designer 2026-11-10; Core Rules 5.2, 8.8
+given: every Bay at 0 Integrity, an empty Overhaul slot
+then: a big see-through red bubble in the middle of the Field (the look of "Your Flagship
+      takes 2 damage"): "Your Flagship is Crippled. Every Bay is at 0 Integrity. You must
+      Overhaul before anything else. rules 5.2 and 8.8". A red bubble "Overhaul, N slots left"
+      sits beside the Overhaul button and points at it (above it on phones); the button burns
+      with a red running outline and throbs. Pressing the bubble or the button Overhauls at
+      once (no confirm).
+note: Checked by scripts/ui-smoke.mjs at 1400 and 390 px (find-save.ts crippled).
+
+id: T13_R13_03
+title: Overhaul's Module is chosen on bubbles beside the Modules
+source: designer 2026-11-10; Core Rules 8.8 step 4
+given: an Overhaul, two or more Modules
+then: no card. The big bubble (blue) in the middle of the Field: "Put one of your Modules on
+      the bottom of the Module deck. Tap a bubble beside one of your Modules. Overhaul · rule
+      8.8". Beside each Module a blue "To the bottom" bubble points at it (inside its right end
+      on phones, the Modules scrolled into view); pressing it answers. The same for every other
+      question that chooses a Module (Tractor Beam "Make ready", Salvage Siphon "Choose" ...).
+note: Checked by scripts/ui-smoke.mjs.
+
+id: T13_R13_04
+title: No question cards or banners during a mission
+source: designer 2026-11-10
+given: any question while the Field shows that was a card or a slim banner
+then: the big see-through bubble asks it inside the Field (blue; red for warnings). Answers
+      that are not things on the screen are bubbles inside it: Yes / No (e.g. "Reveal a unit?
+      (0 of up to 3 so far)", Overclock, "pay 1 more ... energy"), "Choose one" options and unit
+      types, "Confirm" lists, an amount with − and + and Confirm (X, Strata Shifter), energy
+      colours to gain ("+1 Yellow", "+1 Red", "+1 Blue", with "Start again"), "Back to the
+      Supply". Energy placed on or taken off Modules keeps its pop-ups beside the Modules; energy
+      or damage split on Modules or Bays gets "+1" bubbles beside them. The big bubble sits in
+      the middle when the answer is outside the Field or inside the bubble, at the top of the
+      Field when the answer is on the Field (M_03's "click a unit to Attack it, or a sector to
+      Move there first", a Flare's energy tokens). While you press anywhere else it turns almost
+      transparent. Before a mission (setup, Mission Preparation without a Field, Mission End)
+      the card stays.
+
+id: T13_R13_05
+title: Sectors are chosen on bubbles
+source: designer 2026-11-10 (as T9_CHO_04 CHANGED)
+given: "Reveal which Dark sector?" from an effect, "V1_BAY2: move it where?", "Teleport it to
+       which Dark sector?", "Allied Drop: place M_01 on which Dark sector?"
+then: no banner. A bubble on each sector that can be chosen: "Reveal", "Move", "Teleport",
+      "Look", "Take", "Put here" or "Choose", with its source; pressing it (or the sector)
+      chooses it. Several: select, "Confirm" at the foot of the Field; "Skip" when allowed.
+
+id: T13_R13_06
+title: Overload: sun energy tongues and slower beams
+source: designer 2026-11-10 (T13_R11_05 and T13_R9_06 CHANGED)
+given: an Overload
+then: from fixed places all round the Field's edge, semi-transparent tongues of sun energy
+      (orange with a pale core, a few violet) lick in towards the Field: each slowly grows and
+      sinks back (4-7 s), its tip sways a little and it flickers softly. The four beams round
+      the edge go half as fast as before. With reduced motion: still.
+
+id: T13_R13_07
+title: "End the Overload" is a small round sun
+source: designer 2026-11-10; Core Rules 9.2
+given: an Overload with no Alert left
+then: in the Field's lower right corner a round, see-through button "End the Overload" (about
+      100-150 px), glowing orange like a small sun, with soft energy tongues glowing out of its
+      rim, each growing and sinking. Pressed: it flashes, bursts into sparks and a shock ring,
+      then the Overload ends. With reduced motion: the tongues stand still.
+
+id: T13_R13_08
+title: An Alert with no effect fizzles
+source: designer 2026-11-10; Core Rules 6.5
+given: an Alert is resolved and its effect changes nothing on the board (S_02 with no damaged
+       unit next to it, S_03 already at Strength 3, a Power Node with no energy waiting ...)
+then: a fizzle on the unit: a spark at its heart sputters and gutters out, a few weak sparks
+      hop up and fall back blinking, a grey puff of smoke curls away and "no effect" fades in
+      above it and out (1 s). Not for a Mecha's Alert (you Command it) or an Omega. No rule
+      change: the engine reports a display event ("fizzled") when the board did not change.
+note: tests/unit/events.test.ts (find-save.ts fizzle makes a save one tap before one).

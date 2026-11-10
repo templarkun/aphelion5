@@ -55,6 +55,13 @@ export function verbOf(prompt: string): { label: string; tone: PickTone } {
   if (/bottom/i.test(p)) return { label: "To the bottom", tone: "plain" };
   if (/Alert do you resolve/i.test(p)) return { label: "Resolve", tone: "plain" };
   if (/Fuse token goes off/i.test(p)) return { label: "Goes off", tone: "damage" };
+  // Sectors (designer 2026-11-10: sector questions are answered on bubbles too).
+  if (/\bReveal\b/.test(p)) return { label: "Reveal", tone: "plain" };
+  if (/\blook at\b/i.test(p)) return { label: "Look", tone: "plain" };
+  if (/\bJump\b/i.test(p)) return { label: "Jump here", tone: "plain" };
+  if (/\btake (the top tile|tiles)\b/i.test(p)) return { label: "Take", tone: "plain" };
+  if (/\b(put|place) them\b/i.test(p) || /^place \S+ on which/i.test(p)) return { label: "Put here", tone: "plain" };
+  if (/make which .*ready/i.test(p)) return { label: "Make ready", tone: "boost" };
   return { label: "Choose", tone: "plain" };
 }
 

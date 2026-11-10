@@ -37,6 +37,8 @@ export type GameEventBody =
    * left: `wake`) or its Alert is resolved (`alert`); a Gyro is drained (4.3, `drain`), before its effect.
    */
   | { kind: "activated"; tile: TileId; unitId: string; type: string; sector: SectorKey; how: "wake" | "alert" | "drain" }
+  /** A resolved Alert's effect changed nothing on the board (designer 2026-11-10, its fizzle look; screen only). */
+  | { kind: "fizzled"; tile: TileId; unitId: string; type: string; sector: SectorKey }
   /** A Fuse token goes off (6.6), before its effect. */
   | { kind: "fuse"; tile: TileId; unitId: string; sector: SectorKey; fuse: FuseKind }
   /** Heat tokens paid back to the Supply (H5, H7). */

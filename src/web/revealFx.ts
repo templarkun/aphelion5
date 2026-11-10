@@ -371,12 +371,13 @@ export function drawOverloadRing(g: Graphics, w: number, h: number, now: number)
   const pulse = 0.5 + 0.5 * Math.sin(now / 420);
   g.rect(inset, inset, W, H).stroke({ width: 14, color: 0xff3b1a, alpha: 0.08 + 0.06 * pulse });
   g.rect(inset, inset, W, H).stroke({ width: 2, color: 0xff7a3a, alpha: 0.35 + 0.2 * pulse });
-  // Four beams: two of red plasma one way, two of violet energy the other way.
+  // Four beams: two of red plasma one way, two of violet energy the other way
+  // (designer 2026-11-10: half as fast as before).
   const beams = [
-    { t: now / 5200, col: 0xff5a1f, core: 0xffe0a0 },
-    { t: now / 5200 + 0.5, col: 0xff5a1f, core: 0xffe0a0 },
-    { t: -now / 7400 + 0.25, col: 0xb07cff, core: 0xf0e6ff },
-    { t: -now / 7400 + 0.75, col: 0xb07cff, core: 0xf0e6ff },
+    { t: now / 10400, col: 0xff5a1f, core: 0xffe0a0 },
+    { t: now / 10400 + 0.5, col: 0xff5a1f, core: 0xffe0a0 },
+    { t: -now / 14800 + 0.25, col: 0xb07cff, core: 0xf0e6ff },
+    { t: -now / 14800 + 0.75, col: 0xb07cff, core: 0xf0e6ff },
   ];
   beams.forEach((b, k) => {
     const dir = k < 2 ? 1 : -1;
@@ -396,8 +397,8 @@ export function drawOverloadRing(g: Graphics, w: number, h: number, now: number)
     g.circle(head[0], head[1], 6 + 2 * Math.sin(now / 60 + k)).fill({ color: b.col, alpha: 0.5 });
     g.circle(head[0], head[1], 3).fill({ color: 0xffffff, alpha: 0.95 });
   });
-  // Energy waves rising from the edge like a sun's magnetic loops (designer 2026-11-09).
-  if (now) drawEdgeFlames(g, at, per, now);
+  // Sun energy tongues licking in from the edge (designer 2026-11-10; were magnetic loops).
+  if (now) drawEdgeTongues(g, at, per, now);
   // Sparks drifting in from the edge.
   for (let i = 0; i < 46; i++) {
     const u = (now / 2400 + rnd(i)) % 1;
@@ -407,38 +408,47 @@ export function drawOverloadRing(g: Graphics, w: number, h: number, now: number)
 }
 
 /**
- * Energy waves from the Field's edge, like the magnetic loops on a sun (designer 2026-11-09:
- * subtle, not flames). Each loop is rooted at two fixed points on the edge and does not move
- * along it or wiggle: it slowly rises towards the Field and sinks back (5-9 s), as two or three
- * faint nested arcs with a soft glow.
+ * Sun energy tongues from the Field's edge (designer 2026-11-10: semi-transparent, like the
+ * tongues of fire on a sun's rim). Each tongue is rooted at a fixed point on the edge; it slowly
+ * grows towards the Field and sinks back (4-7 s), its tip sways a little, and it flickers softly.
+ * Three layers: a wide faint glow, the tongue, and a brighter core.
  */
-function drawEdgeFlames(g: Graphics, at: (t: number, d?: number) => [number, number], per: number, now: number): void {
-  const n = Math.max(8, Math.min(30, Math.round(per / 90)));
+export function drawEdgeTongues(g: Graphics, at: (t: number, d?: number) => [number, number], per: number, now: number): void {
+  const n = Math.max(10, Math.min(36, Math.round(per / 70)));
   for (let i = 0; i < n; i++) {
-    const t0 = (i + 0.2 + rnd(i + 300) * 0.6) / n;
-    const cyc = 5000 + rnd(i + 400) * 4000;
+    const t0 = (i + 0.15 + rnd(i + 300) * 0.7) / n;
+    const cyc = 4000 + rnd(i + 400) * 3000;
     const ph = ((now / cyc + rnd(i + 500)) % 1) * Math.PI * 2;
-    // Slow rise and fall, eased at both ends.
     const life = 0.5 - 0.5 * Math.cos(ph);
-    const height = (16 + 40 * rnd(i + 600)) * (0.25 + 0.75 * life);
-    const span = (34 + 50 * rnd(i + 700)) / per;
-    const violet = i % 5 === 2;
-    const col = violet ? 0xa98bff : 0xff9a4a;
-    const core = violet ? 0xe6dcff : 0xffe2b0;
-    const nest = 2 + (i % 2);
-    for (let k = 0; k < nest; k++) {
-      const f = 1 - k * 0.28;
-      const w = span * f;
-      const m = 14;
+    const flick = 1 + 0.12 * Math.sin(now / 130 + i * 2.3) + 0.08 * Math.sin(now / 57 + i);
+    const h = (14 + 46 * rnd(i + 600)) * (0.3 + 0.7 * life) * flick;
+    const bw = 16 + 26 * rnd(i + 700);
+    const sway = Math.sin(now / (900 + 300 * rnd(i + 800)) + i) * bw * 0.45;
+    const violet = i % 6 === 3;
+    const layers = [
+      { f: 1.35, col: violet ? 0x8f6bff : 0xff5a1f, a: 0.07 },
+      { f: 1, col: violet ? 0xb59cff : 0xff8a2a, a: 0.16 },
+      { f: 0.55, col: violet ? 0xeee6ff : 0xffe08a, a: 0.22 },
+    ];
+    for (const L of layers) {
       const pts: number[] = [];
+      const m = 9;
+      const half = (bw * L.f) / 2;
+      const hh = h * L.f;
+      // Up the left flank to the tip, then down the right flank.
       for (let j = 0; j <= m; j++) {
-        const s = j / m;
-        const p = at(t0 + (s - 0.5) * w, height * f * Math.sin(Math.PI * s));
+        const k = j / m;
+        const off = -half * (1 - k) ** 0.55 + sway * k * k;
+        const p = at(t0 + off / per, hh * k);
         pts.push(p[0], p[1]);
       }
-      const fade = (0.35 + 0.65 * life) * (1 - k * 0.22);
-      g.poly(pts, false).stroke({ width: 5, color: col, alpha: 0.06 * fade });
-      g.poly(pts, false).stroke({ width: 1.2, color: core, alpha: 0.3 * fade });
+      for (let j = m - 1; j >= 0; j--) {
+        const k = j / m;
+        const off = half * (1 - k) ** 0.55 + sway * k * k;
+        const p = at(t0 + off / per, hh * k);
+        pts.push(p[0], p[1]);
+      }
+      g.poly(pts).fill({ color: L.col, alpha: L.a * (0.45 + 0.55 * life) });
     }
   }
 }

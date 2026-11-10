@@ -59,6 +59,8 @@ const FX: Record<string, (q: Question, g: Game) => string | undefined> = {
   fuses: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "tokens" && (e.change === "tick" || e.change === "mortar" || e.change === "feedback"))),
   uncover: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "uncovered")),
   overhaul: (q, g) => ((q.shortcuts ?? []).some((o) => o.id === "overhaul") ? "overhaul" : undefined),
+  // An Alert resolved with no effect (its fizzle look, designer 2026-11-10).
+  fizzle: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "fizzled"), /^alert:/),
 };
 for (const t of ["Flare", "Omega", "Sentinel", "Gyro", "Sleeper"]) FX[`reveal-${t}`] = (q, g) => (revealOf(t)(q, g) ? shortcutWith(q, g, (es) => es.some((e) => e.kind === "revealed" && e.type === t), /^reveal:/) : undefined);
 
@@ -78,6 +80,12 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
     const tops = sectorKeys(s).filter((k) => sectorState(s, k) === "occupied").map((k) => s.tiles[topTileId(s, k)!]!.tokens);
     return /^Choose an action/.test(q.prompt) && tops.some((t) => t.shield > 0) && tops.some((t) => t.damage > 0);
   },
+  // Questions asked inside the Field (designer 2026-11-10): Crippled, Overhaul's Module, a yes/no, a sector, energy colours.
+  crippled: (q) => /^Your Flagship is Crippled/.test(q.prompt),
+  overhaulmod: (q) => /^Overhaul: put one of your Modules/.test(q.prompt),
+  yesno: (q, g) => q.kind === "yesno" && (g.view.state.phase === "command" || g.view.state.phase === "overload"),
+  sectorpick: (q) => q.kind === "sectors" && q.max === 1 && q.options.length >= 3,
+  gain: (q) => q.kind === "split" && q.pick === "reserve",
   // Ready Alerts on the Field (token at the bottom corner and a pulsing rim, designer 2026-11-09).
   alert: (q, g) => /choose an action/i.test(q.prompt) && alertsOnField(g) >= 2,
   // Removing damage from the Flagship (bubbles by the Bays, designer 2026-11-09).
@@ -200,6 +208,12 @@ for (let seed = 1; seed < 400; seed++) {
     if (dev && q.kind === "option" && /^Choose your Company/.test(q.prompt)) a = { kind: "option", value: what === "upgrade-V2" ? "V2" : "V1" };
     if (dev && q.kind === "option" && q.options.some((o) => o.id === "devWin")) a = { kind: "option", value: "devWin" };
     for (let k = 0; k < 30 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, q);
+    // Crippled: never Overhaul, Reveal as much as possible (the Flagship takes damage sooner).
+    if (what === "crippled" && q.kind === "option" && q.shortcuts) {
+      const rev = q.shortcuts.filter((o) => o.id.startsWith("reveal:"));
+      if (rev.length) a = { kind: "option", value: rev[0]!.id };
+      for (let k = 0; k < 30 && a.kind === "option" && (a.value === "concede" || a.value === "overhaul"); k++) a = randomAnswer(r, q);
+    }
     const res = playAnswer(data, g, a);
     if (res.result.status === "illegal" || res.result.status === "blocked") break;
     g = res.game;

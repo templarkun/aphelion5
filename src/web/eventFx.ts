@@ -207,3 +207,62 @@ export function overhaulStep(): Step {
     end: () => {},
   };
 }
+
+/**
+ * An Alert resolved with no effect (designer 2026-11-10): a fizzle. A few weak sparks sputter up
+ * from the unit, flicker and drop back, a grey puff of smoke curls away and "no effect" fades (0.9 s).
+ */
+export function fizzleStep(e: GameEvent & { kind: "fizzled" }, env: FxEnv): Step {
+  const g = new Graphics();
+  g.eventMode = "none";
+  const t = label("no effect", env.size() * 0.75, 0xe8eef6, 0x1b2230);
+  t.alpha = 0;
+  const N = 16;
+  const seed = (i: number) => {
+    const x = Math.sin(i * 12.9898 + e.seq * 3.1) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  return {
+    ms: 1000,
+    start: () => env.fx.addChild(g, t),
+    frame: (p) => {
+      const c = env.centre(e.sector);
+      const s = env.size();
+      g.clear();
+      // A spark at the heart tries to catch: it sputters twice, then gutters out.
+      const core = p < 0.12 ? p / 0.12 : p < 0.2 ? 0.35 : p < 0.32 ? 1 : Math.max(0, 1 - (p - 0.32) / 0.3);
+      const flick = 0.6 + 0.4 * Math.sin(p * 90) * Math.sin(p * 31);
+      g.circle(c.x, c.y, s * 0.42 * core).fill({ color: 0x20160c, alpha: 0.35 * core });
+      g.circle(c.x, c.y, s * 0.3 * core).fill({ color: 0xff9a3a, alpha: 0.35 * core * flick });
+      g.circle(c.x, c.y, s * (0.08 + 0.07 * core)).fill({ color: 0xfff1c8, alpha: 0.95 * core * flick });
+      // Sparks: short hops up and out that fall back under a little gravity, dimming and blinking.
+      for (let i = 0; i < N; i++) {
+        const born = 0.05 + seed(i) * 0.3;
+        const q = (p - born) / 0.5;
+        if (q <= 0 || q >= 1) continue;
+        const a = -Math.PI / 2 + (seed(i + 20) - 0.5) * 2.6;
+        const v = s * (0.45 + 0.45 * seed(i + 40));
+        const x = c.x + Math.cos(a) * v * q;
+        const y = c.y + Math.sin(a) * v * q + s * 1.1 * q * q;
+        const on = Math.sin(q * 38 + i) > -0.4 ? 1 : 0.2;
+        const r = s * 0.035 * (1.4 - q);
+        g.circle(x, y, r * 2.4).fill({ color: 0x1b1208, alpha: 0.35 * (1 - q) * on });
+        g.circle(x, y, r).fill({ color: i % 3 ? 0xffd27a : 0xffffff, alpha: (1 - q) * on });
+      }
+      // A grey puff of smoke curling up and away.
+      for (let i = 0; i < 5; i++) {
+        const q = Math.max(0, Math.min(1, (p - 0.28 - i * 0.06) / 0.62));
+        if (q <= 0) continue;
+        const x = c.x + Math.sin(q * 3 + i * 1.7) * s * 0.14 + (i - 2) * s * 0.06;
+        const y = c.y - s * 0.05 - q * s * 0.6;
+        g.circle(x, y, s * (0.08 + 0.14 * q)).fill({ color: 0x5c6573, alpha: 0.45 * (1 - q) });
+      }
+      t.position.set(c.x, c.y - s * (0.62 + 0.15 * easeOut(p)));
+      t.alpha = p < 0.2 ? p / 0.2 : p > 0.75 ? (1 - p) / 0.25 : 1;
+    },
+    end: () => {
+      g.destroy();
+      t.destroy();
+    },
+  };
+}

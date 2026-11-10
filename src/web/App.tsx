@@ -31,7 +31,8 @@ import { Fps } from "./Fps.js";
 import { MissionBar } from "./Mission.js";
 import { UpgradeBubble } from "./Upgrade.js";
 import { UpgradeSheet } from "./UpgradeSheet.js";
-import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
+import { AskBubble, PointBubbles, askText } from "./FieldAsk.js";
+import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, OverhaulButton, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 import { MotionSettings } from "./MotionSettings.js";
 
@@ -854,7 +855,7 @@ function GameScreen(p: GameProps) {
   const pickQ =
     actors || !q || m03.length || rowQ || damageQ || planQ || rotate || !hasField
       ? undefined
-      : q.kind === "units" || (q.kind === "split" && q.pick === "units")
+      : q.kind === "units" || q.kind === "sectors" || (q.kind === "split" && q.pick === "units")
         ? q
         : (q.kind === "option" || q.kind === "order") && !q.energy && !q.takeEnergy && !q.rows && !q.options.some((o) => o.chips)
           ? q.pick === "units" || (q.pick === undefined && onFieldUnits.length > 0 && onFieldSectors.length === 0 && q.options.every((o) => !o.on || o.on.kind === "unit"))
@@ -867,15 +868,17 @@ function GameScreen(p: GameProps) {
   if (pickQ) {
     const verb = verbOf(pickQ.prompt);
     const sub = sourceOf(pickQ.prompt, pickQ.rule);
-    if (pickQ.kind === "units") {
+    if (pickQ.kind === "units" || pickQ.kind === "sectors") {
+      // Sectors too (designer 2026-11-10): a bubble on each sector that can be chosen, no banner.
+      const kind = pickQ.kind;
       const single = pickQ.max === 1;
       for (const id of pickQ.options) pickItems.push({ id, ...verb, sub, selected: !single && selected.includes(id) });
-      pickPress = (id) => (single ? send({ kind: "units", value: [id] }) : setSelected((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : xs.length < pickQ.max ? [...xs, id] : xs)));
+      pickPress = (id) => (single ? send({ kind, value: [id] }) : setSelected((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : xs.length < pickQ.max ? [...xs, id] : xs)));
       if (!single) {
         const n = selected.length;
         const what = pickQ.min === pickQ.max ? `${n} of ${pickQ.max}` : `${n}, up to ${pickQ.max}`;
-        pickFoot.push({ id: "confirm", label: n === 0 && pickQ.min === 0 ? "Choose none" : `Confirm (${what})`, primary: n > 0, disabled: n < pickQ.min || n > pickQ.max, onPress: () => send({ kind: "units", value: selected }) });
-      } else if (pickQ.min === 0) pickFoot.push({ id: "skip", label: "Skip", onPress: () => send({ kind: "units", value: [] }) });
+        pickFoot.push({ id: "confirm", label: n === 0 && pickQ.min === 0 ? "Choose none" : `Confirm (${what})`, primary: n > 0, disabled: n < pickQ.min || n > pickQ.max, onPress: () => send({ kind, value: selected }) });
+      } else if (pickQ.min === 0) pickFoot.push({ id: "skip", label: "Skip", onPress: () => send({ kind, value: [] }) });
     } else if (pickQ.kind === "split") {
       for (const b of pickQ.buckets) pickItems.push({ id: b.id, label: verb.tone === "damage" ? "+1 damage" : "+1", sub, tone: verb.tone, count: split[b.id] ?? 0, disabled: (split[b.id] ?? 0) >= b.max });
       pickPress = addSplit;
@@ -950,17 +953,10 @@ function GameScreen(p: GameProps) {
   const orderViews: OrderView[] = s.mission
     ? orders(c).map((o) => ({ id: o.id, tokens: o.tokens, text: `${o.overloadOnly ? "[Overload] " : ""}${o.effect}`, word: orderWord(o.effect), opt: actors?.orders.get(o.id), noUnits: inPlay && o.overloadOnly === inOverload && noUnitToTarget(c, o.id) }))
     : [];
+  const overhaulButton = <OverhaulButton layout={layout} used={s.sheet.overhaulUsed} slots={co.overhaulSlots} can={!!overhaul} must={crippled && !!overhaul} onPress={askOverhaul} />;
   const flagshipExtras = (
     <>
-      {crippled && <p className="warn">CRIPPLED — you must Overhaul before your next action.</p>}
-      <div className="overhaul">
-        <button className={overhaul ? "can" : ""} disabled={!overhaul} onClick={askOverhaul} title="Repair the Flagship, refill energy, swap a Module (8.8)">
-          Overhaul
-        </button>
-        <span className="small">
-          slots used {s.sheet.overhaulUsed}/{co.overhaulSlots}
-        </span>
-      </div>
+      {layout !== "C" && overhaulButton}
       <p className="small sheet-line">
         <UpgradeBubble n={s.sheet.upgradePoints} />
         {s.sheet.ally ? <span>Ally {s.sheet.ally}</span> : null}
@@ -1089,8 +1085,15 @@ function GameScreen(p: GameProps) {
         {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
         {look && <LookCard data={data} tiles={look} onClose={() => setLook(undefined)} />}
         {endOverload && <EndOverload onEnd={() => answer(endOverload.id)} />}
+        {actors && crippled && overhaul && (
+          // Crippled (5.2, designer 2026-11-10): Overhaul is the only action; the Field says so and points at the button.
+          <>
+            <AskBubble tone="alert" title="Your Flagship is Crippled" text="Every Bay is at 0 Integrity. You must Overhaul before anything else." from="rules 5.2 and 8.8" />
+            <PointBubbles items={[{ key: "overhaul", selector: "[data-overhaul]", label: "Overhaul", sub: `${co.overhaulSlots - s.sheet.overhaulUsed} slot${co.overhaulSlots - s.sheet.overhaulUsed === 1 ? "" : "s"} left`, tone: "alert", onPress: () => answer(overhaul.id) }]} />
+          </>
+        )}
         {hasField && <Fps />}
-        {pickQ && <UnitPicks items={pickItems} foot={pickFoot} onPress={pickPress} multi={pickQ.kind !== "option" && pickQ.kind !== "order" && !(pickQ.kind === "units" && pickQ.max === 1)} />}
+        {pickQ && <UnitPicks items={pickItems} foot={pickFoot} onPress={pickPress} multi={pickQ.kind !== "option" && pickQ.kind !== "order" && !((pickQ.kind === "units" || pickQ.kind === "sectors") && pickQ.max === 1)} />}
         {rowQ && hasField && !planQ && <RowBubbles rows={rowQ.rows!} selected={rowSel} onSelect={setRowSel} onConfirm={(i) => send({ kind: "option", value: rowQ.options[i]!.id })} />}
         {planQ ? null : rotate ? (
           // Facing (3.7): the turn buttons are on the unit; no card (designer 2026-11-09). "Done" only when needed.
@@ -1105,7 +1108,9 @@ function GameScreen(p: GameProps) {
           </QCard>
         ) : damageQ ? (
           <FlagshipDamage total={damageQ.total} from={/^\d/.test(damageQ.rule) ? `rule ${damageQ.rule}` : `from ${damageQ.rule}`} buckets={damageQ.buckets} split={split} onAdd={addSplit} onReset={() => setSplit({})} repair={/^Remove/.test(damageQ.prompt)} />
-        ) : actors || anomalyQ || rowQ || pickQ ? null : onBoard(q) ? (
+        ) : actors || anomalyQ || rowQ || pickQ ? null : hasField ? (
+          <FieldQuestion data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} onAddSplit={addSplit} />
+        ) : onBoard(q) ? (
           <div className="q-banner">
             <QuestionPanel data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} />
           </div>
@@ -1115,7 +1120,7 @@ function GameScreen(p: GameProps) {
           </QCard>
         )}
         </div>
-        {layout === "C" && hasField && <FlagshipDock layout="C" company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={useThing} onSelect={setThingSel} drag={dragApi} />}
+        {layout === "C" && hasField && <FlagshipDock layout="C" company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={useThing} onSelect={setThingSel} drag={dragApi} dockExtra={overhaulButton} />}
       </section>
 
       <aside className="right panel">
@@ -1706,5 +1711,156 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
         </div>
       );
     }
+  }
+}
+
+/**
+ * A question during a mission, asked inside the Field (designer 2026-11-10): the big see-through
+ * bubble instead of a card or banner (FieldAsk.tsx). Answers that are not things on the screen are
+ * bubbles inside it; Modules and Bays to press get bubbles beside them that point at them.
+ */
+function FieldQuestion(p: { data: GameData; state: GameState; q: Question; selected: string[]; setSelected: (x: string[]) => void; onAnswer: (a: Answer) => void; split: Record<string, number>; onResetSplit: () => void; onAddSplit: (id: string) => void }) {
+  const { q, state } = p;
+  const [amount, setAmount] = usePerQuestion(q, q.kind === "amount" ? q.min : 0);
+  const { title, from } = askText(q.prompt, q.rule);
+  const legacy = (
+    <div className="q-legacy">
+      <QuestionPanel data={p.data} state={state} q={q} selected={p.selected} setSelected={p.setSelected} onAnswer={p.onAnswer} split={p.split} onResetSplit={p.onResetSplit} />
+    </div>
+  );
+  const modName = (id: string) => moduleDef({ data: p.data, state }, Number(id)).name;
+  switch (q.kind) {
+    case "yesno":
+      return (
+        <AskBubble title={title} from={from}>
+          <div className="ask-choices">
+            <button className="ask-btn primary" onClick={() => p.onAnswer({ kind: "yesno", value: true })}>
+              Yes
+            </button>
+            <button className="ask-btn" onClick={() => p.onAnswer({ kind: "yesno", value: false })}>
+              No
+            </button>
+          </div>
+        </AskBubble>
+      );
+    case "option":
+    case "order": {
+      const kind = q.kind;
+      const isModule = (id: string) => state.player.modules.some((m) => String(m.id) === id);
+      const onScreen = (id: string) => q.rows !== undefined || q.options.find((o) => o.id === id)?.on !== undefined || (q.pick === "modules" ? isModule(id) : q.pick === "units" ? state.tiles[id] !== undefined : false);
+      const rest = q.options.filter((o) => !onScreen(o.id));
+      const there = q.options.length - rest.length;
+      const modulePick = q.pick === "modules" && !q.energy && !q.takeEnergy;
+      const offField = modulePick || q.energy !== undefined || q.takeEnergy !== undefined;
+      const hint = there === 0 ? undefined : q.takeEnergy ? "Tap a pop-up beside a Module to take its energy away." : q.energy ? "Tap an energy pop-up beside a Module to place that energy there." : modulePick ? "Tap a bubble beside one of your Modules." : "Tap a highlighted unit or sector on the Field.";
+      const verb = verbOf(q.prompt).label;
+      return (
+        <>
+          <AskBubble title={title} text={hint} from={from} place={offField && !q.energyFrom ? "middle" : there > 0 ? "top" : "middle"}>
+            {rest.length > 0 && (
+              <div className="ask-choices">
+                {rest.map((o) => (
+                  <button key={o.id} className={`ask-btn ${o.id === "concede" ? "danger" : ""}`} onClick={() => p.onAnswer({ kind, value: o.id } as Answer)}>
+                    {q.energy?.[o.id] && <EnergyGlyph colour={q.energy[o.id]!} />} {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </AskBubble>
+          {modulePick && <PointBubbles items={q.options.filter((o) => isModule(o.id)).map((o) => ({ key: o.id, selector: `[data-module="${o.id}"]`, label: verb, onPress: () => p.onAnswer({ kind, value: o.id } as Answer) }))} />}
+        </>
+      );
+    }
+    case "amount":
+      return (
+        <AskBubble title={title} from={from}>
+          <div className="ask-step">
+            <button className="ask-btn" aria-label="One less" disabled={amount <= q.min} onClick={() => setAmount(Math.max(q.min, amount - 1))}>
+              −
+            </button>
+            <b>{amount}</b>
+            <button className="ask-btn" aria-label="One more" disabled={amount >= q.max} onClick={() => setAmount(Math.min(q.max, amount + 1))}>
+              +
+            </button>
+          </div>
+          <span className="small">
+            {q.min} to {q.max}
+          </span>
+          <div className="ask-choices">
+            <button className="ask-btn primary" onClick={() => p.onAnswer({ kind: "amount", value: amount })}>
+              Confirm
+            </button>
+          </div>
+        </AskBubble>
+      );
+    case "several": {
+      const ok = p.selected.length >= q.min && p.selected.length <= q.max;
+      return (
+        <AskBubble title={title} from={from}>
+          <div className="ask-choices">
+            {q.options.map((o) => (
+              <button key={o.id} className={`ask-btn ${p.selected.includes(o.id) ? "on" : ""}`} onClick={() => p.setSelected(p.selected.includes(o.id) ? p.selected.filter((x) => x !== o.id) : [...p.selected, o.id])}>
+                {p.selected.includes(o.id) ? "✓ " : ""}
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div className="ask-choices">
+            <button className="ask-btn primary" disabled={!ok} onClick={() => p.onAnswer({ kind: "several", value: p.selected })}>
+              Confirm ({p.selected.length})
+            </button>
+          </div>
+        </AskBubble>
+      );
+    }
+    case "split": {
+      const sum = Object.values(p.split).reduce((a, b) => a + b, 0);
+      const again = sum > 0 && (
+        <button className="ask-btn" onClick={p.onResetSplit}>
+          Start again
+        </button>
+      );
+      if (q.pick === "reserve") {
+        // Energy gained in chosen colours: one bubble per colour, each press adds 1; the last one answers.
+        return (
+          <AskBubble title={title} text={`${sum} of ${q.total} chosen`} from={from}>
+            <div className="ask-choices">
+              {q.buckets.map((b) => {
+                const n = p.split[b.id] ?? 0;
+                return (
+                  <button key={b.id} className={`ask-btn ${n ? "on" : ""}`} data-gain={b.id} disabled={n >= b.max || sum >= q.total} onClick={() => p.onAddSplit(b.id)}>
+                    +1 {(b.id === "Yellow" || b.id === "Red" || b.id === "Blue") && <EnergyGlyph colour={b.id} />} {b.label}
+                    {n > 0 ? ` (${n})` : ""}
+                  </button>
+                );
+              })}
+            </div>
+            {again && <div className="ask-choices">{again}</div>}
+          </AskBubble>
+        );
+      }
+      if (q.pick === "modules" || q.pick === "bays") {
+        const sel = (id: string) => (q.pick === "modules" ? `[data-module="${id}"]` : `[data-bay="${id.replace(/^bay/, "")}"]`);
+        return (
+          <>
+            <AskBubble title={title} text={`Tap the bubbles: ${sum} of ${q.total} placed`} from={from}>
+              {again && <div className="ask-choices">{again}</div>}
+            </AskBubble>
+            <PointBubbles items={q.buckets.map((b) => ({ key: b.id, selector: sel(b.id), label: "+1", sub: q.pick === "modules" ? modName(b.id) : b.label, count: p.split[b.id] ?? 0, disabled: (p.split[b.id] ?? 0) >= b.max || sum >= q.total, onPress: () => p.onAddSplit(b.id) }))} />
+          </>
+        );
+      }
+      return (
+        <AskBubble title={title} from={from} place="top">
+          {legacy}
+        </AskBubble>
+      );
+    }
+    default:
+      return (
+        <AskBubble title={title} from={from} place="top">
+          {legacy}
+        </AskBubble>
+      );
   }
 }

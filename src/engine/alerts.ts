@@ -74,10 +74,27 @@ export function* resolveAlert(c: RunCtx, id: TileId, choice?: "energy" | "heat")
   yield* asEffect(c, alertEffect(c, id, d.id, choice));
 }
 
+/**
+ * What an Alert's effect can change, to tell when it changed nothing (the screen's fizzle look,
+ * designer 2026-11-10). Not the log, the events or the random generator.
+ */
+function boardPrint(c: Ctx): string {
+  const s = c.state;
+  return JSON.stringify([s.field, s.tiles, s.flagship, s.player, s.supply, s.decks, s.sheet]);
+}
+
+/** Runs one part of an Alert's effect; if it changed nothing, the unit fizzles (a display event, no rule). */
+function* orFizzle(c: RunCtx, id: TileId, unitId: string, run: Effect): Effect {
+  const before = boardPrint(c);
+  yield* run;
+  const k = sectorOf(c.state, id);
+  if (k !== undefined && boardPrint(c) === before) emit(c, { kind: "fizzled", tile: id, unitId, type: unitType(c, id), sector: k });
+}
+
 function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" | "heat"): Effect {
   // A Wreck: its Destroyed effect, then it leaves (4.8).
   if (isWreck(c, id)) {
-    yield* unitEffect(unitId, "destroyed")(c, id);
+    yield* orFizzle(c, id, unitId, unitEffect(unitId, "destroyed")(c, id));
     if (isUnit(c.state, id)) removeWreck(c, id);
     return;
   }
@@ -88,15 +105,15 @@ function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" |
       return;
     case "Gyro":
       // Activated to Drain (11.1 rule 6): Drain, then discard.
-      yield* unitEffect(unitId, "drain")(c, id);
+      yield* orFizzle(c, id, unitId, unitEffect(unitId, "drain")(c, id));
       discardUnit(c, id, "4.3");
       return;
     case "Sleeper":
-      yield* unitEffect(unitId, "activate")(c, id);
+      yield* orFizzle(c, id, unitId, unitEffect(unitId, "activate")(c, id));
       discardUnit(c, id, "4.4");
       return;
     case "Sentinel":
-      yield* unitEffect(unitId, "activate")(c, id);
+      yield* orFizzle(c, id, unitId, unitEffect(unitId, "activate")(c, id));
       return;
     case "Flare":
       // Trial rule with the Heat module: a Power Node gives its waiting energy or 3 Heat (H4).
@@ -122,9 +139,7 @@ function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" |
         }
       }
       // A Power Node has no effect (4.6). Flares stay until Overload End.
-      if (unitDef(c, id).text.activate !== "none") yield* unitEffect(unitId, "activate")(c, id);
-      // Trial rule (I2): then its waiting energy is placed.
-      yield* placeWaitingFlareEnergy(c, id);
+      yield* orFizzle(c, id, unitId, flareAlert(c, id, unitId));
       return;
     case "Omega":
       yield* unitEffect(unitId, "atOverload")(c, id);
@@ -132,6 +147,12 @@ function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" |
     case "Bot":
       throw new Error(`${id}: a Bot has no effect to resolve`);
   }
+}
+
+function* flareAlert(c: RunCtx, id: TileId, unitId: string): Effect {
+  if (unitDef(c, id).text.activate !== "none") yield* unitEffect(unitId, "activate")(c, id);
+  // Trial rule (I2): then its waiting energy is placed.
+  yield* placeWaitingFlareEnergy(c, id);
 }
 
 /** Pick one alerted unit, in the player's order (8.3, 11.1 rule 4). */

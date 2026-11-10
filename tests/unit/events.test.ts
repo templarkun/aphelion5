@@ -11,6 +11,7 @@ import { boost, dealHit, placeBarrier, placeFuse, setOffFuses } from "../../src/
 import { startOverload } from "../../src/engine/command.js";
 import { turn } from "../../src/effects/kit.js";
 import { topTileId } from "../../src/engine/field.js";
+import { resolveAlert } from "../../src/engine/alerts.js";
 import { A, at, data, given, play, withModules } from "./helpers.js";
 
 const kinds = (es: readonly GameEvent[] | undefined) => (es ?? []).map((e) => e.kind);
@@ -140,5 +141,22 @@ describe("engine events", () => {
     });
     expect(kinds(state.events)[0]).toBe("overload");
     expect(state.events![0]).toMatchObject({ how: "start" });
+  });
+
+  it("an Alert whose effect changes nothing reports a fizzle after the unit acts (designer 2026-11-10, screen only)", () => {
+    // S_02: remove 1 damage from each adjacent unit. Nothing adjacent is damaged.
+    const s0 = given("T_TOK_01", "(0,0): S_02[AL]");
+    const id = at(s0, "0,0");
+    const { state } = play(s0, (c) => resolveAlert(c, id));
+    expect(kinds(state.events)).toEqual(["activated", "fizzled"]);
+    expect(state.events![1]).toMatchObject({ tile: id, unitId: "S_02", sector: "0,0" });
+  });
+
+  it("an Alert whose effect does something reports no fizzle", () => {
+    const s0 = given("T_TOK_01", "(0,0): S_02[AL]. (0,1): B_02[D1].");
+    const id = at(s0, "0,0");
+    const { state } = play(s0, (c) => resolveAlert(c, id));
+    expect(kinds(state.events)).toContain("tokens");
+    expect(kinds(state.events)).not.toContain("fizzled");
   });
 });

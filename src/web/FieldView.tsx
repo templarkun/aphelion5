@@ -33,7 +33,7 @@ import { BIG_REVEAL, chargeLook, drawOverloadRing, gyroBreak, gyroDrain, revealF
 import { addLevel, addUnitMarks } from "./unitMarks.js";
 import { drawAlert } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
-import { overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
+import { fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
 import { isStill, onMotion, speedFactor } from "./motion.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
@@ -1032,6 +1032,10 @@ export function FieldView(p: FieldProps) {
       }
       if (e.kind === "overhaul") {
         out.push(overhaulStep());
+        continue;
+      }
+      if (e.kind === "fizzled") {
+        out.push(fizzleStep(e, env));
         continue;
       }
       if ((e.kind === "moved" || e.kind === "swapped") && from(e.rule)) out.push(weaponStep(src!, "move", onPage(e.from)));
