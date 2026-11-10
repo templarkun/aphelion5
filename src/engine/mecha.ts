@@ -170,7 +170,7 @@ export type CommandMode =
 export function commandOptions(c: Ctx, id: TileId, mode: CommandMode): { id: string; label: string }[] {
   const opts: { id: string; label: string }[] = [];
   if (mode !== "overload") {
-    if (canAttack(c, id)) opts.push({ id: "attack", label: `Attack (one hit of ${strength(c, id)})` });
+    if (canAttack(c, id)) opts.push({ id: "attack", label: "Attack" });
     opts.push({ id: "scrap", label: `Scrap (gain ${strength(c, id)} energy)` });
   }
   for (const a of mechaAbilities(c, id)) {

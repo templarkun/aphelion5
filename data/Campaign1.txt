@@ -77,9 +77,9 @@ effect: Swap a Mecha with another unit.
 id: C1_M1
 number: 1
 route: single
-deployment_shuffled: O_01 x8, F_01 x3, F_24 x2, P_15 x2, G_22 x2, G_24 x2, G_00 x6
-threat_A: S_12, S_12, F_08, G_24
-threat_B: S_08, S_08, F_09, G_22
+deployment_shuffled: O_01 x8, F_01 x3, F_24 x2, P_15 x2, G_20 x2, G_22 x2, G_00 x6
+threat_A: S_12, S_12, F_08, G_22
+threat_B: S_08, S_08, F_09, G_20
 threat_C: S_12, S_12, F_24, P_05
 threat_D: S_08, S_08, F_11, P_15
 objective_type: eliminate
@@ -94,9 +94,9 @@ orders: 4 Command tokens: Deal 1 damage to all units.
 id: C1_M2X
 number: 2
 route: x (alternative to C1_M2Y)
-deployment_shuffled: F_01 x6, F_04 x4, S_18 x4, P_09 x2, G_24 x2, G_00 x6
+deployment_shuffled: F_01 x6, F_04 x4, S_18 x4, P_09 x2, G_22 x2, G_00 x6
 threat_A: S_01, S_11, P_07, P_22
-threat_B: S_01, S_24, G_22, G_32
+threat_B: S_01, S_24, G_20, G_30
 threat_C: S_01, S_08, F_09, F_08
 threat_D: S_01, S_03, S_03, P_15
 objective_type: salvage
@@ -109,9 +109,9 @@ orders: none
 id: C1_M2Y
 number: 2
 route: y (alternative to C1_M2X)
-deployment_shuffled: F_01 x7, F_11 x4, S_24 x4, P_07 x3, G_22 x2, G_00 x6
+deployment_shuffled: F_01 x7, F_11 x4, S_24 x4, P_07 x3, G_20 x2, G_00 x6
 threat_A: S_11, S_01, P_05, P_24
-threat_B: S_11, S_18, G_24, G_26
+threat_B: S_11, S_18, G_22, G_24
 threat_C: S_11, S_08, F_04, F_08
 threat_D: S_11, S_03, S_03, P_04
 objective_type: salvage
@@ -123,12 +123,12 @@ orders: 2 Command tokens: Destroy one Level 2 Bot.
 id: C1_M3
 number: 3
 route: single
-deployment_shuffled: F_01 x4, F_08 x3, P_04 x3, G_26 x3, G_00 x6
+deployment_shuffled: F_01 x4, F_08 x3, P_04 x3, G_24 x3, G_00 x6
 omega_placed: O_02
 omega_sectors: (0, -1), (1, 2), (-1, 3)
-threat_A: S_12, S_24, P_09, G_24
+threat_A: S_12, S_24, P_09, G_22
 threat_B: S_12, S_01, F_09, P_05
-threat_C: S_12, S_18, F_12, G_31
+threat_C: S_12, S_18, F_12, G_29
 threat_D: S_12, F_11, P_24, P_22
 objective_type: eliminate
 objective_target: O_02
@@ -142,9 +142,9 @@ orders: 2 Command tokens: Deal 2 damage to all Gyros.
 id: C1_M4X
 number: 4
 route: x (alternative to C1_M4Y)
-deployment_shuffled: F_01 x8, F_04 x3, S_08 x4, S_03 x3, P_05 x3, G_28 x3, G_00 x6
-threat_A: S_18, S_11, F_24, G_26
-threat_B: S_18, F_11, P_22, G_32
+deployment_shuffled: F_01 x8, F_04 x3, S_08 x4, S_03 x3, P_05 x3, G_26 x3, G_00 x6
+threat_A: S_18, S_11, F_24, G_24
+threat_B: S_18, F_11, P_22, G_30
 threat_C: S_18, S_12, P_05, P_04
 threat_D: S_18, S_01, F_09, P_09
 objective_type: salvage
@@ -156,11 +156,11 @@ orders: [Overload] 1 Command token: Swap two units.
 id: C1_M4Y
 number: 4
 route: y (alternative to C1_M4X)
-deployment_shuffled: F_01 x6, F_25 x3, S_11 x4, P_22 x4, G_32 x3, G_00 x6
-threat_A: S_08, S_12, F_04, G_28
+deployment_shuffled: F_01 x6, F_25 x3, S_11 x4, P_22 x4, G_30 x3, G_00 x6
+threat_A: S_08, S_12, F_04, G_26
 threat_B: S_08, S_01, F_09, P_05
-threat_C: S_08, S_03, F_11, G_30
-threat_D: S_08, S_18, P_07, G_22
+threat_C: S_08, S_03, F_11, G_28
+threat_D: S_08, S_18, P_07, G_20
 objective_type: salvage
 event_type: none
 map_sector_count: 11
@@ -170,13 +170,13 @@ orders: 4 Command tokens: Deal 1 damage to all units.
 id: C1_M5
 number: 5
 route: single
-deployment_shuffled: O_01 x8, F_01 x4, F_12 x4, P_07 x3, G_31 x4, G_00 x6
+deployment_shuffled: O_01 x8, F_01 x4, F_12 x4, P_07 x3, G_29 x4, G_00 x6
 omega_placed: O_02
 omega_sectors: (1, 0)
-threat_A: S_24, F_04, P_22, G_30
-threat_B: S_24, S_01, G_24, G_26
-threat_C: S_24, S_03, F_08, G_22
-threat_D: S_24, S_12, P_04, G_32
+threat_A: S_24, F_04, P_22, G_28
+threat_B: S_24, S_01, G_22, G_24
+threat_C: S_24, S_03, F_08, G_20
+threat_D: S_24, S_12, P_04, G_30
 objective_type: eliminate
 objective_target: O_02
 objective_count: 1
@@ -189,9 +189,9 @@ orders: 2 Command tokens: Take an Anomaly card.
 id: C1_M6
 number: 6
 route: single
-deployment_shuffled: F_01 x6, F_09 x4, S_12 x4, S_01 x4, P_24 x4, G_30 x3, G_00 x6
-threat_A: S_03, S_24, G_32, G_26
-threat_B: S_03, S_18, F_08, G_28
+deployment_shuffled: F_01 x6, F_09 x4, S_12 x4, S_01 x4, P_24 x4, G_28 x3, G_00 x6
+threat_A: S_03, S_24, G_30, G_24
+threat_B: S_03, S_18, F_08, G_26
 threat_C: S_03, S_11, P_22, P_15
 threat_D: S_03, S_08, F_11, F_04
 objective_type: salvage
@@ -203,11 +203,11 @@ orders: 2 Command tokens: Deal 1 damage to all damaged units in one horizontal r
 id: C1_M7
 number: 7
 route: single
-deployment_shuffled: F_01 x5, F_25 x3, P_15 x3, P_09 x3, G_26 x3, G_00 x6
+deployment_shuffled: F_01 x5, F_25 x3, P_15 x3, P_09 x3, G_24 x3, G_00 x6
 omega_placed: O_03
 omega_sectors: (1, -1), (-1, 2)
 threat_A: O_01, O_01, F_01, P_05
-threat_B: O_01, O_01, F_01, G_30
+threat_B: O_01, O_01, F_01, G_28
 threat_C: O_01, O_01, F_01, F_09
 threat_D: O_01, O_01, F_01, F_11
 objective_type: eliminate

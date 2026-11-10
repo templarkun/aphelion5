@@ -135,7 +135,7 @@ describe("Campaign 1 file", () => {
   it("reads Mission 1 exactly", () => {
     const m = d.campaigns[0]!.missionById.get("C1_M1")!;
     expect(m.deploymentShuffled[0]).toEqual({ id: "O_01", count: 8 });
-    expect(m.threat.A).toEqual(["S_12", "S_12", "F_08", "G_24"]);
+    expect(m.threat.A).toEqual(["S_12", "S_12", "F_08", "G_22"]);
     expect(m.objective).toEqual({ type: "eliminate", target: "O_01", count: 6 });
     expect(m.event).toEqual({ type: "allied_drop", level: 1 });
     expect(m.map).toHaveLength(10);

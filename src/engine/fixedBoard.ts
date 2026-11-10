@@ -5,9 +5,9 @@
  * Mission 1 (C1_M1): its map, objective (Eliminate 6 Alpha units) and
  * Order; Company V1. The mission deck is built as Core Rules 7.1 and 7.2 say:
  * 30 Bots, V1's starting Mecha (10 M_01, 5 M_02, 6 M_03, 6 M_04), the
- * Mission 1 Deployment (8 O_01, 3 F_01, 2 F_24, 2 P_15, 2 G_22, 2 G_24 and
+ * Mission 1 Deployment (8 O_01, 3 F_01, 2 F_24, 2 P_15, 2 G_20, 2 G_22 and
  * 6 G_00 from the top of the shuffled Energy deck) and Threat column A
- * (S_12, S_12, F_08, G_24): Threat Level Patrol.
+ * (S_12, S_12, F_08, G_22): Threat Level Patrol.
  *
  * Modules (stage 6): the Module deck is shuffled and you keep the first two
  * of each colour (7.1 step 8); the rest stay in the deck for Overhauls.

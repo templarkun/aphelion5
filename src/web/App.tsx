@@ -9,7 +9,7 @@ import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
 import { alertedUnits } from "../engine/alerts.js";
 import { bayAbilities, noUnitToTarget, orders } from "../engine/command.js";
-import { describe, sectorKeys, sectorOf, strength, tile, unitDef } from "../engine/field.js";
+import { describe, level, sectorKeys, sectorOf, strength, tile, unitDef } from "../engine/field.js";
 import { moduleCost, moduleDef, xWouldBeZero } from "../engine/modules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
@@ -714,7 +714,7 @@ function GameScreen(p: GameProps) {
       let unitOpts = actors.units.get(id) || hw.length ? [...(actors.units.get(id) ?? []), ...hw] : undefined;
       // M_01 (designer 2026-11-08): Attack also reaches units it can walk to, so it is offered when one exists.
       if (unitOpts && s.tiles[id]?.unitId === "M_01" && v === game.view && !unitOpts.some((o) => o.id === `mecha:${id}:attack`) && m01Targets(data, game, id, "attack").length)
-        unitOpts = [{ id: `mecha:${id}:attack`, label: `Attack (one hit of ${strength(c, id)})` }, ...unitOpts];
+        unitOpts = [{ id: `mecha:${id}:attack`, label: "Attack" }, ...unitOpts];
       if (unitOpts) {
         const alerts = alertedUnits(c);
         const last = inOverload && alerts.length === 1 && alerts[0] === id;
@@ -1361,6 +1361,13 @@ function SplitCount({ n, onMinus }: { n: number; onMinus: () => void }) {
 
 
 /** A long label "Name: what it does" shows the name in bold and the rest smaller, cut to fit. */
+/** Short pop-up labels for long Mecha abilities (designer 2026-11-10); the full text stays on the card. */
+const SHORT_ABILITY: Record<string, string> = { M_05: "Jump: Jump over units to Dark space" };
+function popLabel(id: string, label: string): string {
+  const m = /:ability:([A-Z]_\d\d)$/.exec(id);
+  return (m && SHORT_ABILITY[m[1]!]) || label;
+}
+
 function BubbleLabel({ text }: { text: string }) {
   const i = text.indexOf(": ");
   if (text.length <= 30 || i < 0 || i > 24)
@@ -1411,7 +1418,7 @@ function PopupMenu({ popup, onPick, onClose, tapThrough, bubbleW }: { popup: Pop
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
   }, [onClose, leaving]);
-  const items = [...popup.options.map((o) => ({ id: o.id, label: o.label, chips: o.chips, go: () => leave(() => onPick(o.id)), main: popup.commit || o.chips !== undefined })), ...(popup.next ? [{ id: "next", label: popup.next.label, go: popup.next.go, main: false }] : [])];
+  const items = [...popup.options.map((o) => ({ id: o.id, label: popLabel(o.id, o.label), chips: o.chips, go: () => leave(() => onPick(o.id)), main: popup.commit || o.chips !== undefined })), ...(popup.next ? [{ id: "next", label: popup.next.label, go: popup.next.go, main: false }] : [])];
   return (
     <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && !leaving && !tapThrough(e.clientX, e.clientY) && leave(onClose)}>
       <div ref={box} className={`popup bubbles ${leaving ? "leaving" : ""}`} role="menu" aria-label={popup.title} style={{ ...pos, ["--bw" as string]: `${bubbleW}px`, ["--bs" as string]: String(bubbleW < 120 ? 0.92 : bubbleW / 120) }}>
@@ -1537,18 +1544,55 @@ function InfoBubble({ data, state, sector }: { data: GameData; state: GameState;
   );
 }
 
+/**
+ * A unit's card text (designer 2026-11-10): "Type. Level N. Strength N" in bold, then one line per
+ * trigger ("Drain: ...", bold trigger name), then a description if any, then how many tiles lie
+ * beneath. No [1] [2] [3] step numbers.
+ */
 function HoverInfo({ data, state, sector }: { data: GameData; state: GameState; sector: string }) {
   const c = { data, state };
-  const top = state.field[sector]!.at(-1);
-  const line = sectorLine(data, state, sector);
-  if (!top || !state.tiles[top]!.faceUp) return <span>{line}</span>;
+  const stackHere = state.field[sector]!;
+  const top = stackHere.at(-1);
+  if (!top || !state.tiles[top]!.faceUp) return <span>{sectorLine(data, state, sector)}</span>;
   const d = unitDef(c, top);
+  const t = tile(state, top);
   const camp = data.campaigns.find((x) => x.prefix === state.campaign);
   const omega = camp?.omega.find((o) => o.id === d.id);
-  const texts = [d.text.activate && d.text.activate !== "none" ? `Effect: ${d.text.activate}` : "", d.text.ability ?? "", d.text.drain ? `Drain: ${d.text.drain}` : "", d.text.destroyed ? `Destroyed: ${d.text.destroyed}` : "", omega?.atOverload ? `At Overload: ${omega.atOverload}` : "", omega?.destroyed ? `Destroyed: ${omega.destroyed}` : ""].filter(Boolean);
+  const clean = (x: string) => x.replace(/\s*\[\d+\]\s*/g, " ").replace(/\s+/g, " ").trim();
+  const safe = <T,>(f: () => T): T | undefined => {
+    try {
+      return f();
+    } catch {
+      return undefined;
+    }
+  };
+  const lv = d.type === "Flare" ? undefined : safe(() => level(c, top));
+  const str = d.type === "Flare" ? undefined : safe(() => strength(c, top));
+  const head = [d.type, lv !== undefined ? `Level ${lv}` : "", str !== undefined ? `Strength ${str}` : ""].filter(Boolean).join(". ") + ".";
+  const lines: [string, string][] = [];
+  // Sentinels, Flares and Sleepers resolve their effect when their Alert is resolved (4.4-4.6).
+  if (d.text.activate && d.text.activate !== "none") lines.push(["Alert", d.text.activate]);
+  if (d.text.ability) {
+    const m = /^(Command|Passive|Expend|Overload|\[Overload\][^:]*):\s*(.*)$/s.exec(d.text.ability);
+    lines.push(m ? [m[1]!, m[2]!] : ["Ability", d.text.ability]);
+  }
+  if (d.text.drain) lines.push(["Drain", d.text.drain]);
+  if (d.text.destroyed) lines.push(["Destroyed", d.text.destroyed]);
+  if (omega?.atOverload) lines.push(["At Overload", omega.atOverload]);
+  if (omega?.destroyed) lines.push(["Destroyed", omega.destroyed]);
+  // Description: what the card is in this game (an Omega's role, a Wreck), when there is one.
+  const desc = [omega ? `${omega.role}.` : "", t.tokens.wreck ? "A Wreck." : ""].filter(Boolean).join(" ");
+  const below = stackHere.length - 1;
   return (
-    <span>
-      <b>{line}</b> {tokenText(tile(state, top).tokens)} — {d.type}. {texts.join(" ")}
+    <span className="info-lines">
+      <b>{head}</b>
+      {lines.map(([k, v], i) => (
+        <span key={i}>
+          <b>{k}:</b> {clean(v)}
+        </span>
+      ))}
+      {desc && <span>{desc}</span>}
+      <b>{below === 0 ? "No tiles beneath" : `${below} tile${below === 1 ? "" : "s"} beneath`}</b>
     </span>
   );
 }

@@ -225,6 +225,7 @@ html.still .popup .bubble, html.still .popup.bubbles .popup-title { animation: n
 .q-card.peek { opacity: 0.1; pointer-events: none; }
 .info-bubble { position: absolute; z-index: 19; width: 280px; pointer-events: none; background: color-mix(in srgb, var(--panel) 96%, transparent); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 26px rgb(0 0 0 / 0.22); padding: 8px 10px; font-size: 12px; line-height: 1.35; }
 .info-bubble.above { transform: translateY(-100%); }
+.info-lines { display: flex; flex-direction: column; gap: 3px; }
 .field-toast { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 12; pointer-events: none; max-width: calc(100% - 24px); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; box-shadow: 0 6px 18px rgb(0 0 0 / 0.2); }
 .field-toast.warn { color: var(--warn); }
 @keyframes burn { from { background-position: 0% 50%; } to { background-position: 300% 50%; } }

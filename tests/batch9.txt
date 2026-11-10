@@ -67,11 +67,13 @@ title: A unit opens a pop-up with its commands
 source: designer 2026-11-04 (point 6); Core Rules 4.2, 8.4
 given: the Command phase; a Mecha that can Attack.
 when: click the Mecha; then click anywhere outside the pop-up
-then: a pop-up next to the click, titled with the Mecha, lists "Attack (one hit of N)",
+then: a pop-up next to the click, titled with the Mecha, lists "Attack",
       "Scrap (gain N energy)" and its abilities that can be used now. Clicking outside (or
       Escape) closes it and nothing happens. Clicking an entry does it at once (Attack then
       asks for its target on the Field). A Gyro shows "Drain"; a unit with a Bio-shield also
       shows "Drain the Bio-shield".
+note: CHANGED 2026-11-10 (designer): the Attack bubble says just "Attack"; M_05's Jump bubble says
+      "Jump" and "Jump over units to Dark space".
 
 id: T9_ACT_03
 title: A Dark sector opens a pop-up with Reveal

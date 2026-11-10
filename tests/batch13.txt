@@ -587,7 +587,7 @@ id: T13_R15_02
 title: A unit shown small appears as its glyph badge
 source: designer 2026-11-10 (I10)
 given: a question, pop-up or card that names a unit, e.g. setup's Threat columns
-       ("A: S_12, S_12, F_08, G_24"), the look card after Bay 3, the Mission card's Trophy pile
+       ("A: S_12, S_12, F_08, G_22"), the look card after Bay 3, the Mission card's Trophy pile
 then: each unit name is replaced by its glyph badge (the name shows on hover and is read out).
 note: Units shown big (on the Field) will get the designer's unit illustrations later.
 
@@ -605,3 +605,28 @@ source: designer 2026-11-10 (T13_R9 Flagship damage)
 given: a phone (Bays in a row under the Field); the Flagship takes damage (or is repaired)
 then: every "−1" (or "+1") bubble sits above its own Bay and points down at it; none sits
       beside a Bay pointing sideways at the wrong one.
+
+################################################################################
+=== SECTION: ROUND 16 (designer 2026-11-10, screen only) ===
+
+id: T13_R16_01
+title: A unit's card text, line by line
+source: designer 2026-11-10 (batch 9 card text bubble)
+given: a face-up unit on the Field
+when: hover over it (mouse) or hold it 0.5 s (touch)
+then: the bubble shows, each on its own line: "Type. Level N. Strength N." in bold (a Flare
+      shows only "Flare."); one line per trigger with the trigger's name in bold and its
+      effect ("Drain: ...", "Destroyed: ...", "Alert: ..." for Sentinels, Flares and
+      Sleepers, "Passive: ..." / "Command: ..." for Mecha, "At Overload: ..." for Omega
+      units); a description when there is one (an Omega unit's role, "A Wreck."); then "N
+      tiles beneath" in bold ("No tiles beneath" when it is alone). No [1] [2] [3] step
+      numbers. Example G_24: "Gyro. Level 1. Strength 1." / "Drain: Boost all other units in
+      a row through this unit." / "Destroyed: Deal 1 damage to all units in a row through
+      this unit."
+
+id: T13_R16_02
+title: Shorter Mecha pop-up labels
+source: designer 2026-11-10 (batch 9 T9_ACT_02 CHANGED)
+when: tap a Mecha
+then: its Attack bubble says "Attack" (no "one hit of N"). M_05's Jump bubble says "Jump" in
+      bold and "Jump over units to Dark space" in small text; the full rule stays on its card.
