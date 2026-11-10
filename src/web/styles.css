@@ -171,6 +171,15 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 @keyframes pop-pulse { 0%, 100% { box-shadow: 0 6px 18px rgb(0 0 0 / 0.25), 0 0 0 0 var(--pop); } 50% { box-shadow: 0 6px 18px rgb(0 0 0 / 0.25), 0 0 0 6px color-mix(in srgb, var(--pop) 35%, transparent); } }
 .glyph { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 800; flex: none; box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.2); }
 .glyph.yellow { background: var(--yellow); } .glyph.red { background: var(--red); } .glyph.blue { background: var(--blue); }
+/* Energy glyphs (designer 2026-11-10): the designer's pictures in place of the letters Y, R, B. */
+.glyph.yellow, .glyph.red, .glyph.blue { position: relative; color: transparent; font-size: 0 !important; }
+.glyph.yellow::after, .glyph.red::after, .glyph.blue::after { content: ""; position: absolute; inset: 20%; background: center / contain no-repeat; pointer-events: none; }
+.glyph.yellow::after { background-image: url("../../art/energy/yellow.png"); }
+.glyph.red::after { background-image: url("../../art/energy/red.png"); }
+.glyph.blue::after { background-image: url("../../art/energy/blue.png"); }
+/* A unit shown small (designer 2026-11-10): its glyph badge in place of its name. */
+.unit-glyph { display: inline-block; height: 1.7em; width: auto; vertical-align: middle; margin: 0 1px; }
+.ask-btn .unit-glyph, .choices .unit-glyph { height: 2.3em; }
 .module.energy-target { box-shadow: 0 0 0 2px var(--pop), 0 0 14px color-mix(in srgb, var(--pop) 45%, transparent); }
 .module.energy-target.yellow { --pop: var(--yellow); } .module.energy-target.red { --pop: var(--red); } .module.energy-target.blue { --pop: var(--blue); }
 html.still .energy-pop { animation: none; }
@@ -241,6 +250,7 @@ html.still .popup .bubble, html.still .popup.bubbles .popup-title { animation: n
 .look-tile { display: grid; place-items: center; width: 46px; height: 52px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--tile, #5b6f8f); color: #fff; line-height: 1; }
 .look-tile b { font-size: 18px; }
 .look-tile small { font-size: 9px; opacity: 0.9; }
+.look-tile:has(.unit-glyph) { clip-path: none; background: none; width: auto; height: auto; }
 .t-bot { --tile: #6b7280; } .t-sentinel { --tile: #7c3aed; } .t-flare { --tile: #d97706; } .t-sleeper { --tile: #0f766e; } .t-gyro { --tile: #2563eb; } .t-mecha { --tile: #ea580c; } .t-omega { --tile: #be123c; }
 /* Energy taken off a Module (designer 2026-11-08): dashed, the arrow points out of the Module. */
 .energy-pop.take { border-style: dashed; background: color-mix(in srgb, var(--pop) 8%, var(--panel)); gap: 6px; }
@@ -548,7 +558,7 @@ html.still .row-bubble rect, html.still .row-bubble.selected { animation: none; 
 html.still .damage-bubble, html.still .damage-bubble rect, html.still .bay-hit-bubble { animation: none; }
 
 /* End the Overload (designer 2026-11-10): round, see-through, a small sun with energy tongues from its rim; a burst when pressed. */
-.end-overload { --eo: clamp(96px, 13vmin, 150px); position: absolute; right: calc(14px + var(--eo) * 0.22); bottom: calc(14px + var(--eo) * 0.22); z-index: 12; width: var(--eo); height: var(--eo); padding: 0; border: 1.5px solid rgb(255 214 150 / 0.75); border-radius: 50%; font-weight: 800; font-size: clamp(12px, 1vw, 15px); line-height: 1.1; color: #fff; background: radial-gradient(circle at 50% 45%, rgb(255 240 190 / 0.55), rgb(255 150 40 / 0.38) 45%, rgb(230 60 0 / 0.26) 72%, rgb(150 20 0 / 0.14)); backdrop-filter: blur(1.5px); text-shadow: 0 1px 3px rgb(0 0 0 / 0.75); box-shadow: 0 0 22px 6px rgb(255 120 20 / 0.4), inset 0 0 18px 4px rgb(255 190 90 / 0.35); animation: eo-glow 2.4s ease-in-out infinite; overflow: visible; cursor: pointer; }
+.end-overload { --eo: clamp(96px, 13vmin, 150px); position: absolute; right: calc(8px + var(--eo) * 0.55); bottom: calc(8px + var(--eo) * 0.55); z-index: 12; width: var(--eo); height: var(--eo); padding: 0; border: 1.5px solid rgb(255 214 150 / 0.75); border-radius: 50%; font-weight: 800; font-size: clamp(12px, 1vw, 15px); line-height: 1.1; color: #fff; background: radial-gradient(circle at 50% 45%, rgb(255 240 190 / 0.55), rgb(255 150 40 / 0.38) 45%, rgb(230 60 0 / 0.26) 72%, rgb(150 20 0 / 0.14)); backdrop-filter: blur(1.5px); text-shadow: 0 1px 3px rgb(0 0 0 / 0.75); box-shadow: 0 0 22px 6px rgb(255 120 20 / 0.4), inset 0 0 18px 4px rgb(255 190 90 / 0.35); animation: eo-glow 2.4s ease-in-out infinite; overflow: visible; cursor: pointer; }
 @keyframes eo-glow { 0%, 100% { box-shadow: 0 0 20px 5px rgb(255 120 20 / 0.35), inset 0 0 16px 3px rgb(255 190 90 / 0.3); } 50% { box-shadow: 0 0 32px 10px rgb(255 140 30 / 0.5), inset 0 0 24px 6px rgb(255 210 120 / 0.45); } }
 .end-overload .eo-label { position: relative; z-index: 2; }
 .end-overload .eo-core { position: absolute; inset: 18%; border-radius: 50%; background: radial-gradient(circle, rgb(255 245 210 / 0.35), transparent 70%); animation: eo-core 3.1s ease-in-out infinite; pointer-events: none; }
@@ -567,7 +577,7 @@ html.still .end-overload, html.still .end-overload .eo-core { animation: none; }
 .end-overload .eo-plasma { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 0; }
 /* Size by screen (designer 2026-11-10): tablets as before, a little bigger on PCs, much smaller on phones. */
 @media (min-width: 1280px) { .end-overload { --eo: clamp(110px, 15vmin, 172px); font-size: clamp(14px, 1.05vw, 17px); } }
-@media (max-width: 599px) { .end-overload { --eo: 64px; font-size: 10px; right: 12px; bottom: 12px; } }
+@media (max-width: 599px) { .end-overload { --eo: 64px; font-size: 10px; right: 36px; bottom: 36px; } }
 .damage-bubble.repair { background: radial-gradient(circle at 50% 0%, rgb(60 200 140 / 0.42), rgb(6 50 40 / 0.58)); }
 .damage-bubble.repair rect { stroke: #8af0c4; }
 .bay-hit-bubble.repair { border-color: #b4f5d8; background: linear-gradient(160deg, #2fc58a, #0d7a52); box-shadow: 0 0 14px 3px rgb(40 220 150 / 0.5); animation-name: bay-fix-breathe; }

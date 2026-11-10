@@ -28,13 +28,16 @@ export function FlagshipDamage(p: {
   useLayoutEffect(() => {
     const place = () => {
       const next: Spot[] = [];
+      // Bays side by side in a row (phones, layout C): every bubble sits above its Bay.
+      const tops = [...document.querySelectorAll<HTMLElement>("[data-bay]")].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0).map((r) => Math.round(r.top));
+      const inRow = tops.length > 1 && new Set(tops).size < tops.length;
       for (const b of p.buckets) {
         const n = Number(b.id.slice(3));
         const el = [...document.querySelectorAll<HTMLElement>(`[data-bay="${n}"]`)].find((e) => e.getBoundingClientRect().width > 0);
         const r = el?.getBoundingClientRect();
         if (!r) continue;
-        // Bays on the left (wide screens): the bubble sits to their right. Along the bottom (phones): above.
-        const side = r.right < window.innerWidth / 3 ? "right" : "above";
+        // Bays down the left (wide screens): the bubble sits to their right. In a row (phones): above.
+        const side = !inRow && r.right < window.innerWidth / 3 ? "right" : "above";
         next.push(side === "right" ? { n, x: r.right + 10, y: r.top + r.height / 2, side } : { n, x: r.left + r.width / 2, y: r.top - 10, side });
       }
       setSpots((old) => (JSON.stringify(old) === JSON.stringify(next) ? old : next));

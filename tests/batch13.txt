@@ -493,32 +493,34 @@ then: no banner. A bubble on each sector that can be chosen: "Reveal", "Move", "
       chooses it. Several: select, "Confirm" at the foot of the Field; "Skip" when allowed.
 
 id: T13_R13_06
-title: Overload: coronal waves round the edge and slower beams
+title: Overload: a plasma wave round the edge and slower beams
 source: designer 2026-11-10 (T13_R11_05 and T13_R9_06 CHANGED)
 given: an Overload
-then: the "coronal waves effect" round the Field's edge: glowing arcs of solar plasma (coronal
-      loops) rooted on the edge, with plasma streaming slowly along them; each arc rises,
-      billows, stretches and sinks over 9-15 s and dissolves and forms again in place; a soft
-      glowing band along the edge, and wisps that drift out from it, expand and fade. Colours
-      from deep orange through amber to white-hot where the light overlaps (it adds up, as
-      light does). No flames, no flicker, nothing falling or rising like a candle. It fades in
-      when the Overload starts and out when it ends. The four beams round the edge go half as
-      fast as before. With reduced motion: none.
-note: CHANGED 2026-11-10 (designer, second request): coronal waves instead of sun tongues.
+then: round the Field's edge a slow plasma wave like stellar wind and coronal mass ejections:
+      soft wisps of golden-yellow and white energy leave the edge, drift into the Field, swell,
+      bend and fade, over a soft glow along the edge that breathes slowly. No flames, no
+      flicker. It fades in when the Overload starts and out when it ends. The four beams round
+      the edge go half as fast as before. With reduced motion: none.
+note: CHANGED 2026-11-10 (designer, third request): the plasma wave and the coronal waves
+      effect swapped places; the coronal waves are now round "End the Overload" (T13_R13_07).
 
 id: T13_R13_07
-title: "End the Overload" is a small round sun with a plasma wave
+title: "End the Overload" is a small round sun with the coronal waves effect
 source: designer 2026-11-10; Core Rules 9.2
 given: an Overload with no Alert left
-then: in the Field's lower right corner a round, see-through button "End the Overload",
-      glowing like a small sun. Round it a slow plasma wave like stellar wind: soft wisps of
-      golden-yellow and white energy leave its rim, drift outwards, swell, bend and fade, and
-      a soft corona round the rim breathes slowly; no flicker. The glow stays inside the Field.
-      Size: about 64 px on a phone (under 600 px wide), 100-150 px on a tablet, 110-172 px on a
-      PC (1280 px wide or more). Pressed: it flashes, bursts into sparks and a shock ring, then
+then: near the Field's lower right corner a round, see-through button "End the Overload",
+      glowing like a small sun. Round it the "coronal waves effect": glowing arcs of solar
+      plasma (coronal loops) stand on its rim with plasma streaming slowly along them; each arc
+      rises, billows and sinks over 9-15 s and dissolves and forms again in place; a glowing
+      band round the rim, and wisps that drift out from it, expand and fade. Colours from deep
+      orange through amber to white-hot where the light overlaps. No flicker. Nothing is cut
+      off by a straight edge: near the Field's edge the glow shrinks and fades before it. Size:
+      about 64 px on a phone (under 600 px wide), 100-150 px on a tablet, 110-172 px on a PC
+      (1280 px wide or more). Pressed: it flashes, bursts into sparks and a shock ring, then
       the Overload ends. With reduced motion: the glow stands still.
-note: CHANGED 2026-11-10 (designer, second request): the plasma wave instead of the tongues;
-      smaller on phones, a little bigger on PCs.
+note: CHANGED 2026-11-10 (designer, third request): the coronal waves instead of the plasma
+      wave (swapped with the Field's edge); the button sits a little further from the corner so
+      the arcs have room.
 
 id: T13_R13_08
 title: An Alert with no effect fizzles
@@ -556,8 +558,9 @@ title: Smaller unit pop-ups on phones
 source: designer 2026-11-10 (batch 11 pop-up bubbles)
 given: a screen under 600 px wide
 when: tap a unit or Dark sector with actions
-then: its pop-up bubbles are 96 px wide (120 px on tablets and PCs, as before), with the text a
-      little smaller to match.
+then: its pop-up bubbles are 96 px wide (120 px on tablets and PCs, as before); the text is
+      about as big as on a tablet.
+note: CHANGED 2026-11-10 (designer): the text a little bigger than in round 14.
 
 id: T13_R14_04
 title: Level badges read on every screen
@@ -565,3 +568,40 @@ source: designer 2026-11-10 (T13_R11_01 CHANGED)
 then: the Level badge in each unit's top corner is about a fifth of the tile's width across
       (never under 18 px), with a bright gold rim and a bigger number. Fuse tokens sit lower,
       under it.
+
+################################################################################
+=== SECTION: ROUND 15 (designer 2026-11-10, screen only) ===
+
+id: T13_R15_01
+title: Each unit's glyph badge in the tile's upper right corner
+source: designer 2026-11-10 (I10)
+given: any unit face up on the Field
+then: in the tile's upper right corner a small badge: a solid hexagon in the unit type's
+      colour (white for a Bot, red for a Sentinel ...), the empty hexagon frame (Unit.png) over
+      it, and the unit's own glyph (B_03.png for B_03 ...) in the middle, at the size the
+      designer drew it against the frame. G_01-G_04 use G_01's glyph, G_05-G_06 G_05's,
+      G_07-G_09 G_07's. A unit with no glyph yet shows the coloured hexagon and frame only. The
+      unit's name moves a little left to stay clear of it.
+
+id: T13_R15_02
+title: A unit shown small appears as its glyph badge
+source: designer 2026-11-10 (I10)
+given: a question, pop-up or card that names a unit, e.g. setup's Threat columns
+       ("A: S_12, S_12, F_08, G_24"), the look card after Bay 3, the Mission card's Trophy pile
+then: each unit name is replaced by its glyph badge (the name shows on hover and is read out).
+note: Units shown big (on the Field) will get the designer's unit illustrations later.
+
+id: T13_R15_03
+title: Energy glyphs
+source: designer 2026-11-10
+then: every energy token shows the designer's glyph (yellow.png, red.png, blue.png) in place of
+      the letters Y, R, B: the Reserve in the top bar, energy pop-ups by the Modules, the
+      Power Node's Alert pop-ups, the energy waiting on a Flare (on its tile and the tokens you
+      drag), the Upgrade sheet.
+
+id: T13_R15_04
+title: Flagship damage bubbles point at their Bays on phones
+source: designer 2026-11-10 (T13_R9 Flagship damage)
+given: a phone (Bays in a row under the Field); the Flagship takes damage (or is repaired)
+then: every "−1" (or "+1") bubble sits above its own Bay and points down at it; none sits
+      beside a Bay pointing sideways at the wrong one.

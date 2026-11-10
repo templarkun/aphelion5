@@ -19,7 +19,7 @@
 
 // PixiJS without eval(): the published page (and app wrappers) may forbid it.
 import "pixi.js/unsafe-eval";
-import { Application, Container, Graphics, Text } from "pixi.js";
+import { Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
 import { useEffect, useRef } from "react";
 import type { GameData } from "../data/index.js";
 import { type GameEvent, newEvents } from "../engine/events.js";
@@ -31,11 +31,12 @@ import { type NodeLook, Player, type Step, easeInOut, easeOut, parallel } from "
 import { type ShotLook, type Source, type Target, UNIT_SHOT, edgeOf, fireGlow, shotStep, weaponStep } from "./weapons.js";
 import { BIG_REVEAL, chargeLook, drawOverloadRing, gyroBreak, gyroDrain, revealFxStep, sleeperActivate } from "./revealFx.js";
 import { addLevel, addUnitMarks } from "./unitMarks.js";
+import { BADGE_ASPECT, energyGlyphImage, glyphBadge, TYPE_COLOUR } from "./glyphs.js";
 import { drawAlert } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
 import { fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
 import { isStill, onMotion, speedFactor } from "./motion.js";
-import { CoronalWaves } from "./coronalFx.js";
+import { PlasmaWave } from "./plasmaFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 
 export interface FieldProps {
@@ -64,15 +65,6 @@ export interface FieldProps {
   onMiss?: (() => void) | undefined;
 }
 
-const TYPE_COLOUR: Record<string, number> = {
-  Bot: 0xe8e6e1,
-  Mecha: 0xf0913a,
-  Gyro: 0x55b36b,
-  Sleeper: 0x4f86d9,
-  Sentinel: 0xd9534f,
-  Flare: 0xf2c94c,
-  Omega: 0x9b6bd6,
-};
 const ENERGY_HEX: Record<string, number> = { Yellow: 0xf2c230, Red: 0xe8402f, Blue: 0x2f74e8 };
 const ENERGY_CSS: Record<string, string> = { Yellow: "var(--yellow)", Red: "var(--red)", Blue: "var(--blue)" };
 const MOVE = 0x23c4a8;
@@ -83,6 +75,39 @@ const AFFECT = 0x9b6bff;
 
 /** Screen angle of each side (1 left, then clockwise), in radians; y grows downwards. */
 const SIDE_ANGLE: Record<number, number> = { 1: Math.PI, 2: (2 * Math.PI) / 3, 3: Math.PI / 3, 4: 0, 5: -Math.PI / 3, 6: (-2 * Math.PI) / 3 };
+
+const badgeTextures = new Map<string, Texture>();
+/** A unit's three-layer glyph badge (glyphs.ts) at the tile's upper right corner. */
+function addGlyphBadge(node: Container, unitId: string | undefined, cx: number, cy: number, size: number): void {
+  if (!unitId) return;
+  let tex = badgeTextures.get(unitId);
+  if (!tex) {
+    const c = glyphBadge(unitId);
+    if (!c) return;
+    tex = Texture.from(c);
+    badgeTextures.set(unitId, tex);
+  }
+  // A little over a third of the tile's height, tucked into the corner inside the tile's edge.
+  const h = Math.max(18, size * 0.38);
+  const sp = new Sprite({ texture: tex, anchor: 0.5 });
+  sp.width = h * BADGE_ASPECT;
+  sp.height = h;
+  sp.position.set(cx + size * 0.6, cy - size * 0.33);
+  sp.eventMode = "none";
+  sp.label = "glyph-badge";
+  node.addChild(sp);
+}
+
+const energyTextures = new Map<string, Texture>();
+function energyTexture(col: "Yellow" | "Red" | "Blue"): Texture | undefined {
+  const have = energyTextures.get(col);
+  if (have) return have;
+  const img = energyGlyphImage(col);
+  if (!img) return undefined;
+  const tex = Texture.from(img);
+  energyTextures.set(col, tex);
+  return tex;
+}
 
 function hexPoints(cx: number, cy: number, size: number): number[] {
   const pts: number[] = [];
@@ -139,7 +164,7 @@ export function FieldView(p: FieldProps) {
   const geo = useRef({ size: 40 });
   /** Reduced motion: the Barrier field is drawn still. */
   const stillRef = useRef(false);
-  const corona = useRef<CoronalWaves | undefined>(undefined);
+  const corona = useRef<PlasmaWave | undefined>(undefined);
   const lastState = useRef<GameState | undefined>(undefined);
   const drag = useRef<DragState | undefined>(undefined);
   const press = useRef<{ k: string | undefined; unit: TileId | undefined; x: number; y: number; touch: boolean; held: boolean } | undefined>(undefined);
@@ -180,9 +205,10 @@ export function FieldView(p: FieldProps) {
       const tether = new Graphics();
       dl.addChild(tether);
       // Coronal waves round the edge during an Overload (designer 2026-11-10).
-      const coronal = new CoronalWaves();
-      corona.current = coronal;
-      a.stage.addChild(root, aura, coronal.view, edge, glow, fx, dl);
+      // The plasma wave round the Field's edge during an Overload (plasmaFx.ts).
+      const plasma = new PlasmaWave();
+      corona.current = plasma;
+      a.stage.addChild(root, aura, plasma.view, edge, glow, fx, dl);
       layers.current = { root, aura, edge, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined };
       ready.current = true;
       draw();
@@ -1534,10 +1560,10 @@ export function FieldView(p: FieldProps) {
       g.eventMode = "none";
       node.addChild(g);
 
-      const label = (text: string, y: number, sz: number, color = 0x1d1d1f, bold = false) => {
+      const label = (text: string, y: number, sz: number, color = 0x1d1d1f, bold = false, dx = 0) => {
         const t = new Text({ text, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(9, sz), fill: color, fontWeight: bold ? "700" : "400", align: "center" } });
         t.anchor.set(0.5);
-        t.x = cx;
+        t.x = cx + dx;
         t.y = cy + y;
         t.eventMode = "none";
         node.addChild(t);
@@ -1551,7 +1577,8 @@ export function FieldView(p: FieldProps) {
       } else {
         const t = tile(state, unit!);
         const str = strength(c, unit!);
-        label(t.unitId ?? "?", -size * 0.28, size * 0.28, 0x1d1d1f, true);
+        // A little left of centre, clear of the glyph badge in the upper right corner.
+        label(t.unitId ?? "?", -size * 0.28, size * 0.28, 0x1d1d1f, true, -size * 0.1);
         // Strength pips, Shield and Damage tokens as pieces (designer 2026-11-09, unitMarks.ts).
         addUnitMarks(node, str, t.tokens, cx, cy, size);
         // Level (3.3): a hexagon badge and notches at the upper left (designer 2026-11-09).
@@ -1562,6 +1589,8 @@ export function FieldView(p: FieldProps) {
           lv = undefined;
         }
         addLevel(node, lv, cx, cy, size);
+        // The unit's glyph badge in the tile's upper right corner (designer 2026-11-10, glyphs.ts).
+        addGlyphBadge(node, t.unitId ?? undefined, cx, cy, size);
         const b = badgeText(t.tokens);
         const marked = t.tokens.shield + t.tokens.bioShield + t.tokens.damage > 0;
         if (b.length) label(b.join(" "), t.tokens.wreck ? size * 0.02 : marked ? size * 0.47 : size * 0.27, size * 0.16, 0x9b1c1c, true);
@@ -1575,13 +1604,24 @@ export function FieldView(p: FieldProps) {
           const gap = r * 2.4;
           const y0 = cy + size * (b.length ? 0.37 : 0.27);
           const tok = new Graphics();
+          const marks = new Container();
           waiting.forEach((col, i) => {
             const x0 = cx + (i - (waiting.length - 1) / 2) * gap;
             tok.circle(x0, y0, r).fill({ color: ENERGY_HEX[col] ?? 0x888888 }).stroke({ width: 1.5, color: 0xffffff });
+            // The energy's glyph on the token (designer 2026-11-10).
+            const g = energyTexture(col);
+            if (g) {
+              const sp = new Sprite({ texture: g, anchor: 0.5, x: x0, y: y0 });
+              const k = (r * 1.25) / Math.max(g.width, g.height);
+              sp.scale.set(k);
+              marks.addChild(sp);
+            }
           });
           tok.eventMode = "none";
           tok.label = "flare-energy";
           node.addChild(tok);
+          marks.eventMode = "none";
+          node.addChild(marks);
         }
         // Arrows on their sides, turned by the tile's facing (3.8).
         const turning = rotate?.tile === unit;

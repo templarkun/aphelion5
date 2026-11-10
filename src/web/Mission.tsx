@@ -7,6 +7,7 @@
  * the full objective and the whole Trophy pile.
  */
 
+import { UnitGlyph as UnitBadge } from "./UnitGlyph.js";
 import { useEffect, useRef, useState } from "react";
 import { type Ctx, sectorKeys, sectorState } from "../engine/field.js";
 import { type Anchor, PopCard, anchorOf } from "./PopCard.js";
@@ -121,7 +122,7 @@ export function MissionBar({ c, phase }: { c: Ctx; phase: string }) {
             <ul className="trophy-list">
               {[...pile].map(([u, n]) => (
                 <li key={u}>
-                  <Glyph g={u === "F_01" ? "node" : "omega"} /> <b>{n}×</b> {roleOf(c, u)} <span className="small">({u})</span>
+                  <Glyph g={u === "F_01" ? "node" : "omega"} /> <b>{n}×</b> {roleOf(c, u)} <UnitBadge id={u} size={20} />
                 </li>
               ))}
             </ul>

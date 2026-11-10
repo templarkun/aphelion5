@@ -11,6 +11,7 @@
  * press anywhere outside it, it turns almost transparent, like the old card.
  */
 
+import { UnitText } from "./UnitGlyph.js";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export type AskTone = "ask" | "alert" | "repair";
@@ -133,8 +134,14 @@ export function PointBubbles(p: { items: PointItem[] }) {
               it.onPress();
             }}
           >
-            <b>{it.label}</b>
-            {it.sub && <span className="small">{it.sub}</span>}
+            <b>
+              <UnitText text={it.label} />
+            </b>
+            {it.sub && (
+              <span className="small">
+                <UnitText text={it.sub} />
+              </span>
+            )}
             {it.count ? <span className="taken">{it.count}</span> : null}
           </button>
         );

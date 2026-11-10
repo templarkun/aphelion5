@@ -5,5 +5,6 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react()],
   base: "./",
-  build: { outDir: "dist", chunkSizeWarningLimit: 2000 },
+  // Pictures stay inside the page (the published Artifact is one file).
+  build: { outDir: "dist", chunkSizeWarningLimit: 2000, assetsInlineLimit: 1_000_000 },
 });

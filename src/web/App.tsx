@@ -25,6 +25,7 @@ import { AnomalyStrip } from "./Anomalies.js";
 import { FlareEnergyChips } from "./FlareEnergy.js";
 import { type PickFoot, type PickItem, UnitPicks, sourceOf, verbOf } from "./UnitPicks.js";
 import { RowBubbles } from "./RowBubbles.js";
+import { UnitGlyph, UnitText } from "./UnitGlyph.js";
 import { EndOverload } from "./EndOverload.js";
 import { FlagshipDamage } from "./FlagshipDamage.js";
 import { Fps } from "./Fps.js";
@@ -1362,11 +1363,20 @@ function SplitCount({ n, onMinus }: { n: number; onMinus: () => void }) {
 /** A long label "Name: what it does" shows the name in bold and the rest smaller, cut to fit. */
 function BubbleLabel({ text }: { text: string }) {
   const i = text.indexOf(": ");
-  if (text.length <= 30 || i < 0 || i > 24) return <span>{text}</span>;
+  if (text.length <= 30 || i < 0 || i > 24)
+    return (
+      <span>
+        <UnitText text={text} />
+      </span>
+    );
   return (
     <span className="two">
-      <b>{text.slice(0, i)}</b>
-      <small>{text.slice(i + 2)}</small>
+      <b>
+        <UnitText text={text.slice(0, i)} />
+      </b>
+      <small>
+        <UnitText text={text.slice(i + 2)} />
+      </small>
     </span>
   );
 }
@@ -1404,7 +1414,7 @@ function PopupMenu({ popup, onPick, onClose, tapThrough, bubbleW }: { popup: Pop
   const items = [...popup.options.map((o) => ({ id: o.id, label: o.label, chips: o.chips, go: () => leave(() => onPick(o.id)), main: popup.commit || o.chips !== undefined })), ...(popup.next ? [{ id: "next", label: popup.next.label, go: popup.next.go, main: false }] : [])];
   return (
     <div className="popup-back" onPointerDown={(e) => e.target === e.currentTarget && !leaving && !tapThrough(e.clientX, e.clientY) && leave(onClose)}>
-      <div ref={box} className={`popup bubbles ${leaving ? "leaving" : ""}`} role="menu" aria-label={popup.title} style={{ ...pos, ["--bw" as string]: `${bubbleW}px`, ["--bs" as string]: String(bubbleW / 120) }}>
+      <div ref={box} className={`popup bubbles ${leaving ? "leaving" : ""}`} role="menu" aria-label={popup.title} style={{ ...pos, ["--bw" as string]: `${bubbleW}px`, ["--bs" as string]: String(bubbleW < 120 ? 0.92 : bubbleW / 120) }}>
         <div className="popup-title">{popup.title}</div>
         <div className="bubble-row">
           {items.map((o, i) => (
@@ -1494,8 +1504,7 @@ function LookCard({ data, tiles, onClose }: { data: GameData; tiles: LookTile[];
               const u = data.units.byId.get(t.unitId);
               return (
                 <span key={t.tile} className={`look-tile t-${(u?.type ?? "x").toLowerCase()}`} title={u ? `${t.unitId} (${u.type}, Level ${u.level ?? "?"})` : t.unitId}>
-                  <b>{u ? typeGlyph(u.type) : "?"}</b>
-                  <small>{t.unitId}</small>
+                  <UnitGlyph id={t.unitId} size={34} />
                 </span>
               );
             })}
@@ -1602,7 +1611,7 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
           <div className="choices">
             {rest.map((o) => (
               <button key={o.id} className={o.id === "concede" ? "danger" : ""} onClick={() => p.onAnswer({ kind: q.kind, value: o.id } as Answer)}>
-                {q.energy?.[o.id] && <EnergyGlyph colour={q.energy[o.id]!} />} {o.label}
+                {q.energy?.[o.id] && <EnergyGlyph colour={q.energy[o.id]!} />} <UnitText text={o.label} />
               </button>
             ))}
           </div>
@@ -1648,7 +1657,7 @@ function QuestionPanel(p: { data: GameData; state: GameState; q: Question; selec
           <div className="choices">
             {q.options.map((o) => (
               <button key={o.id} className={p.selected.includes(o.id) ? "on" : ""} onClick={() => p.setSelected(p.selected.includes(o.id) ? p.selected.filter((x) => x !== o.id) : [...p.selected, o.id])}>
-                {o.label}
+                <UnitText text={o.label} />
               </button>
             ))}
           </div>
@@ -1764,7 +1773,7 @@ function FieldQuestion(p: { data: GameData; state: GameState; q: Question; selec
               <div className="ask-choices">
                 {rest.map((o) => (
                   <button key={o.id} className={`ask-btn ${o.id === "concede" ? "danger" : ""}`} onClick={() => p.onAnswer({ kind, value: o.id } as Answer)}>
-                    {q.energy?.[o.id] && <EnergyGlyph colour={q.energy[o.id]!} />} {o.label}
+                    {q.energy?.[o.id] && <EnergyGlyph colour={q.energy[o.id]!} />} <UnitText text={o.label} />
                   </button>
                 ))}
               </div>
@@ -1804,7 +1813,7 @@ function FieldQuestion(p: { data: GameData; state: GameState; q: Question; selec
             {q.options.map((o) => (
               <button key={o.id} className={`ask-btn ${p.selected.includes(o.id) ? "on" : ""}`} onClick={() => p.setSelected(p.selected.includes(o.id) ? p.selected.filter((x) => x !== o.id) : [...p.selected, o.id])}>
                 {p.selected.includes(o.id) ? "✓ " : ""}
-                {o.label}
+                <UnitText text={o.label} />
               </button>
             ))}
           </div>
