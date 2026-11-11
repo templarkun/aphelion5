@@ -121,3 +121,4 @@ The designer is not a programmer. Explain in plain words, cite rule sections, ke
 - 2026-11-10: Round 15 (see Decisions).
 - 2026-11-10: Round 16 (see Decisions).
 - 2026-11-10: Round 17 (see Decisions). Missing glyph: G_24 (badge shows the frame only). The Project needs the new `unit_list_structured.txt` and `Campaign1.txt`.
+- 2026-11-11: Round 18: glyph files fixed by the designer (G_25-G_27 renamed G_24-G_26, new G_27); every unit now has its glyph.
