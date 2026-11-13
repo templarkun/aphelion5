@@ -33,6 +33,9 @@ note: CHANGED 2026-11-07 (designer, open question I2) - the list also holds "Tri
 note: CHANGED 2026-11-09 (designer) - the list holds only "Heat module (Expansion1)": the Flare
       energy trial rule left it (batch 10, T10_TRY_01), and the "Trial look" for Alerts offered
       for one round is gone too (batch 13, T13_R11_02).
+CHANGED 2026-11-13 (designer, command briefing): Campaign, Company, expansion modules and
+      Mission 1's Threat columns are chosen in the command briefing (batch 13 T13_BRF_02/03),
+      not on question cards; the engine's questions are unchanged and answered from it.
 
 id: T9_SET_02
 title: Extra tiles are placed by the program

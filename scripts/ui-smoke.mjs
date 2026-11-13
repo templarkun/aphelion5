@@ -6,6 +6,13 @@ const { chromium } = createRequire(import.meta.url)("playwright");
 const url = process.argv[2] ?? "http://localhost:4173";
 const out = process.argv[3] ?? ".";
 const browser = await chromium.launch();
+// The intro (command briefing, 2026-11-13) is switched off for these checks; it has its own check below.
+const plainPage = browser.newPage.bind(browser);
+browser.newPage = async (o) => {
+  const pg = await plainPage(o);
+  await pg.addInitScript(() => localStorage.getItem("aphelion5.intro") ?? localStorage.setItem("aphelion5.intro", "off"));
+  return pg;
+};
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
@@ -34,13 +41,25 @@ async function clickField(pg, n = 0) {
   return true;
 }
 
-/** Setup: Campaign 1, Company V1, no expansion module, Threat column A. */
-async function setup(pg) {
-  await clickIn(pg, /^Campaign 1/);
-  await clickIn(pg, /^V1/);
-  await clickIn(pg, /^Confirm/); // expansion modules: none selected
-  await clickIn(pg, /^A:/);
-  await clickIn(pg, /^Confirm/);
+/** A step of the command briefing is on screen and ready for a tap. */
+const briefAt = (pg, step) => pg.waitForSelector(`.brief[data-step=${step}][data-busy="0"]`);
+/** The command briefing: Campaign 1, Company V1, no expansion module, every mission at Threat Level 1 (column A), launch. */
+async function start(pg, seed) {
+  await briefAt(pg, "campaign");
+  if (seed !== undefined) {
+    await pg.getByRole("button", { name: "System options" }).click();
+    await pg.locator("input[placeholder=random]").fill(String(seed));
+    await pg.getByRole("button", { name: "Close" }).click();
+  }
+  await pg.locator("[data-action=campaign]").click();
+  await briefAt(pg, "vessel");
+  await pg.locator("[data-action=vessel]").click();
+  await briefAt(pg, "modules");
+  await pg.locator("[data-action=modules]").click();
+  await briefAt(pg, "threat");
+  await pg.locator("[data-all='1']").click();
+  await pg.locator("[data-action=threat]").click();
+  await pg.waitForSelector(".game");
 }
 
 /** Answer whatever else comes (Module, Ally, Allied Drop) until it is the player's action. */
@@ -69,8 +88,7 @@ async function untilAction(pg) {
 }
 
 await page.goto(url);
-await page.getByRole("button", { name: "Start" }).click();
-await setup(page);
+await start(page);
 await untilAction(page);
 const noMenu = (await panel.locator(".choices button, .ask-choices button").count()) === 0;
 await page.screenshot({ path: `${out}/ui-command.png` });
@@ -141,9 +159,7 @@ for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.goto(url);
-  await pg.locator("input[placeholder=random]").fill(String(seed));
-  await pg.getByRole("button", { name: "Start" }).click();
-  await setup(pg);
+  await start(pg, seed);
   await untilAction(pg);
   for (let i = 0; i < 4 && !rotateShown; i++) {
     if (!/^Choose an action/.test(await promptOf(pg))) break;
@@ -175,6 +191,7 @@ if (existsSync(rowSave)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.goto(url);
+  await pg.getByRole("button", { name: "System options" }).click();
   await pg.getByRole("button", { name: "Paste a save…" }).click();
   await pg.locator("#textbox-text").fill(readFileSync(rowSave, "utf8"));
   await pg.getByRole("button", { name: "Load" }).click();
@@ -228,6 +245,7 @@ if (existsSync(energySave)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.goto(url);
+  await pg.getByRole("button", { name: "System options" }).click();
   await pg.getByRole("button", { name: "Paste a save…" }).click();
   await pg.locator("#textbox-text").fill(readFileSync(energySave, "utf8"));
   await pg.getByRole("button", { name: "Load" }).click();
@@ -249,6 +267,7 @@ if (existsSync(energySave)) {
 // Dragging Mecha (Program Spec "Interaction and animation", build step 2).
 async function pasteSave(pg, file) {
   await pg.goto(url);
+  await pg.getByRole("button", { name: "System options" }).click();
   await pg.getByRole("button", { name: "Paste a save…" }).click();
   await pg.locator("#textbox-text").fill(readFileSync(file, "utf8"));
   await pg.getByRole("button", { name: "Load" }).click();
@@ -515,8 +534,7 @@ if (existsSync(`${out}/m01-save.json`)) {
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
 mobile.on("pageerror", (e) => errors.push(e.message));
 await mobile.goto(url);
-await mobile.getByRole("button", { name: "Start" }).click();
-await setup(mobile);
+await start(mobile);
 await mobile.waitForTimeout(400);
 const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
 await mobile.evaluate(() => window.scrollTo(0, 0));
@@ -880,7 +898,61 @@ if (existsSync(`${out}/crippled-save.json`)) {
   }
   askCheck = res.every((x) => x === "ok") ? "ok" : `failed (${res.filter((x) => x !== "ok").join("; ")})`;
 }
-console.log(JSON.stringify({ phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
+// Command briefing (2026-11-13): the long intro on a first visit, two taps skip it; then the short one.
+let introCheck = "ok";
+{
+  const pg = await plainPage({ viewport: { width: 390, height: 800 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(url);
+  await pg.waitForSelector(".bf-intro[data-intro=full]");
+  await pg.waitForTimeout(1200);
+  await pg.mouse.click(120, 300);
+  const armed = await pg.locator("[data-skip=armed]").count();
+  await pg.waitForTimeout(400);
+  await pg.mouse.click(120, 300);
+  const skipped = await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 1500 }).then(() => true, () => false);
+  const noScroll = (await pg.evaluate(() => document.documentElement.scrollWidth)) <= 390;
+  await pg.reload();
+  const short = await pg.waitForSelector(".bf-intro[data-intro=short]", { timeout: 3000 }).then(() => true, () => false);
+  const gone = await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 3000 }).then(() => true, () => false);
+  // Launch stays locked until every mission has a Threat Level; a chip plugs in.
+  await start(pg).catch(() => {});
+  const launched = (await pg.locator(".game").count()) === 1;
+  await pg.close();
+  if (!(armed === 1 && skipped && noScroll && short && gone && launched)) introCheck = `failed (hint ${armed}, skipped ${skipped}, fits ${noScroll}, short intro ${short}, ends ${gone}, launched ${launched})`;
+}
+{
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(url);
+  await briefAt(pg, "campaign");
+  await pg.screenshot({ path: `${out}/ui-brief-campaign.png` });
+  await pg.locator("[data-action=campaign]").click();
+  await briefAt(pg, "vessel");
+  await pg.locator("[data-company=V2]").click();
+  await pg.screenshot({ path: `${out}/ui-brief-vessel.png` });
+  await pg.locator("[data-action=vessel]").click();
+  await briefAt(pg, "modules");
+  await pg.locator("[data-chip=heat]").click();
+  const plugged = await pg.locator("[data-expansions=heat]").count();
+  await pg.locator("[data-action=modules]").click();
+  await briefAt(pg, "threat");
+  const locked = await pg.locator("[data-action=threat]").isDisabled();
+  await pg.locator("[data-all='1']").click();
+  await pg.locator("[data-threat-row=C1_M1] [data-level-btn='3']").click();
+  const level = await pg.locator("[data-threat-row=C1_M1]").getAttribute("data-level");
+  await pg.screenshot({ path: `${out}/ui-brief-threat.png` });
+  await pg.locator("[data-action=threat]").click();
+  await pg.waitForSelector(".game");
+  await pg.waitForTimeout(300);
+  // The loadout reached the game: V2 has 5 Bays, the Heat bar shows, Mission 1 plays 3 Threat columns.
+  await toggleLog(pg);
+  const log = await pg.locator(".log").innerText().catch(() => "");
+  await pg.close();
+  const ok = plugged === 1 && locked && level === "3" && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log); // the Heat module itself: tests/unit/briefing.test.ts
+  if (!ok && introCheck === "ok") introCheck = `failed (chip ${plugged}, launch locked ${locked}, level ${level}, log has company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
+}
+console.log(JSON.stringify({ introCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

@@ -12,6 +12,10 @@ import { bayAbilities, noUnitToTarget, orders } from "../engine/command.js";
 import { describe, level, sectorKeys, sectorOf, strength, tile, unitDef } from "../engine/field.js";
 import { moduleCost, moduleDef, xWouldBeZero } from "../engine/modules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
+import { Briefing } from "./briefing/Briefing.js";
+import { IntroSequence } from "./briefing/IntroSequence.js";
+import { applyLoadout, plannedThreat } from "./briefing/launch.js";
+import { type IntroMode, introMode, savePlan } from "./briefing/prefs.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
@@ -82,6 +86,8 @@ export function App() {
   const [autoAnswer, setAutoAnswer] = useState(true);
   const [inMenu, setInMenu] = useState(true);
   const [box, setBox] = useState<TextBoxProps | undefined>();
+  // The intro plays over the screen when the page opens: the long one on a first visit, then the short one.
+  const [intro, setIntro] = useState<IntroMode>(introMode);
 
   useEffect(() => {
     void loadSave().then((f) => {
@@ -128,6 +134,7 @@ export function App() {
     <>
       {screen()}
       {box && <TextBox {...box} onClose={() => setBox(undefined)} />}
+      {intro !== "off" && <IntroSequence key={intro} mode={intro} onDone={() => setIntro("off")} />}
     </>
   );
 
@@ -135,15 +142,20 @@ export function App() {
   const resumable = game !== undefined && game.view.state.ending === undefined;
   if (!game || inMenu)
     return (
-      <StartScreen
+      <Briefing
+        data={data}
         profile={profile}
         onContinue={resumable ? () => setInMenu(false) : undefined}
         autoAnswer={autoAnswer}
         setAutoAnswer={setAutoAnswer}
         error={error}
-        onNew={(dev, seed) => {
+        onReplayIntro={() => setIntro("full")}
+        onLaunch={(l) => {
+          // The compiled loadout answers the engine's setup questions (7.1) and Mission 1's Threat (7.2 step 3).
           setError(undefined);
-          update(startGame(data, { seed, date: today(), developerMode: dev, autoAnswer, profile }));
+          const date = today();
+          savePlan(l.seed, date, l.threat);
+          update(applyLoadout(data, startGame(data, { seed: l.seed, date, developerMode: l.developerMode, autoAnswer, profile }), l));
           setInMenu(false);
         }}
         onImport={async () => {
@@ -279,52 +291,6 @@ function TextBox(p: TextBoxProps & { onClose: () => void }) {
         </div>
       </section>
     </div>
-  );
-}
-
-function StartScreen(p: { profile: Profile; onContinue?: (() => void) | undefined; autoAnswer: boolean; setAutoAnswer: (b: boolean) => void; error?: string | undefined; onNew: (dev: boolean, seed: number) => void; onImport: () => void; onPaste: () => void }) {
-  const [dev, setDev] = useState(false);
-  const [seed, setSeed] = useState("");
-  const hs = p.profile.highScores.C1;
-  return (
-    <main className="start">
-      <h1>Aphelion 5</h1>
-      <p className="sub">Campaign 1 — a solo campaign against the Field.</p>
-      {p.error && <p className="error">{p.error}</p>}
-      {p.onContinue && (
-        <section className="card">
-          <h2>Game in progress</h2>
-          <button className="primary" onClick={p.onContinue}>
-            Continue
-          </button>
-          <p className="small">Starting a new campaign replaces it.</p>
-        </section>
-      )}
-      <section className="card">
-        <h2>New campaign</h2>
-        <label>
-          <input type="checkbox" checked={p.autoAnswer} onChange={(e) => p.setAutoAnswer(e.target.checked)} /> Answer automatically when only one answer is legal
-        </label>
-        <label>
-          <input type="checkbox" checked={dev} onChange={(e) => setDev(e.target.checked)} /> Developer mode (unlimited undo, see hidden tiles, no high score)
-        </label>
-        <label className="seed">
-          Seed (optional) <input value={seed} inputMode="numeric" onChange={(e) => setSeed(e.target.value.replace(/\D/g, ""))} placeholder="random" />
-        </label>
-        <div className="row">
-          <button className="primary" onClick={() => p.onNew(dev, seed ? Number(seed) : Math.floor(Math.random() * 1e9))}>
-            Start
-          </button>
-          <button onClick={p.onImport}>Import a save file…</button>
-          <button onClick={p.onPaste}>Paste a save…</button>
-        </div>
-      </section>
-      <section className="card">
-        <h2>High scores — Campaign 1</h2>
-        <p>Fresh: {hs?.fresh ? `${hs.fresh.score} (${hs.fresh.date})` : "—"}</p>
-        <p>Veteran ★: {hs?.veteran ? `${hs.veteran.score} (${hs.veteran.date})` : "—"}</p>
-      </section>
-    </main>
   );
 }
 
@@ -491,7 +457,9 @@ function GameScreen(p: GameProps) {
   const dark = useDark();
   const q = v.status === "question" ? v.question : undefined;
   // Selections, a pop-up or a split in progress belong to the question they were made for.
-  const [selected, setSelected] = usePerQuestion<string[]>(q, []);
+  // Threat columns planned in the command briefing come pre-selected; the player confirms or changes them.
+  const planned = useMemo(() => plannedThreat(game, q), [game, q]);
+  const [selected, setSelected] = usePerQuestion<string[]>(q, planned);
   const [hover, setHover] = useState<string | undefined>();
   // A short message in the information strip (a drop that was not allowed), shown for a few seconds.
   const [note, setNote] = useState<{ text: string; warn: boolean; at: number } | undefined>();
