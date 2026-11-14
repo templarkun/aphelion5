@@ -140,7 +140,8 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
             {q.options.map((o) => {
               const on = cols.includes(o.id);
               const ids = m.threat[o.id as ThreatColumn] ?? [];
-              const list = [...new Set(ids)];
+              // Every copy shown one by one, never combined (designer 2026-11-14, round 4).
+              const list = ids;
               return (
                 <section
                   key={o.id}
@@ -160,16 +161,14 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
                     <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-extrabold uppercase tracking-wider ${on ? "bg-acc text-indigo-950" : "bg-white/15 text-sky-100"}`}>{on ? "In play" : `${ids.length} units`}</span>
                   </div>
                   <div className="my-1.5 flex flex-1 flex-wrap content-start items-start justify-center gap-0.5 xl:gap-1">
-                    {list.map((id) => {
+                    {list.map((id, k) => {
                       const u = unitOf(id);
                       if (!u) return null;
-                      const n = ids.filter((x) => x === id).length;
                       return (
-                        <button key={id} type="button" className="bf-unit !p-0.5 xl:!px-1 xl:!py-1" data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list }))} aria-label={`${u.type} ${id}, ${n}: open its card`}>
+                        <button key={k} type="button" className="bf-unit !p-0.5 xl:!px-1 xl:!py-1" data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list: [...new Set(list)] }))} aria-label={`${u.type}: open its card`}>
                           <span className="bf-tw">
                             <UnitTile unit={u} level={levelOf(u, camp)} size={72} />
                           </span>
-                          {n > 1 && <b className="!text-[12px] leading-none">×{n}</b>}
                         </button>
                       );
                     })}

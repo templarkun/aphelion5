@@ -654,11 +654,13 @@ source: designer 2026-11-13; CHANGED 2026-11-14 (designer): three steps (the Thr
         effects written out, compact "All", type filter opens the units, Vessel in two tabs;
         CHANGED again 2026-11-14 (designer, round 3): roster without F_01, no unit names in
         the cards or under the Mecha, mission buttons open and close, mission maps and mission
-        unit roster, two-column Campaign step on big screens, "NO HARDWARE"
+        unit roster, two-column Campaign step on big screens, "NO HARDWARE";
+        CHANGED again 2026-11-14 (designer, round 4): Campaign cards one per row on big
+        screens; no unit names in the Campaign unit roster
 given: no game shown (first visit, or "Leave" from a game)
 then: three steps in order: Campaign, Vessel, Modules. Campaign: Campaign 1 and seven places
       "Classified". On tablets in landscape and PCs (1024 px and wider) the Campaign cards
-      stand on the left, two per row; on the right the briefing file, then the unit roster.
+      stand on the left, one per row; on the right the briefing file, then the unit roster.
       On a phone: the cards in a sliding row, then the briefing file, then the unit roster.
       The briefing file: the road of missions (2X/2Y and 4X/4Y as forks), each mission button
       with its map drawn faintly behind it. No mission is open at first and no mission file
@@ -670,10 +672,10 @@ then: three steps in order: Campaign, Vessel, Modules. Campaign: Campaign 1 and 
       The unit roster shows the units of the Campaign as tiles, without the Bots, the Energy
       Gyros G_01-G_09 (they are in every Campaign) and F_01: the three Omega units
       (Alpha, Beta, Gamma) in their own gold-rimmed place on top, each with its effects
-      written out beside it (no crown, no "priority targets"); then a filter button per type
-      (Sentinels, Flares, Sleepers, Gyros). "All" shows small tiles with their names; on a
+      written out beside it (no crown, no "priority targets", no unit name); then a filter button per type
+      (Sentinels, Flares, Sleepers, Gyros). "All" shows small tiles, no names; on a
       phone only the glyphs. A type filter shows only that type, each unit opened with its
-      effects written out. A tap on a unit opens its card (no unit name: type, Level, tiles in the box,
+      effects written out, no names. A tap on a unit opens its card (no unit name: type, Level, tiles in the box,
       every effect text, and where in the Campaign it comes from); a tap outside, the cross or
       Esc closes it, the arrows step to the next unit. "Confirm campaign" plays the lock
       animation (under half a second) and opens Vessel.
@@ -695,13 +697,14 @@ source: designer 2026-11-14 (I12 answered: the Threat is chosen at each Mission 
         Core Rules 7.2 step 3; replaces the Threat step of the briefing); CHANGED again
         2026-11-14 (designer): four columns in one row on tablets and PCs, two on a phone;
         CHANGED again 2026-11-14 (designer, round 3): no unit names, copies instead,
-        "ALREADY IN THIS MISSION'S DECK"
+        "ALREADY IN THIS MISSION'S DECK"; CHANGED again 2026-11-14 (designer, round 4):
+        the columns show every copy one by one, never combined
 given: a game just launched from the briefing (or any later Mission Preparation, step 3)
 then: the Threat screen fills the screen under the top bar: the steps of this preparation
       (Threat, Module, Allied Drop when the mission has one), the mission and its objective,
       the four Threat columns A to D (one row of four on tablets and PCs, two rows of two
-      with smaller tiles on a phone), each with its units as tiles, one tile per kind with
-      "×2" under it when the column has two copies, no unit names (a tap on a unit opens its
+      with smaller tiles on a phone), each with all its units as tiles, one by one (two
+      copies = two tiles, never combined), no unit names (a tap on a unit opens its
       card), and a button "Add this Threat"; a row "ALREADY IN THIS MISSION'S DECK" (tiles
       with their copies under them, no names).
       Nothing is chosen at first and "Confirm Threat" is locked.

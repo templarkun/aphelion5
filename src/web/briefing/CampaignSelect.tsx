@@ -35,7 +35,7 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
     <div>
       <StepHead code="Step 1 of 3" title="Select Campaign" help="Choose where your Company is sent. Then read its briefing file, the road of missions and every unit you can meet there." />
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <div className="bf-scroll -mx-4 flex snap-x gap-2.5 px-4 pb-2 pt-1 sm:mx-0 sm:px-1 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0" role="radiogroup" aria-label="Campaigns">
+      <div className="bf-scroll -mx-4 flex snap-x gap-2.5 px-4 pb-2 pt-1 sm:mx-0 sm:px-1 lg:grid lg:grid-cols-1 lg:overflow-visible lg:px-0" role="radiogroup" aria-label="Campaigns">
         {camps.map((c, i) => {
           const l = loreOf(c.prefix);
           const on = c.prefix === cur.prefix;

@@ -67,7 +67,7 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
                 </button>
                 <div className="min-w-0">
                   <div className="text-[15px] font-extrabold uppercase tracking-wide text-amber-100">
-                    {o?.role ?? "Omega"} <span className="text-[13px] font-semibold text-amber-200/80">{u.id}</span>
+                    {o?.role ?? "Omega"}
                   </div>
                   <EffectLines data={data} id={u.id} campaign={campaign} small />
                 </div>
@@ -93,15 +93,14 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
       </div>
 
       {filter === "all" ? (
-        // Compact: small tiles with their names; on a phone only the glyphs.
+        // Compact: small tiles, no names; on a phone only the glyphs.
         <div key="all" className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-1 sm:grid-cols-[repeat(auto-fill,minmax(62px,1fr))]" data-compact="1">
           {shown.map((u, i) => (
-            <button key={u.id} type="button" className="bf-unit bf-rise !p-0.5 sm:!px-1 sm:!py-1" style={{ "--i": Math.min(i, 24) } as React.CSSProperties} data-unit={u.id} onClick={(e) => show(u, shown, e.currentTarget)} aria-label={`${u.type} ${u.id}: open its card`}>
+            <button key={u.id} type="button" className="bf-unit bf-rise !p-0.5 sm:!px-1 sm:!py-1" style={{ "--i": Math.min(i, 24) } as React.CSSProperties} data-unit={u.id} onClick={(e) => show(u, shown, e.currentTarget)} aria-label={`${u.type}: open its card`}>
               <span className="hidden sm:block">
                 <UnitTile unit={u} level={levelOf(u, campaign)} size={52} />
               </span>
               <img className="block h-[42px] w-[38px] object-contain sm:hidden" src={glyphBadgeUrl(u.id) ?? ""} alt="" draggable={false} />
-              <b className="hidden !text-[11px] sm:block">{u.id}</b>
             </button>
           ))}
         </div>
@@ -109,10 +108,9 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
         // One type: every unit opened, its effects written out.
         <div key={filter} className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-2 md:grid-cols-2" data-compact="0">
           {shown.map((u, i) => (
-            <button key={u.id} type="button" className="bf-rise flex min-w-0 items-start gap-2.5 rounded-xl bg-white/10 p-2 text-left transition-colors hover:bg-white/20" style={{ "--i": Math.min(i, 24) } as React.CSSProperties} data-unit={u.id} onClick={(e) => show(u, shown, e.currentTarget)} aria-label={`${u.type} ${u.id}: open its card`}>
-              <span className="flex shrink-0 flex-col items-center">
+            <button key={u.id} type="button" className="bf-rise flex min-w-0 items-start gap-2.5 rounded-xl bg-white/10 p-2 text-left transition-colors hover:bg-white/20" style={{ "--i": Math.min(i, 24) } as React.CSSProperties} data-unit={u.id} onClick={(e) => show(u, shown, e.currentTarget)} aria-label={`${u.type}: open its card`}>
+              <span className="shrink-0">
                 <UnitTile unit={u} level={levelOf(u, campaign)} size={60} />
-                <b className="text-[12px] text-white">{u.id}</b>
               </span>
               <EffectLines data={data} id={u.id} campaign={campaign} small />
             </button>
