@@ -58,7 +58,7 @@ button {
   font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
   border-radius: 8px; padding: 6px 10px; cursor: pointer; min-height: 36px;
 }
-button:hover:not(:disabled):not(.brief button) { border-color: var(--accent); }
+button:hover:not(:disabled):not(.brief button):not(.bf-veil button) { border-color: var(--accent); }
 button:disabled { opacity: 0.45; cursor: default; }
 button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 button.on { outline: 3px solid var(--accent); }

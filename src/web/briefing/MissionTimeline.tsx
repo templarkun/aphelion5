@@ -5,7 +5,7 @@ import type { CampaignDatabase, MissionDef } from "../../data/campaign.js";
 import { UnitGlyph } from "../UnitGlyph.js";
 import { Readout } from "./hud.js";
 import { eventText, missionGroups, missionLabel, objectiveShort, objectiveText, orderText } from "./missionText.js";
-import { cue } from "./sfx.js";
+import { playSelect } from "./soundHooks.js";
 
 export function MissionTimeline({ campaign, focus, onFocus }: { campaign: CampaignDatabase; focus: string; onFocus: (id: string) => void }) {
   const groups = missionGroups(campaign);
@@ -20,40 +20,39 @@ export function MissionTimeline({ campaign, focus, onFocus }: { campaign: Campai
               {gi > 0 && <Link fork={g.length > 1 || groups[gi - 1]!.length > 1} />}
               <div className="flex flex-col gap-2">
                 {g.map((x) => (
-                  <Node key={x.id} m={x} on={x.id === m.id} final={gi === last} onPick={() => (cue("tick"), onFocus(x.id))} />
+                  <Node key={x.id} m={x} on={x.id === m.id} final={gi === last} onPick={() => (playSelect(), onFocus(x.id))} />
                 ))}
               </div>
             </li>
           ))}
         </ol>
       </div>
-      <div key={m.id} className="bf-step-in mt-2 grid gap-x-5 gap-y-2 border-t border-acc/20 pt-3 sm:grid-cols-2" data-mission-detail={m.id}>
+      <div key={m.id} className="bf-step-in mt-2 grid gap-x-5 gap-y-2 border-t border-white/20 pt-3 sm:grid-cols-2" data-mission-detail={m.id}>
         <div className="sm:col-span-2">
-          <span className="font-hud text-sm font-bold tracking-widest text-acc">{missionLabel(m).toUpperCase()}</span>
-          <span className="ml-2 font-hud text-[11px] text-slate-400">{m.id}</span>
-          {m.route !== "single" && (
-            <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-amber-300">
+          <span className="text-base font-extrabold tracking-wider text-white">{missionLabel(m).toUpperCase()}</span>
+                    {m.route !== "single" && (
+            <span className="ml-2 inline-flex items-center gap-1 text-[13px] text-amber-200">
               <GitFork size={12} /> Alternative route: you choose one of the pair before that mission; the other is skipped.
             </span>
           )}
         </div>
         <Readout label="Objective">
-          <span className="font-sans text-[13px]">{objectiveText(campaign, m)}</span>
+          <span className="text-[14px] font-normal">{objectiveText(campaign, m)}</span>
         </Readout>
         <Readout label="Mission event">
-          <span className="font-sans text-[13px]">{eventText(m)}</span>
+          <span className="text-[14px] font-normal">{eventText(m)}</span>
         </Readout>
         <Readout label="Mission Order">
-          <span className="font-sans text-[13px]">{orderText(m)}</span>
+          <span className="text-[14px] font-normal">{orderText(m)}</span>
         </Readout>
         <Readout label="The Field">
-          <span className="font-sans text-[13px]">
+          <span className="text-[14px] font-normal">
             {m.mapSectorCount} sectors
             {m.omegaPlaced.length > 0 && (
               <>
                 {" · on the Field from the start: "}
                 {m.omegaPlaced.map((id) => (
-                  <UnitGlyph key={id} id={id} size={20} />
+                  <UnitGlyph key={id} id={id} size={24} />
                 ))}
                 {` ×${m.omegaSectors.length}`}
               </>
@@ -67,8 +66,8 @@ export function MissionTimeline({ campaign, focus, onFocus }: { campaign: Campai
 
 function Link({ fork }: { fork: boolean }) {
   return (
-    <span className="relative block h-px w-5 bg-acc/50 sm:w-7" aria-hidden="true">
-      {fork && <span className="absolute -top-[5px] left-1/2 h-[11px] w-[11px] -translate-x-1/2 rotate-45 border border-amberhud/80 bg-metal-900" />}
+    <span className="relative block h-px w-5 bg-white/60 sm:w-7" aria-hidden="true">
+      {fork && <span className="absolute -top-[5px] left-1/2 h-[11px] w-[11px] -translate-x-1/2 rotate-45 border-2 border-amber-300 bg-indigo-800" />}
     </span>
   );
 }
@@ -82,14 +81,14 @@ function Node({ m, on, final, onPick }: { m: MissionDef; on: boolean; final: boo
       aria-pressed={on}
       data-mission={m.id}
       title={`${missionLabel(m)}: ${objectiveShort(m)}`}
-      className={`bf-panel flex w-[72px] flex-col items-center gap-0.5 !px-1 !py-1.5 ${on ? "bf-sel" : "hover:border-acc/70"}`}
+      className={`bf-panel flex w-[78px] flex-col items-center gap-0.5 !px-1 !py-2 ${on ? "bf-sel" : ""}`}
     >
-      <Icon size={15} className={final ? "text-amberhud" : "text-acc"} />
-      <span className="font-hud text-base font-bold leading-none text-slate-100">
+      <Icon size={18} className={final ? "text-amber-300" : "text-acc"} />
+      <span className="text-lg font-extrabold leading-none text-white">
         {String(m.number).padStart(2, "0")}
-        {m.route !== "single" && <span className="text-amberhud">{m.route.split(" ")[0]!.toUpperCase()}</span>}
+        {m.route !== "single" && <span className="text-amber-300">{m.route.split(" ")[0]!.toUpperCase()}</span>}
       </span>
-      <span className="bf-label !text-[8.5px] !tracking-[0.1em]">{objectiveShort(m)}</span>
+      <span className="text-[11px] font-bold uppercase text-sky-100">{objectiveShort(m)}</span>
     </button>
   );
 }

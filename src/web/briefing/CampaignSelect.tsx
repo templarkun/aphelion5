@@ -1,6 +1,6 @@
-/** Step 1: choose a Campaign. Cards on one side, the chosen Campaign's file and roadmap on the other. */
+/** Step 1: choose a Campaign. Its cards along the top, then every unit it holds, its file and roadmap. */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Lock, Radar, Trophy } from "lucide-react";
 import type { GameData } from "../../data/index.js";
 import type { Profile } from "../../engine/state.js";
@@ -8,7 +8,9 @@ import { CAMPAIGN_LORE, CAMPAIGN_SLOTS, FALLBACK_LORE } from "./content.js";
 import { Pips, StepHead } from "./hud.js";
 import { MissionTimeline } from "./MissionTimeline.js";
 import { missionGroups } from "./missionText.js";
-import { cue } from "./sfx.js";
+import { setEmitter, sparkEdges } from "./particles.js";
+import { playSelect } from "./soundHooks.js";
+import { UnitRoster } from "./UnitRoster.js";
 
 export function loreOf(prefix: string) {
   const l = CAMPAIGN_LORE[prefix] ?? FALLBACK_LORE;
@@ -23,72 +25,76 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
   const lore = loreOf(cur.prefix);
   const hs = profile.highScores[cur.prefix];
   const locked = Math.max(0, CAMPAIGN_SLOTS - camps.length);
+  // Holographic sparks keep hopping off the chosen Campaign's card.
+  const sel = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    setEmitter("campaign", sel.current, "grid", "125 211 252", 9);
+    return () => setEmitter("campaign", null);
+  }, [cur.prefix]);
   return (
     <div>
-      <StepHead code="STEP 01 // THEATRE OF OPERATIONS" title="Select Campaign" help="Choose where your Company is sent. The roadmap shows every mission of the Campaign." />
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="bf-scroll -mx-4 flex snap-x gap-2 px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-2 lg:content-start lg:overflow-visible lg:px-0" role="radiogroup" aria-label="Campaigns">
-          {camps.map((c, i) => {
-            const l = loreOf(c.prefix);
-            const on = c.prefix === cur.prefix;
-            return (
-              <button
-                key={c.prefix}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                data-campaign={c.prefix}
-                onClick={() => (cue("select"), onChange(c.prefix), setFocus(c.missions[0]!.id))}
-                className={`bf-panel bf-rise min-w-[68%] snap-start !p-3 sm:min-w-[40%] lg:min-w-0 ${on ? "bf-sel" : "hover:border-acc/70"}`}
-                style={{ "--i": i } as React.CSSProperties}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="bf-label">{l.sector}</span>
-                  <Radar size={14} className={`text-acc ${on ? "bf-pulse" : "opacity-50"}`} />
-                </div>
-                <div className="mt-1 font-hud text-base font-bold uppercase tracking-widest text-slate-50">{l.title}</div>
-                <p className="mt-1 line-clamp-2 text-xs text-slate-300/80">{l.lore}</p>
-                <div className="mt-2 flex items-center justify-between">
-                  <Pips n={l.difficulty} label="Difficulty" />
-                  <span className="bf-label">{missionGroups(c).length} missions</span>
-                </div>
-              </button>
-            );
-          })}
-          {Array.from({ length: locked }, (_, i) => (
-            <div key={i} className="bf-panel bf-static bf-rise min-w-[46%] snap-start p-3 opacity-60 sm:min-w-[30%] lg:min-w-0" style={{ "--i": camps.length + i } as React.CSSProperties} aria-label="Campaign not yet available">
+      <StepHead code="Step 1 of 3" title="Select Campaign" help="Choose where your Company is sent. Below: every unit you can meet there, and the road of missions." />
+      <div className="bf-scroll -mx-4 flex snap-x gap-2.5 px-4 pb-2 pt-1 sm:mx-0 sm:px-1" role="radiogroup" aria-label="Campaigns">
+        {camps.map((c, i) => {
+          const l = loreOf(c.prefix);
+          const on = c.prefix === cur.prefix;
+          return (
+            <button
+              key={c.prefix}
+              ref={on ? sel : undefined}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              data-campaign={c.prefix}
+              onClick={(e) => (playSelect(), sparkEdges(e.currentTarget, "125 211 252"), onChange(c.prefix), setFocus(c.missions[0]!.id))}
+              className={`bf-panel bf-rise w-[250px] shrink-0 snap-start !p-3 ${on ? "bf-sel" : ""}`}
+              style={{ "--i": i } as React.CSSProperties}
+            >
               <div className="flex items-center justify-between">
-                <span className="bf-label !text-slate-400">SECTOR A5-{String(camps.length + i + 1).padStart(2, "0")}</span>
-                <Lock size={13} className="text-slate-500" />
+                <span className="bf-label">{l.sector}</span>
+                <Radar size={18} className={`text-acc ${on ? "bf-pulse" : "opacity-60"}`} />
               </div>
-              <div className="mt-1 font-hud text-sm font-bold uppercase tracking-widest text-slate-500">Classified</div>
-              <span className="bf-redact mt-2 w-11/12" />
-              <span className="bf-redact mt-1.5 w-7/12" />
-              <div className="bf-label mt-2 !text-slate-500">Awaiting clearance</div>
+              <div className="mt-0.5 text-lg font-extrabold uppercase tracking-wider text-white">{l.title}</div>
+              <div className="mt-1.5 flex items-center justify-between">
+                <Pips n={l.difficulty} label="Difficulty" />
+                <span className="text-[13px] font-semibold text-sky-100">{missionGroups(c).length} missions</span>
+              </div>
+            </button>
+          );
+        })}
+        {Array.from({ length: locked }, (_, i) => (
+          <div key={i} className="bf-panel bf-soon bf-rise w-[150px] shrink-0 snap-start p-3" style={{ "--i": camps.length + i } as React.CSSProperties} aria-label="Campaign not yet available">
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] font-bold uppercase tracking-wider">Campaign {camps.length + i + 1}</span>
+              <Lock size={15} />
             </div>
-          ))}
-        </div>
+            <div className="mt-1 text-[15px] font-bold uppercase tracking-wider">Coming later</div>
+          </div>
+        ))}
+      </div>
 
-        <section key={cur.prefix} className="bf-panel bf-step-in p-4" aria-label={`${lore.title} briefing`}>
+      <div key={cur.prefix} className="bf-step-in mt-2 grid grid-cols-[minmax(0,1fr)] items-start gap-4 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+        <UnitRoster data={data} campaign={cur} />
+        <section className="bf-panel p-3 sm:p-4" aria-label={`${lore.title} briefing`}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="bf-label">{lore.sector} // BRIEFING FILE</div>
-              <h3 className="bf-glow font-hud text-lg font-bold uppercase tracking-[0.14em] text-acc">{lore.title}</h3>
+              <div className="bf-label">{lore.sector} · briefing file</div>
+              <h3 className="text-xl font-extrabold uppercase tracking-wider text-white">{lore.title}</h3>
             </div>
             <div className="text-right">
               <div className="bf-label">Difficulty</div>
               <Pips n={lore.difficulty} label="Difficulty" />
             </div>
           </div>
-          <p className="mt-2 max-w-prose text-[13px] leading-relaxed text-slate-200/90">{lore.lore}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-slate-300">
-            <span className="inline-flex items-center gap-1.5">
-              <Trophy size={13} className="text-amberhud" /> High score
+          <p className="mt-2 max-w-prose text-[15px] leading-relaxed text-slate-50">{lore.lore}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[14px] text-sky-50">
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              <Trophy size={16} className="text-amber-300" /> High score
             </span>
             <span>Fresh: {hs?.fresh ? `${hs.fresh.score} (${hs.fresh.date})` : "—"}</span>
             <span>Veteran ★: {hs?.veteran ? `${hs.veteran.score} (${hs.veteran.date})` : "—"}</span>
           </div>
-          <div className="bf-label mb-2 mt-4">Tactical roadmap // tap a mission</div>
+          <div className="bf-label mb-2 mt-4">Road of missions · tap one</div>
           <MissionTimeline campaign={cur} focus={focus} onFocus={setFocus} />
         </section>
       </div>

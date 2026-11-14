@@ -632,46 +632,64 @@ then: its Attack bubble says "Attack" (no "one hit of N"). M_05's Jump bubble sa
       bold and "Jump over units to Dark space" in small text; the full rule stays on its card.
 
 id: T13_BRF_01
-title: Intro: long once, then short
-source: designer 2026-11-13 (command briefing)
+title: Intro: the approach once, then a fly-by
+source: designer 2026-11-13; CHANGED 2026-11-14 (designer): the terminal boot, glitches and
+        log lines are gone; a space scene instead; skip window 1 second
 given: the game opened in this browser for the first time
-then: a boot sequence of about 10 seconds plays (power-on, "CORP-SEC PROTOCOL v4.2" log
-      lines, a glitch, the Aphelion 5 mark). One tap shows "TAP AGAIN TO SKIP" with a bar that
-      runs out in 2 seconds; a second tap inside those 2 seconds skips the intro. On later
-      visits only "SESSION RESUMED // SYSTEM SECURE" shows for about 1 second. System options
-      (the gear): "Play the intro when the game opens" and "Replay the full intro". With
-      reduced motion the short one always plays.
+then: about 10 seconds: stars in several depths, nebula and dust; the Company ship flies from
+      beside the camera on glowing engine trails towards a ringed planet that turns slowly and
+      has a bright rim of atmosphere; brackets close on the planet with "ORBIT LOCK"; the
+      Aphelion 5 mark and name come up; the view dives in and the Campaign step is there.
+      One tap shows "TAP AGAIN TO SKIP" with a bar that runs out in 1 second; a second tap
+      inside that second skips the intro; after the second has passed a tap only shows the hint
+      again. On later visits a fly-by of about 1.5 seconds. System options (the gear): "Play
+      the intro when the game opens" and "Replay the full intro". With reduced motion one still
+      picture shows briefly. No sound.
 
 id: T13_BRF_02
 title: Command briefing replaces the start screen
-source: designer 2026-11-13; replaces the setup cards of batch 9 T9_SET_01 (CHANGED there)
+source: designer 2026-11-13; CHANGED 2026-11-14 (designer): three steps (the Threat left the
+        briefing), unit roster, bigger Mecha, brighter look, faster confirmations, no sound
 given: no game shown (first visit, or "Leave" from a game)
-then: four steps in order: Campaign, Vessel, Modules, Threat. Campaign: Campaign 1 and seven
-      locked places; its briefing file shows the roadmap of all missions (2X/2Y and 4X/4Y as
-      forks); a tap on a mission shows its objective, event, Order and Field. "Confirm
-      campaign" plays the lock animation and opens Vessel. Vessel: V1 and V2 with a wireframe,
-      Bays, trait, starting energy and Mecha, and three locked places; a sheet with upgrade
-      marks asks Veteran or Fresh here (7.1 step 3). Modules: six sockets, the Heat chip plugs
-      in and out by a tap; none is allowed. Auto-answer, Developer mode, the seed, Import and
-      Paste a save, and Resume session are under System options (the gear).
+then: three steps in order: Campaign, Vessel, Modules. Campaign: Campaign 1 and seven places
+      "Coming later"; the unit roster shows every unit of the Campaign as tiles: the three Omega
+      units (Alpha, Beta, Gamma) in their own gold-rimmed place on top, then Bots, Sentinels,
+      Flares, Sleepers and Gyros with a filter button per type; a tap on a unit opens its card
+      (type, Level, tiles in the box, every effect text, and where in the Campaign it comes
+      from); a tap outside, the cross or Esc closes it, the arrows step to the next unit. The
+      briefing file beside it keeps the road of missions (2X/2Y and 4X/4Y as forks).
+      "Confirm campaign" plays the lock animation (under half a second) and opens Vessel.
+      Vessel: V1 and V2 and three places "Coming later"; "Your Mecha" shows the Company's
+      starting Mecha as big tiles with their number; a tap opens the Mecha's card (ability, and
+      its upgrades on this Company's sheet); also the wireframe, Bays, trait and starting
+      energy; a sheet with upgrade marks asks Veteran or Fresh here (7.1 step 3). Modules: six
+      sockets, the Heat chip plugs in and out by a tap; none is allowed; "Launch command
+      sequence" starts the game (under a second). Auto-answer, Developer mode, the seed, Import
+      and Paste a save, and Resume game are under System options (the gear). Dust, small marks
+      and light streaks drift behind the panels and lean with the pointer; sparks hop off the
+      chosen Campaign card, a glow drifts down from the chosen Company card.
 
 id: T13_BRF_03
-title: Threat Levels in the briefing
-source: designer 2026-11-13; Core Rules 7.2 step 3 unchanged (I12 open)
-given: the Threat step of the briefing
-when: set Mission 1 to Level 3
-then: its columns A, B, C light up (a tap on a column swaps which ones; at least one stays),
-      the row turns orange and says "Siege, up to +3 points". Level 1 is cyan, 2 amber,
-      3 orange, 4 crimson. "Launch command sequence" stays locked until every mission
-      (both routes of 2 and 4 too) has a Level. After Launch the game starts with the chosen
-      Campaign, Company and modules, Mission 1 is prepared with columns A, B, C without
-      asking, and the first question is "Draw a Module: keep one."
+title: The Threat screen at Mission Preparation
+source: designer 2026-11-14 (I12 answered: the Threat is chosen at each Mission Preparation,
+        Core Rules 7.2 step 3; replaces the Threat step of the briefing)
+given: a game just launched from the briefing (or any later Mission Preparation, step 3)
+then: the Threat screen fills the screen under the top bar: the mission and its objective, the
+      four Threat columns A to D side by side, each with its units as tiles (a tap on a unit
+      opens its card) and a button "Add this Threat"; a row "Always in this mission's deck".
+      Nothing is chosen at first and "Confirm Threat" is locked.
+when: add A, B and C
+then: each column added answers with a particle effect, stronger each time; the Threat Level
+      box says "3 · Siege, up to +3 points"; Level 1 is light blue, 2 amber, 3 orange,
+      4 crimson; at 3 and 4 the screen shakes and embers rise. "Remove" takes a column back.
+when: press "Confirm Threat"
+then: the mission is prepared with columns A, B, C ("Threat Level Siege: columns A, B, C" in
+      the log) and the next question is "Draw a Module: keep one."
 
 id: T13_BRF_04
-title: The Threat plan at later missions
-source: designer 2026-11-13; I12 open
-given: a game launched from the briefing with Mission 3 planned at Level 2 (A, B)
-when: Mission 3's preparation reaches the Threat question
-then: the question is asked as before, with A and B already selected; Confirm keeps them,
-      or the player changes them first. A game loaded in another browser shows the question
-      with nothing selected.
+title: Later missions ask the Threat the same way
+source: designer 2026-11-14 (replaces the Threat plan, which is gone)
+given: Mission 1 won, the Upgrade sheet closed
+when: the next Mission Preparation reaches step 3
+then: the same Threat screen shows for that mission, with that mission's units in the four
+      columns and nothing chosen. Undo and the Menu in the top bar still work.

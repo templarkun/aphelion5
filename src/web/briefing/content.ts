@@ -1,6 +1,6 @@
 /**
  * Words and placeholders of the command briefing that are NOT rules and not in the data files:
- * sector designations, lore snippets, difficulty ratings, and the empty places kept for Campaigns,
+ * sector designations, lore snippets, difficulty ratings, the words of the intro (in IntroSequence.tsx), and the empty places kept for Campaigns,
  * Companies and expansion modules still to come. The designer can change any line here freely.
  */
 
@@ -39,16 +39,3 @@ export const EXPANSION_INFO: Record<string, { code: string; name: string; text: 
     text: "Start every mission with 10 Heat tokens. Pay 1 for a Heat Wave: 1 damage to one Bot. Overclock a Module to gain Heat back.",
   },
 };
-
-/** Boot log of the long intro. "!" in front = a line that glitches. */
-export const BOOT_LOG = [
-  "CORP-SEC PROTOCOL v4.2",
-  "COLD START ............................ OK",
-  "MEMORY LATTICE 0x7F3A ................. OK",
-  "UPLINK // RELAY 5 ..................... HANDSHAKE",
-  "CRYPTO KEY EXCHANGE ................... VERIFIED",
-  "!FIELD TELEMETRY ...................... SIGNAL DEGRADED",
-  "REROUTING VIA APHELION ARRAY .......... OK",
-  "FLAGSHIP REGISTRY ..................... LOADED",
-  "OPERATOR CLEARANCE .................... GRANTED",
-];

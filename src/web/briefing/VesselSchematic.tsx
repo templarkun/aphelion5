@@ -41,7 +41,7 @@ export function VesselSchematic({ company, bay, onBay }: { company: CompanyDef; 
     <svg viewBox="0 0 400 240" className="block h-auto w-full" role="img" aria-label={`Wireframe of ${company.name} with ${company.bays.length} Bays`}>
       <defs>
         <pattern id="bf-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path d="M20 0H0V20" fill="none" stroke="rgb(var(--acc) / 0.12)" strokeWidth="0.5" />
+          <path d="M20 0H0V20" fill="none" stroke="rgb(255 255 255 / 0.14)" strokeWidth="0.5" />
         </pattern>
       </defs>
       <rect width="400" height="240" fill="url(#bf-grid)" />
@@ -51,10 +51,10 @@ export function VesselSchematic({ company, bay, onBay }: { company: CompanyDef; 
       </g>
       <g key={company.id} className="bf-draw" fill="none" stroke="rgb(var(--acc))" strokeLinejoin="round">
         {h.lines.map((d, i) => (
-          <path key={i} d={d} strokeWidth="1.6" pathLength={1} style={{ "--d": i * 140 } as React.CSSProperties} fill="rgb(var(--acc) / 0.04)" />
+          <path key={i} d={d} strokeWidth="2" stroke="#fff" pathLength={1} style={{ "--d": i * 140 } as React.CSSProperties} fill="rgb(var(--acc) / 0.22)" />
         ))}
         {h.thin.map((d, i) => (
-          <path key={`t${i}`} d={d} strokeWidth="0.6" opacity="0.6" pathLength={1} style={{ "--d": 500 + i * 80 } as React.CSSProperties} />
+          <path key={`t${i}`} d={d} strokeWidth="0.8" opacity="0.8" pathLength={1} style={{ "--d": 500 + i * 80 } as React.CSSProperties} />
         ))}
       </g>
       <g transform={`translate(${h.bridge[0]} ${h.bridge[1]})`} fill="none" stroke="rgb(251 191 36)">
@@ -69,16 +69,16 @@ export function VesselSchematic({ company, bay, onBay }: { company: CompanyDef; 
         return (
           <g key={b.id} transform={`translate(${x} ${y})`} className="cursor-pointer" onPointerEnter={() => onBay(b.number)} onPointerLeave={() => onBay(undefined)} onClick={() => onBay(b.number)}>
             <circle r="20" fill="transparent" />
-            <polygon points="0,-13 11.3,-6.5 11.3,6.5 0,13 -11.3,6.5 -11.3,-6.5" fill={on ? "rgb(var(--acc))" : "rgb(6 8 11 / 0.9)"} stroke="rgb(var(--acc))" strokeWidth={on ? 2 : 1.2} />
+            <polygon points="0,-13 11.3,-6.5 11.3,6.5 0,13 -11.3,6.5 -11.3,-6.5" fill={on ? "#fff" : "rgb(30 42 130 / 0.95)"} stroke="#fff" strokeWidth={on ? 2 : 1.4} />
             {on && <circle r="18" fill="none" stroke="rgb(var(--acc))" strokeWidth="0.8" strokeDasharray="4 3" className="bf-spin" />}
-            <text y="4" textAnchor="middle" fontSize="11" fontWeight="700" fill={on ? "#05080a" : "rgb(var(--acc))"} fontFamily="ui-monospace, Menlo, Consolas, monospace">
+            <text y="4" textAnchor="middle" fontSize="11" fontWeight="700" fill={on ? "#0b1445" : "#fff"} fontFamily="system-ui, sans-serif">
               {b.number}
             </text>
           </g>
         );
       })}
-      <text x="14" y="232" fontSize="7" fill="rgb(var(--acc) / 0.7)" fontFamily="ui-monospace, Menlo, Consolas, monospace" letterSpacing="1.5">
-        {company.id} // TOP VIEW // {company.bays.length} BAYS
+      <text x="14" y="232" fontSize="8" fill="rgb(255 255 255 / 0.75)" fontFamily="system-ui, sans-serif" letterSpacing="1.2">
+        {company.id} · TOP VIEW · {company.bays.length} BAYS
       </text>
     </svg>
   );

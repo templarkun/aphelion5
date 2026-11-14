@@ -43,7 +43,14 @@ async function clickField(pg, n = 0) {
 
 /** A step of the command briefing is on screen and ready for a tap. */
 const briefAt = (pg, step) => pg.waitForSelector(`.brief[data-step=${step}][data-busy="0"]`);
-/** The command briefing: Campaign 1, Company V1, no expansion module, every mission at Threat Level 1 (column A), launch. */
+/** The Threat screen of a Mission Preparation (7.2 step 3): add the given columns, confirm. */
+async function threat(pg, cols = ["A"]) {
+  await pg.waitForSelector("[data-threat-screen]");
+  for (const c of cols) await pg.locator(`[data-col-btn=${c}]`).click();
+  await pg.locator("[data-action=threat]").click();
+  await pg.waitForSelector("[data-threat-screen]", { state: "detached" });
+}
+/** The command briefing: Campaign 1, Company V1, no expansion module, launch; then Mission 1 at Threat Level 1 (column A). */
 async function start(pg, seed) {
   await briefAt(pg, "campaign");
   if (seed !== undefined) {
@@ -56,10 +63,8 @@ async function start(pg, seed) {
   await pg.locator("[data-action=vessel]").click();
   await briefAt(pg, "modules");
   await pg.locator("[data-action=modules]").click();
-  await briefAt(pg, "threat");
-  await pg.locator("[data-all='1']").click();
-  await pg.locator("[data-action=threat]").click();
   await pg.waitForSelector(".game");
+  await threat(pg);
 }
 
 /** Answer whatever else comes (Module, Ally, Allied Drop) until it is the player's action. */
@@ -901,56 +906,101 @@ if (existsSync(`${out}/crippled-save.json`)) {
 // Command briefing (2026-11-13): the long intro on a first visit, two taps skip it; then the short one.
 let introCheck = "ok";
 {
+  // First visit: the long approach; one tap arms the 1-second skip, a second tap inside it skips.
   const pg = await plainPage({ viewport: { width: 390, height: 800 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.goto(url);
   await pg.waitForSelector(".bf-intro[data-intro=full]");
-  await pg.waitForTimeout(1200);
+  await pg.waitForTimeout(1500);
+  await pg.screenshot({ path: `${out}/ui-intro-phone.png` });
   await pg.mouse.click(120, 300);
   const armed = await pg.locator("[data-skip=armed]").count();
-  await pg.waitForTimeout(400);
+  await pg.waitForTimeout(1200);
+  const lapsed = (await pg.locator("[data-skip=idle]").count()) === 1 && (await pg.locator(".bf-intro").count()) === 1;
+  await pg.mouse.click(120, 300);
+  await pg.waitForTimeout(300);
   await pg.mouse.click(120, 300);
   const skipped = await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 1500 }).then(() => true, () => false);
   const noScroll = (await pg.evaluate(() => document.documentElement.scrollWidth)) <= 390;
   await pg.reload();
   const short = await pg.waitForSelector(".bf-intro[data-intro=short]", { timeout: 3000 }).then(() => true, () => false);
   const gone = await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 3000 }).then(() => true, () => false);
-  // Launch stays locked until every mission has a Threat Level; a chip plugs in.
   await start(pg).catch(() => {});
-  const launched = (await pg.locator(".game").count()) === 1;
+  const launched = (await pg.locator(".game").count()) === 1 && (await promptOf(pg)) === "Draw a Module: keep one.";
   await pg.close();
-  if (!(armed === 1 && skipped && noScroll && short && gone && launched)) introCheck = `failed (hint ${armed}, skipped ${skipped}, fits ${noScroll}, short intro ${short}, ends ${gone}, launched ${launched})`;
+  if (!(armed === 1 && lapsed && skipped && noScroll && short && gone && launched)) introCheck = `failed (hint ${armed}, lapsed ${lapsed}, skipped ${skipped}, fits ${noScroll}, short intro ${short}, ends ${gone}, launched ${launched})`;
 }
 {
-  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  // The long intro, looked at: frames for the designer, and it ends by itself on the Campaign step.
+  const pg = await plainPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(url);
+  await pg.waitForSelector(".bf-intro[data-intro=full]");
+  for (const [i, wait] of [[1, 1200], [2, 2300], [3, 2500], [4, 2300], [5, 1200]]) {
+    await pg.waitForTimeout(wait);
+    await pg.screenshot({ path: `${out}/ui-intro-${i}.png` });
+  }
+  const ended = await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 4000 }).then(() => true, () => false);
+  await pg.close();
+  if (!ended && introCheck === "ok") introCheck = "failed (the long intro did not end)";
+}
+for (const [name, width, height] of [["", 1400, 900], ["-phone", 390, 800]]) {
+  const pg = await browser.newPage({ viewport: { width, height } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.goto(url);
   await briefAt(pg, "campaign");
-  await pg.screenshot({ path: `${out}/ui-brief-campaign.png` });
+  // The unit roster: Omega units in their own place, a filter per type, a card per unit.
+  const vip = await pg.locator("[data-vip=omega] [data-unit]").count();
+  await pg.screenshot({ path: `${out}/ui-brief-campaign${name}.png`, fullPage: false });
+  await pg.locator("[data-filter=Sleeper]").click();
+  const sleepers = await pg.locator("[data-roster] .grid [data-unit]").evaluateAll((els) => els.every((e) => e.dataset.unit.startsWith("P_")) && els.length > 0);
+  await pg.locator("[data-roster] .grid [data-unit]").first().click();
+  const card = await pg.locator("[data-unit-card] .bf-line").count();
+  await pg.screenshot({ path: `${out}/ui-brief-unit${name}.png` });
+  await pg.keyboard.press("Escape");
+  const closed = (await pg.locator("[data-unit-card]").count()) === 0;
+  const t0 = Date.now();
   await pg.locator("[data-action=campaign]").click();
   await briefAt(pg, "vessel");
+  const confirmMs = Date.now() - t0;
   await pg.locator("[data-company=V2]").click();
-  await pg.screenshot({ path: `${out}/ui-brief-vessel.png` });
+  await pg.waitForTimeout(350);
+  await pg.screenshot({ path: `${out}/ui-brief-vessel${name}.png` });
+  await pg.locator("[data-mecha-bay=V2] [data-unit]").first().click();
+  const mechaCard = await pg.locator("[data-unit-card] .bf-line").count();
+  await pg.screenshot({ path: `${out}/ui-brief-mecha${name}.png` });
+  await pg.locator(".bf-x").click();
   await pg.locator("[data-action=vessel]").click();
   await briefAt(pg, "modules");
   await pg.locator("[data-chip=heat]").click();
   const plugged = await pg.locator("[data-expansions=heat]").count();
+  await pg.screenshot({ path: `${out}/ui-brief-modules${name}.png` });
   await pg.locator("[data-action=modules]").click();
-  await briefAt(pg, "threat");
+  // After Launch the game asks Mission 1's Threat on its own screen: nothing chosen, Confirm locked.
+  await pg.waitForSelector("[data-threat-screen=C1_M1]");
   const locked = await pg.locator("[data-action=threat]").isDisabled();
-  await pg.locator("[data-all='1']").click();
-  await pg.locator("[data-threat-row=C1_M1] [data-level-btn='3']").click();
-  const level = await pg.locator("[data-threat-row=C1_M1]").getAttribute("data-level");
-  await pg.screenshot({ path: `${out}/ui-brief-threat.png` });
+  const tiles = await pg.locator("[data-col=A] [data-unit]").count();
+  for (const c of ["A", "B", "C"]) await pg.locator(`[data-col-btn=${c}]`).click();
+  const level = await pg.locator("[data-threat-screen]").getAttribute("data-level");
+  await pg.waitForTimeout(150);
+  await pg.screenshot({ path: `${out}/ui-threat-3${name}.png` });
+  await pg.locator("[data-col-btn=D]").click();
+  await pg.waitForTimeout(200);
+  await pg.screenshot({ path: `${out}/ui-threat-4${name}.png` });
+  await pg.locator("[data-col-btn=D]").click();
+  await pg.locator("[data-col=A] [data-unit]").first().click();
+  const threatCard = await pg.locator("[data-unit-card]").count();
+  await pg.keyboard.press("Escape");
+  const fits = (await pg.evaluate(() => document.documentElement.scrollWidth)) <= width;
   await pg.locator("[data-action=threat]").click();
-  await pg.waitForSelector(".game");
+  await pg.waitForSelector("[data-threat-screen]", { state: "detached" });
   await pg.waitForTimeout(300);
-  // The loadout reached the game: V2 has 5 Bays, the Heat bar shows, Mission 1 plays 3 Threat columns.
+  // The loadout reached the game: V2, and Mission 1 plays the three columns chosen.
   await toggleLog(pg);
   const log = await pg.locator(".log").innerText().catch(() => "");
   await pg.close();
-  const ok = plugged === 1 && locked && level === "3" && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log); // the Heat module itself: tests/unit/briefing.test.ts
-  if (!ok && introCheck === "ok") introCheck = `failed (chip ${plugged}, launch locked ${locked}, level ${level}, log has company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
+  const ok = vip === 3 && sleepers && card > 0 && closed && confirmMs < 1200 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
+  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px (omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
 }
 console.log(JSON.stringify({ introCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
