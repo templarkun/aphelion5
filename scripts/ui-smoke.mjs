@@ -50,6 +50,17 @@ async function threat(pg, cols = ["A"]) {
   await pg.locator("[data-action=threat]").click();
   await pg.waitForSelector("[data-threat-screen]", { state: "detached" });
 }
+/** A Mission Preparation screen (Module draw, Ally, Allied Drop Mecha): take the first option, confirm. */
+async function prep(pg) {
+  if (!(await pg.locator("[data-prep]").count())) return false;
+  const kind = await pg.locator("[data-prep]").getAttribute("data-prep");
+  if (!kind || kind === "threat") return false;
+  await pg.locator("[data-prep-pick]").first().click({ position: { x: 24, y: 16 } });
+  await pg.locator("[data-action=prep]").click();
+  await pg.waitForFunction((k) => document.querySelector("[data-prep]")?.getAttribute("data-prep") !== k || !document.querySelector("[data-prep]"), kind);
+  await pg.waitForTimeout(100);
+  return true;
+}
 /** The command briefing: Campaign 1, Company V1, no expansion module, launch; then Mission 1 at Threat Level 1 (column A). */
 async function start(pg, seed) {
   await briefAt(pg, "campaign");
@@ -73,6 +84,7 @@ async function untilAction(pg) {
   for (let i = 0; i < 30; i++) {
     const prompt = await promptOf(pg);
     if (/^Choose an action/.test(prompt)) return prompt;
+    if (await prep(pg)) continue;
     const buttons = q.locator(".choices button, .ask-choices button:not(:disabled)");
     if (await buttons.count()) {
       await buttons.first().click();
@@ -276,6 +288,7 @@ async function pasteSave(pg, file) {
   await pg.getByRole("button", { name: "Paste a save…" }).click();
   await pg.locator("#textbox-text").fill(readFileSync(file, "utf8"));
   await pg.getByRole("button", { name: "Load" }).click();
+  await pg.waitForSelector(".game[data-prompt]", { timeout: 15000 }).catch(() => {});
   await pg.waitForTimeout(600);
 }
 async function sectorPoint(pg, k) {
@@ -685,7 +698,7 @@ if (existsSync(`${out}/reveal-Omega-save.json`) && existsSync(`${out}/area-save.
   if (await act.count()) await act.first().click();
   else await order.click();
   let bombs = 0;
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 80; i++) {
     bombs = Math.max(bombs, await pg.locator("svg.look-bomb").count());
     await pg.waitForTimeout(25);
   }
@@ -770,7 +783,8 @@ if (existsSync(`${out}/pickmany-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/pickmany-save.json`);
-  await pg.locator(".unit-pick").first().waitFor({ timeout: 4000 }).catch(() => {});
+  await pg.locator(".unit-pick").first().waitFor({ timeout: 10000 }).catch(() => {});
+  await pg.waitForTimeout(400);
   const bubblesN = await pg.locator(".unit-pick").count();
   const card = await pg.locator(Q).count();
   const before = await promptOf(pg);
@@ -926,7 +940,7 @@ let introCheck = "ok";
   const short = await pg.waitForSelector(".bf-intro[data-intro=short]", { timeout: 3000 }).then(() => true, () => false);
   const gone = await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 3000 }).then(() => true, () => false);
   await start(pg).catch(() => {});
-  const launched = (await pg.locator(".game").count()) === 1 && (await promptOf(pg)) === "Draw a Module: keep one.";
+  const launched = (await pg.locator(".game").count()) === 1 && (await pg.locator("[data-prep=module] [data-prep-pick]").count()) === 3;
   await pg.close();
   if (!(armed === 1 && lapsed && skipped && noScroll && short && gone && launched)) introCheck = `failed (hint ${armed}, lapsed ${lapsed}, skipped ${skipped}, fits ${noScroll}, short intro ${short}, ends ${gone}, launched ${launched})`;
 }
@@ -953,8 +967,8 @@ for (const [name, width, height] of [["", 1400, 900], ["-phone", 390, 800]]) {
   const vip = await pg.locator("[data-vip=omega] [data-unit]").count();
   await pg.screenshot({ path: `${out}/ui-brief-campaign${name}.png`, fullPage: false });
   await pg.locator("[data-filter=Sleeper]").click();
-  const sleepers = await pg.locator("[data-roster] .grid [data-unit]").evaluateAll((els) => els.every((e) => e.dataset.unit.startsWith("P_")) && els.length > 0);
-  await pg.locator("[data-roster] .grid [data-unit]").first().click();
+  const sleepers = await pg.locator("[data-roster] [data-compact] [data-unit]").evaluateAll((els) => els.every((e) => e.dataset.unit.startsWith("P_")) && els.length > 0);
+  await pg.locator("[data-roster] [data-compact] [data-unit]").first().click();
   const card = await pg.locator("[data-unit-card] .bf-line").count();
   await pg.screenshot({ path: `${out}/ui-brief-unit${name}.png` });
   await pg.keyboard.press("Escape");
@@ -966,6 +980,10 @@ for (const [name, width, height] of [["", 1400, 900], ["-phone", 390, 800]]) {
   await pg.locator("[data-company=V2]").click();
   await pg.waitForTimeout(350);
   await pg.screenshot({ path: `${out}/ui-brief-vessel${name}.png` });
+  const flagshipTab = await pg.locator("[data-flagship=V2]").count();
+  await pg.locator("[data-vtab=mecha]").click();
+  await pg.waitForTimeout(300);
+  await pg.screenshot({ path: `${out}/ui-brief-vessel-mecha${name}.png` });
   await pg.locator("[data-mecha-bay=V2] [data-unit]").first().click();
   const mechaCard = await pg.locator("[data-unit-card] .bf-line").count();
   await pg.screenshot({ path: `${out}/ui-brief-mecha${name}.png` });
@@ -994,13 +1012,36 @@ for (const [name, width, height] of [["", 1400, 900], ["-phone", 390, 800]]) {
   const fits = (await pg.evaluate(() => document.documentElement.scrollWidth)) <= width;
   await pg.locator("[data-action=threat]").click();
   await pg.waitForSelector("[data-threat-screen]", { state: "detached" });
+  // Then the Module draw and the Ally, on the same kind of screen, before the Field.
+  await pg.waitForSelector("[data-prep=module]");
+  const modCards = await pg.locator("[data-prep-pick] .module").count();
+  const keepLocked = await pg.locator("[data-action=prep]").isDisabled();
+  await pg.locator("[data-prep-pick]").nth(1).click();
+  await pg.waitForTimeout(250);
+  await pg.screenshot({ path: `${out}/ui-prep-module${name}.png` });
+  await pg.locator("[data-action=prep]").click();
+  await pg.waitForSelector("[data-prep=ally]");
+  const allies = await pg.locator("[data-prep-pick]").count();
+  const fieldHidden = await pg.locator(".game.upgrading").count();
+  await pg.locator("[data-prep-pick]").first().click({ position: { x: 24, y: 16 } });
+  await pg.waitForTimeout(250);
+  await pg.screenshot({ path: `${out}/ui-prep-ally${name}.png` });
+  await pg.locator("[data-action=prep]").click();
+  if (await pg.waitForSelector("[data-prep=allyMecha]", { timeout: 1500 }).then(() => true, () => false)) {
+    await pg.screenshot({ path: `${out}/ui-prep-allymecha${name}.png` });
+    await pg.locator("[data-prep-pick]").first().click({ position: { x: 24, y: 16 } });
+    await pg.locator("[data-action=prep]").click();
+  }
+  await pg.waitForSelector("[data-prep]", { state: "detached" });
+  const fieldShown = (await pg.locator(".game.upgrading").count()) === 0;
   await pg.waitForTimeout(300);
   // The loadout reached the game: V2, and Mission 1 plays the three columns chosen.
   await toggleLog(pg);
   const log = await pg.locator(".log").innerText().catch(() => "");
   await pg.close();
-  const ok = vip === 3 && sleepers && card > 0 && closed && confirmMs < 1200 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
-  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px (omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
+  const prepOk = flagshipTab === 1 && modCards === 3 && keepLocked && allies >= 1 && fieldHidden === 1 && fieldShown && /keep /.test(log) && /your Ally: /.test(log);
+  const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 1200 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
+  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px (prep: flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
 }
 console.log(JSON.stringify({ introCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));

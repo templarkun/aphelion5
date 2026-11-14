@@ -14,9 +14,9 @@ import { moduleCost, moduleDef, xWouldBeZero } from "../engine/modules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
 import { Briefing } from "./briefing/Briefing.js";
 import { IntroSequence } from "./briefing/IntroSequence.js";
-import { applyLoadout, isThreatQuestion } from "./briefing/launch.js";
+import { applyLoadout } from "./briefing/launch.js";
 import { type IntroMode, introMode } from "./briefing/prefs.js";
-import { ThreatScreen } from "./briefing/ThreatScreen.js";
+import { MissionPrep, prepKind } from "./briefing/MissionPrep.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
 import { gameData } from "./data.js";
@@ -458,7 +458,7 @@ function GameScreen(p: GameProps) {
   // Selections, a pop-up or a split in progress belong to the question they were made for.
   const [selected, setSelected] = usePerQuestion<string[]>(q, []);
   // The Threat columns of a Mission Preparation (7.2 step 3) are chosen on their own screen (designer 2026-11-14).
-  const threatQ = isThreatQuestion(q) ? q : undefined;
+  const prepQ = prepKind(q) ? q : undefined;
   const [hover, setHover] = useState<string | undefined>();
   // A short message in the information strip (a drop that was not allowed), shown for a few seconds.
   const [note, setNote] = useState<{ text: string; warn: boolean; at: number } | undefined>();
@@ -937,7 +937,7 @@ function GameScreen(p: GameProps) {
 
   return (
     <div
-      className={`game layout-${layout} ${inOverload ? "is-overload" : ""} ${upOpen || threatQ ? "upgrading" : ""}`}
+      className={`game layout-${layout} ${inOverload ? "is-overload" : ""} ${upOpen || prepQ ? "upgrading" : ""}`}
       style={{ "--bar-h": `${barH}px` } as React.CSSProperties}
       data-prompt={q ? q.prompt : ""}
       onPointerDownCapture={(e) => {
@@ -1066,7 +1066,7 @@ function GameScreen(p: GameProps) {
         {hasField && <Fps />}
         {pickQ && <UnitPicks items={pickItems} foot={pickFoot} onPress={pickPress} multi={pickQ.kind !== "option" && pickQ.kind !== "order" && !((pickQ.kind === "units" || pickQ.kind === "sectors") && pickQ.max === 1)} />}
         {rowQ && hasField && !planQ && <RowBubbles rows={rowQ.rows!} selected={rowSel} onSelect={setRowSel} onConfirm={(i) => send({ kind: "option", value: rowQ.options[i]!.id })} />}
-        {planQ ? null : rotate ? (
+        {planQ || prepQ ? null : rotate ? (
           // Facing (3.7): the turn buttons are on the unit; no card (designer 2026-11-09). "Done" only when needed.
           rotate.done ? (
             <button className="primary facing-done" onClick={rotate.done}>
@@ -1124,7 +1124,7 @@ function GameScreen(p: GameProps) {
 
 
 
-      {threatQ && <ThreatScreen key={s.mission} data={data} state={s} q={threatQ} onAnswer={(cols) => send({ kind: "several", value: cols })} />}
+      {prepQ && <MissionPrep data={data} state={s} q={prepQ} onAnswer={(kind, value) => send(kind === "several" ? { kind, value: value as string[] } : { kind, value: value as string })} />}
       {upOpen && (
         <UpgradeSheet
           data={data}

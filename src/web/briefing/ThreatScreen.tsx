@@ -12,8 +12,8 @@ import type { ThreatColumn } from "../../data/campaign.js";
 import type { GameData } from "../../data/index.js";
 import type { Question } from "../../engine/questions.js";
 import type { GameState } from "../../engine/state.js";
-import { AmbientLayer, FxLayer, ambientKick } from "./fx.js";
-import { hoverHook, ms, tapSpark } from "./hud.js";
+import { ambientKick } from "./fx.js";
+import { ms } from "./hud.js";
 import { missionLabel, objectiveText } from "./missionText.js";
 import { burst, ring, setEmitter } from "./particles.js";
 import { playConfirm, playOpenInfo, playThreatDown, playThreatUp } from "./soundHooks.js";
@@ -44,7 +44,7 @@ function menace(el: Element, level: number): void {
   }
 }
 
-export function ThreatScreen({ data, state, q, onAnswer }: { data: GameData; state: GameState; q: Question & { kind: "several" }; onAnswer: (cols: string[]) => void }) {
+export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data: GameData; state: GameState; q: Question & { kind: "several" }; onAnswer: (cols: string[]) => void; setAcc: (rgb: string) => void; steps: React.ReactNode }) {
   const camp = data.campaigns.find((c) => c.prefix === state.campaign);
   const m = camp?.missionById.get(state.mission ?? "");
   const [cols, setCols] = useState<string[]>([]);
@@ -58,6 +58,7 @@ export function ThreatScreen({ data, state, q, onAnswer }: { data: GameData; sta
   const ok = level >= q.min && level <= q.max && !sent;
   const Icon = ICON[level]!;
 
+  useEffect(() => setAcc(acc), [acc]); // eslint-disable-line react-hooks/exhaustive-deps
   // Embers keep rising from every column in play, thicker as the Level rises.
   useEffect(() => {
     for (const o of q.options) setEmitter(`threat-${o.id}`, cols.includes(o.id) ? panels.current.get(o.id) : null, "menace", acc, level <= 1 ? 3 : level * level * 1.6);
@@ -103,28 +104,27 @@ export function ThreatScreen({ data, state, q, onAnswer }: { data: GameData; sta
   const energy = m.deploymentShuffled.find((x) => x.id === data.units.energyDeckPlaceholder)?.count ?? 0;
 
   return (
-    <div className="brief bf-ingame flex flex-col" style={{ "--acc": acc } as React.CSSProperties} data-threat-screen={m.id} data-level={level} onPointerOver={hoverHook} onPointerDown={tapSpark}>
-      <AmbientLayer rgb={acc} />
-      <FxLayer />
+    <div className="flex min-h-0 flex-1 flex-col" style={{ "--acc": acc } as React.CSSProperties} data-threat-screen={m.id} data-level={level}>
       {pulse > 0 && level > 0 && <div key={pulse} className="bf-menace" style={{ "--lv": level } as React.CSSProperties} />}
 
       <div ref={body} className="bf-scroll relative z-10 flex-1 px-3 py-3 sm:px-6 sm:py-4">
         <div className="bf-step-in mx-auto max-w-[1320px]">
+          {steps}
           <header className="mb-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
             <div className="min-w-0">
               <div className="bf-label">{missionLabel(m)} · preparation</div>
-              <h2 className="bf-glow text-2xl font-extrabold uppercase tracking-[0.08em] text-white sm:text-3xl">Choose the Threat</h2>
-              <p className="mt-0.5 max-w-2xl text-[15px] text-sky-100">Each Threat column adds its units to this mission's deck, and each one you complete scores 1 point. Play 1 to 4 of them.</p>
+              <h2 className="bf-glow text-xl font-extrabold uppercase tracking-[0.08em] text-white sm:text-3xl">Choose the Threat</h2>
+              <p className="mt-0.5 hidden max-w-2xl text-[15px] text-sky-100 sm:block">Each Threat column adds its units to this mission's deck, and each one you complete scores 1 point. Play 1 to 4 of them.</p>
               <p className="mt-1 text-[14px] text-white">
                 <b className="text-acc">Objective</b> {objectiveText(camp, m)} · {m.mapSectorCount} sectors
               </p>
             </div>
-            <div className="bf-panel bf-sel min-w-[230px] px-4 py-2.5" aria-live="polite" data-threat-level={level}>
+            <div className="bf-panel bf-sel w-full px-3 py-2 sm:w-auto sm:min-w-[230px] sm:px-4 sm:py-2.5" aria-live="polite" data-threat-level={level}>
               <div className="flex items-center gap-3">
-                <Icon size={34} className="text-acc" />
+                <Icon size={30} className="text-acc" />
                 <div>
                   <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-sky-100">Threat Level</div>
-                  <div className="text-2xl font-extrabold leading-tight text-white">{level ? `${level} · ${THREAT_NAMES[level]}` : "Not chosen"}</div>
+                  <div className="text-xl font-extrabold leading-tight text-white sm:text-2xl">{level ? `${level} · ${THREAT_NAMES[level]}` : "Not chosen"}</div>
                 </div>
               </div>
               <div className="bf-gauge mt-2 flex h-3 gap-1.5">
@@ -136,7 +136,7 @@ export function ThreatScreen({ data, state, q, onAnswer }: { data: GameData; sta
             </div>
           </header>
 
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
             {q.options.map((o) => {
               const on = cols.includes(o.id);
               const ids = m.threat[o.id as ThreatColumn] ?? [];
@@ -145,35 +145,36 @@ export function ThreatScreen({ data, state, q, onAnswer }: { data: GameData; sta
                 <section
                   key={o.id}
                   ref={(el) => void (el ? panels.current.set(o.id, el) : panels.current.delete(o.id))}
-                  className={`bf-panel flex flex-col p-3 ${on ? "bf-sel bf-col-on" : ""}`}
+                  className={`bf-panel flex min-w-0 flex-col p-2 md:p-2.5 xl:p-3 ${on ? "bf-sel bf-col-on" : ""}`}
                   data-col={o.id}
                   data-on={on ? "1" : "0"}
                   aria-label={`Threat column ${o.id}`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span className={`grid h-11 w-10 place-items-center text-xl font-extrabold ${on ? "bg-acc text-indigo-950" : "bg-white/25 text-white"}`} style={{ clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)" }}>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className={`grid h-9 w-8 place-items-center text-lg font-extrabold xl:h-11 xl:w-10 xl:text-xl ${on ? "bg-acc text-indigo-950" : "bg-white/25 text-white"}`} style={{ clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)" }}>
                         {o.id}
                       </span>
-                      <span className="text-lg font-extrabold uppercase tracking-wider text-white">Threat {o.id}</span>
+                      <span className="hidden text-lg font-extrabold uppercase tracking-wider text-white xl:inline">Threat {o.id}</span>
                     </div>
-                    <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-extrabold uppercase tracking-wider ${on ? "bg-acc text-indigo-950" : "bg-white/15 text-sky-100"}`}>{on ? "In play" : `${ids.length} units`}</span>
+                    <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-extrabold uppercase tracking-wider ${on ? "bg-acc text-indigo-950" : "bg-white/15 text-sky-100"}`}>{on ? "In play" : `${ids.length} units`}</span>
                   </div>
-                  <div className="my-2 flex flex-1 flex-wrap content-start items-start justify-around gap-x-1 gap-y-1">
+                  <div className="my-1.5 flex flex-1 flex-wrap content-start items-start justify-center gap-0.5 xl:gap-1">
                     {ids.map((id, k) => {
                       const u = unitOf(id);
                       if (!u) return null;
                       return (
-                        <button key={k} type="button" className="bf-unit" data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list }))} aria-label={`${u.type} ${id}: open its card`}>
-                          <UnitTile unit={u} level={levelOf(u, camp)} size={84} />
-                          <b>{id}</b>
-                          <span className="text-[12px] font-semibold text-sky-100">{u.type}</span>
+                        <button key={k} type="button" className="bf-unit !p-0.5 xl:!px-1 xl:!py-1" data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list }))} aria-label={`${u.type} ${id}: open its card`}>
+                          <span className="bf-tw">
+                            <UnitTile unit={u} level={levelOf(u, camp)} size={72} />
+                          </span>
+                          <b className="hidden !text-[12px] md:block">{id}</b>
                         </button>
                       );
                     })}
                   </div>
-                  <button type="button" className={`bf-btn w-full ${on ? "" : "bf-primary"}`} aria-pressed={on} data-col-btn={o.id} disabled={sent || (!on && level >= q.max)} onClick={() => toggle(o.id)}>
-                    {on ? <Minus size={18} /> : <Plus size={18} />} {on ? "Remove" : "Add this Threat"}
+                  <button type="button" className={`bf-btn w-full !min-h-[40px] !px-2 ${on ? "" : "bf-primary"}`} aria-pressed={on} data-col-btn={o.id} disabled={sent || (!on && level >= q.max)} onClick={() => toggle(o.id)}>
+                    {on ? <Minus size={18} /> : <Plus size={18} />} {on ? "Remove" : <>Add<span className="hidden xl:inline"> this Threat</span></>}
                   </button>
                 </section>
               );
@@ -211,7 +212,7 @@ export function ThreatScreen({ data, state, q, onAnswer }: { data: GameData; sta
           )}
         </div>
         <button type="button" className="bf-btn bf-primary" disabled={!ok} onClick={confirm} data-action="threat">
-          <Check size={18} /> Confirm Threat<span className="hidden sm:inline"> · begin mission</span>
+          <Check size={18} /> Confirm Threat
         </button>
       </footer>
 

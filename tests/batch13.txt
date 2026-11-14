@@ -649,33 +649,44 @@ then: about 10 seconds: stars in several depths, nebula and dust; the Company sh
 id: T13_BRF_02
 title: Command briefing replaces the start screen
 source: designer 2026-11-13; CHANGED 2026-11-14 (designer): three steps (the Threat left the
-        briefing), unit roster, bigger Mecha, brighter look, faster confirmations, no sound
+        briefing), unit roster, bigger Mecha, brighter look, faster confirmations, no sound;
+        CHANGED again 2026-11-14 (designer): roster without Bots and Energy Gyros, Omega
+        effects written out, compact "All", type filter opens the units, Vessel in two tabs
 given: no game shown (first visit, or "Leave" from a game)
 then: three steps in order: Campaign, Vessel, Modules. Campaign: Campaign 1 and seven places
-      "Coming later"; the unit roster shows every unit of the Campaign as tiles: the three Omega
-      units (Alpha, Beta, Gamma) in their own gold-rimmed place on top, then Bots, Sentinels,
-      Flares, Sleepers and Gyros with a filter button per type; a tap on a unit opens its card
-      (type, Level, tiles in the box, every effect text, and where in the Campaign it comes
-      from); a tap outside, the cross or Esc closes it, the arrows step to the next unit. The
-      briefing file beside it keeps the road of missions (2X/2Y and 4X/4Y as forks).
-      "Confirm campaign" plays the lock animation (under half a second) and opens Vessel.
-      Vessel: V1 and V2 and three places "Coming later"; "Your Mecha" shows the Company's
-      starting Mecha as big tiles with their number; a tap opens the Mecha's card (ability, and
-      its upgrades on this Company's sheet); also the wireframe, Bays, trait and starting
-      energy; a sheet with upgrade marks asks Veteran or Fresh here (7.1 step 3). Modules: six
-      sockets, the Heat chip plugs in and out by a tap; none is allowed; "Launch command
-      sequence" starts the game (under a second). Auto-answer, Developer mode, the seed, Import
-      and Paste a save, and Resume game are under System options (the gear). Dust, small marks
-      and light streaks drift behind the panels and lean with the pointer; sparks hop off the
-      chosen Campaign card, a glow drifts down from the chosen Company card.
+      "Classified"; the unit roster shows the units of the Campaign as tiles, without the Bots
+      and the Energy Gyros G_01-G_09 (they are in every Campaign): the three Omega units
+      (Alpha, Beta, Gamma) in their own gold-rimmed place on top, each with its effects
+      written out beside it (no crown, no "priority targets"); then a filter button per type
+      (Sentinels, Flares, Sleepers, Gyros). "All" shows small tiles with their names; on a
+      phone only the glyphs. A type filter shows only that type, each unit opened with its
+      effects written out. A tap on a unit opens its card (type, Level, tiles in the box,
+      every effect text, and where in the Campaign it comes from); a tap outside, the cross or
+      Esc closes it, the arrows step to the next unit. The briefing file beside it keeps the
+      road of missions (2X/2Y and 4X/4Y as forks). "Confirm campaign" plays the lock
+      animation (under half a second) and opens Vessel.
+      Vessel: V1 and V2 and three places "Under Construction"; a sheet with upgrade marks asks
+      Veteran or Fresh here (7.1 step 3); two tabs: "Flagship" (the wireframe and its numbers:
+      Integrity, Bays, Overhauls, Upgrades, starting energy, on the left on tablets and PCs;
+      the Company trait and the Bays with their abilities on the right) and "Mecha" (each
+      starting Mecha as a big tile with its Level, how many you start with, its Command,
+      Expend or Passive ability and how many upgrades its sheet offers; a tap opens its card).
+      Modules: six sockets, the Heat chip plugs in and out by a tap; none is allowed; "Launch
+      command sequence" starts the game (under a second). Auto-answer, Developer mode, the
+      seed, Import and Paste a save, and Resume game are under System options (the gear).
+      Dust, small marks and light streaks drift behind the panels and lean with the pointer;
+      sparks hop off the chosen Campaign card, a glow drifts down from the chosen Company card.
 
 id: T13_BRF_03
 title: The Threat screen at Mission Preparation
 source: designer 2026-11-14 (I12 answered: the Threat is chosen at each Mission Preparation,
-        Core Rules 7.2 step 3; replaces the Threat step of the briefing)
+        Core Rules 7.2 step 3; replaces the Threat step of the briefing); CHANGED again
+        2026-11-14 (designer): four columns in one row on tablets and PCs, two on a phone
 given: a game just launched from the briefing (or any later Mission Preparation, step 3)
-then: the Threat screen fills the screen under the top bar: the mission and its objective, the
-      four Threat columns A to D side by side, each with its units as tiles (a tap on a unit
+then: the Threat screen fills the screen under the top bar: the steps of this preparation
+      (Threat, Module, Allied Drop when the mission has one), the mission and its objective,
+      the four Threat columns A to D (one row of four on tablets and PCs, two rows of two
+      with smaller tiles on a phone), each with its units as tiles (a tap on a unit
       opens its card) and a button "Add this Threat"; a row "Always in this mission's deck".
       Nothing is chosen at first and "Confirm Threat" is locked.
 when: add A, B and C
@@ -684,7 +695,7 @@ then: each column added answers with a particle effect, stronger each time; the 
       4 crimson; at 3 and 4 the screen shakes and embers rise. "Remove" takes a column back.
 when: press "Confirm Threat"
 then: the mission is prepared with columns A, B, C ("Threat Level Siege: columns A, B, C" in
-      the log) and the next question is "Draw a Module: keep one."
+      the log) and the Module screen follows (T13_BRF_05).
 
 id: T13_BRF_04
 title: Later missions ask the Threat the same way
@@ -693,3 +704,21 @@ given: Mission 1 won, the Upgrade sheet closed
 when: the next Mission Preparation reaches step 3
 then: the same Threat screen shows for that mission, with that mission's units in the four
       columns and nothing chosen. Undo and the Menu in the top bar still work.
+
+id: T13_BRF_05
+title: Module draw and Ally on their own screens before the Field
+source: designer 2026-11-14 (screen only; Core Rules 7.2 steps 6 and 9, 7.3)
+given: Mission 1 of Campaign 1, the Threat just confirmed
+then: the Module screen, in the same look as the Threat screen: the three Modules drawn, each
+      exactly as a Module card looks in the game's Modules panel (name, energy bar, effect
+      text, coloured rim), with its cost, colour and phase under it; your Modules below.
+      "Keep this Module" is locked until one is tapped; the tapped one gets the fire outline.
+when: tap one and press "Keep this Module"
+then: "keep <name>" in the log; the Ally screen follows (Mission 1's event is an Allied Drop):
+      each other Company with its Mecha as tiles (a tap opens a Mecha's card) and its trait,
+      and the Allied Drops of the Campaign with their Levels (Level 1, 2 and 3). The Field is
+      still hidden.
+when: tap a Company and press "Choose this Ally"
+then: "your Ally: <id>" in the log. If more than one Mecha can come, the Allied Drop screen
+      shows them as big tiles with Level and ability; "Drop this Mecha". Only then the Field
+      shows, and the Mecha is placed on a Dark sector there.

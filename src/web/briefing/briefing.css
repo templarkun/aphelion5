@@ -142,3 +142,19 @@ button.bf-panel:hover:not(:disabled) { border-color: rgb(var(--acc) / 0.9); tran
 
 /* Reduced motion and the Instant speed: no movement, only what is needed to read the screen. */
 html.still .brief *, html.still .brief *::before, html.still .brief *::after, html.still .bf-intro *, html.still .bf-veil * { animation-duration: 0.01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0.01s !important; }
+
+/* Threat tiles: small on a phone (two columns a row), bigger on tablets and PCs (four in a row). */
+.bf-tw > svg { display: block; width: 44px; height: auto; }
+@media (min-width: 768px) { .bf-tw > svg { width: 52px; } }
+@media (min-width: 1280px) { .bf-tw > svg { width: 70px; } }
+
+/* Module cards shown as in the game's Modules panel: the game's own colours and type. */
+.bf-game-skin { color: var(--ink); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: normal; text-transform: none; }
+.bf-game-skin .module { background: var(--panel); }
+.bf-game-skin button.module { border: 1px solid var(--line); border-left-width: 6px; border-left-color: var(--rim); border-radius: 8px; padding: 6px 8px; }
+.bf-game-skin .module.dim { opacity: 0.55; }
+.bf-modslot { border-radius: 12px; transition: transform 0.15s; }
+.bf-modslot .module { margin: 0; min-height: 96px; }
+.bf-modslot:hover .module:not(.selected) { box-shadow: 0 0 0 2px rgb(var(--m) / 0.9), 0 0 18px rgb(var(--m) / 0.5); }
+.bf-modslot.on { transform: translateY(-3px); }
+.bf-modslot > div:last-child { color: #dbe7ff; }

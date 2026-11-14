@@ -68,7 +68,7 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
               <span className="text-[12px] font-bold uppercase tracking-wider">Campaign {camps.length + i + 1}</span>
               <Lock size={15} />
             </div>
-            <div className="mt-1 text-[15px] font-bold uppercase tracking-wider">Coming later</div>
+            <div className="mt-1 text-[15px] font-bold uppercase tracking-wider">Classified</div>
           </div>
         ))}
       </div>
