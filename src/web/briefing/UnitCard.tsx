@@ -42,7 +42,7 @@ export function UnitCard(p: { data: GameData; id: string; campaign?: CampaignDat
   // On the page itself, not inside the step: a step that slides in would hold the card in its own box.
   return createPortal(
     <div className="bf-veil" onClick={close} data-unit-card={u.id}>
-      <div className="bf-card bf-pop" role="dialog" aria-label={`${f.title} ${u.id}`} onClick={(e) => e.stopPropagation()} style={{ "--type": col } as React.CSSProperties}>
+      <div className="bf-card bf-pop" role="dialog" aria-label={f.title} onClick={(e) => e.stopPropagation()} style={{ "--type": col } as React.CSSProperties}>
         <button type="button" className="bf-x" aria-label="Close" onClick={close}>
           <X size={20} />
         </button>
@@ -54,7 +54,6 @@ export function UnitCard(p: { data: GameData; id: string; campaign?: CampaignDat
             <div className="bf-type" style={{ background: col }}>
               {f.title}
             </div>
-            <div className="mt-1 text-2xl font-extrabold tracking-wide text-white">{u.id}</div>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[14px] text-sky-100">
               {f.level !== undefined && (
                 <span>

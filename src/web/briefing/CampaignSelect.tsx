@@ -21,7 +21,7 @@ export function loreOf(prefix: string) {
 export function CampaignSelect({ data, profile, value, onChange }: { data: GameData; profile: Profile; value: string; onChange: (prefix: string) => void }) {
   const camps = data.campaigns;
   const cur = camps.find((c) => c.prefix === value) ?? camps[0]!;
-  const [focus, setFocus] = useState(cur.missions[0]!.id);
+  const [focus, setFocus] = useState<string | undefined>();
   const lore = loreOf(cur.prefix);
   const hs = profile.highScores[cur.prefix];
   const locked = Math.max(0, CAMPAIGN_SLOTS - camps.length);
@@ -33,8 +33,9 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
   }, [cur.prefix]);
   return (
     <div>
-      <StepHead code="Step 1 of 3" title="Select Campaign" help="Choose where your Company is sent. Below: every unit you can meet there, and the road of missions." />
-      <div className="bf-scroll -mx-4 flex snap-x gap-2.5 px-4 pb-2 pt-1 sm:mx-0 sm:px-1" role="radiogroup" aria-label="Campaigns">
+      <StepHead code="Step 1 of 3" title="Select Campaign" help="Choose where your Company is sent. Then read its briefing file, the road of missions and every unit you can meet there." />
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <div className="bf-scroll -mx-4 flex snap-x gap-2.5 px-4 pb-2 pt-1 sm:mx-0 sm:px-1 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0" role="radiogroup" aria-label="Campaigns">
         {camps.map((c, i) => {
           const l = loreOf(c.prefix);
           const on = c.prefix === cur.prefix;
@@ -46,8 +47,8 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
               role="radio"
               aria-checked={on}
               data-campaign={c.prefix}
-              onClick={(e) => (playSelect(), sparkEdges(e.currentTarget, "125 211 252"), onChange(c.prefix), setFocus(c.missions[0]!.id))}
-              className={`bf-panel bf-rise w-[250px] shrink-0 snap-start !p-3 ${on ? "bf-sel" : ""}`}
+              onClick={(e) => (playSelect(), sparkEdges(e.currentTarget, "125 211 252"), onChange(c.prefix), setFocus(undefined))}
+              className={`bf-panel bf-rise w-[250px] shrink-0 snap-start !p-3 lg:w-auto ${on ? "bf-sel" : ""}`}
               style={{ "--i": i } as React.CSSProperties}
             >
               <div className="flex items-center justify-between">
@@ -55,15 +56,15 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
                 <Radar size={18} className={`text-acc ${on ? "bf-pulse" : "opacity-60"}`} />
               </div>
               <div className="mt-0.5 text-lg font-extrabold uppercase tracking-wider text-white">{l.title}</div>
-              <div className="mt-1.5 flex items-center justify-between">
+              <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                 <Pips n={l.difficulty} label="Difficulty" />
-                <span className="text-[13px] font-semibold text-sky-100">{missionGroups(c).length} missions</span>
+                <span className="whitespace-nowrap text-[13px] font-semibold text-sky-100">{missionGroups(c).length} missions</span>
               </div>
             </button>
           );
         })}
         {Array.from({ length: locked }, (_, i) => (
-          <div key={i} className="bf-panel bf-soon bf-rise w-[150px] shrink-0 snap-start p-3" style={{ "--i": camps.length + i } as React.CSSProperties} aria-label="Campaign not yet available">
+          <div key={i} className="bf-panel bf-soon bf-rise w-[150px] shrink-0 snap-start p-3 lg:w-auto" style={{ "--i": camps.length + i } as React.CSSProperties} aria-label="Campaign not yet available">
             <div className="flex items-center justify-between">
               <span className="text-[12px] font-bold uppercase tracking-wider">Campaign {camps.length + i + 1}</span>
               <Lock size={15} />
@@ -73,8 +74,7 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
         ))}
       </div>
 
-      <div key={cur.prefix} className="bf-step-in mt-2 grid grid-cols-[minmax(0,1fr)] items-start gap-4 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <UnitRoster data={data} campaign={cur} />
+      <div key={cur.prefix} className="bf-step-in flex min-w-0 flex-col gap-4">
         <section className="bf-panel p-3 sm:p-4" aria-label={`${lore.title} briefing`}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -94,9 +94,11 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
             <span>Fresh: {hs?.fresh ? `${hs.fresh.score} (${hs.fresh.date})` : "—"}</span>
             <span>Veteran ★: {hs?.veteran ? `${hs.veteran.score} (${hs.veteran.date})` : "—"}</span>
           </div>
-          <div className="bf-label mb-2 mt-4">Road of missions · tap one</div>
-          <MissionTimeline campaign={cur} focus={focus} onFocus={setFocus} />
+          <div className="bf-label mb-2 mt-4">Road of missions · tap one to open its file, again to close it</div>
+          <MissionTimeline data={data} campaign={cur} focus={focus} onFocus={setFocus} />
         </section>
+        <UnitRoster data={data} campaign={cur} />
+      </div>
       </div>
     </div>
   );

@@ -182,7 +182,6 @@ export function VesselSelect(p: { data: GameData; profile: Profile; value: strin
                   <UnitTile unit={u} level={levelOf(u)} size={96} count={m.count} />
                 </span>
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="text-xl font-extrabold tracking-wide text-white">{m.id}</span>
                   <span className="flex flex-wrap gap-x-3 text-[14px] text-sky-100">
                     <span>
                       Level <b className="text-white">{levelOf(u) ?? "?"}</b>

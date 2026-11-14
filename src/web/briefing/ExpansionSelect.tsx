@@ -79,7 +79,7 @@ export function ExpansionSelect({ value, onChange }: { value: string[]; onChange
               <div className="grid flex-1 place-items-center">
                 <div className="text-center">
                   <Cpu size={30} className="mx-auto" strokeWidth={1.4} />
-                  <div className="mt-1 text-[13px] font-bold uppercase tracking-wider">Coming later</div>
+                  <div className="mt-1 text-[13px] font-bold uppercase tracking-wider">NO HARDWARE</div>
                 </div>
               </div>
             </div>

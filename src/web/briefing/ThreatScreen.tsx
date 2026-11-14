@@ -160,15 +160,16 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
                     <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-extrabold uppercase tracking-wider ${on ? "bg-acc text-indigo-950" : "bg-white/15 text-sky-100"}`}>{on ? "In play" : `${ids.length} units`}</span>
                   </div>
                   <div className="my-1.5 flex flex-1 flex-wrap content-start items-start justify-center gap-0.5 xl:gap-1">
-                    {ids.map((id, k) => {
+                    {list.map((id) => {
                       const u = unitOf(id);
                       if (!u) return null;
+                      const n = ids.filter((x) => x === id).length;
                       return (
-                        <button key={k} type="button" className="bf-unit !p-0.5 xl:!px-1 xl:!py-1" data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list }))} aria-label={`${u.type} ${id}: open its card`}>
+                        <button key={id} type="button" className="bf-unit !p-0.5 xl:!px-1 xl:!py-1" data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list }))} aria-label={`${u.type} ${id}, ${n}: open its card`}>
                           <span className="bf-tw">
                             <UnitTile unit={u} level={levelOf(u, camp)} size={72} />
                           </span>
-                          <b className="hidden !text-[12px] md:block">{id}</b>
+                          {n > 1 && <b className="!text-[12px] leading-none">×{n}</b>}
                         </button>
                       );
                     })}
@@ -181,9 +182,9 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
             })}
           </div>
 
-          <section className="bf-panel mt-3 p-3" aria-label="Always in this mission's deck">
+          <section className="bf-panel mt-3 p-3" aria-label="Already in this mission's deck">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-              <div className="bf-label">Always in this mission's deck</div>
+              <div className="bf-label">ALREADY IN THIS MISSION'S DECK</div>
               <span className="text-[13px] text-sky-100">Whatever the Threat. Also all 30 Bots{energy ? ` and ${energy} tiles from the Energy deck` : ""}.</span>
             </div>
             <div className="mt-1 flex flex-wrap gap-1">
@@ -191,8 +192,8 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
                 const u = unitOf(x.id)!;
                 return (
                   <button key={x.id} type="button" className="bf-unit" data-unit={x.id} onClick={() => (playOpenInfo(), setOpen({ id: x.id, list: [...m.omegaPlaced, ...always.map((a) => a.id)] }))} aria-label={`${u.type} ${x.id}, ${x.count}: open its card`}>
-                    <UnitTile unit={u} level={levelOf(u, camp)} size={58} count={x.count} />
-                    <b>{x.id}</b>
+                    <UnitTile unit={u} level={levelOf(u, camp)} size={58} />
+                    {x.count > 1 && <b>×{x.count}</b>}
                   </button>
                 );
               })}

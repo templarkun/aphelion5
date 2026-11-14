@@ -1,7 +1,7 @@
 /**
  * The units a Campaign brings, as tiles (designer 2026-11-14, round 2): the Omega units in their
  * own gold-rimmed place with their effects written out, then the rest. Bots and the Energy Gyros
- * (G_01-G_09) are left out: they are in every Campaign. "All" shows compact tiles (glyphs only on
+ * (G_01-G_09) are left out: they are in every Campaign; F_01 too (round 3). "All" shows compact tiles (glyphs only on
  * a phone); a type filter opens each unit with its effects written out. A tap opens its card.
  */
 
@@ -38,7 +38,7 @@ export function EffectLines({ data, id, campaign, small }: { data: GameData; id:
 export function UnitRoster({ data, campaign }: { data: GameData; campaign: CampaignDatabase }) {
   const all = campaignUnits(data, campaign);
   const omega = all.filter((u) => u.type === "Omega");
-  const rest = all.filter((u) => ORDER.includes(u.type) && !u.energyGyro).sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type));
+  const rest = all.filter((u) => ORDER.includes(u.type) && !u.energyGyro && u.id !== "F_01").sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type));
   const [filter, setFilter] = useState<UnitType | "all">("all");
   const [open, setOpen] = useState<{ id: string; list: string[] } | undefined>();
   const shown = filter === "all" ? rest : rest.filter((u) => u.type === filter);
@@ -57,15 +57,15 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
       </div>
 
       {omega.length > 0 && (
-        <div className="bf-vip mt-3 grid grid-cols-[minmax(0,1fr)] gap-2 p-2.5 sm:p-3 2xl:grid-cols-3" data-vip="omega">
+        <div className="bf-vip mt-3 grid grid-cols-[minmax(0,1fr)] gap-1 p-1.5 sm:p-2 2xl:grid-cols-3" data-vip="omega">
           {omega.map((u) => {
             const o = campaign.omega.find((x) => x.id === u.id);
             return (
-              <div key={u.id} className="flex min-w-0 items-start gap-2.5 rounded-xl bg-indigo-950/30 p-2">
-                <button type="button" className="bf-unit shrink-0" data-unit={u.id} onClick={(e) => show(u, omega, e.currentTarget)} aria-label={`${o?.role ?? "Omega"} ${u.id}: open its card`}>
-                  <UnitTile unit={u} level={levelOf(u, campaign)} size={64} />
+              <div key={u.id} className="flex min-w-0 items-center gap-2 rounded-lg bg-indigo-950/30 px-1.5 py-1">
+                <button type="button" className="bf-unit shrink-0 !p-0.5" data-unit={u.id} onClick={(e) => show(u, omega, e.currentTarget)} aria-label={`${o?.role ?? "Omega"} ${u.id}: open its card`}>
+                  <UnitTile unit={u} level={levelOf(u, campaign)} size={52} />
                 </button>
-                <div className="min-w-0 pt-1">
+                <div className="min-w-0">
                   <div className="text-[15px] font-extrabold uppercase tracking-wide text-amber-100">
                     {o?.role ?? "Omega"} <span className="text-[13px] font-semibold text-amber-200/80">{u.id}</span>
                   </div>

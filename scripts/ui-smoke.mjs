@@ -965,7 +965,18 @@ for (const [name, width, height] of [["", 1400, 900], ["-phone", 390, 800]]) {
   await briefAt(pg, "campaign");
   // The unit roster: Omega units in their own place, a filter per type, a card per unit.
   const vip = await pg.locator("[data-vip=omega] [data-unit]").count();
+  // No mission open at first; a tap opens its file (map, unit roster), a second tap closes it.
+  const noFile = (await pg.locator("[data-mission-detail]").count()) === 0;
+  const maps = await pg.locator("[data-mission] svg[data-map]").count();
+  const noF01 = (await pg.locator("[data-roster] [data-unit=F_01]").count()) === 0;
   await pg.screenshot({ path: `${out}/ui-brief-campaign${name}.png`, fullPage: false });
+  await pg.locator("[data-mission=C1_M3]").click();
+  const fileOpen = (await pg.locator("[data-mission-detail=C1_M3] svg[data-map]").count()) === 1 && (await pg.locator("[data-mission-roster=C1_M3] [data-unit]").count()) > 0;
+  await pg.locator("[data-mission-detail=C1_M3]").scrollIntoViewIfNeeded();
+  await pg.screenshot({ path: `${out}/ui-brief-mission${name}.png`, fullPage: false });
+  await pg.locator("[data-mission=C1_M3]").click();
+  const fileClosed = (await pg.locator("[data-mission-detail]").count()) === 0;
+  const missionOk = noFile && maps > 3 && noF01 && fileOpen && fileClosed;
   await pg.locator("[data-filter=Sleeper]").click();
   const sleepers = await pg.locator("[data-roster] [data-compact] [data-unit]").evaluateAll((els) => els.every((e) => e.dataset.unit.startsWith("P_")) && els.length > 0);
   await pg.locator("[data-roster] [data-compact] [data-unit]").first().click();
@@ -1040,8 +1051,8 @@ for (const [name, width, height] of [["", 1400, 900], ["-phone", 390, 800]]) {
   const log = await pg.locator(".log").innerText().catch(() => "");
   await pg.close();
   const prepOk = flagshipTab === 1 && modCards === 3 && keepLocked && allies >= 1 && fieldHidden === 1 && fieldShown && /keep /.test(log) && /your Ally: /.test(log);
-  const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 1200 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
-  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px (prep: flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
+  const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 1200 && mechaCard > 0 && plugged === 1 && locked && tiles === 3 && missionOk && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
+  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px (missions: none open ${noFile}, maps ${maps}, no F_01 ${noF01}, opens ${fileOpen}, closes ${fileClosed}; prep: flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
 }
 console.log(JSON.stringify({ introCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
