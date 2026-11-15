@@ -944,23 +944,68 @@ let introCheck = "ok";
   await pg.close();
   if (!(armed === 1 && lapsed && skipped && noScroll && short && gone && launched)) introCheck = `failed (hint ${armed}, lapsed ${lapsed}, skipped ${skipped}, fits ${noScroll}, short intro ${short}, ends ${gone}, launched ${launched})`;
 }
-{
-  // The long intro, looked at: frames for the designer, and it ends by itself on the Campaign step.
+// Styles (designer 2026-11-14): "intro1" and "intro2", each with its own long intro; frames of both
+// for the designer, and each ends by itself on the Campaign step in its own look.
+let styleCheck = "ok";
+for (const style of ["intro2", "intro1"]) {
   const pg = await plainPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.addInitScript((s) => localStorage.setItem("aphelion5.style", s), style);
   await pg.goto(url);
-  await pg.waitForSelector(".bf-intro[data-intro=full]");
+  await pg.waitForSelector(`.bf-intro[data-intro=full][data-intro-style=${style}]`);
   for (const [i, wait] of [[1, 1200], [2, 2300], [3, 2500], [4, 2300], [5, 1200]]) {
     await pg.waitForTimeout(wait);
-    await pg.screenshot({ path: `${out}/ui-intro-${i}.png` });
+    await pg.screenshot({ path: `${out}/ui-intro-${style}-${i}.png` });
   }
-  const ended = await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 4000 }).then(() => true, () => false);
+  const ended = await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 6000 }).then(() => true, () => false);
+  const look = await pg.evaluate(() => [document.documentElement.dataset.bfStyle, document.querySelector(".brief")?.getAttribute("data-style")].join());
   await pg.close();
-  if (!ended && introCheck === "ok") introCheck = "failed (the long intro did not end)";
+  if (!ended && introCheck === "ok") introCheck = `failed (the long intro of ${style} did not end)`;
+  if (look !== `${style},${style}` && styleCheck === "ok") styleCheck = `failed (${style}: the page is marked ${look})`;
 }
-for (const [name, width, height] of [["", 1400, 900], ["-phone", 390, 800]]) {
+{
+  // The switch (System options > Style): the menu changes look at once and keeps its layout; the
+  // choice is remembered; "Replay the full intro" plays the chosen style's film.
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(url);
+  await briefAt(pg, "campaign");
+  const mark = () => pg.evaluate(() => document.documentElement.dataset.bfStyle);
+  const boxes = () => pg.evaluate(() => [...document.querySelectorAll(".brief [data-campaign], .brief [data-mission], .brief [data-action]")].map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)].join(); }).join(";"));
+  const first = await mark();
+  await pg.waitForTimeout(800); // the cards have slid in: measure them at rest
+  const lay2 = await boxes();
+  await pg.locator("[aria-label='System options']").click();
+  const picks = await pg.locator("[data-style-pick]").count();
+  await pg.locator("[data-style-pick=intro1]").click();
+  const second = await mark();
+  await pg.screenshot({ path: `${out}/ui-style-options.png` });
+  await pg.locator("[aria-label='Close']").click();
+  await pg.waitForTimeout(800);
+  const lay1 = await boxes();
+  await pg.screenshot({ path: `${out}/ui-style-intro1.png` });
+  await pg.reload();
+  await briefAt(pg, "campaign");
+  const kept = await mark();
+  await pg.locator("[aria-label='System options']").click();
+  await pg.getByRole("button", { name: /Replay the full intro/ }).click();
+  const replay = await pg.waitForSelector(".bf-intro[data-intro=full][data-intro-style=intro1]", { timeout: 3000 }).then(() => true, () => false);
+  await pg.mouse.click(300, 300);
+  await pg.waitForTimeout(200);
+  await pg.mouse.click(300, 300);
+  await pg.waitForSelector(".bf-intro", { state: "detached", timeout: 3000 }).catch(() => {});
+  await pg.locator("[aria-label='System options']").click();
+  await pg.locator("[data-style-pick=intro2]").click();
+  const back = await mark();
+  await pg.close();
+  if (!(first === "intro2" && picks === 2 && second === "intro1" && kept === "intro1" && replay && back === "intro2" && lay1 === lay2) && styleCheck === "ok")
+    styleCheck = `failed (starts ${first}, ${picks} styles offered, after the switch ${second}, after a reload ${kept}, replay plays intro1 ${replay}, back ${back}, same layout ${lay1 === lay2})`;
+}
+// The whole briefing walked in both styles (the layout is the same; only the look differs).
+for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone", 390, 800, "intro2"], ["-intro1", 1400, 900, "intro1"], ["-intro1-phone", 390, 800, "intro1"]]) {
   const pg = await browser.newPage({ viewport: { width, height } });
   pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.addInitScript((s) => localStorage.setItem("aphelion5.style", s), style);
   await pg.goto(url);
   await briefAt(pg, "campaign");
   // The unit roster: Omega units in their own place, a filter per type, a card per unit.
@@ -1052,9 +1097,9 @@ for (const [name, width, height] of [["", 1400, 900], ["-phone", 390, 800]]) {
   await pg.close();
   const prepOk = flagshipTab === 1 && modCards === 3 && keepLocked && allies >= 1 && fieldHidden === 1 && fieldShown && /keep /.test(log) && /your Ally: /.test(log);
   const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 1200 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && missionOk && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
-  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px (missions: none open ${noFile}, maps ${maps}, no F_01 ${noF01}, opens ${fileOpen}, closes ${fileClosed}; prep: flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
+  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px in ${style} (missions: none open ${noFile}, maps ${maps}, no F_01 ${noF01}, opens ${fileOpen}, closes ${fileClosed}; prep: flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
 }
-console.log(JSON.stringify({ introCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
+console.log(JSON.stringify({ introCheck, styleCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck, styleCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

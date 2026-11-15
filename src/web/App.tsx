@@ -16,6 +16,7 @@ import { Briefing } from "./briefing/Briefing.js";
 import { IntroSequence } from "./briefing/IntroSequence.js";
 import { applyLoadout } from "./briefing/launch.js";
 import { type IntroMode, introMode } from "./briefing/prefs.js";
+import { briefStyle } from "./briefing/styles/index.js";
 import { MissionPrep, prepKind } from "./briefing/MissionPrep.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
@@ -87,8 +88,8 @@ export function App() {
   const [autoAnswer, setAutoAnswer] = useState(true);
   const [inMenu, setInMenu] = useState(true);
   const [box, setBox] = useState<TextBoxProps | undefined>();
-  // The intro plays over the screen when the page opens: the long one on a first visit, then the short one.
-  const [intro, setIntro] = useState<IntroMode>(introMode);
+  // The intro plays over the screen when the page opens: the chosen style's long one on a first visit, then its short one.
+  const [intro, setIntro] = useState<IntroMode>(() => introMode(briefStyle().id));
 
   useEffect(() => {
     void loadSave().then((f) => {

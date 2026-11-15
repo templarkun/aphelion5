@@ -1,16 +1,17 @@
 /**
- * The two intros, over the page when the game opens (designer 2026-11-14).
- * First visit: a 10-second approach from deep space to the planet (introScene.ts), the brackets
- * lock on, the mark and the name come up, and the view dives into the Campaign screen.
- * Later visits: a 1.5-second fly-by. Two taps within 1 second skip the long one (the first tap
+ * The two intros, over the page when the game opens (designer 2026-11-14). The film itself comes
+ * from the chosen style (styles/<id>/scene.ts); this shell is the same for every style.
+ * First visit with a style: its long film (about 10 seconds), the lock closes, the mark and the
+ * name come up, and the view goes into the Campaign screen.
+ * Later visits: its 1.5-second film. Two taps within 1 second skip the long one (the first tap
  * shows the hint and a 1-second bar). Reduced motion: one still picture, briefly.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { isStill } from "../motion.js";
-import { createScene, FULL_SECONDS, LOCK_AT, SHORT_SECONDS, TITLE_AT } from "./introScene.js";
 import { markIntroSeen } from "./prefs.js";
 import { playEngineHum, playFlyBy, playOrbitLock, stopEngineHum } from "./soundHooks.js";
+import { briefStyle } from "./styles/index.js";
 
 const SKIP_WINDOW = 1000;
 const LEAVE_MS = 420;
@@ -32,6 +33,9 @@ export function Logo({ size = 120, draw = false }: { size?: number; draw?: boole
 
 export function IntroSequence({ mode, onDone }: { mode: "full" | "short"; onDone: () => void }) {
   const still = isStill();
+  // The style chosen when this intro started: a switch in the middle does not change the film.
+  const style = useRef(briefStyle()).current;
+  const film = style.intro;
   const long = mode === "full" && !still;
   const cv = useRef<HTMLCanvasElement>(null);
   const [title, setTitle] = useState(false);
@@ -43,7 +47,7 @@ export function IntroSequence({ mode, onDone }: { mode: "full" | "short"; onDone
   function finish(): void {
     if (done.current) return;
     done.current = true;
-    if (mode === "full") markIntroSeen();
+    if (mode === "full") markIntroSeen(style.id);
     stopEngineHum();
     setLeaving(true);
     setTimeout(onDone, still ? 0 : LEAVE_MS);
@@ -53,8 +57,8 @@ export function IntroSequence({ mode, onDone }: { mode: "full" | "short"; onDone
     const canvas = cv.current;
     const g = canvas?.getContext("2d");
     if (!canvas || !g) return void finish();
-    const scene = createScene();
-    const total = long ? FULL_SECONDS : SHORT_SECONDS;
+    const scene = film.create();
+    const total = long ? film.fullSeconds : film.shortSeconds;
     let raf = 0;
     let start = 0;
     let locked = false;
@@ -62,8 +66,8 @@ export function IntroSequence({ mode, onDone }: { mode: "full" | "short"; onDone
     else playFlyBy();
     const frame = (now: number) => {
       start ||= now;
-      // Reduced motion: the locked planet, still.
-      const t = still ? 8.8 : (now - start) / 1000;
+      // Reduced motion: one moment of the long film, still.
+      const t = still ? film.stillAt : (now - start) / 1000;
       const r = canvas.getBoundingClientRect();
       const k = Math.min(2, window.devicePixelRatio || 1);
       const w = Math.max(1, Math.round(r.width * k));
@@ -73,12 +77,19 @@ export function IntroSequence({ mode, onDone }: { mode: "full" | "short"; onDone
         canvas.height = h;
       }
       g.setTransform(k, 0, 0, k, 0, 0);
-      scene.draw(g, r.width, r.height, Math.min(t, total), still ? "full" : long ? "full" : "short");
-      if (long && !locked && t >= LOCK_AT) {
+      try {
+        // Nothing is drawn while the canvas has no size (it is just being taken off the page).
+        if (r.width >= 2 && r.height >= 2) scene.draw(g, r.width, r.height, still ? t : Math.min(t, total), still ? "full" : long ? "full" : "short");
+      } catch (e) {
+        // A film that cannot be drawn must never keep the player from the game: end the intro.
+        console.error(e);
+        return void finish();
+      }
+      if (long && !locked && t >= film.lockAt) {
         locked = true;
         playOrbitLock();
       }
-      if (long && t >= TITLE_AT) setTitle(true);
+      if (long && t >= film.titleAt) setTitle(true);
       if (still) return;
       if (t >= total - LEAVE_MS / 1000) finish();
       if (t < total + 0.5) raf = requestAnimationFrame(frame);
@@ -117,6 +128,7 @@ export function IntroSequence({ mode, onDone }: { mode: "full" | "short"; onDone
     <div
       className={`bf-intro ${leaving ? "bf-leave" : ""}`}
       data-intro={long ? "full" : "short"}
+      data-intro-style={style.id}
       onPointerDown={tap}
       role={long ? "button" : "status"}
       aria-label={long ? "Intro. Tap twice to skip." : "Aphelion 5"}
@@ -126,19 +138,19 @@ export function IntroSequence({ mode, onDone }: { mode: "full" | "short"; onDone
       {long && title && (
         <div className="bf-title-in pointer-events-none absolute inset-x-0 bottom-[12%] flex flex-col items-center px-4 text-center">
           <Logo size={84} draw />
-          <div className="bf-glow mt-2 text-3xl font-extrabold tracking-[0.34em] text-white sm:text-5xl" style={{ paddingLeft: "0.34em" }}>
+          <div className="bf-glow bf-name mt-2 text-3xl font-extrabold tracking-[0.34em] text-white sm:text-5xl" style={{ paddingLeft: "0.34em" }}>
             APHELION 5
           </div>
-          <div className="mt-2 text-[12px] font-semibold tracking-[0.4em] text-amber-200 sm:text-sm">ORBIT REACHED · COMMAND DECK OPENING</div>
+          <div className="mt-2 text-[12px] font-semibold tracking-[0.4em] text-amber-200 sm:text-sm">{film.lines.full}</div>
         </div>
       )}
       {!long && (
         <div className="bf-title-in pointer-events-none absolute inset-x-0 bottom-[14%] flex flex-col items-center px-4 text-center" style={{ animationDuration: "0.35s" }}>
           <Logo size={64} />
-          <div className="bf-glow mt-1 text-xl font-extrabold tracking-[0.3em] text-white sm:text-3xl" style={{ paddingLeft: "0.3em" }}>
+          <div className="bf-glow bf-name mt-1 text-xl font-extrabold tracking-[0.3em] text-white sm:text-3xl" style={{ paddingLeft: "0.3em" }}>
             APHELION 5
           </div>
-          <div className="mt-1 text-[12px] font-semibold tracking-[0.3em] text-amber-200">WELCOME BACK, COMMANDER</div>
+          <div className="mt-1 text-[12px] font-semibold tracking-[0.3em] text-amber-200">{film.lines.short}</div>
         </div>
       )}
       {long && (

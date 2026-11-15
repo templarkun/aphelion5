@@ -1,8 +1,13 @@
-/* The command briefing, the intro and the Threat screen: a bright orbital command deck
-   (designer 2026-11-14: lighter, easier to read; no CRT, no dark metal). Luminous blue space,
-   clear glass panels, white text, one accent colour (--acc, "r g b").
+/* The command briefing, the intro and the Threat screen (designer 2026-11-14: easy to read; no
+   CRT, no dark metal). One accent colour (--acc, "r g b").
    Tailwind utilities do the layout; this file holds the reset for these screens, the surfaces
-   and every keyframe. Everything is scoped to .brief / .bf-intro or prefixed bf-. */
+   and the keyframes every style shares. Everything is scoped to .brief / .bf-intro or prefixed bf-.
+
+   STYLES (styles/index.ts): the colours are not written here. Each style gives them as --bf-*
+   variables in styles/<id>/style.css, under :root[data-bf-style="<id>"], and may give any .bf-*
+   rule a different shape or motion there. The shapes and motions in this file are the ones first
+   made for "intro1" (glass panels, round buttons, a sideways step); they are what a style gets
+   when it changes nothing. */
 @tailwind base;
 @tailwind utilities;
 
@@ -13,15 +18,11 @@
 .brief button:focus-visible, .brief input:focus-visible, .bf-veil button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
 .brief {
-  --acc: 125 211 252;
-  position: fixed; inset: 0; z-index: 40; overflow: hidden; color: #f3f7ff;
+  --acc: var(--bf-acc);
+  position: fixed; inset: 0; z-index: 40; overflow: hidden; color: var(--bf-ink);
   font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
-  background:
-    radial-gradient(70% 55% at 12% 0%, rgb(56 189 248 / 0.38), transparent 70%),
-    radial-gradient(60% 60% at 95% 100%, rgb(192 132 252 / 0.36), transparent 70%),
-    radial-gradient(50% 45% at 78% 8%, rgb(45 212 191 / 0.2), transparent 70%),
-    linear-gradient(160deg, #15246a 0%, #1c2f86 45%, #33278a 100%);
+  background: var(--bf-page);
 }
 /* The Threat screen inside the game: under the game's top bar, over the rest. */
 .brief.bf-ingame { top: var(--bar-h, 52px); }
@@ -29,12 +30,14 @@
 .bf-fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 90; pointer-events: none; }
 
 /* A glass panel. */
-.bf-panel { position: relative; border-radius: 14px; background: linear-gradient(180deg, rgb(92 124 214 / 0.34), rgb(46 62 150 / 0.42)); border: 1.5px solid rgb(255 255 255 / 0.22);
-  box-shadow: 0 6px 24px rgb(8 12 60 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.2); transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s, background 0.2s, opacity 0.2s; }
+.bf-panel { position: relative; border-radius: var(--bf-panel-radius); background: var(--bf-panel); border: 1.5px solid var(--bf-panel-line);
+  box-shadow: var(--bf-panel-shadow); transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s, background 0.2s, opacity 0.2s; }
 button.bf-panel:hover:not(:disabled) { border-color: rgb(var(--acc) / 0.9); transform: translateY(-2px); }
-.bf-panel.bf-sel { border-color: rgb(var(--acc)); background: linear-gradient(180deg, rgb(var(--acc) / 0.3), rgb(70 96 200 / 0.45)); box-shadow: 0 0 0 1.5px rgb(var(--acc)), 0 0 26px rgb(var(--acc) / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.3); }
-.bf-glow { text-shadow: 0 0 18px rgb(var(--acc) / 0.8), 0 2px 6px rgb(8 12 60 / 0.6); }
+.bf-panel.bf-sel { border-color: rgb(var(--acc)); background: linear-gradient(180deg, rgb(var(--acc) / 0.3), var(--bf-sel-to)); box-shadow: 0 0 0 1.5px rgb(var(--acc)), 0 0 26px rgb(var(--acc) / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.3); }
+.bf-glow { text-shadow: 0 0 18px rgb(var(--acc) / 0.8), 0 2px 6px rgb(var(--bf-shade) / 0.6); }
 .bf-label { text-transform: uppercase; letter-spacing: 0.13em; font-size: 12px; font-weight: 700; color: rgb(var(--acc)); }
+.bf-solid { background-color: rgb(var(--bf-solid)); }
+.bf-launch.bf-solid { background-color: rgb(var(--bf-solid) / 0.95); }
 .bf-scroll { overflow: auto; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 0.45) transparent; }
 
 /* Buttons. */
@@ -44,13 +47,13 @@ button.bf-panel:hover:not(:disabled) { border-color: rgb(var(--acc) / 0.9); tran
 .bf-btn:hover:not(:disabled) { background: rgb(var(--acc) / 0.38) !important; box-shadow: 0 0 18px rgb(var(--acc) / 0.5); }
 .bf-btn:active:not(:disabled) { transform: scale(0.96); }
 .bf-btn:disabled { opacity: 0.4; }
-.bf-btn.bf-primary { color: #0b1445; background: linear-gradient(180deg, #fff, rgb(var(--acc))) !important; border-color: #fff !important; box-shadow: 0 0 26px rgb(var(--acc) / 0.65); }
+.bf-btn.bf-primary { color: var(--bf-dark-ink); background: linear-gradient(180deg, #fff, rgb(var(--acc))) !important; border-color: #fff !important; box-shadow: 0 0 26px rgb(var(--acc) / 0.65); }
 .bf-btn.bf-primary:hover:not(:disabled) { background: linear-gradient(180deg, #fff, #fff) !important; }
 .bf-btn.bf-primary:not(:disabled)::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / 0.7) 50%, transparent 65%); transform: translateX(-120%); animation: bf-sheen 3.2s ease-in-out infinite; }
 @keyframes bf-sheen { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 .bf-tab { min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 700; color: #e6eeff; border: 1.5px solid rgb(255 255 255 / 0.28) !important; background: rgb(255 255 255 / 0.08) !important; display: inline-flex; align-items: center; gap: 7px; transition: background 0.15s, border-color 0.15s; white-space: nowrap; }
 .bf-tab:hover { background: rgb(255 255 255 / 0.18) !important; }
-.bf-tab[aria-pressed="true"], .bf-tab[aria-checked="true"] { color: #0b1445; background: #fff !important; border-color: #fff !important; }
+.bf-tab[aria-pressed="true"], .bf-tab[aria-checked="true"] { color: var(--bf-dark-ink); background: #fff !important; border-color: #fff !important; }
 .bf-tab i { display: block; width: 12px; height: 13px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
 
 /* A step comes in and goes out (quick). */
@@ -62,7 +65,7 @@ button.bf-panel:hover:not(:disabled) { border-color: rgb(var(--acc) / 0.9); tran
 @keyframes bf-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 /* The holographic lock on a confirmed choice: under half a second. */
-.bf-lock { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; background: rgb(16 24 90 / 0.55); animation: bf-fade 0.1s both; }
+.bf-lock { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--bf-lock-veil); animation: bf-fade 0.1s both; }
 .bf-lock > svg { width: min(64vmin, 400px); height: min(64vmin, 400px); overflow: visible; }
 .bf-lock .r1 { transform-origin: center; animation: bf-ring 0.3s cubic-bezier(0.2, 0.9, 0.1, 1) both; }
 .bf-lock .r2 { transform-origin: center; animation: bf-ring2 0.3s cubic-bezier(0.2, 0.9, 0.1, 1) both; }
@@ -89,10 +92,10 @@ button.bf-panel:hover:not(:disabled) { border-color: rgb(var(--acc) / 0.9); tran
 @keyframes bf-pulse { 50% { opacity: 0.55; } }
 
 /* Places kept for what is still to come. */
-.bf-soon { border-style: dashed; border-color: rgb(255 255 255 / 0.3); background: rgb(255 255 255 / 0.05); box-shadow: none; color: #c7d4f7; }
+.bf-soon { border-style: dashed; border-color: rgb(255 255 255 / 0.3); background: rgb(255 255 255 / 0.05); box-shadow: none; color: var(--bf-soon-ink); }
 
 /* Unit tiles. */
-.bf-tile { display: block; filter: drop-shadow(0 4px 6px rgb(8 12 60 / 0.4)); }
+.bf-tile { display: block; filter: drop-shadow(0 4px 6px rgb(var(--bf-shade) / 0.4)); }
 .bf-unit { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 5px; border-radius: 12px; border: 1.5px solid transparent !important; transition: transform 0.15s, background 0.15s, border-color 0.15s; }
 .bf-unit:hover { transform: translateY(-3px) scale(1.04); background: rgb(255 255 255 / 0.12); border-color: rgb(255 255 255 / 0.5) !important; }
 .bf-unit:active { transform: scale(0.96); }
@@ -100,9 +103,9 @@ button.bf-panel:hover:not(:disabled) { border-color: rgb(var(--acc) / 0.9); tran
 .bf-vip { border-radius: 16px; border: 2px solid #f5c451; background: linear-gradient(180deg, rgb(155 107 214 / 0.5), rgb(88 56 160 / 0.5)); box-shadow: 0 0 28px rgb(245 196 81 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.3); }
 
 /* The unit information card. */
-.bf-veil { --acc: 125 211 252; position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 14px; background: rgb(12 18 70 / 0.62); animation: bf-fade 0.12s both; }
-.bf-card { --acc: 125 211 252; position: relative; width: min(560px, 100%); max-height: 100%; padding: 18px; border-radius: 18px; color: #f3f7ff; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: linear-gradient(180deg, #3550b8, #27358f); border: 2px solid var(--type, #fff); box-shadow: 0 18px 60px rgb(4 8 50 / 0.6), 0 0 34px color-mix(in srgb, var(--type, #fff) 45%, transparent); }
+.bf-veil { --acc: var(--bf-acc); position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 14px; background: var(--bf-veil); animation: bf-fade 0.12s both; }
+.bf-card { --acc: var(--bf-acc); position: relative; width: min(560px, 100%); max-height: 100%; padding: 18px; border-radius: var(--bf-card-radius); color: var(--bf-ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bf-card); border: 2px solid var(--type, #fff); box-shadow: 0 18px 60px rgb(var(--bf-deep) / 0.6), 0 0 34px color-mix(in srgb, var(--type, #fff) 45%, transparent); }
 .bf-pop { animation: bf-pop 0.18s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
 @keyframes bf-pop { from { opacity: 0; transform: scale(0.9) translateY(10px); } }
 .bf-x { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 999px; color: #fff; }
@@ -113,13 +116,13 @@ button.bf-panel:hover:not(:disabled) { border-color: rgb(var(--acc) / 0.9); tran
 .bf-line .unit-glyph { height: 1.9em; }
 
 /* Expansion chips: hardware that seats into its socket. */
-.bf-chip { position: relative; transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.4, 1), filter 0.2s; transform: translateY(-9px); filter: drop-shadow(0 12px 8px rgb(8 12 60 / 0.5)) saturate(0.6); }
+.bf-chip { position: relative; transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.4, 1), filter 0.2s; transform: translateY(-9px); filter: drop-shadow(0 12px 8px rgb(var(--bf-shade) / 0.5)) saturate(0.6); }
 .bf-chip.bf-in { transform: none; filter: drop-shadow(0 0 14px rgb(var(--acc) / 0.7)); }
 .bf-pins { position: absolute; top: 14%; bottom: 14%; width: 9px; background: repeating-linear-gradient(180deg, rgb(226 232 240 / 0.8) 0 4px, transparent 4px 9px); transition: background 0.2s; }
 .bf-chip.bf-in .bf-pins { background: repeating-linear-gradient(180deg, rgb(var(--acc)) 0 4px, transparent 4px 9px); }
 
 /* Intro. */
-.bf-intro { --acc: 125 211 252; position: fixed; inset: 0; z-index: 80; background: #0b1238; color: #fff; overflow: hidden; user-select: none; -webkit-user-select: none; cursor: pointer; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.bf-intro { --acc: var(--bf-acc); position: fixed; inset: 0; z-index: 80; background: var(--bf-intro-bg); color: #fff; overflow: hidden; user-select: none; -webkit-user-select: none; cursor: pointer; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .bf-intro.bf-leave { animation: bf-intro-out 0.42s ease-in both; pointer-events: none; }
 @keyframes bf-intro-out { to { opacity: 0; transform: scale(1.12); } }
 .bf-title-in { animation: bf-title-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
@@ -157,4 +160,4 @@ html.still .brief *, html.still .brief *::before, html.still .brief *::after, ht
 .bf-modslot .module { margin: 0; min-height: 96px; }
 .bf-modslot:hover .module:not(.selected) { box-shadow: 0 0 0 2px rgb(var(--m) / 0.9), 0 0 18px rgb(var(--m) / 0.5); }
 .bf-modslot.on { transform: translateY(-3px); }
-.bf-modslot > div:last-child { color: #dbe7ff; }
+.bf-modslot > div:last-child { color: var(--bf-soft-ink); }

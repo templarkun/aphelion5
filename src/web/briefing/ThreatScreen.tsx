@@ -17,6 +17,7 @@ import { ms } from "./hud.js";
 import { missionLabel, objectiveText } from "./missionText.js";
 import { burst, ring, setEmitter } from "./particles.js";
 import { playConfirm, playOpenInfo, playThreatDown, playThreatUp } from "./soundHooks.js";
+import { briefStyle } from "./styles/index.js";
 import { THREAT_NAMES, THREAT_RGB } from "./types.js";
 import { UnitCard } from "./UnitCard.js";
 import { levelOf } from "./unitFacts.js";
@@ -54,7 +55,8 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
   const panels = useRef(new Map<string, HTMLElement>());
   const body = useRef<HTMLDivElement>(null);
   const level = cols.length;
-  const acc = THREAT_RGB[level]!;
+  // No column yet: the style's own accent; then the colour of the Threat Level.
+  const acc = level === 0 ? briefStyle().acc : THREAT_RGB[level]!;
   const ok = level >= q.min && level <= q.max && !sent;
   const Icon = ICON[level]!;
 

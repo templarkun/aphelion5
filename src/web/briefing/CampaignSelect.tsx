@@ -10,6 +10,7 @@ import { MissionTimeline } from "./MissionTimeline.js";
 import { missionGroups } from "./missionText.js";
 import { setEmitter, sparkEdges } from "./particles.js";
 import { playSelect } from "./soundHooks.js";
+import { briefStyle } from "./styles/index.js";
 import { UnitRoster } from "./UnitRoster.js";
 
 export function loreOf(prefix: string) {
@@ -28,7 +29,7 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
   // Holographic sparks keep hopping off the chosen Campaign's card.
   const sel = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    setEmitter("campaign", sel.current, "grid", "125 211 252", 9);
+    setEmitter("campaign", sel.current, "grid", briefStyle().acc, 9);
     return () => setEmitter("campaign", null);
   }, [cur.prefix]);
   return (
@@ -47,7 +48,7 @@ export function CampaignSelect({ data, profile, value, onChange }: { data: GameD
               role="radio"
               aria-checked={on}
               data-campaign={c.prefix}
-              onClick={(e) => (playSelect(), sparkEdges(e.currentTarget, "125 211 252"), onChange(c.prefix), setFocus(undefined))}
+              onClick={(e) => (playSelect(), sparkEdges(e.currentTarget, briefStyle().acc), onChange(c.prefix), setFocus(undefined))}
               className={`bf-panel bf-rise w-[250px] shrink-0 snap-start !p-3 lg:w-auto ${on ? "bf-sel" : ""}`}
               style={{ "--i": i } as React.CSSProperties}
             >

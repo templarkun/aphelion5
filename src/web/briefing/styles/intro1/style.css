@@ -1,0 +1,41 @@
+/* Style "intro1" (designer 2026-11-14, saved under this name): a bright orbital command deck.
+   Luminous blue space, clear glass panels, white text, sky-blue accent. These are its colours;
+   its shapes and motions are the ones briefing.css gives when a style changes nothing. */
+:root[data-bf-style="intro1"] {
+  /* Accent ("r g b"), text, and the page behind everything. */
+  --bf-acc: 125 211 252;
+  --bf-ink: #f3f7ff;
+  --bf-soft-ink: #dbe7ff;
+  --bf-soon-ink: #c7d4f7;
+  --bf-dark-ink: #0b1445;
+  --bf-page:
+    radial-gradient(70% 55% at 12% 0%, rgb(56 189 248 / 0.38), transparent 70%),
+    radial-gradient(60% 60% at 95% 100%, rgb(192 132 252 / 0.36), transparent 70%),
+    radial-gradient(50% 45% at 78% 8%, rgb(45 212 191 / 0.2), transparent 70%),
+    linear-gradient(160deg, #15246a 0%, #1c2f86 45%, #33278a 100%);
+  /* Glass panels. */
+  --bf-panel: linear-gradient(180deg, rgb(92 124 214 / 0.34), rgb(46 62 150 / 0.42));
+  --bf-panel-line: rgb(255 255 255 / 0.22);
+  --bf-panel-shadow: 0 6px 24px rgb(8 12 60 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.2);
+  --bf-panel-radius: 14px;
+  --bf-sel-to: rgb(70 96 200 / 0.45);
+  /* Shadows ("r g b"), veils, solid surfaces. */
+  --bf-shade: 8 12 60;
+  --bf-deep: 4 8 50;
+  --bf-veil: rgb(12 18 70 / 0.62);
+  --bf-lock-veil: rgb(16 24 90 / 0.55);
+  --bf-solid: 39 53 143;
+  --bf-node: rgb(30 42 130 / 0.95);
+  --bf-card: linear-gradient(180deg, #3550b8, #27358f);
+  --bf-card-radius: 18px;
+  --bf-intro-bg: #0b1238;
+  /* The two colour families the screens name in their Tailwind classes ("r g b"):
+     sky = soft text and small highlights, indigo = the deep shade of bars and veils. */
+  --bf-sky-50: 240 249 255;
+  --bf-sky-100: 224 242 254;
+  --bf-sky-200: 186 230 253;
+  --bf-sky-300: 125 211 252;
+  --bf-indigo-800: 55 48 163;
+  --bf-indigo-900: 49 46 129;
+  --bf-indigo-950: 30 27 75;
+}

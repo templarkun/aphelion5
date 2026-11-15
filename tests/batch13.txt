@@ -634,8 +634,12 @@ then: its Attack bubble says "Attack" (no "one hit of N"). M_05's Jump bubble sa
 id: T13_BRF_01
 title: Intro: the approach once, then a fly-by
 source: designer 2026-11-13; CHANGED 2026-11-14 (designer): the terminal boot, glitches and
-        log lines are gone; a space scene instead; skip window 1 second
-given: the game opened in this browser for the first time
+        log lines are gone; a space scene instead; skip window 1 second;
+        CHANGED 2026-11-15 (designer): this film is now the intro of the style "intro1"
+        (T13_STY_01); a new player gets the style "intro2" (T13_STY_02) unless they choose
+        this one; the button reads "Replay the full intro of intro1"
+given: the style "intro1" chosen (System options > Style), its long intro not yet seen in
+       this browser
 then: about 10 seconds: stars in several depths, nebula and dust; the Company ship flies from
       beside the camera on glowing engine trails towards a ringed planet that turns slowly and
       has a bright rim of atmosphere; brackets close on the planet with "ORBIT LOCK"; the
@@ -656,7 +660,11 @@ source: designer 2026-11-13; CHANGED 2026-11-14 (designer): three steps (the Thr
         the cards or under the Mecha, mission buttons open and close, mission maps and mission
         unit roster, two-column Campaign step on big screens, "NO HARDWARE";
         CHANGED again 2026-11-14 (designer, round 4): Campaign cards one per row on big
-        screens; no unit names in the Campaign unit roster
+        screens; no unit names in the Campaign unit roster;
+        CHANGED 2026-11-15 (designer): the look described in the last two lines (dust, marks,
+        light streaks, hopping sparks) is the style "intro1"; the style "intro2" has its own
+        (T13_STY_03); the layout and every word are the same in both; System options also
+        holds "Style"
 given: no game shown (first visit, or "Leave" from a game)
 then: three steps in order: Campaign, Vessel, Modules. Campaign: Campaign 1 and seven places
       "Classified". On tablets in landscape and PCs (1024 px and wider) the Campaign cards
@@ -741,3 +749,67 @@ when: tap a Company and press "Choose this Ally"
 then: "your Ally: <id>" in the log. If more than one Mecha can come, the Allied Drop screen
       shows them as big tiles with Level and ability; "Drop this Mecha". Only then the Field
       shows, and the Mecha is placed on a Dark sector there.
+
+################################################################################
+=== SECTION: STYLES OF THE INTRO AND THE MENU (intro1, intro2) ===
+
+id: T13_STY_01
+title: Two styles to switch between; intro1 is the look made first
+source: designer 2026-11-14 / 2026-11-15 (screen only, no rule change)
+given: the briefing (no game shown), System options open (the gear)
+then: under "Style - intro and menu look" two choices: "intro1" (Bright command deck: the
+      ringed planet, blue glass, round buttons) and "intro2" (Capital ship: the sunrise
+      horizon, dark glass plates, cut corners). A player who never chose has intro2.
+when: tap "intro1"
+then: the menu changes look at once: exactly as it was before the styles (intro, colours,
+      background, lock rings, sparks; T13_BRF_01, T13_BRF_02). Nothing moves: every card,
+      button and word is in the same place and the same size in both styles.
+when: close and open the page again
+then: the chosen style is still chosen. Each style's long intro plays once, the first time
+      that style is used in this browser; after that its short one. "Replay the full intro of
+      <style>" plays the chosen style's long intro. "Play the intro when the game opens"
+      switches the intros of every style off or on.
+note: The Threat, Module and Ally screens of Mission Preparation follow the chosen style too.
+
+id: T13_STY_02
+title: intro2: the capital ship over the sunrise horizon
+source: designer 2026-11-14 (a massive capital-class Company vessel, not a flat rocket;
+        layered exhaust; three-quarters rear view past the ship to the planet's curved horizon)
+given: the style "intro2", its long intro not yet seen in this browser
+then: about 10 seconds. It opens from black close on the stern: an angular armoured ship with
+      plating seams, four drive bells and two drive pods on pylons, radiator fins. The drives
+      light with a flash: each has a white-hot core with bright knots in it, a cyan stream
+      round it, and soft blue-white dust that swells and drifts back past the camera across
+      the screen. The camera pulls back to show the whole ship from behind and above its
+      starboard side: stepped citadel, command tower with a lit bridge, a mast with a turning
+      radar bar, a communications dish, a sensor array, turrets, lit hangar mouths, rows of
+      windows, running lights, small craft passing. The ship rises and sinks slowly and rolls
+      gently. Beyond and below it the planet fills the picture: its huge curved edge with the
+      sunrise on it, lit cloud near the edge, the night side under the ship with a few points
+      of lava, the ground sliding slowly towards the camera; the sun stands just over the edge.
+      Brackets close on a point of the horizon with "ORBIT LOCK"; the Aphelion 5 mark and
+      name come up low on the right (in the middle on a phone); the ship burns away and the
+      picture washes out into the Campaign step.
+      Two taps within 1 second skip it, as in intro1. On later visits about 1.5 seconds: the
+      ship, then the burn away. With reduced motion one still picture. No sound.
+      On a phone held upright the ship is seen more from behind, running up the screen.
+
+id: T13_STY_03
+title: intro2: the menu in the same style, the layout unchanged
+source: designer 2026-11-14 ("change the menu selection screen's style, colours, animations,
+        effects to reflect the new intro; keep the layout")
+given: the style "intro2", the briefing shown
+then: deep space behind the panels: stars, along the foot of the screen the planet's dark
+      curve with its lit edge and the sunrise low on the right, soft blue-white exhaust dust
+      drifting from right to left, now and then a thin ion trail; all of it leans a little
+      with the pointer and rushes for a moment when the step changes. Panels are dark glass
+      with square corners, two corners marked in ion cyan; white text. The chosen card has a
+      bar of light down its left edge. Buttons have two cut corners; the main button (Confirm,
+      Launch) is white-hot cyan. A step comes in from below with a brief flare; cards slide
+      in from the left. A tap on a button throws slivers of light.
+when: press "Confirm campaign"
+then: two armour doors slide in from the sides and meet across the middle of the screen, a
+      seam of light runs down the join, "CAMPAIGN LOCKED" stands on them; under half a
+      second, then the Vessel step. "Launch command sequence": a square box, the bar fills
+      like a stream of plasma.
+note: Same steps, cards, texts and sizes as T13_BRF_02; only the look differs.

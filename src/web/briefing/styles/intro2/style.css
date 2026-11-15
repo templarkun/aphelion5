@@ -1,0 +1,132 @@
+/* Style "intro2" (designer 2026-11-14): the capital ship. Deep space after the intro's picture:
+   near-black blue, the sunrise glow low on the right, ion-cyan accent, white text (easy to
+   read: no CRT, no monospace). Dark glass plates with marked corners, buttons with cut corners,
+   plates that slide in, armour doors on a confirmed choice. The layout is the same as every
+   style's; only the look changes. */
+:root[data-bf-style="intro2"] {
+  /* Accent ("r g b"), text, and the page behind everything. */
+  --bf-acc: 110 231 255;
+  --bf-ink: #eef6fb;
+  --bf-soft-ink: #cfe3ee;
+  --bf-soon-ink: #a9c0cf;
+  --bf-dark-ink: #04141d;
+  --bf-page:
+    radial-gradient(90% 60% at 90% 112%, rgb(255 170 100 / 0.2), transparent 62%),
+    radial-gradient(70% 50% at 6% -8%, rgb(40 110 190 / 0.22), transparent 70%),
+    linear-gradient(180deg, #03060d 0%, #07101c 52%, #0a1826 100%);
+  /* Dark glass plates. */
+  --bf-panel: linear-gradient(180deg, rgb(28 47 66 / 0.8), rgb(13 25 38 / 0.86));
+  --bf-panel-line: rgb(150 214 240 / 0.26);
+  --bf-panel-shadow: 0 10px 30px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(200 240 255 / 0.12);
+  --bf-panel-radius: 3px;
+  --bf-sel-to: rgb(14 34 50 / 0.9);
+  /* Shadows ("r g b"), veils, solid surfaces. */
+  --bf-shade: 0 4 10;
+  --bf-deep: 0 3 8;
+  --bf-veil: rgb(1 5 12 / 0.74);
+  --bf-lock-veil: rgb(1 6 14 / 0.62);
+  --bf-solid: 12 26 40;
+  --bf-node: rgb(8 26 40 / 0.95);
+  --bf-card: linear-gradient(180deg, #172b3e, #0b1826);
+  --bf-card-radius: 4px;
+  --bf-intro-bg: #02040a;
+  /* sky = soft text and small highlights, indigo = the deep shade of bars and veils ("r g b"). */
+  --bf-sky-50: 236 246 251;
+  --bf-sky-100: 207 227 238;
+  --bf-sky-200: 164 206 226;
+  --bf-sky-300: 110 231 255;
+  --bf-indigo-800: 16 44 64;
+  --bf-indigo-900: 6 22 32;
+  --bf-indigo-950: 2 8 16;
+}
+
+/* Plates: square, with the accent marking two corners. */
+:root[data-bf-style="intro2"] .bf-panel {
+  background:
+    linear-gradient(rgb(var(--acc) / 0.85), rgb(var(--acc) / 0.85)) left top / 16px 2px no-repeat,
+    linear-gradient(rgb(var(--acc) / 0.85), rgb(var(--acc) / 0.85)) left top / 2px 16px no-repeat,
+    linear-gradient(rgb(var(--acc) / 0.85), rgb(var(--acc) / 0.85)) right bottom / 16px 2px no-repeat,
+    linear-gradient(rgb(var(--acc) / 0.85), rgb(var(--acc) / 0.85)) right bottom / 2px 16px no-repeat,
+    var(--bf-panel);
+}
+:root[data-bf-style="intro2"] button.bf-panel:hover:not(:disabled) { transform: none; border-color: rgb(var(--acc) / 0.95); box-shadow: 0 0 0 1px rgb(var(--acc) / 0.35), 0 0 22px rgb(var(--acc) / 0.28), inset 0 1px 0 rgb(200 240 255 / 0.16); }
+/* The chosen plate: a bar of light down its left edge, the accent washing in from it. */
+:root[data-bf-style="intro2"] .bf-panel.bf-sel {
+  border-color: rgb(var(--acc));
+  background: linear-gradient(90deg, rgb(var(--acc) / 0.3), rgb(var(--acc) / 0.09) 55%, rgb(var(--acc) / 0.04)), linear-gradient(180deg, rgb(24 44 62 / 0.92), rgb(11 24 36 / 0.94));
+  box-shadow: inset 4px 0 0 rgb(var(--acc)), 0 0 0 1px rgb(var(--acc) / 0.9), 0 0 30px rgb(var(--acc) / 0.34);
+}
+:root[data-bf-style="intro2"] .bf-soon { border-style: dashed; border-color: rgb(150 214 240 / 0.3); background: rgb(150 214 240 / 0.04); box-shadow: none; }
+/* Boxes inside the plates are square too (round marks such as pips and badges stay round). */
+:root[data-bf-style="intro2"] :is(.brief, .bf-veil) :is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl) { border-radius: 3px; }
+:root[data-bf-style="intro2"] .bf-vip { border-radius: 4px; }
+:root[data-bf-style="intro2"] .bf-unit { border-radius: 3px; }
+:root[data-bf-style="intro2"] .bf-glow { text-shadow: 0 0 22px rgb(var(--acc) / 0.55), 0 2px 8px rgb(0 0 0 / 0.75); }
+:root[data-bf-style="intro2"] .bf-line { background: rgb(150 214 240 / 0.08); border-radius: 3px; }
+:root[data-bf-style="intro2"] .bf-x { border-radius: 3px; }
+
+/* Buttons: two corners cut, a hair-line of the accent all round (the button itself is the line, its fill sits
+   inside; the border is kept, unseen, so every button is exactly as big as in the other styles). */
+:root[data-bf-style="intro2"] .bf-btn {
+  --cut: 11px;
+  border-radius: 0; isolation: isolate; border-color: transparent !important;
+  background: rgb(var(--acc) / 0.85) !important;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+:root[data-bf-style="intro2"] .bf-btn::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; transition: background 0.15s;
+  background: linear-gradient(180deg, #14304a, #0a1b29);
+  clip-path: polygon(calc(var(--cut) - 0.6px) 0, 100% 0, 100% calc(100% - var(--cut) + 0.6px), calc(100% - var(--cut) + 0.6px) 100%, 0 100%, 0 calc(var(--cut) - 0.6px));
+}
+:root[data-bf-style="intro2"] .bf-btn:hover:not(:disabled) { background: rgb(var(--acc)) !important; box-shadow: none; }
+:root[data-bf-style="intro2"] .bf-btn:hover:not(:disabled)::before { background: linear-gradient(180deg, rgb(var(--acc) / 0.38), rgb(var(--acc) / 0.16)), #0c1e2c; }
+:root[data-bf-style="intro2"] .bf-btn:focus-visible { outline-offset: -6px; }
+/* The main button: white-hot plasma. */
+:root[data-bf-style="intro2"] .bf-btn.bf-primary { color: var(--bf-dark-ink); background: #fff !important; box-shadow: none; }
+:root[data-bf-style="intro2"] .bf-btn.bf-primary::before { background: linear-gradient(180deg, #f6feff 0%, rgb(var(--acc)) 62%, color-mix(in srgb, rgb(var(--acc)) 72%, #063a52) 100%); }
+:root[data-bf-style="intro2"] .bf-btn.bf-primary:hover:not(:disabled)::before { background: linear-gradient(180deg, #fff, #e9fcff); }
+:root[data-bf-style="intro2"] .bf-btn.bf-primary:not(:disabled)::after { background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.85) 50%, transparent 70%); animation-duration: 2.6s; }
+:root[data-bf-style="intro2"] .bf-tab { border-radius: 2px; border-color: rgb(150 214 240 / 0.32) !important; background: rgb(150 214 240 / 0.06) !important; }
+:root[data-bf-style="intro2"] .bf-tab:hover { background: rgb(150 214 240 / 0.16) !important; }
+:root[data-bf-style="intro2"] .bf-tab[aria-pressed="true"], :root[data-bf-style="intro2"] .bf-tab[aria-checked="true"] { color: var(--bf-dark-ink); background: rgb(var(--acc)) !important; border-color: rgb(var(--acc)) !important; box-shadow: 0 0 16px rgb(var(--acc) / 0.45); }
+
+/* A step comes in from below with a brief flare, like a screen powering up; plates slide in from the left. */
+:root[data-bf-style="intro2"] .bf-step-in { animation: bf2-step-in 0.3s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
+:root[data-bf-style="intro2"] .bf-step-out { animation: bf2-step-out 0.13s ease-in both; }
+@keyframes bf2-step-in { from { opacity: 0; transform: translateY(18px) scale(0.985); filter: brightness(1.8); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes bf2-step-out { to { opacity: 0; transform: translateY(-10px) scale(1.012); } }
+:root[data-bf-style="intro2"] .bf-rise { animation: bf2-rise 0.32s cubic-bezier(0.16, 0.84, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 26ms); }
+@keyframes bf2-rise { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+:root[data-bf-style="intro2"] .bf-pop { animation: bf2-pop 0.2s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
+@keyframes bf2-pop { from { opacity: 0; transform: scaleY(0.6); filter: brightness(2); } }
+
+/* The bars at the top and foot: a thread of the accent along their inner edge. */
+:root[data-bf-style="intro2"] .brief > header { box-shadow: inset 0 -1px 0 rgb(var(--acc) / 0.4); }
+:root[data-bf-style="intro2"] .brief > footer { box-shadow: inset 0 1px 0 rgb(var(--acc) / 0.4); }
+
+/* Armour doors on a confirmed choice. */
+.bf2-doors { position: relative; width: 100%; height: min(34vmin, 190px); display: grid; place-items: center; overflow: hidden; }
+.bf2-doors .l, .bf2-doors .r { position: absolute; top: 0; bottom: 0; width: 50%; background: linear-gradient(180deg, #1a3147, #0b1a28); border-top: 2px solid rgb(var(--acc)); border-bottom: 2px solid rgb(var(--acc)); box-shadow: inset 0 0 40px rgb(0 0 0 / 0.5); }
+.bf2-doors .l { left: 0; animation: bf2-door-l 0.2s cubic-bezier(0.3, 0, 0.1, 1) both; background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgb(150 214 240 / 0.1) 46px 47px), linear-gradient(180deg, #1a3147, #0b1a28); }
+.bf2-doors .r { right: 0; animation: bf2-door-r 0.2s cubic-bezier(0.3, 0, 0.1, 1) both; background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgb(150 214 240 / 0.1) 46px 47px), linear-gradient(180deg, #1a3147, #0b1a28); }
+@keyframes bf2-door-l { from { transform: translateX(-102%); } to { transform: none; } }
+@keyframes bf2-door-r { from { transform: translateX(102%); } to { transform: none; } }
+.bf2-doors .seam { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 18px 4px rgb(var(--acc)), 0 0 60px 14px rgb(var(--acc) / 0.5); transform-origin: center; animation: bf2-seam 0.26s 0.16s ease-out both; }
+@keyframes bf2-seam { 0% { transform: scaleY(0); opacity: 0; } 35% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1) scaleX(0.4); opacity: 0.55; } }
+.bf2-doors .tx { position: relative; text-align: center; padding: 10px 26px; background: rgb(4 14 22 / 0.86); border: 1px solid rgb(var(--acc) / 0.9); clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); animation: bf2-word 0.18s 0.17s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+.bf2-doors .tx .t { font-size: clamp(20px, 4.6vmin, 34px); font-weight: 800; letter-spacing: 0.2em; padding-left: 0.2em; color: #fff; text-shadow: 0 0 18px rgb(var(--acc) / 0.8); }
+.bf2-doors .tx .s { margin-top: 2px; font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; letter-spacing: 0.16em; color: rgb(var(--acc)); }
+@keyframes bf2-word { from { opacity: 0; transform: scale(1.25); } }
+.bf-lock.bf2-lock .fl { background: rgb(var(--acc)); }
+
+/* The Launch box: square, a stream of plasma filling its bar. */
+:root[data-bf-style="intro2"] .bf-launch { border-radius: 4px; border-color: rgb(var(--acc) / 0.8); }
+:root[data-bf-style="intro2"] .bf-launch-bar { border-radius: 0; background: linear-gradient(90deg, rgb(var(--acc) / 0.25), rgb(var(--acc)) 80%, #fff); }
+
+/* The intro's name: thin and wide; on a wide screen it sits low on the right, clear of the ship. */
+.bf-intro[data-intro-style="intro2"] .bf-name { font-weight: 300; letter-spacing: 0.52em; }
+@media (min-aspect-ratio: 1/1) {
+  .bf-intro[data-intro-style="intro2"] .bf-title-in { align-items: flex-end; text-align: right; left: auto; right: 5vw; bottom: 9%; }
+}
+.bf-intro[data-intro-style="intro2"] .bf-title-in { animation-name: bf2-title-in; animation-duration: 1.1s; }
+@keyframes bf2-title-in { from { opacity: 0; transform: translateX(22px); filter: blur(6px); } }

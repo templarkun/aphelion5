@@ -1,19 +1,19 @@
 /**
- * What the briefing remembers in this browser: whether the long intro has been seen. Storage can
- * be blocked (private windows, previews): every read and write is guarded and the screen works
- * without it.
+ * What the briefing remembers in this browser: whether the long intro of each style has been
+ * seen, and which style is chosen (styles/index.ts). Storage can be blocked (private windows,
+ * previews): every read and write is guarded and the screen works without it.
  */
 
 const INTRO = "aphelion5.intro";
 
-function read(key: string): string | null {
+export function readPref(key: string): string | null {
   try {
     return localStorage.getItem(key);
   } catch {
     return null;
   }
 }
-function write(key: string, value: string | null): void {
+export function writePref(key: string, value: string | null): void {
   try {
     if (value === null) localStorage.removeItem(key);
     else localStorage.setItem(key, value);
@@ -22,16 +22,25 @@ function write(key: string, value: string | null): void {
   }
 }
 
-/** "full" = the long approach (first visit), "short" = the 1.5-second fly-by, "off" = none. */
+/**
+ * "aphelion5.intro": "off" = no intro at all; "seen" = the long intro of intro1 has played.
+ * Every later style keeps its own mark ("aphelion5.intro.<style>" = "seen"), so the first time a
+ * style is used its long intro plays once.
+ */
+const seenKey = (style: string) => (style === "intro1" ? INTRO : `${INTRO}.${style}`);
+
+/** "full" = the long intro (first visit with this style), "short" = the 1.5-second one, "off" = none. */
 export type IntroMode = "full" | "short" | "off";
-export function introMode(): IntroMode {
-  const v = read(INTRO);
-  return v === "off" ? "off" : v === "seen" ? "short" : "full";
+export function introMode(style: string): IntroMode {
+  if (readPref(INTRO) === "off") return "off";
+  return readPref(seenKey(style)) === "seen" ? "short" : "full";
 }
+/** The switch in System options: off, or on again (short intros; a style never seen still plays its long one once). */
 export function setIntroMode(m: IntroMode): void {
-  write(INTRO, m === "full" ? null : m === "short" ? "seen" : "off");
+  writePref(INTRO, m === "full" ? null : m === "short" ? "seen" : "off");
 }
-/** After the long intro has played once, later visits get the short one. */
-export function markIntroSeen(): void {
-  if (introMode() === "full") write(INTRO, "seen");
+/** After a style's long intro has played once, later visits get its short one. */
+export function markIntroSeen(style: string): void {
+  if (readPref(INTRO) === "off") return;
+  writePref(seenKey(style), "seen");
 }

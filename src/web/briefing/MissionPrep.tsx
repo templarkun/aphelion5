@@ -21,7 +21,7 @@ import { missionLabel } from "./missionText.js";
 import { burstFrom, ring, sparkEdges } from "./particles.js";
 import { playConfirm, playOpenInfo, playSelect } from "./soundHooks.js";
 import { ThreatScreen } from "./ThreatScreen.js";
-import { SKY } from "./types.js";
+import { briefStyle } from "./styles/index.js";
 import { UnitCard } from "./UnitCard.js";
 import { levelOf } from "./unitFacts.js";
 import { UnitTile } from "./UnitTile.js";
@@ -49,7 +49,7 @@ type Props = { data: GameData; state: GameState; q: Question; onAnswer: (kind: "
 
 export function MissionPrep({ data, state, q, onAnswer }: Props) {
   const kind = prepKind(q)!;
-  const [acc, setAcc] = useState(SKY);
+  const [acc, setAcc] = useState(() => briefStyle().acc);
   const camp = data.campaigns.find((c) => c.prefix === state.campaign);
   const m = camp?.missionById.get(state.mission ?? "");
   const drop = m?.event.type === "allied_drop";
@@ -136,7 +136,7 @@ function slotsOf(data: GameData, id: number): PlanInfo {
 function ModulePick({ data, state, q, steps, setAcc, onAnswer }: { data: GameData; state: GameState; q: OptionQ; steps: React.ReactNode; setAcc: (x: string) => void; onAnswer: (id: string) => void }) {
   const c = { data, state };
   const [pick, setPick] = useState<string | undefined>();
-  const [sent, send] = useSend(onAnswer, SKY);
+  const [sent, send] = useSend(onAnswer, briefStyle().acc);
   const chosen = pick !== undefined ? moduleDef(c, Number(pick)) : undefined;
   const select = (id: string, el: Element) => {
     if (sent) return;

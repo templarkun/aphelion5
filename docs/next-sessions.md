@@ -1,4 +1,4 @@
-# Next sessions (plan, updated 2026-11-10)
+# Next sessions (plan, updated 2026-11-15)
 
 All 8 build stages are built and all test batches (1-9) are agreed and in the Project. What
 is left for version 1 (spec "Scope", "Acceptance") and after:
@@ -61,6 +61,11 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    2026-11-10 step 5: the remaining event looks (turn, Boost / Shield / repair, Barrier and Fuse
    tokens, uncover, Overload start and end, Overhaul, Wreck smoke) and Menu settings (animation
    speed, reduced motion). Next: the designer tries them; then step 6 (phone check of every drag).
+   2026-11-15 styles: the intro and menu look is now a "style" the player switches (System
+   options > Style): "intro1" (the first look, saved) and "intro2" (capital ship over the
+   sunrise horizon, dark glass menu). Next: the designer compares them and says which to keep
+   or what to change; more styles can be added beside them (`src/web/briefing/styles/README.md`).
+   The ship in intro2 is a stand-in built from blocks (`styles/intro2/ship.ts`) until real art.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    The Flagship picture on the Upgrade sheet (`FlagshipArt` in `src/web/UpgradeSheet.tsx`) is a

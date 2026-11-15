@@ -8,6 +8,7 @@ import { COMPANY_SLOTS } from "./content.js";
 import { Readout, StepHead } from "./hud.js";
 import { burstFrom, setEmitter, sparkEdges } from "./particles.js";
 import { playOpenInfo, playSelect } from "./soundHooks.js";
+import { briefStyle } from "./styles/index.js";
 import type { Loadout } from "./types.js";
 import { UnitCard } from "./UnitCard.js";
 import { levelOf } from "./unitFacts.js";
@@ -37,7 +38,7 @@ export function VesselSelect(p: { data: GameData; profile: Profile; value: strin
   // Thruster glow drifts down from the chosen Company's card.
   const sel = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    setEmitter("vessel", sel.current, "thruster", "125 211 252", 11);
+    setEmitter("vessel", sel.current, "thruster", briefStyle().acc, 11);
     return () => setEmitter("vessel", null);
   }, [cur.id]);
   const mechaIds = cur.startingMecha.map((m) => m.id);
@@ -55,7 +56,7 @@ export function VesselSelect(p: { data: GameData; profile: Profile; value: strin
               role="radio"
               aria-checked={on}
               data-company={c.id}
-              onClick={(e) => (playSelect(), sparkEdges(e.currentTarget, "125 211 252"), p.onChange(c.id), setBay(undefined))}
+              onClick={(e) => (playSelect(), sparkEdges(e.currentTarget, briefStyle().acc), p.onChange(c.id), setBay(undefined))}
               className={`bf-panel bf-rise w-[240px] shrink-0 snap-start !p-3 ${on ? "bf-sel" : ""}`}
               style={{ "--i": i } as React.CSSProperties}
             >

@@ -69,9 +69,9 @@ export function VesselSchematic({ company, bay, onBay }: { company: CompanyDef; 
         return (
           <g key={b.id} transform={`translate(${x} ${y})`} className="cursor-pointer" onPointerEnter={() => onBay(b.number)} onPointerLeave={() => onBay(undefined)} onClick={() => onBay(b.number)}>
             <circle r="20" fill="transparent" />
-            <polygon points="0,-13 11.3,-6.5 11.3,6.5 0,13 -11.3,6.5 -11.3,-6.5" fill={on ? "#fff" : "rgb(30 42 130 / 0.95)"} stroke="#fff" strokeWidth={on ? 2 : 1.4} />
+            <polygon points="0,-13 11.3,-6.5 11.3,6.5 0,13 -11.3,6.5 -11.3,-6.5" style={{ fill: on ? "#fff" : "var(--bf-node)" }} stroke="#fff" strokeWidth={on ? 2 : 1.4} />
             {on && <circle r="18" fill="none" stroke="rgb(var(--acc))" strokeWidth="0.8" strokeDasharray="4 3" className="bf-spin" />}
-            <text y="4" textAnchor="middle" fontSize="11" fontWeight="700" fill={on ? "#0b1445" : "#fff"} fontFamily="system-ui, sans-serif">
+            <text y="4" textAnchor="middle" fontSize="11" fontWeight="700" style={{ fill: on ? "var(--bf-dark-ink)" : "#fff" }} fontFamily="system-ui, sans-serif">
               {b.number}
             </text>
           </g>

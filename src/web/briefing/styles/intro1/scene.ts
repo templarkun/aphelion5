@@ -1,5 +1,5 @@
 /**
- * The intro's space scene, drawn on a 2D canvas: a deep field of stars in three depths, nebula
+ * Style "intro1": the intro's space scene, drawn on a 2D canvas: a deep field of stars in three depths, nebula
  * and dust, an alien planet (turning, ringed, lit from the upper left with a glowing rim of
  * atmosphere), and the Company's ship flying from beside the camera towards it on ion trails.
  * As it reaches orbit, telemetry brackets close on the planet. Looks only; no game data.
@@ -7,7 +7,8 @@
  * "full": the 10-second approach.  "short": a 1.5-second fly-by for a returning player.
  */
 
-import { noise3 } from "../noise.js";
+import { noise3 } from "../../../noise.js";
+import type { IntroScene } from "../types.js";
 
 export const FULL_SECONDS = 10.4;
 export const SHORT_SECONDS = 1.5;
@@ -111,11 +112,7 @@ interface Puff {
   life: number;
 }
 
-export interface Scene {
-  draw(g: CanvasRenderingContext2D, w: number, h: number, t: number, mode: "full" | "short"): void;
-}
-
-export function createScene(): Scene {
+export function createScene(): IntroScene {
   const R = rng(4242);
   const cols = ["255 255 255", "190 227 255", "255 236 179", "224 215 255"];
   const stars: Star[] = Array.from({ length: 380 }, (_, i) => ({ x: R(), y: R(), z: i < 220 ? 0.2 : i < 330 ? 0.5 : 1, r: 0.4 + R() * 1.3, ph: R() * TAU, col: cols[Math.floor(R() * cols.length)]! }));

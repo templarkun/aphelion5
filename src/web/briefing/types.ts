@@ -26,6 +26,5 @@ export interface Loadout {
 
 /** The names the Core Rules give the Threat Levels (7.2 step 3). */
 export const THREAT_NAMES = ["", "Patrol", "Assault", "Siege", "Annihilation"] as const;
-/** Accent per Threat Level: sky blue, then amber, orange and crimson. 0 = none chosen yet. */
+/** Accent per Threat Level: light blue, then amber, orange and crimson. 0 = none chosen yet (the screen uses the style's accent). */
 export const THREAT_RGB = ["125 211 252", "103 232 249", "252 211 77", "251 146 60", "251 113 133"] as const;
-export const SKY = "125 211 252";

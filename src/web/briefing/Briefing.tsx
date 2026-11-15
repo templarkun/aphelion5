@@ -16,9 +16,10 @@ import { AmbientLayer, FxLayer, ambientKick } from "./fx.js";
 import { LockOverlay, hoverHook, ms, tapSpark } from "./hud.js";
 import { Logo } from "./IntroSequence.js";
 import { burst, burstFrom, ring } from "./particles.js";
-import { type IntroMode, introMode, setIntroMode } from "./prefs.js";
-import { playBack, playConfirm, playLaunch, playTransition } from "./soundHooks.js";
-import { BRIEF_STEPS, type BriefStep, type Loadout, SKY } from "./types.js";
+import { readPref, setIntroMode } from "./prefs.js";
+import { playBack, playConfirm, playLaunch, playSelect, playTransition } from "./soundHooks.js";
+import { STYLES, setBriefStyle, useBriefStyle } from "./styles/index.js";
+import { BRIEF_STEPS, type BriefStep, type Loadout } from "./types.js";
 import { VesselSelect, hasMarks } from "./VesselSelect.js";
 
 export interface BriefingProps {
@@ -49,7 +50,10 @@ export function Briefing(p: BriefingProps) {
   const [lock, setLock] = useState<{ title: string; sub: string } | undefined>();
   const [launching, setLaunching] = useState(false);
   const [drawer, setDrawer] = useState(false);
-  const [intro, setIntro] = useState<IntroMode>(introMode);
+  const [introOn, setIntroOn] = useState(() => readPref("aphelion5.intro") !== "off");
+  // The chosen style (System options > Style): its accent, background, lock and sparks.
+  const style = useBriefStyle();
+  const acc = style.acc;
 
   const [campaign, setCampaign] = useState(data.campaigns[0]!.prefix);
   const [company, setCompany] = useState(data.companies.companies[0]!.id);
@@ -79,7 +83,7 @@ export function Briefing(p: BriefingProps) {
   /** A confirmed choice: the holographic lock snaps shut on it, then the next step comes in. */
   function lockIn(title: string, sub: string, to: BriefStep): void {
     playConfirm();
-    ring(innerWidth / 2, innerHeight / 2, SKY, 900, 0.4, 40);
+    ring(innerWidth / 2, innerHeight / 2, acc, 900, 0.4, 40);
     burst(innerWidth / 2, innerHeight / 2, { count: 40, speed: 520, life: 0.5, rgb: "255 255 255", shape: "streak", size: 3 });
     setLock({ title, sub });
     later(() => {
@@ -112,8 +116,8 @@ export function Briefing(p: BriefingProps) {
   const modsText = expansions.length ? expansions.map((x) => EXPANSION_INFO[x]?.name ?? x).join(", ") : "none";
 
   return (
-    <main className="brief flex flex-col" style={{ "--acc": SKY } as React.CSSProperties} data-step={step} data-busy={busy ? "1" : "0"} onPointerOver={hoverHook} onPointerDown={tapSpark}>
-      <AmbientLayer rgb={SKY} />
+    <main className="brief flex flex-col" style={{ "--acc": acc } as React.CSSProperties} data-style={style.id} data-step={step} data-busy={busy ? "1" : "0"} onPointerOver={hoverHook} onPointerDown={tapSpark}>
+      <AmbientLayer rgb={acc} />
       <FxLayer />
 
       <header className="relative z-10 flex items-center gap-3 border-b border-white/20 bg-indigo-950/30 px-3 py-2 sm:px-5">
@@ -198,7 +202,7 @@ export function Briefing(p: BriefingProps) {
 
       {drawer && (
         <div className="absolute inset-0 z-[55] flex justify-end bg-indigo-950/60" onClick={() => setDrawer(false)}>
-          <aside className="bf-scroll bf-step-in h-full w-[min(92vw,400px)] border-l-2 border-white/40 bg-[#27358f] p-4" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="System options">
+          <aside className="bf-scroll bf-step-in bf-solid h-full w-[min(92vw,400px)] border-l-2 border-white/40 p-4" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="System options">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-extrabold uppercase tracking-[0.12em] text-white">System options</h2>
               <button type="button" className="grid h-11 w-11 place-items-center rounded-full text-white hover:bg-white/15" aria-label="Close" onClick={() => setDrawer(false)}>
@@ -230,22 +234,40 @@ export function Briefing(p: BriefingProps) {
                 Paste a save…
               </button>
               {p.onContinue && <p className="text-[14px] text-sky-100">Launching a new campaign replaces the game in progress.</p>}
-              <div className="bf-label mt-2">Intro</div>
+              <div className="bf-label mt-2">Style · intro and menu look</div>
+              <div className="flex flex-col gap-2" role="radiogroup" aria-label="Style">
+                {STYLES.map((x) => (
+                  <button
+                    key={x.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={x.id === style.id}
+                    data-style-pick={x.id}
+                    className={`bf-panel !p-3 text-left ${x.id === style.id ? "bf-sel" : ""}`}
+                    onClick={() => (playSelect(), setBriefStyle(x.id))}
+                  >
+                    <span className="flex items-center justify-between gap-2">
+                      <b className="text-[16px] font-extrabold tracking-wider text-white">{x.name}</b>
+                      {x.id === style.id && <Check size={18} className="text-emerald-300" />}
+                    </span>
+                    <span className="mt-0.5 block text-[14px] leading-snug text-sky-100">{x.note}</span>
+                  </button>
+                ))}
+              </div>
               <label className="flex items-start gap-2">
                 <input
                   type="checkbox"
                   className="mt-1 h-4 w-4 accent-sky-300"
-                  checked={intro !== "off"}
+                  checked={introOn}
                   onChange={(e) => {
-                    const m: IntroMode = e.target.checked ? "short" : "off";
-                    setIntroMode(m);
-                    setIntro(m);
+                    setIntroMode(e.target.checked ? "short" : "off");
+                    setIntroOn(e.target.checked);
                   }}
                 />
                 Play the intro when the game opens
               </label>
               <button type="button" className="bf-btn" onClick={() => (setDrawer(false), p.onReplayIntro())}>
-                Replay the full intro
+                Replay the full intro of {style.name}
               </button>
             </div>
           </aside>
@@ -260,7 +282,7 @@ function LaunchOverlay({ lines }: { lines: [string, string][] }) {
   const total = ms(LAUNCH_MS);
   return (
     <div className="bf-lock" role="status" aria-live="polite" data-launching="1">
-      <div className="w-[min(92vw,480px)] rounded-2xl border-2 border-white/60 bg-[#27358f]/95 p-5">
+      <div className="bf-launch bf-solid w-[min(92vw,480px)] rounded-2xl border-2 border-white/60 p-5">
         <div className="bf-glow text-center text-lg font-extrabold uppercase tracking-[0.22em] text-white sm:text-xl">Launch</div>
         <ul className="m-0 mt-3 list-none p-0 text-[15px] text-white">
           {lines.map(([k, v]) => (

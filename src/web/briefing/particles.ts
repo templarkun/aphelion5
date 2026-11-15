@@ -6,8 +6,10 @@
  */
 
 import { isStill } from "../motion.js";
+import { briefStyle, type ParticleShape } from "./styles/index.js";
 
-export type Shape = "spark" | "mote" | "ember" | "ring" | "streak";
+/** The shapes a screen may ask for; the chosen style may draw another in its place (squares as shards ...). */
+export type Shape = ParticleShape;
 export interface Particle {
   x: number;
   y: number;
@@ -62,8 +64,8 @@ export function burst(x: number, y: number, o: BurstOptions = {}): void {
       age: 0,
       life: (o.life ?? 0.7) * rnd(0.6, 1.2),
       size: (o.size ?? 2.2) * rnd(0.6, 1.3),
-      rgb: o.rgb ?? "125 211 252",
-      shape: o.shape ?? "spark",
+      rgb: o.rgb ?? briefStyle().acc,
+      shape: briefStyle().shape(o.shape ?? "spark"),
       drag: o.drag ?? 0.12,
       grav: o.grav ?? 0,
       grow: 0,
@@ -118,7 +120,7 @@ interface Emitter {
   owed: number;
 }
 const emitters = new Map<string, Emitter>();
-export function setEmitter(key: string, el: Element | null | undefined, look: EmitterLook = "grid", rgb = "125 211 252", rate = 14): void {
+export function setEmitter(key: string, el: Element | null | undefined, look: EmitterLook = "grid", rgb = briefStyle().acc, rate = 14): void {
   if (!el) emitters.delete(key);
   else emitters.set(key, { el, look, rgb, rate, owed: emitters.get(key)?.owed ?? 0 });
 }
@@ -197,6 +199,31 @@ export function drawParticles(g: CanvasRenderingContext2D): void {
       g.fillStyle = grd;
       g.beginPath();
       g.arc(p.x, p.y, r * 2.2, 0, Math.PI * 2);
+      g.fill();
+    } else if (p.shape === "shard") {
+      // A sliver of light along its flight: long and thin, sharp at both ends.
+      const v = Math.hypot(p.vx, p.vy) || 1;
+      const ux = p.vx / v;
+      const uy = p.vy / v;
+      const len = p.size * (2.2 + Math.min(3, v * 0.012)) * (1 - t * 0.5);
+      const wd = p.size * 0.42;
+      g.fillStyle = c;
+      g.beginPath();
+      g.moveTo(p.x + ux * len, p.y + uy * len);
+      g.lineTo(p.x - uy * wd, p.y + ux * wd);
+      g.lineTo(p.x - ux * len, p.y - uy * len);
+      g.lineTo(p.x + uy * wd, p.y - ux * wd);
+      g.fill();
+    } else if (p.shape === "plasma") {
+      // Exhaust: a white-hot point that swells into a soft cloud as it cools.
+      const r = p.size * (1.4 + t * 4.2);
+      const grd = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+      grd.addColorStop(0, `rgb(255 255 255 / ${(a * (1 - t) * 0.95).toFixed(3)})`);
+      grd.addColorStop(0.25, `rgb(${p.rgb} / ${(a * 0.6).toFixed(3)})`);
+      grd.addColorStop(1, `rgb(${p.rgb} / 0)`);
+      g.fillStyle = grd;
+      g.beginPath();
+      g.arc(p.x, p.y, r, 0, Math.PI * 2);
       g.fill();
     } else {
       g.fillStyle = c;
