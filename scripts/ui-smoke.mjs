@@ -1167,7 +1167,9 @@ for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone"
   await pg.waitForTimeout(1300);
   await pg.screenshot({ path: `${out}/ui-mission-intro${name}.png` });
   await settle(pg);
+  await pg.waitForFunction(() => !document.querySelector("[data-mission-intro]") && !document.querySelector(".game.upgrading"), null, { timeout: 9000 }).catch(() => {});
   const fieldShown = (await pg.locator(".game.upgrading").count()) === 0 && (await pg.locator("[data-mission-intro]").count()) === 0;
+  if (!fieldShown) console.log("field", { upgrading: await pg.locator(".game.upgrading").count(), intro: await pg.locator("[data-mission-intro]").count(), prep: await pg.locator("[data-prep]").getAttribute("data-prep").catch(() => "none"), gate: await pg.locator("[data-gate]").count() });
   await pg.waitForTimeout(300);
   // The loadout reached the game: V2, and Mission 1 plays the three columns chosen.
   await toggleLog(pg);
