@@ -69,6 +69,8 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    2026-11-16 round 18: designer chose intro2 as the default. Bug fix (unit-pick bubbles), two
    rules changes (Power Node 2 Heat, M_02 arrows), Bay 3 and similar effects played on the
    Field (`StackPicker.tsx`), briefing roster / Threat layout, slower transitions.
+   Round 19: the logo gate between setup screens (`Gate.tsx`), a short mission intro before the
+   Field (`MissionIntro.tsx`), Module draw text sizes. Next: the game's outro (new session).
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    The Flagship picture on the Upgrade sheet (`FlagshipArt` in `src/web/UpgradeSheet.tsx`) is a

@@ -54,7 +54,7 @@ export interface BriefStyle {
   intro: IntroFilm;
   /** A new background painter for one menu screen (it keeps its own stars, dust ...). */
   ambient(): AmbientPainter;
-  /** The animation over the screen when a choice is confirmed (under half a second). */
+  /** The style's own confirm animation. Not shown since 2026-11-16: every style uses the shared logo gate (Gate.tsx). */
   Lock(p: { title: string; sub: string }): ReactElement;
   /** The shape this style draws when a screen asks for a given one (e.g. squares become shards). */
   shape(asked: ParticleShape): ParticleShape;

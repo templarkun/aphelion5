@@ -4,18 +4,12 @@ import type { ReactNode } from "react";
 import { isStill, speedFactor } from "../motion.js";
 import { burst } from "./particles.js";
 import { playHover } from "./soundHooks.js";
-import { briefStyle, useBriefStyle } from "./styles/index.js";
+import { briefStyle } from "./styles/index.js";
 
 /** Animation length in ms at the player's speed setting; 0 with reduced motion or Instant. */
 export function ms(n: number): number {
   const f = speedFactor();
   return isStill() || f === 0 ? 0 : n / f;
-}
-
-/** A confirmed choice: the chosen style's lock animation over the screen. Under half a second. */
-export function LockOverlay({ title, sub }: { title: string; sub: string }) {
-  const { Lock } = useBriefStyle();
-  return <Lock title={title} sub={sub} />;
 }
 
 /** Rating pips (difficulty). */

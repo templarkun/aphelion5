@@ -13,7 +13,8 @@ import { CampaignSelect, loreOf } from "./CampaignSelect.js";
 import { EXPANSION_INFO } from "./content.js";
 import { ExpansionSelect } from "./ExpansionSelect.js";
 import { AmbientLayer, FxLayer, ambientKick } from "./fx.js";
-import { LockOverlay, hoverHook, ms, tapSpark } from "./hud.js";
+import { runGate } from "./Gate.js";
+import { hoverHook, ms, tapSpark } from "./hud.js";
 import { Logo } from "./IntroSequence.js";
 import { burst, burstFrom, ring } from "./particles.js";
 import { readPref, setIntroMode } from "./prefs.js";
@@ -37,10 +38,10 @@ export interface BriefingProps {
   onReplayIntro: () => void;
 }
 
-/** Confirm animations are short (designer 2026-11-14); twice as long since 2026-11-16 (designer). */
+/** Step changes (Back, the step tabs); a confirmed choice plays the logo gate (Gate.tsx, designer 2026-11-16). */
 const STEP_OUT = 240;
-const LOCK_MS = 860;
-const LAUNCH_MS = 1700;
+/** The loadout read back before the gate closes over the briefing. */
+const LAUNCH_MS = 1100;
 
 export function Briefing(p: BriefingProps) {
   const { data } = p;
@@ -80,16 +81,23 @@ export function Briefing(p: BriefingProps) {
       setLeaving(false);
     }, STEP_OUT);
   }
-  /** A confirmed choice: the holographic lock snaps shut on it, then the next step comes in. */
+  /** A confirmed choice: the logo gate closes on it, the next step is put in place behind the doors, they open. */
   function lockIn(title: string, sub: string, to: BriefStep): void {
     playConfirm();
     ring(innerWidth / 2, innerHeight / 2, acc, 900, 0.4, 40);
     burst(innerWidth / 2, innerHeight / 2, { count: 40, speed: 520, life: 0.5, rgb: "255 255 255", shape: "streak", size: 3 });
     setLock({ title, sub });
-    later(() => {
-      setLock(undefined);
-      go(to);
-    }, LOCK_MS);
+    runGate({
+      title,
+      sub,
+      acc,
+      onMid: () => {
+        setStep(to);
+        setReached((r) => Math.max(r, BRIEF_STEPS.findIndex((s) => s.id === to)));
+        ambientKick(1);
+      },
+      onEnd: () => setLock(undefined),
+    });
   }
   function confirm(el: Element): void {
     if (busy) return;
@@ -108,7 +116,8 @@ export function Briefing(p: BriefingProps) {
         developerMode: dev,
         seed: seed ? Number(seed) : Math.floor(Math.random() * 1e9),
       };
-      later(() => p.onLaunch(loadout), LAUNCH_MS);
+      // The loadout is read back, then the gate closes over the briefing and opens on the game.
+      later(() => runGate({ title: "LAUNCH", sub: loreOf(campaign).title, acc, onMid: () => p.onLaunch(loadout) }), LAUNCH_MS);
     }
   }
 
@@ -197,7 +206,6 @@ export function Briefing(p: BriefingProps) {
         </button>
       </footer>
 
-      {lock && <LockOverlay title={lock.title} sub={lock.sub} />}
       {launching && <LaunchOverlay lines={[["Campaign", loreOf(campaign).title], ["Vessel", co.name], ["Modules", modsText]]} />}
 
       {drawer && (

@@ -43,12 +43,21 @@ async function clickField(pg, n = 0) {
 
 /** A step of the command briefing is on screen and ready for a tap. */
 const briefAt = (pg, step) => pg.waitForSelector(`.brief[data-step=${step}][data-busy="0"]`);
+/** The logo gate between setup screens has opened again; a mission intro (before the Field) is tapped away. */
+async function settle(pg) {
+  await pg.waitForSelector("[data-gate]", { state: "detached", timeout: 6000 }).catch(() => {});
+  if (await pg.waitForSelector("[data-mission-intro]", { timeout: 400 }).then(() => true, () => false)) {
+    await pg.locator("[data-mission-intro]").click({ force: true });
+    await pg.waitForSelector("[data-mission-intro]", { state: "detached", timeout: 4000 }).catch(() => {});
+  }
+}
 /** The Threat screen of a Mission Preparation (7.2 step 3): add the given columns, confirm. */
 async function threat(pg, cols = ["A"]) {
   await pg.waitForSelector("[data-threat-screen]");
   for (const c of cols) await pg.locator(`[data-col-btn=${c}]`).click();
   await pg.locator("[data-action=threat]").click();
   await pg.waitForSelector("[data-threat-screen]", { state: "detached" });
+  await settle(pg);
 }
 /** A Mission Preparation screen (Module draw, Ally, Allied Drop Mecha): take the first option, confirm. */
 async function prep(pg) {
@@ -58,6 +67,7 @@ async function prep(pg) {
   await pg.locator("[data-prep-pick]").first().click({ position: { x: 24, y: 16 } });
   await pg.locator("[data-action=prep]").click();
   await pg.waitForFunction((k) => document.querySelector("[data-prep]")?.getAttribute("data-prep") !== k || !document.querySelector("[data-prep]"), kind);
+  await settle(pg);
   await pg.waitForTimeout(100);
   return true;
 }
@@ -1089,6 +1099,10 @@ for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone"
   const closed = (await pg.locator("[data-unit-card]").count()) === 0;
   const t0 = Date.now();
   await pg.locator("[data-action=campaign]").click();
+  // The logo gate (designer 2026-11-16): doors shut, the mark on the join.
+  const gateSeen = await pg.waitForSelector("[data-gate] .gt-core svg", { timeout: 1500 }).then(() => true, () => false);
+  await pg.waitForTimeout(700);
+  await pg.screenshot({ path: `${out}/ui-gate${name}.png` });
   await briefAt(pg, "vessel");
   const confirmMs = Date.now() - t0;
   await pg.locator("[data-company=V2]").click();
@@ -1141,21 +1155,27 @@ for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone"
   await pg.waitForTimeout(250);
   await pg.screenshot({ path: `${out}/ui-prep-ally${name}.png` });
   await pg.locator("[data-action=prep]").click();
-  if (await pg.waitForSelector("[data-prep=allyMecha]", { timeout: 1500 }).then(() => true, () => false)) {
+  if (await pg.waitForSelector("[data-prep=allyMecha]", { timeout: 3500 }).then(() => true, () => false)) {
     await pg.screenshot({ path: `${out}/ui-prep-allymecha${name}.png` });
     await pg.locator("[data-prep-pick]").first().click({ position: { x: 24, y: 16 } });
     await pg.locator("[data-action=prep]").click();
   }
   await pg.waitForSelector("[data-prep]", { state: "detached" });
-  const fieldShown = (await pg.locator(".game.upgrading").count()) === 0;
+  // The mission intro before the Field (designer 2026-11-16), then a tap skips it.
+  const missionIntro = await pg.waitForSelector("[data-mission-intro=C1_M1]", { timeout: 4000 }).then(() => true, () => false);
+  await pg.waitForSelector("[data-gate]", { state: "detached", timeout: 6000 }).catch(() => {});
+  await pg.waitForTimeout(1300);
+  await pg.screenshot({ path: `${out}/ui-mission-intro${name}.png` });
+  await settle(pg);
+  const fieldShown = (await pg.locator(".game.upgrading").count()) === 0 && (await pg.locator("[data-mission-intro]").count()) === 0;
   await pg.waitForTimeout(300);
   // The loadout reached the game: V2, and Mission 1 plays the three columns chosen.
   await toggleLog(pg);
   const log = await pg.locator(".log").innerText().catch(() => "");
   await pg.close();
-  const prepOk = flagshipTab === 1 && modCards === 3 && keepLocked && allies >= 1 && fieldHidden === 1 && fieldShown && /keep /.test(log) && /your Ally: /.test(log);
-  const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 2400 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && missionOk && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
-  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px in ${style} (missions: none open ${noFile}, maps ${maps}, no F_01 ${noF01}, opens ${fileOpen}, closes ${fileClosed}; prep: flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
+  const prepOk = gateSeen && missionIntro && flagshipTab === 1 && modCards === 3 && keepLocked && allies >= 1 && fieldHidden === 1 && fieldShown && /keep /.test(log) && /your Ally: /.test(log);
+  const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 3400 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && missionOk && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
+  if (!ok && introCheck === "ok") introCheck = `failed at ${width} px in ${style} (missions: none open ${noFile}, maps ${maps}, no F_01 ${noF01}, opens ${fileOpen}, closes ${fileClosed}; prep: gate ${gateSeen}, mission intro ${missionIntro}, flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
 }
 console.log(JSON.stringify({ introCheck, styleCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));

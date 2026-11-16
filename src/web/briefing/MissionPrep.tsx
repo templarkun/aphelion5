@@ -15,7 +15,8 @@ import { sortedModules } from "../App.js";
 import { ModuleCard } from "../Modules.js";
 import { planInfo, type PlanInfo, type Slot } from "../modulePlan.js";
 import { AmbientLayer, FxLayer, ambientKick } from "./fx.js";
-import { hoverHook, ms, Readout, tapSpark } from "./hud.js";
+import { runGate } from "./Gate.js";
+import { hoverHook, Readout, tapSpark } from "./hud.js";
 import { isThreatQuestion } from "./launch.js";
 import { missionLabel } from "./missionText.js";
 import { burstFrom, ring, sparkEdges } from "./particles.js";
@@ -109,16 +110,16 @@ function Head({ title, help }: { title: string; help: string }) {
   );
 }
 
-/** Send the answer after a short lock-in flash. */
+/** Send the answer behind the logo gate (designer 2026-11-16): the doors close, the answer goes, the next screen opens. */
 function useSend(onAnswer: (id: string) => void, acc: string) {
   const [sent, setSent] = useState(false);
-  const send = (id: string) => {
+  const send = (id: string, title: string, sub: string) => {
     if (sent) return;
     setSent(true);
     playConfirm();
     ambientKick(1);
     ring(innerWidth / 2, innerHeight / 2, acc, 1100, 0.4, 36);
-    setTimeout(() => onAnswer(id), ms(240));
+    runGate({ title, sub, acc, onMid: () => onAnswer(id) });
   };
   return [sent, send] as const;
 }
@@ -152,7 +153,7 @@ function ModulePick({ data, state, q, steps, setAcc, onAnswer }: { data: GameDat
       data={{ "data-module-pick": String(q.options.length) }}
       status={chosen ? <span>Keep <b className="text-white">{chosen.name}</b></span> : <span className="font-semibold text-amber-200">Tap the Module to keep</span>}
       button={
-        <button type="button" className="bf-btn bf-primary" disabled={pick === undefined || sent} onClick={() => pick !== undefined && send(pick)} data-action="prep">
+        <button type="button" className="bf-btn bf-primary" disabled={pick === undefined || sent} onClick={() => pick !== undefined && send(pick, "MODULE ACQUIRED", moduleDef(c, Number(pick)).name)} data-action="prep">
           <Check size={18} /> Keep this Module
         </button>
       }
@@ -181,7 +182,7 @@ function ModulePick({ data, state, q, steps, setAcc, onAnswer }: { data: GameDat
       {own.length > 0 && (
         <section className="bf-panel mt-4 p-3" aria-label="Your Modules">
           <div className="bf-label mb-1">Your Modules · {own.length}</div>
-          <div className="bf-game-skin grid grid-cols-[minmax(0,1fr)] gap-x-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="bf-game-skin bf-own grid grid-cols-[minmax(0,1fr)] gap-x-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-3">
             {own.map((x) => (
               <ModuleCard key={x.id} def={moduleDef(c, x.id)} id={x.id} ready={x.ready} info={planInfo(c, x.id)} can={false} selected={false} dim={false} extraClass="" />
             ))}
@@ -213,7 +214,7 @@ function AllyPick({ data, state, q, steps, setAcc, mecha, onAnswer }: { data: Ga
       data={{ "data-ally-pick": mecha ? "mecha" : "company" }}
       status={label ? <b className="text-white">{label}</b> : <span className="font-semibold text-amber-200">{mecha ? "Tap the Mecha to drop" : "Tap the Company to call"}</span>}
       button={
-        <button type="button" className="bf-btn bf-primary" disabled={pick === undefined || sent} onClick={() => pick !== undefined && send(pick)} data-action="prep">
+        <button type="button" className="bf-btn bf-primary" disabled={pick === undefined || sent} onClick={() => pick !== undefined && send(pick, mecha ? "MECHA DROPPED" : "ALLY CONFIRMED", mecha ? `Level ${levelOf(data.units.byId.get(pick)!) ?? ""} Mecha` : data.companies.byId.get(pick)?.name ?? pick)} data-action="prep">
           <Check size={18} /> {mecha ? "Drop this Mecha" : "Choose this Ally"}
         </button>
       }

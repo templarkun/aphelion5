@@ -177,3 +177,136 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
   .bf-modslot .module .module-name { font-size: 20px; }
   .bf-modslot .module .module-text { font-size: 17px; }
 }
+
+/* The logo gate between setup screens (Gate.tsx, designer 2026-11-16): blast doors, the mark, a shock
+   wave. Every part runs on one clock, var(--gt); the percentages below are moments of it. */
+.gate { position: fixed; inset: 0; z-index: 200; overflow: hidden; pointer-events: auto; cursor: progress; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --gt-a: #1b2a7a; --gt-b: #0a1140; --gt-lip: rgb(var(--acc)); }
+:root[data-bf-style="intro2"] .gate { --gt-a: #1a3147; --gt-b: #08141f; }
+.gate * { animation-duration: var(--gt); animation-fill-mode: both; animation-timing-function: linear; }
+.gt-shake { position: absolute; inset: 0; animation-name: gt-shake; }
+@keyframes gt-shake { 0%, 20% { transform: none; } 21% { transform: translate(-7px, 5px); } 22.5% { transform: translate(6px, -6px); } 24% { transform: translate(-4px, 3px); } 25.5% { transform: translate(3px, -2px); } 27%, 100% { transform: none; } }
+.gt-door { position: absolute; left: -2%; right: -2%; height: 51%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='24.25'%3E%3Cpath d='M0 12.125L7 0H21L28 12.125L21 24.25H7ZM28 12.125H42' fill='none' stroke='%23fff' stroke-opacity='.09'/%3E%3C/svg%3E"),
+    radial-gradient(120% 90% at 50% 100%, rgb(var(--acc) / 0.16), transparent 60%),
+    linear-gradient(180deg, var(--gt-a), var(--gt-b));
+  box-shadow: 0 0 60px rgb(0 0 0 / 0.7); }
+.gt-door.top { top: 0; animation-name: gt-top; }
+.gt-door.bot { bottom: 0; animation-name: gt-bot; transform-origin: bottom; background-position: 0 6px, 0 0, 0 0; }
+.gt-door.bot { background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='24.25'%3E%3Cpath d='M0 12.125L7 0H21L28 12.125L21 24.25H7ZM28 12.125H42' fill='none' stroke='%23fff' stroke-opacity='.09'/%3E%3C/svg%3E"),
+    radial-gradient(120% 90% at 50% 0%, rgb(var(--acc) / 0.16), transparent 60%),
+    linear-gradient(0deg, var(--gt-a), var(--gt-b)); }
+.gt-door::before { content: ""; position: absolute; left: 0; right: 0; height: 26px; background: repeating-linear-gradient(-45deg, rgb(255 255 255 / 0.12) 0 10px, transparent 10px 22px); }
+.gt-door.top::before { bottom: 10px; }
+.gt-door.bot::before { top: 10px; }
+.gt-lip { position: absolute; left: 0; right: 0; height: 4px; background: var(--gt-lip); box-shadow: 0 0 14px 3px rgb(var(--acc) / 0.8); }
+.gt-door.top .gt-lip { bottom: 0; }
+.gt-door.bot .gt-lip { top: 0; }
+@keyframes gt-top { 0% { transform: translateY(-104%); animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.6); } 20% { transform: translateY(0); } 22.5% { transform: translateY(-1.6%); } 25% { transform: translateY(0); } 70% { transform: translateY(0); animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); } 88%, 100% { transform: translateY(-104%); } }
+@keyframes gt-bot { 0% { transform: translateY(104%); animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.6); } 20% { transform: translateY(0); } 22.5% { transform: translateY(1.6%); } 25% { transform: translateY(0); } 70% { transform: translateY(0); animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1); } 88%, 100% { transform: translateY(104%); } }
+.gt-seam { position: absolute; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1.5px; background: #fff; box-shadow: 0 0 22px 5px rgb(var(--acc)), 0 0 80px 18px rgb(var(--acc) / 0.55); animation-name: gt-seam; }
+@keyframes gt-seam { 0%, 19.5% { opacity: 0; transform: scaleX(0); } 20% { opacity: 1; transform: scaleX(0.2); } 24% { opacity: 1; transform: scaleX(1); } 40%, 68% { opacity: 0.55; transform: scaleX(1); } 72% { opacity: 1; transform: scaleX(1) scaleY(3); } 84%, 100% { opacity: 0; transform: scaleX(1) scaleY(14); } }
+.gt-wave { position: absolute; left: 50%; top: 50%; width: 40vmin; height: 40vmin; margin: -20vmin 0 0 -20vmin; border-radius: 50%; border: 3px solid rgb(var(--acc)); box-shadow: 0 0 30px rgb(var(--acc) / 0.8), inset 0 0 30px rgb(var(--acc) / 0.5); opacity: 0; animation-name: gt-wave; }
+.gt-wave.w2 { border-color: #fff; border-width: 1.5px; animation-name: gt-wave2; }
+@keyframes gt-wave { 0%, 20% { opacity: 0; transform: scale(0.1); } 21% { opacity: 1; transform: scale(0.15); } 42%, 100% { opacity: 0; transform: scale(5); } }
+@keyframes gt-wave2 { 0%, 70% { opacity: 0; transform: scale(0.3); } 71% { opacity: 0.9; transform: scale(0.4); } 90%, 100% { opacity: 0; transform: scale(6); } }
+.gt-rays i { position: absolute; left: 50%; top: 50%; width: var(--l); height: 2px; margin-top: -1px; transform-origin: 0 50%; background: linear-gradient(90deg, #fff, rgb(var(--acc) / 0.8) 30%, transparent); opacity: 0; animation-name: gt-ray; }
+@keyframes gt-ray { 0%, 20% { opacity: 0; transform: rotate(var(--a)) scaleX(0); } 22% { opacity: 1; } 28% { opacity: 0.9; transform: rotate(var(--a)) scaleX(1); } 40%, 100% { opacity: 0; transform: rotate(var(--a)) scaleX(1.1); } }
+.gt-sparks i { position: absolute; left: 50%; top: 50%; width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px rgb(var(--acc)); opacity: 0; animation-name: gt-spark; animation-timing-function: cubic-bezier(0.1, 0.7, 0.3, 1); }
+@keyframes gt-spark { 0%, 20% { opacity: 0; transform: rotate(var(--a)) translateX(0); } 21% { opacity: 1; } 44%, 100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)); } }
+.gt-core { position: absolute; left: 50%; top: 50%; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); animation-name: gt-core; }
+@keyframes gt-core { 0%, 10% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } 14% { opacity: 1; } 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4); } 84%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(4); filter: blur(4px); } }
+.gt-core svg { width: min(58vmin, 380px); height: min(58vmin, 380px); overflow: visible; filter: drop-shadow(0 0 10px rgb(var(--acc) / 0.9)); }
+.gt-core svg g, .gt-core svg polygon, .gt-core svg text, .gt-core svg circle { transform-origin: 0 0; transform-box: view-box; }
+.gt-r1 { animation-name: gt-r1; animation-timing-function: cubic-bezier(0.2, 0.9, 0.1, 1); }
+.gt-r2 { animation-name: gt-r2; }
+@keyframes gt-r1 { 0%, 12% { opacity: 0; transform: scale(2.3) rotate(-120deg); } 34%, 100% { opacity: 1; transform: none; } }
+@keyframes gt-r2 { 0%, 14% { opacity: 0; transform: scale(0.2) rotate(160deg); } 34%, 100% { opacity: 1; transform: none; } }
+.gt-br { animation-name: gt-br; }
+@keyframes gt-br { 0%, 30% { opacity: 0; transform: scale(1.7); } 36% { opacity: 1; transform: scale(0.94); } 39%, 100% { opacity: 1; transform: none; } }
+.gt-orbits { animation-name: gt-orbits; }
+@keyframes gt-orbits { 0%, 18% { opacity: 0; transform: scale(0); } 34% { opacity: 1; transform: scale(1.12); } 38%, 100% { opacity: 1; transform: none; } }
+.gt-hex { stroke-dasharray: 1; animation-name: gt-hex; }
+@keyframes gt-hex { 0%, 14% { stroke-dashoffset: 1; fill-opacity: 0; } 32% { stroke-dashoffset: 0; fill-opacity: 0; } 38%, 100% { stroke-dashoffset: 0; fill-opacity: 1; } }
+.gt-five { animation-name: gt-five; }
+@keyframes gt-five { 0%, 30% { opacity: 0; transform: scale(2.4); } 36%, 100% { opacity: 1; transform: none; } }
+.gt-spin { animation: gt-spin 6s linear infinite !important; }
+.gt-spin.rev { animation-direction: reverse !important; animation-duration: 4.4s !important; }
+.gt-spin.orbit { animation-duration: 1.7s !important; }
+.gt-spin.orbit.rev { animation-duration: 2.6s !important; }
+@keyframes gt-spin { to { transform: rotate(360deg); } }
+.gt-dot { filter: drop-shadow(0 0 5px rgb(251 191 36)); }
+.gt-word { margin-top: -2vmin; text-align: center; padding: 8px 22px; background: rgb(4 10 30 / 0.82); border: 1px solid rgb(var(--acc) / 0.9); box-shadow: 0 0 24px rgb(var(--acc) / 0.45); animation-name: gt-word; }
+:root[data-bf-style="intro2"] .gt-word { clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); background: rgb(4 14 22 / 0.88); }
+:root[data-bf-style="intro1"] .gt-word { border-radius: 10px; }
+.gt-word .t { font-size: clamp(18px, 4.2vmin, 32px); font-weight: 800; letter-spacing: 0.22em; padding-left: 0.22em; text-shadow: 0 0 18px rgb(var(--acc) / 0.9); white-space: nowrap; }
+.gt-word .s { margin-top: 2px; font-size: clamp(12px, 2.1vmin, 15px); font-weight: 700; letter-spacing: 0.16em; color: rgb(var(--acc)); text-transform: uppercase; white-space: nowrap; max-width: 86vw; overflow: hidden; text-overflow: ellipsis; }
+@keyframes gt-word { 0%, 34% { opacity: 0; letter-spacing: 0.9em; transform: scaleX(1.25); } 44%, 100% { opacity: 1; transform: none; } }
+.gt-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; animation-name: gt-flash; }
+@keyframes gt-flash { 0%, 19.5% { opacity: 0; } 20.5% { opacity: 0.45; } 27% { opacity: 0; } 70% { opacity: 0; } 73% { opacity: 0.4; } 82%, 100% { opacity: 0; } }
+
+/* The short mission intro before the Field (MissionIntro.tsx, designer 2026-11-16). Every moment is a
+   share of var(--mt), the whole intro; var(--mo) is the ring opening on the Field at the end. */
+@property --mr { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+.mi { position: fixed; inset: 0; z-index: 150; overflow: hidden; display: grid; place-items: center; background: #02040c; color: #fff; cursor: pointer; user-select: none; -webkit-user-select: none;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif; animation: bf-fade calc(var(--mt) * 0.05) both; }
+.mi-stars { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mi-scan { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 0 46%, rgb(var(--acc) / 0.08) 49%, rgb(var(--acc) / 0.25) 50%, transparent 51%); background-size: 100% 220%; animation: mi-scan calc(var(--mt) * 0.5) linear infinite; mix-blend-mode: screen; }
+@keyframes mi-scan { from { background-position: 0 100%; } to { background-position: 0 -120%; } }
+.mi-body { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; width: min(92vw, 760px); text-align: center; animation: mi-shake calc(var(--mt) * 0.06) calc(var(--mt) * 0.165) both; }
+@keyframes mi-shake { 0%, 100% { transform: none; } 20% { transform: translate(-6px, 4px); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
+.mi-top { font-size: clamp(12px, 2vmin, 16px); font-weight: 800; letter-spacing: 0.32em; padding-left: 0.32em; color: rgb(var(--acc)); text-transform: uppercase; animation: mi-type calc(var(--mt) * 0.12) calc(var(--mt) * 0.04) cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes mi-type { from { opacity: 0; letter-spacing: 1.2em; filter: blur(4px); } }
+.mi-name { position: relative; font-size: clamp(40px, 11vmin, 104px); line-height: 1; font-weight: 900; letter-spacing: 0.12em; padding-left: 0.12em; white-space: nowrap;
+  text-shadow: 0 0 22px rgb(var(--acc) / 0.95), 0 0 70px rgb(var(--acc) / 0.6), 3px 0 0 rgb(255 60 90 / 0.5), -3px 0 0 rgb(60 200 255 / 0.5);
+  animation: mi-slam calc(var(--mt) * 0.07) calc(var(--mt) * 0.1) cubic-bezier(0.3, 1.4, 0.4, 1) both; }
+@keyframes mi-slam { from { opacity: 0; transform: scale(2.8); filter: blur(10px); } to { opacity: 1; transform: none; filter: none; } }
+.mi-wave { position: absolute; left: 50%; top: 50%; width: 30vmin; height: 30vmin; margin: -15vmin 0 0 -15vmin; border-radius: 50%; border: 3px solid rgb(var(--acc)); box-shadow: 0 0 30px rgb(var(--acc)); opacity: 0; animation: mi-wave calc(var(--mt) * 0.14) calc(var(--mt) * 0.165) ease-out both; }
+@keyframes mi-wave { 0% { opacity: 1; transform: scale(0.2); } 100% { opacity: 0; transform: scale(6); } }
+.mi-co { font-size: clamp(13px, 2.2vmin, 18px); font-weight: 700; letter-spacing: 0.2em; color: rgb(254 243 199); text-transform: uppercase; animation: mi-rise calc(var(--mt) * 0.08) calc(var(--mt) * 0.19) both; }
+.mi-map { width: min(70vw, 340px); height: min(26vh, 220px); margin: 1vmin 0; filter: drop-shadow(0 0 8px rgb(var(--acc) / 0.8)); overflow: visible; }
+.mi-hex { transform-box: fill-box; transform-origin: center; animation: mi-hex calc(var(--mt) * 0.06) calc(var(--mt) * (0.21 + var(--i) * 0.011)) cubic-bezier(0.3, 1.6, 0.4, 1) both; }
+@keyframes mi-hex { from { opacity: 0; transform: scale(0.1) rotate(-60deg); } to { opacity: 1; transform: none; } }
+.mi-lines { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.6vmin; font-size: clamp(14px, 2.3vmin, 19px); line-height: 1.35; }
+.mi-lines li { animation: mi-rise calc(var(--mt) * 0.08) calc(var(--mt) * (0.36 + var(--i) * 0.06)) both; }
+.mi-lines b { color: rgb(var(--acc)); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.82em; margin-right: 0.4em; }
+@keyframes mi-rise { from { opacity: 0; transform: translateY(12px); filter: blur(3px); } }
+.mi-deploy { width: min(80vw, 420px); margin-top: 1.6vmin; animation: bf-fade calc(var(--mt) * 0.05) calc(var(--mt) * 0.46) both; }
+.mi-label { font-size: 12px; font-weight: 800; letter-spacing: 0.3em; color: rgb(var(--acc)); text-transform: uppercase; animation: bf-blink 0.6s steps(2) infinite; }
+.mi-bar { margin-top: 6px; height: 4px; background: rgb(255 255 255 / 0.15); overflow: hidden; }
+.mi-bar i { display: block; height: 100%; background: linear-gradient(90deg, rgb(var(--acc) / 0.3), rgb(var(--acc)) 80%, #fff); box-shadow: 0 0 12px rgb(var(--acc)); transform-origin: left; animation: mi-fill calc(var(--mt) * 0.38) calc(var(--mt) * 0.47) cubic-bezier(0.5, 0, 0.5, 1) both; }
+@keyframes mi-fill { from { transform: scaleX(0); } }
+.mi-skip { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.3em; color: rgb(224 242 254 / 0.6); text-transform: uppercase; }
+/* The end: a ring of light opens from the middle and shows the Field through it. */
+.mi.mi-out { pointer-events: none; animation: mi-iris var(--mo) cubic-bezier(0.6, 0, 0.3, 1) both;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent var(--mr), #000 calc(var(--mr) + 0.5%));
+  mask-image: radial-gradient(circle at 50% 50%, transparent var(--mr), #000 calc(var(--mr) + 0.5%)); }
+@keyframes mi-iris { from { --mr: 0%; } to { --mr: 101%; } }
+.mi-out .mi-body { animation: mi-zoom var(--mo) ease-in both; }
+@keyframes mi-zoom { to { transform: scale(1.6); opacity: 0; filter: blur(6px); } }
+.mi-ring { position: absolute; left: 50%; top: 50%; width: 0; height: 0; border-radius: 50%; transform: translate(-50%, -50%); border: 4px solid #fff; box-shadow: 0 0 30px 8px rgb(var(--acc)), inset 0 0 30px 8px rgb(var(--acc)); opacity: 0; }
+.mi-out .mi-ring { animation: mi-ring var(--mo) cubic-bezier(0.6, 0, 0.3, 1) both; }
+@keyframes mi-ring { from { width: 0; height: 0; opacity: 1; } 85% { opacity: 1; } to { width: 118vmax; height: 118vmax; opacity: 0; } }
+
+/* Module draw text sizes (designer 2026-11-16). Phones: the three to choose from in big type, your
+   Modules in middle type, nothing else in between. PCs (1280 px and wider): your Modules as big as
+   the three drawn, three to a row. Tablets unchanged. */
+@media (max-width: 767px) {
+  .bf-modslot .module .module-name { font-size: 18px; }
+  .bf-modslot .module .module-text { font-size: 16px; line-height: 1.4; }
+  .bf-modslot > div:last-child { font-size: 15px; }
+  .bf-own .module .module-name { font-size: 15px; }
+  .bf-own .module .module-text { font-size: 14px; line-height: 1.35; }
+}
+@media (min-width: 1280px) {
+  .bf-own { gap: 12px; }
+  .bf-own .module { margin: 0; min-height: 96px; }
+  .bf-own .module .module-name { font-size: 18px; }
+  .bf-own .module .module-text { font-size: 16px; line-height: 1.4; }
+}
+@media (min-width: 1440px) {
+  .bf-own .module .module-name { font-size: 20px; }
+  .bf-own .module .module-text { font-size: 17px; }
+}

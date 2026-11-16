@@ -19,6 +19,8 @@ import { IntroSequence } from "./briefing/IntroSequence.js";
 import { applyLoadout } from "./briefing/launch.js";
 import { type IntroMode, introMode } from "./briefing/prefs.js";
 import { briefStyle } from "./briefing/styles/index.js";
+import { GateHost } from "./briefing/Gate.js";
+import { MissionIntro } from "./briefing/MissionIntro.js";
 import { MissionPrep, prepKind } from "./briefing/MissionPrep.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
@@ -138,6 +140,7 @@ export function App() {
       {screen()}
       {box && <TextBox {...box} onClose={() => setBox(undefined)} />}
       {intro !== "off" && <IntroSequence key={intro} mode={intro} onDone={() => setIntro("off")} />}
+      <GateHost />
     </>
   );
 
@@ -463,6 +466,16 @@ function GameScreen(p: GameProps) {
   const [selected, setSelected] = usePerQuestion<string[]>(q, []);
   // The Threat columns of a Mission Preparation (7.2 step 3) are chosen on their own screen (designer 2026-11-14).
   const prepQ = prepKind(q) ? q : undefined;
+  // The short mission intro (designer 2026-11-16): once the last Mission Preparation screen is answered, before the Field.
+  const [missionIntro, setMissionIntro] = useState<string | undefined>();
+  const hadPrep = useRef(false);
+  useLayoutEffect(() => {
+    if (prepQ) hadPrep.current = true;
+    else if (hadPrep.current) {
+      hadPrep.current = false;
+      if (s.phase !== "gameEnd") setMissionIntro(s.mission);
+    }
+  }, [prepQ, s.mission]); // eslint-disable-line react-hooks/exhaustive-deps
   // Tiles in the hand put back one by one (V1 Bay 3, Gravity Well; designer 2026-11-16): StackPicker.
   const stackQ = stackAskOf(q, s);
   const lookAsk = !stackQ ? lookAskOf(look, s) : undefined;
@@ -1169,6 +1182,7 @@ function GameScreen(p: GameProps) {
 
 
 
+      {missionIntro === s.mission && !prepQ && <MissionIntro data={data} state={s} onDone={() => setMissionIntro(undefined)} />}
       {prepQ && <MissionPrep data={data} state={s} q={prepQ} onAnswer={(kind, value) => send(kind === "several" ? { kind, value: value as string[] } : { kind, value: value as string })} />}
       {upOpen && (
         <UpgradeSheet

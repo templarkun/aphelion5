@@ -13,7 +13,7 @@ import type { GameData } from "../../data/index.js";
 import type { Question } from "../../engine/questions.js";
 import type { GameState } from "../../engine/state.js";
 import { ambientKick } from "./fx.js";
-import { ms } from "./hud.js";
+import { runGate } from "./Gate.js";
 import { missionLabel, objectiveText } from "./missionText.js";
 import { burst, ring, setEmitter } from "./particles.js";
 import { playConfirm, playOpenInfo, playThreatDown, playThreatUp } from "./soundHooks.js";
@@ -112,7 +112,7 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
     setSent(true);
     ambientKick(1);
     ring(innerWidth / 2, innerHeight / 2, acc, 1200, 0.4, 40);
-    setTimeout(() => onAnswer(cols), ms(260));
+    runGate({ title: "THREAT LOCKED", sub: `${THREAT_NAMES[cols.length] ?? ""} · Threat ${[...cols].sort().join(" + ")}`, acc, onMid: () => onAnswer(cols) });
   }
 
   if (!camp || !m) return null;

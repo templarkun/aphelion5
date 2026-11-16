@@ -718,6 +718,9 @@ note: CHANGED 2026-11-16 (designer): "Confirm campaign" (and "Confirm vessel", L
       "Threat D" that show that Threat's units; on a phone the mission deck is one row. "All"
       in the Campaign unit roster: one row per unit type (Sentinels, Flares, Sleepers, Gyros)
       on every screen.
+note: CHANGED 2026-11-16 (designer, round 19): "Confirm campaign", "Confirm vessel" and Launch play
+      the logo gate (T13_R19_01) instead of the lock rings / armour doors; Launch reads the
+      loadout back first, then the gate closes over the briefing and opens on the Threat screen.
 
 id: T13_BRF_03
 title: The Threat screen at Mission Preparation
@@ -746,6 +749,8 @@ then: the mission is prepared with columns A, B, C ("Threat Level Siege: columns
 note: CHANGED 2026-11-16 (designer): the four Threat columns always stand side by side in one row.
       Wide screens: each column's units in one row, sized to fit. Phones: each column's units
       one under another, "+ Add" at its foot.
+note: CHANGED 2026-11-16 (designer, round 19): "Confirm Threat" plays the logo gate (T13_R19_01,
+      "THREAT LOCKED", the Threat Level and columns); the Module screen is behind the doors.
 
 id: T13_BRF_04
 title: Later missions ask the Threat the same way
@@ -775,6 +780,9 @@ then: "your Ally: <id>" in the log. If more than one Mecha can come, the Allied 
 note: CHANGED 2026-11-16 (designer): the tapped Module's outline glows round the outside of the card;
       its coloured left edge stays visible. Bigger text on big screens. No unit names on the
       Ally and Allied Drop screens (under a Company's Mecha, on the Mecha to drop).
+note: CHANGED 2026-11-16 (designer, round 19): each confirm plays the logo gate (T13_R19_01:
+      "MODULE ACQUIRED", "ALLY CONFIRMED", "MECHA DROPPED"); after the last screen the mission
+      intro plays (T13_R19_02), then the Field. Text sizes: T13_R19_03.
 
 ################################################################################
 === SECTION: STYLES OF THE INTRO AND THE MENU (intro1, intro2) ===
@@ -841,6 +849,8 @@ then: two armour doors slide in from the sides and meet across the middle of the
 note: Same steps, cards, texts and sizes as T13_BRF_02; only the look differs.
 note: CHANGED 2026-11-16 (designer): the armour doors and the step change take twice as long (the
       doors under a second).
+note: CHANGED 2026-11-16 (designer, round 19): no armour doors; every style plays the logo gate on a
+      confirm (T13_R19_01), in its own colours (intro2: dark steel doors, cut-corner word box).
 
 ################################################################################
 === SECTION: ROUND 18 (designer 2026-11-16) ===
@@ -946,3 +956,48 @@ then: 1 damage to every unit on its lines of fire: straight left ((0,-1), (0,-2)
       its flat left and right sides.
 note: Batch 1 T_GEO_05 and batch 5 T5_MCH_01 CHANGED.
 
+################################################################################
+=== SECTION: ROUND 19 (designer 2026-11-16, screen only, no rule change) ===
+
+id: T13_R19_01
+title: The logo gate between setup screens
+source: designer 2026-11-16 ("return the old transition with the game's logo ... add more effects
+        to look dramatic")
+given: the briefing, Campaign step
+when: press "Confirm campaign"
+then: about 2 seconds. Two blast doors (hexagon plating, a striped band and a lit lip on each)
+      slam shut from the top and the bottom; the screen shakes, a seam of light runs along the
+      join, a flash, a shock wave, light rays and sparks burst from the middle. On the join the
+      game's mark builds itself: two dashed rings fly in from big and small and lock, the
+      hexagon draws itself round the "5", its two orbits spin with the gold aphelion point
+      running round, brackets snap shut; "CAMPAIGN LOCKED" with the Campaign's name under it.
+      Behind the closed doors the Vessel step is put in place; then the mark flies at you and
+      fades, a second flash and a white ring go out, and the doors open on the Vessel step.
+      Taps wait until the doors are open.
+then: the same gate on "Confirm vessel" ("VESSEL LOCKED"), on Launch ("LAUNCH", after the loadout
+      is read back), on "Confirm Threat" ("THREAT LOCKED"), "Keep this Module" ("MODULE
+      ACQUIRED"), "Choose this Ally" ("ALLY CONFIRMED") and "Drop this Mecha" ("MECHA DROPPED").
+      Back and the step tabs keep the plain slide. Both styles use it in their own colours.
+      Slow / Fast in the Menu's settings change its length; Instant or reduced motion: no gate.
+
+id: T13_R19_02
+title: A short mission intro before the Field
+source: designer 2026-11-16 ("before each mission starts and the gameplay Field appears, show a
+        short intro")
+given: the last Mission Preparation screen (Module, Ally or Allied Drop) confirmed
+then: once the gate opens, about 5 seconds over the whole screen: stars rush out from the
+      middle; "Campaign 1 · Sector A5-01" types in; "MISSION 1" slams down with a shock wave and
+      a shake; the Company's name; the mission's Field draws itself sector by sector (Omega
+      sectors gold); the objective, the Threat (Level name and columns) and the event rise in
+      one by one; "Deploying to the Field" and a bar fills; then a ring of light opens from the
+      middle and the Field shows through it. "Tap to skip" at the foot: a tap goes straight to the
+      ring. Every later mission the same, with its own name, Field and Threat. Loading a saved
+      game in the middle of a mission shows no intro. Instant or reduced motion: none.
+
+id: T13_R19_03
+title: Module draw: text sizes
+source: designer 2026-11-16
+given: the Module draw screen of a Mission Preparation
+then: Phone: the three Modules to choose from in big type (name, effect text, the cost line);
+      your Modules below in middle type; no other sizes mixed in. Tablet: as before.
+      PC (1280 px and wider): your Modules as big as the three drawn, three to a row.
