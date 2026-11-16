@@ -31,8 +31,8 @@ import { type NodeLook, Player, type Step, easeInOut, easeOut, parallel } from "
 import { type ShotLook, type Source, type Target, UNIT_SHOT, edgeOf, fireGlow, shotStep, weaponStep } from "./weapons.js";
 import { BIG_REVEAL, chargeLook, drawOverloadRing, gyroBreak, gyroDrain, revealFxStep, sleeperActivate } from "./revealFx.js";
 import { addLevel, addUnitMarks } from "./unitMarks.js";
-import { BADGE_ASPECT, energyGlyphImage, glyphBadge, TYPE_COLOUR } from "./glyphs.js";
-import { drawAlert } from "./alertFx.js";
+import { BADGE_ASPECT, CLEARED_COLOUR, energyGlyphImage, glyphBadge, TYPE_COLOUR } from "./glyphs.js";
+import { drawAlert, drawEnergyBorder, flareEnergySpots } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
 import { fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
 import { isStill, onMotion, speedFactor } from "./motion.js";
@@ -1373,6 +1373,18 @@ export function FieldView(p: FieldProps) {
       drawAlert(au, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, born, v?.alpha ?? 1, v?.scale ?? 1, tk.wreck);
     }
     for (const id of alertBorn.current.keys()) if (!seenNow.has(id)) alertBorn.current.delete(id);
+    // Energy waiting on a Flare: a border of energy sparks round each token (designer 2026-11-16).
+    for (const [k, n] of nodes.current) {
+      if (sectorState(st, k) !== "occupied") continue;
+      const top = topTileId(st, k);
+      const t = top ? tile(st, top) : undefined;
+      if (!t?.energy) continue;
+      const cols = (["Yellow", "Red", "Blue"] as const).flatMap((col) => Array.from({ length: t.energy![col] ?? 0 }, () => col));
+      if (!cols.length) continue;
+      const v = looks.get(k);
+      const spots = flareEnergySpots(n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size * (v?.scale ?? 1), cols.length, t.tokens.wreck);
+      cols.forEach((col, i) => drawEnergyBorder(au, spots.x[i]!, spots.y, spots.r, ENERGY_HEX[col] ?? 0x888888, stillRef.current ? 0 : now, i, v?.alpha ?? 1));
+    }
 
     // Glows: the targets only show once the animations before them are done (spec "Timing").
     const g = L.glow;
@@ -1527,7 +1539,7 @@ export function FieldView(p: FieldProps) {
     const oy = (h - (maxY - minY) * size) / 2 - minY * size;
     // The Field is black in both themes (designer 2026-11-09).
     const ink = 0xe6e6e6;
-    const plate = 0x2b2d31;
+    const plate = CLEARED_COLOUR;
     const back = 0x4a6280;
     const slots = new Graphics();
     slots.eventMode = "none";
@@ -1600,14 +1612,15 @@ export function FieldView(p: FieldProps) {
         // Trial rule (I2): the energy waiting on a Flare, as tokens on its tile (build step 3).
         const waiting = t.energy ? (["Yellow", "Red", "Blue"] as const).flatMap((col) => Array.from({ length: t.energy![col] ?? 0 }, () => col)) : [];
         if (waiting.length) {
-          const r = size * 0.1;
-          const gap = r * 2.4;
-          const y0 = cy + size * (b.length ? 0.37 : 0.27);
+          // Designer 2026-11-16: as big as Damage tokens; no white rim (a living energy border is drawn every frame, flareEnergyFx).
+          const spots = flareEnergySpots(cx, cy, size, waiting.length, b.length > 0);
+          const r = spots.r;
+          const y0 = spots.y;
           const tok = new Graphics();
           const marks = new Container();
           waiting.forEach((col, i) => {
-            const x0 = cx + (i - (waiting.length - 1) / 2) * gap;
-            tok.circle(x0, y0, r).fill({ color: ENERGY_HEX[col] ?? 0x888888 }).stroke({ width: 1.5, color: 0xffffff });
+            const x0 = spots.x[i]!;
+            tok.circle(x0, y0, r).fill({ color: ENERGY_HEX[col] ?? 0x888888 }).stroke({ width: 1, color: 0x000000, alpha: 0.35 });
             // The energy's glyph on the token (designer 2026-11-10).
             const g = energyTexture(col);
             if (g) {

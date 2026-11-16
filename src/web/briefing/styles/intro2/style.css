@@ -91,11 +91,11 @@
 :root[data-bf-style="intro2"] .bf-tab[aria-pressed="true"], :root[data-bf-style="intro2"] .bf-tab[aria-checked="true"] { color: var(--bf-dark-ink); background: rgb(var(--acc)) !important; border-color: rgb(var(--acc)) !important; box-shadow: 0 0 16px rgb(var(--acc) / 0.45); }
 
 /* A step comes in from below with a brief flare, like a screen powering up; plates slide in from the left. */
-:root[data-bf-style="intro2"] .bf-step-in { animation: bf2-step-in 0.3s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
-:root[data-bf-style="intro2"] .bf-step-out { animation: bf2-step-out 0.13s ease-in both; }
+:root[data-bf-style="intro2"] .bf-step-in { animation: bf2-step-in 0.6s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
+:root[data-bf-style="intro2"] .bf-step-out { animation: bf2-step-out 0.26s ease-in both; }
 @keyframes bf2-step-in { from { opacity: 0; transform: translateY(18px) scale(0.985); filter: brightness(1.8); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes bf2-step-out { to { opacity: 0; transform: translateY(-10px) scale(1.012); } }
-:root[data-bf-style="intro2"] .bf-rise { animation: bf2-rise 0.32s cubic-bezier(0.16, 0.84, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 26ms); }
+:root[data-bf-style="intro2"] .bf-rise { animation: bf2-rise 0.64s cubic-bezier(0.16, 0.84, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 52ms); }
 @keyframes bf2-rise { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
 :root[data-bf-style="intro2"] .bf-pop { animation: bf2-pop 0.2s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
 @keyframes bf2-pop { from { opacity: 0; transform: scaleY(0.6); filter: brightness(2); } }
@@ -107,13 +107,13 @@
 /* Armour doors on a confirmed choice. */
 .bf2-doors { position: relative; width: 100%; height: min(34vmin, 190px); display: grid; place-items: center; overflow: hidden; }
 .bf2-doors .l, .bf2-doors .r { position: absolute; top: 0; bottom: 0; width: 50%; background: linear-gradient(180deg, #1a3147, #0b1a28); border-top: 2px solid rgb(var(--acc)); border-bottom: 2px solid rgb(var(--acc)); box-shadow: inset 0 0 40px rgb(0 0 0 / 0.5); }
-.bf2-doors .l { left: 0; animation: bf2-door-l 0.2s cubic-bezier(0.3, 0, 0.1, 1) both; background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgb(150 214 240 / 0.1) 46px 47px), linear-gradient(180deg, #1a3147, #0b1a28); }
-.bf2-doors .r { right: 0; animation: bf2-door-r 0.2s cubic-bezier(0.3, 0, 0.1, 1) both; background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgb(150 214 240 / 0.1) 46px 47px), linear-gradient(180deg, #1a3147, #0b1a28); }
+.bf2-doors .l { left: 0; animation: bf2-door-l 0.4s cubic-bezier(0.3, 0, 0.1, 1) both; background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgb(150 214 240 / 0.1) 46px 47px), linear-gradient(180deg, #1a3147, #0b1a28); }
+.bf2-doors .r { right: 0; animation: bf2-door-r 0.4s cubic-bezier(0.3, 0, 0.1, 1) both; background-image: repeating-linear-gradient(90deg, transparent 0 46px, rgb(150 214 240 / 0.1) 46px 47px), linear-gradient(180deg, #1a3147, #0b1a28); }
 @keyframes bf2-door-l { from { transform: translateX(-102%); } to { transform: none; } }
 @keyframes bf2-door-r { from { transform: translateX(102%); } to { transform: none; } }
-.bf2-doors .seam { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 18px 4px rgb(var(--acc)), 0 0 60px 14px rgb(var(--acc) / 0.5); transform-origin: center; animation: bf2-seam 0.26s 0.16s ease-out both; }
+.bf2-doors .seam { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 18px 4px rgb(var(--acc)), 0 0 60px 14px rgb(var(--acc) / 0.5); transform-origin: center; animation: bf2-seam 0.52s 0.32s ease-out both; }
 @keyframes bf2-seam { 0% { transform: scaleY(0); opacity: 0; } 35% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1) scaleX(0.4); opacity: 0.55; } }
-.bf2-doors .tx { position: relative; text-align: center; padding: 10px 26px; background: rgb(4 14 22 / 0.86); border: 1px solid rgb(var(--acc) / 0.9); clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); animation: bf2-word 0.18s 0.17s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+.bf2-doors .tx { position: relative; text-align: center; padding: 10px 26px; background: rgb(4 14 22 / 0.86); border: 1px solid rgb(var(--acc) / 0.9); clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); animation: bf2-word 0.36s 0.34s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
 .bf2-doors .tx .t { font-size: clamp(20px, 4.6vmin, 34px); font-weight: 800; letter-spacing: 0.2em; padding-left: 0.2em; color: #fff; text-shadow: 0 0 18px rgb(var(--acc) / 0.8); }
 .bf2-doors .tx .s { margin-top: 2px; font-size: clamp(12px, 2.2vmin, 15px); font-weight: 700; letter-spacing: 0.16em; color: rgb(var(--acc)); }
 @keyframes bf2-word { from { opacity: 0; transform: scale(1.25); } }

@@ -1,4 +1,4 @@
-# Next sessions (plan, updated 2026-11-15)
+# Next sessions (plan, updated 2026-11-16)
 
 All 8 build stages are built and all test batches (1-9) are agreed and in the Project. What
 is left for version 1 (spec "Scope", "Acceptance") and after:
@@ -66,6 +66,9 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    sunrise horizon, dark glass menu). Next: the designer compares them and says which to keep
    or what to change; more styles can be added beside them (`src/web/briefing/styles/README.md`).
    The ship in intro2 is a stand-in built from blocks (`styles/intro2/ship.ts`) until real art.
+   2026-11-16 round 18: designer chose intro2 as the default. Bug fix (unit-pick bubbles), two
+   rules changes (Power Node 2 Heat, M_02 arrows), Bay 3 and similar effects played on the
+   Field (`StackPicker.tsx`), briefing roster / Threat layout, slower transitions.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    The Flagship picture on the Upgrade sheet (`FlagshipArt` in `src/web/UpgradeSheet.tsx`) is a

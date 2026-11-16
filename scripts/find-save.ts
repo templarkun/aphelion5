@@ -95,6 +95,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   "upgrade-V2": (q, g) => q.upgrade === true && q.kind === "option" && g.view.state.sheet.upgradePoints >= 3 && g.view.state.player.company === "V2",
   // A question that chooses one unit, answered on bubbles on the units (designer 2026-11-09).
   pickunit: (q) => q.kind === "units" && q.min === 1 && q.max === 1 && q.options.length >= 2 && !/Attacks/.test(q.prompt),
+  // A unit effect that deals damage to one chosen unit (designer 2026-11-16: "1 damage" bubbles crashed).
+  pickdamage: (q) => q.kind === "units" && q.min === 1 && q.max === 1 && /^[SFPGO]_\d+: .*damage/i.test(q.prompt) && !/Attacks/.test(q.prompt),
   // ... or several units, with a Confirm bubble.
   pickmany: (q) => q.kind === "units" && q.max >= 2 && q.options.length > q.max,
   // Dragging a Mecha (Program Spec "Interaction and animation"): blue and red targets.
@@ -138,6 +140,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   orderdrag: (q, g) => (q.shortcuts ?? []).some((o) => o.on?.kind === "order" && abilityTargets(data, g, { kind: "option", value: o.id }).length > 0),
   // Bay 3 (look at the top tiles of a Dark sector) on the action menu.
   bay3: (q) => (q.shortcuts ?? []).some((o) => o.on?.kind === "bay" && /BAY3$/.test(o.on.ability)),
+  // V1's Bay 3 on a sector of 4 or more tiles (3 to put back, a fourth beneath).
+  "bay3-V1": (q, g) => g.view.state.player.company === "V1" && (q.shortcuts ?? []).some((o) => o.on?.kind === "bay" && o.on.ability === "V1_BAY3") && sectorKeys(g.view.state).some((k) => (g.view.state.field[k]?.length ?? 0) >= 4 && sectorState(g.view.state, k) === "dark"),
   // Energy on Modules with pop-ups (designer 2026-11-07).
   energy: (q) => q.energy !== undefined && q.kind === "option" && q.options.length >= 2,
   // A unit with three or more actions in its pop-up (bubbles, designer 2026-11-07).
@@ -206,6 +210,8 @@ for (let seed = 1; seed < 400; seed++) {
     }
     let a = randomAnswer(r, q);
     if (dev && q.kind === "option" && /^Choose your Company/.test(q.prompt)) a = { kind: "option", value: what === "upgrade-V2" ? "V2" : "V1" };
+    // The V1 ship's Bay 3 (put the tiles back one by one, designer 2026-11-16).
+    if (what === "bay3-V1" && q.kind === "option" && /^Choose your Company/.test(q.prompt)) a = { kind: "option", value: "V1" };
     if (dev && q.kind === "option" && q.options.some((o) => o.id === "devWin")) a = { kind: "option", value: "devWin" };
     for (let k = 0; k < 30 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, q);
     // Crippled: never Overhaul, Reveal as much as possible (the Flagship takes damage sooner).

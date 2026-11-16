@@ -46,3 +46,39 @@ export function drawAlert(g: Graphics, cx: number, cy: number, size: number, now
   g.roundRect(ax - r * 0.1, ay - r * 0.42, r * 0.2, r * 0.66, r * 0.08).fill({ color: 0x15161a, alpha });
   g.circle(ax, ay + r * 0.44, r * 0.11).fill({ color: 0x15161a, alpha });
 }
+
+/**
+ * Energy waiting on a Flare (trial rule I2): where its tokens sit on the tile. Designer
+ * 2026-11-16: as big as a Damage token (radius 0.13 of the tile's half height).
+ */
+export function flareEnergySpots(cx: number, cy: number, size: number, n: number, low: boolean): { x: number[]; y: number; r: number } {
+  const r = size * 0.13;
+  const gap = r * 2.5;
+  const y = cy + size * (low ? 0.37 : 0.3);
+  return { x: Array.from({ length: n }, (_, i) => cx + (i - (n - 1) / 2) * gap), y, r };
+}
+
+/**
+ * A border of energy round one waiting energy token (designer 2026-11-16: not a white rim; it
+ * makes the tokens pop): a breathing glow ring in the energy's colour and sparks running round it,
+ * flaring and fading. `now` 0: drawn still.
+ */
+export function drawEnergyBorder(g: Graphics, x: number, y: number, r: number, colour: number, now: number, seed: number, alpha: number): void {
+  if (alpha <= 0.01) return;
+  const t = now / 1000;
+  const breathe = now ? 0.5 + 0.5 * Math.sin(t * 3.1 + seed * 1.7) : 0.6;
+  g.circle(x, y, r * 1.32).stroke({ width: r * (0.32 + 0.18 * breathe), color: colour, alpha: (0.22 + 0.2 * breathe) * alpha });
+  g.circle(x, y, r * 1.1).stroke({ width: Math.max(1, r * 0.12), color: 0xffffff, alpha: (0.35 + 0.35 * breathe) * alpha });
+  const n = 12;
+  for (let i = 0; i < n; i++) {
+    const dir = i % 2 ? 1 : -1;
+    const a = (i / n) * Math.PI * 2 + dir * t * (1.4 + 0.3 * (i % 3)) + seed;
+    const life = now ? (t * 0.9 + i * 0.37 + seed * 0.21) % 1 : 0.5;
+    const d = r * (1.12 + 0.38 * life);
+    const k = Math.sin(Math.PI * life);
+    const px = x + Math.cos(a) * d;
+    const py = y + Math.sin(a) * d;
+    g.circle(px, py, r * (0.1 + 0.1 * k)).fill({ color: colour, alpha: 0.55 * k * alpha });
+    g.circle(px, py, r * 0.06 * (0.5 + k)).fill({ color: 0xffffff, alpha: 0.9 * k * alpha });
+  }
+}

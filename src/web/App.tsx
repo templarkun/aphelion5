@@ -4,6 +4,8 @@
  * question, and turns clicks and taps into answers.
  */
 
+import { CrashGuard } from "./Crash.js";
+import { lookAskOf, StackPicker, stackAskOf } from "./StackPicker.js";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { sectorLine, tokenText } from "../cli/text.js";
 import type { GameData } from "../data/index.js";
@@ -35,8 +37,7 @@ import { UnitGlyph, UnitText } from "./UnitGlyph.js";
 import { EndOverload } from "./EndOverload.js";
 import { FlagshipDamage } from "./FlagshipDamage.js";
 import { Fps } from "./Fps.js";
-import { MissionBar } from "./Mission.js";
-import { UpgradeBubble } from "./Upgrade.js";
+import { MissionBar, missionName } from "./Mission.js";
 import { UpgradeSheet } from "./UpgradeSheet.js";
 import { AskBubble, PointBubbles, askText } from "./FieldAsk.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, OverhaulButton, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
@@ -183,6 +184,7 @@ export function App() {
       />
     );
   return (
+    <CrashGuard>
     <GameScreen
       data={data}
       game={game}
@@ -234,6 +236,7 @@ export function App() {
         setInMenu(true);
       }}
     />
+    </CrashGuard>
   );
   }
 }
@@ -435,7 +438,7 @@ function GameScreen(p: GameProps) {
     trophyFlights(before, real.state);
     if (!planRef.current) paidShown(undefined);
     const seen = newEvents(before.events, real.state.events).filter((e) => e.kind === "looked");
-    setLook(seen.length ? seen.flatMap((e) => (e.kind === "looked" ? e.tiles : [])) : undefined);
+    setLook(seen.length ? seen.flatMap((e) => (e.kind === "looked" ? e.tiles.map((t) => ({ ...t, rule: e.rule })) : [])) : undefined);
   }, [real.state]);
   const wayAnswers = useRef(new Map<string, Answer[]>());
   const rotate = faceQ
@@ -460,6 +463,16 @@ function GameScreen(p: GameProps) {
   const [selected, setSelected] = usePerQuestion<string[]>(q, []);
   // The Threat columns of a Mission Preparation (7.2 step 3) are chosen on their own screen (designer 2026-11-14).
   const prepQ = prepKind(q) ? q : undefined;
+  // Tiles in the hand put back one by one (V1 Bay 3, Gravity Well; designer 2026-11-16): StackPicker.
+  const stackQ = stackAskOf(q, s);
+  const lookAsk = !stackQ ? lookAskOf(look, s) : undefined;
+  const [stackShow, setStackShow] = useState<{ sector: string; stack: string[] } | undefined>();
+  const shownState = useMemo(() => {
+    const on = stackQ ?? lookAsk;
+    if (!on || !stackShow || stackShow.sector !== on.sector) return s;
+    const copy = { ...s, field: { ...s.field, [stackShow.sector]: stackShow.stack } };
+    return copy;
+  }, [s, stackQ?.sector, lookAsk?.sector, stackShow]); // eslint-disable-line react-hooks/exhaustive-deps
   const [hover, setHover] = useState<string | undefined>();
   // A short message in the information strip (a drop that was not allowed), shown for a few seconds.
   const [note, setNote] = useState<{ text: string; warn: boolean; at: number } | undefined>();
@@ -684,9 +697,8 @@ function GameScreen(p: GameProps) {
       if (unitOpts && s.tiles[id]?.unitId === "M_01" && v === game.view && !unitOpts.some((o) => o.id === `mecha:${id}:attack`) && m01Targets(data, game, id, "attack").length)
         unitOpts = [{ id: `mecha:${id}:attack`, label: "Attack" }, ...unitOpts];
       if (unitOpts) {
-        const alerts = alertedUnits(c);
-        const last = inOverload && alerts.length === 1 && alerts[0] === id;
-        return openPopup(describe(c, id), unitOpts, last ? "This is the last Alert on the Field. After it, you can end the Overload (9.2)." : undefined, id);
+        // No "last Alert" note in the pop-up (designer 2026-11-16).
+        return openPopup(describe(c, id), unitOpts, undefined, id);
       }
       const secOpts = actors.sectors.get(id);
       if (secOpts) return openPopup(`Dark sector (${id})`, secOpts, undefined, id);
@@ -929,10 +941,8 @@ function GameScreen(p: GameProps) {
   const flagshipExtras = (
     <>
       {layout !== "C" && overhaulButton}
-      <p className="small sheet-line">
-        <UpgradeBubble n={s.sheet.upgradePoints} />
-        {s.sheet.ally ? <span>Ally {s.sheet.ally}</span> : null}
-      </p>
+      {/* Upgrade points are in the Mission card (designer 2026-11-16). */}
+      {s.sheet.ally ? <p className="small sheet-line"><span>Ally {s.sheet.ally}</span></p> : null}
     </>
   );
 
@@ -946,7 +956,16 @@ function GameScreen(p: GameProps) {
       }}
     >
       <header className="bar" ref={barRef}>
-        <strong className="bar-title">{s.mission || "Aphelion 5"}</strong>
+        <strong className="bar-title">
+          {s.mission ? (
+            <>
+              <span className="long-name">{missionName(c).long}</span>
+              <span className="short-name">{missionName(c).short}</span>
+            </>
+          ) : (
+            "Aphelion 5"
+          )}
+        </strong>
         {/* The Reserve in the top bar (designer 2026-11-08): each colour in its own bubble; energy flies in and out of it. */}
         <div className="reserve-bar" aria-label="Energy Reserve">
           {(["Yellow", "Red", "Blue"] as const).map((col) => {
@@ -980,7 +999,8 @@ function GameScreen(p: GameProps) {
           {menuOpen && (
             <div className="menu panel" role="menu" onClick={() => setMenuOpen(false)}>
               <p className="small">
-                {s.mission} · {PHASE[s.phase]}
+                <span className="long-name">{missionName(c).long}</span>
+                <span className="short-name">{missionName(c).short}</span> · {PHASE[s.phase]}
                 <br />
                 Threat: {s.run.threat.join(", ") || "—"} · Command tokens {s.player.commandTokens}
                 {s.settings.heatModule ? ` · Heat ${s.player.heat}` : ""}
@@ -1028,7 +1048,7 @@ function GameScreen(p: GameProps) {
         {hasField ? (
           <FieldView
             data={data}
-            state={s}
+            state={shownState}
             rotate={rotate}
             choosable={choosable}
             tones={tones}
@@ -1055,7 +1075,20 @@ function GameScreen(p: GameProps) {
         )}
         {hover && !popup && hasField && <InfoBubble data={data} state={s} sector={hover} />}
         {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
-        {look && <LookCard data={data} tiles={look} onClose={() => setLook(undefined)} />}
+        {look && !stackQ && hasField && lookAsk ? (
+          <StackPicker
+            key={`look:${look.map((t) => t.tile).join()}`}
+            data={data}
+            state={s}
+            ask={lookAsk}
+            onAnswer={() => {}}
+            onClose={() => setLook(undefined)}
+            onShow={(sector, stack) => setStackShow(stack ? { sector, stack } : undefined)}
+            info={(t) => <HoverInfo data={data} state={s} sector={lookAsk.sector} tileId={t} />}
+          />
+        ) : (
+          look && !stackQ && <LookCard data={data} tiles={look} onClose={() => setLook(undefined)} />
+        )}
         {endOverload && <EndOverload onEnd={() => answer(endOverload.id)} />}
         {actors && crippled && overhaul && (
           // Crippled (5.2, designer 2026-11-10): Overhaul is the only action; the Field says so and points at the button.
@@ -1080,6 +1113,17 @@ function GameScreen(p: GameProps) {
           </QCard>
         ) : damageQ ? (
           <FlagshipDamage total={damageQ.total} from={/^\d/.test(damageQ.rule) ? `rule ${damageQ.rule}` : `from ${damageQ.rule}`} buckets={damageQ.buckets} split={split} onAdd={addSplit} onReset={() => setSplit({})} repair={/^Remove/.test(damageQ.prompt)} />
+        ) : stackQ && q?.kind === "option" && hasField ? (
+          <StackPicker
+            key={`${stackQ.kind}:${stackQ.sector}`}
+            data={data}
+            state={s}
+            ask={stackQ}
+            q={q}
+            onAnswer={(value) => send({ kind: "option", value })}
+            onShow={(sector, stack) => setStackShow(stack ? { sector, stack } : undefined)}
+            info={(t) => <HoverInfo data={data} state={s} sector={stackQ.sector} tileId={t} />}
+          />
         ) : actors || anomalyQ || rowQ || pickQ ? null : hasField ? (
           <FieldQuestion data={data} state={s} q={q} selected={selected} setSelected={setSelected} onAnswer={send} split={split} onResetSplit={() => setSplit({})} onAddSplit={addSplit} />
         ) : onBoard(q) ? (
@@ -1458,7 +1502,7 @@ function QCard({ children }: { children: React.ReactNode }) {
   );
 }
 
-type LookTile = { tile: string; unitId: string; sector?: string | undefined };
+type LookTile = { tile: string; unitId: string; sector?: string | undefined; rule?: string | undefined };
 
 /** What the player just looked at, by sector, top first (placeholder glyphs until the designer's art). */
 function LookCard({ data, tiles, onClose }: { data: GameData; tiles: LookTile[]; onClose: () => void }) {
@@ -1493,7 +1537,7 @@ function LookCard({ data, tiles, onClose }: { data: GameData; tiles: LookTile[];
 
 /** Placeholder glyph for a unit type (designer 2026-11-08: real images later). */
 export function typeGlyph(type: string): string {
-  return type === "Sleeper" ? "P" : type[0]!.toUpperCase();
+  return type === "Sleeper" ? "Z" : type[0]!.toUpperCase();
 }
 
 /** The card text of a sector, as a bubble over the Field that nothing else moves for (designer 2026-11-08). */
@@ -1518,11 +1562,12 @@ function InfoBubble({ data, state, sector }: { data: GameData; state: GameState;
  * trigger ("Drain: ...", bold trigger name), then a description if any, then how many tiles lie
  * beneath. No [1] [2] [3] step numbers.
  */
-function HoverInfo({ data, state, sector }: { data: GameData; state: GameState; sector: string }) {
+export function HoverInfo({ data, state, sector, tileId }: { data: GameData; state: GameState; sector: string; tileId?: string }) {
   const c = { data, state };
-  const stackHere = state.field[sector]!;
-  const top = stackHere.at(-1);
-  if (!top || !state.tiles[top]!.faceUp) return <span>{sectorLine(data, state, sector)}</span>;
+  const stackHere = state.field[sector] ?? [];
+  // A tile in the hand (looked at, being put back: StackPicker) is shown face up, with no "beneath" line.
+  const top = tileId ?? stackHere.at(-1);
+  if (!top || (!tileId && !state.tiles[top]!.faceUp)) return <span>{sectorLine(data, state, sector)}</span>;
   const d = unitDef(c, top);
   const t = tile(state, top);
   const camp = data.campaigns.find((x) => x.prefix === state.campaign);
@@ -1561,7 +1606,7 @@ function HoverInfo({ data, state, sector }: { data: GameData; state: GameState; 
         </span>
       ))}
       {desc && <span>{desc}</span>}
-      <b>{below === 0 ? "No tiles beneath" : `${below} tile${below === 1 ? "" : "s"} beneath`}</b>
+      {!tileId && <b>{below === 0 ? "No tiles beneath" : `${below} tile${below === 1 ? "" : "s"} beneath`}</b>}
     </span>
   );
 }

@@ -5,7 +5,7 @@
  * event, Order, the Field (number and map) and every unit it adds (no Bots, no Energy Gyros).
  */
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Crosshair, Flag, GitFork, Package } from "lucide-react";
 import type { CampaignDatabase, MissionDef, ThreatColumn } from "../../data/campaign.js";
 import type { GameData } from "../../data/index.js";
@@ -80,43 +80,93 @@ function MissionFile({ data, campaign, m }: { data: GameData; campaign: Campaign
 /** Every unit this mission adds: Omega units on the Field, its deck, its Threat columns. Not the Bots or the Energy Gyros, which are in every mission. */
 function MissionRoster({ data, campaign, m }: { data: GameData; campaign: CampaignDatabase; m: MissionDef }) {
   const [open, setOpen] = useState<{ id: string; list: string[] } | undefined>();
+  const [threatOpen, setThreatOpen] = useState<ThreatColumn | undefined>();
+  const box = useRef<HTMLElement>(null);
+  const width = useWidth(box);
   const unit = (id: string): UnitDef | undefined => {
     const u = data.units.byId.get(id);
     return u && u.type !== "Bot" && !u.energyGyro ? u : undefined;
   };
-  const counted = (ids: string[]) => {
-    const n = new Map<string, number>();
-    for (const id of ids) if (unit(id)) n.set(id, (n.get(id) ?? 0) + 1);
-    return [...n.entries()].map(([id, count]) => ({ id, count }));
-  };
-  const groups: { label: string; items: { id: string; count: number }[] }[] = [
+  const top = [
     { label: "Starts on the Field", items: m.omegaPlaced.filter((id) => unit(id)).map((id) => ({ id, count: m.omegaSectors.length })) },
     { label: "Mission deck", items: m.deploymentShuffled.filter((x) => unit(x.id)) },
-    ...(["A", "B", "C", "D"] as ThreatColumn[]).map((c) => ({ label: `Threat ${c}`, items: counted(m.threat[c]) })),
   ].filter((g) => g.items.length > 0);
-  const all = [...new Set(groups.flatMap((g) => g.items.map((x) => x.id)))];
+  // Threats (designer 2026-11-16): never combined: every copy one by one, four tiles per Threat.
+  const threats = (["A", "B", "C", "D"] as ThreatColumn[]).map((c) => ({ c, ids: m.threat[c].filter((id) => unit(id)) })).filter((t) => t.ids.length > 0);
+  const all = [...new Set([...top.flatMap((g) => g.items.map((x) => x.id)), ...threats.flatMap((t) => t.ids)])];
+  // Tiles as big as in the Campaign roster's "All" (52 px; 40 on a phone).
+  const full = width >= 640 ? 52 : 40;
+  // All four Threats on one row when they fit with tiles of at least 34 px; else four Threat buttons.
+  const perThreat = Math.max(...threats.map((t) => t.ids.length), 1);
+  const gap = 14;
+  const fit = Math.floor((width - 24 - gap * (threats.length - 1)) / (threats.length * perThreat) - 6);
+  const threatTile = Math.min(full, fit);
+  const threatRow = threatTile >= 34;
+  const tileBtn = (id: string, size: number, count?: number, key?: string) => {
+    const u = unit(id)!;
+    return (
+      <button key={key ?? id} type="button" className="bf-unit shrink !p-0.5" style={{ minWidth: 0 }} data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list: all }))} aria-label={`${u.type} ${id}${count ? `, ${count}` : ""}: open its card`}>
+        <UnitTile unit={u} level={levelOf(u, campaign)} size={size} />
+        {count !== undefined && count > 1 && <b className="!text-[11px] leading-none">×{count}</b>}
+      </button>
+    );
+  };
+  // The deck on a phone: one row, the tiles shrink to fit (designer 2026-11-16).
+  const rowTile = (n: number) => Math.max(24, Math.min(full, Math.floor((width - 24) / Math.max(n, 1)) - 6));
   return (
-    <section className="rounded-lg bg-white/10 px-3 py-2 sm:col-span-2" aria-label={`Units of ${missionLabel(m)}`} data-mission-roster={m.id}>
+    <section ref={box} className="rounded-lg bg-white/10 px-3 py-2 sm:col-span-2" aria-label={`Units of ${missionLabel(m)}`} data-mission-roster={m.id}>
       <div className="bf-label">Unit roster · tap one to read it</div>
-      <div className="mt-1 grid grid-cols-[minmax(0,1fr)] gap-x-4 gap-y-1 sm:grid-cols-2">
-        {groups.map((g) => (
-          <div key={g.label} className={`flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 ${g.label.startsWith("Threat") ? "" : "sm:col-span-2"}`}>
+      <div className="mt-1 flex flex-col gap-y-1">
+        {top.map((g) => (
+          <div key={g.label} className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 sm:flex-nowrap" data-roster-row={g.label}>
             <span className="w-full text-[12px] font-bold uppercase tracking-wider text-sky-100 sm:w-[92px] sm:shrink-0">{g.label}</span>
-            {g.items.map((x) => {
-              const u = unit(x.id)!;
-              return (
-                <button key={x.id} type="button" className="bf-unit !p-0.5" data-unit={x.id} onClick={() => (playOpenInfo(), setOpen({ id: x.id, list: all }))} aria-label={`${u.type} ${x.id}, ${x.count}: open its card`}>
-                  <UnitTile unit={u} level={levelOf(u, campaign)} size={40} />
-                  {x.count > 1 && <b className="!text-[11px] leading-none">×{x.count}</b>}
-                </button>
-              );
-            })}
+            <span className="flex min-w-0 flex-nowrap items-end gap-x-1 sm:flex-wrap">{g.items.map((x) => tileBtn(x.id, width < 640 ? rowTile(g.items.length) : full, x.count))}</span>
           </div>
         ))}
+        {threats.length > 0 && threatRow && (
+          <div className="flex min-w-0 flex-nowrap items-start" style={{ gap }} data-threat-row="1">
+            {threats.map((t) => (
+              <div key={t.c} className="min-w-0" data-threat-col={t.c}>
+                <span className="block text-[12px] font-bold uppercase tracking-wider text-sky-100">Threat {t.c}</span>
+                <span className="flex flex-nowrap items-end gap-x-0.5">{t.ids.map((id, k) => tileBtn(id, threatTile, undefined, `${id}:${k}`))}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {threats.length > 0 && !threatRow && (
+          <div data-threat-row="0">
+            <div className="grid grid-cols-4 gap-1.5" role="group" aria-label="Threats">
+              {threats.map((t) => (
+                <button key={t.c} type="button" className="bf-tab justify-center !px-1" aria-pressed={threatOpen === t.c} data-threat-btn={t.c} onClick={() => (playSelect(), setThreatOpen(threatOpen === t.c ? undefined : t.c))}>
+                  Threat {t.c}
+                </button>
+              ))}
+            </div>
+            {threatOpen && (
+              <span key={threatOpen} className="bf-pop mt-1 flex flex-nowrap items-end justify-center gap-x-1" data-threat-col={threatOpen}>
+                {threats.find((t) => t.c === threatOpen)!.ids.map((id, k) => tileBtn(id, rowTile(perThreat), undefined, `${id}:${k}`))}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       {open && <UnitCard data={data} id={open.id} campaign={campaign} list={open.list} onPick={(id) => setOpen({ ...open, id })} onClose={() => setOpen(undefined)} />}
     </section>
   );
+}
+
+/** The width of an element, followed as it changes. */
+function useWidth(ref: React.RefObject<HTMLElement | null>): number {
+  const [w, setW] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setW(el.clientWidth));
+    ro.observe(el);
+    setW(el.clientWidth);
+    return () => ro.disconnect();
+  }, [ref]);
+  return w;
 }
 
 function Link({ fork }: { fork: boolean }) {

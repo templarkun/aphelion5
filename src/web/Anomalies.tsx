@@ -14,18 +14,31 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { type Anchor, PopCard, anchorOf } from "./PopCard.js";
 import type { GameData } from "../data/index.js";
+import { CLEARED_COLOUR, TYPE_COLOUR, unitFrameUrl } from "./glyphs.js";
 import type { Option, Question } from "../engine/questions.js";
 
 const WORD = /\b(Bots?|Mecha|Sentinels?|Gyros?|Sleepers?|Flares?|Cleared sectors?)\b/g;
 const TYPE_OF: Record<string, string> = { Bot: "bot", Mecha: "mecha", Sentinel: "sentinel", Gyro: "gyro", Sleeper: "sleeper", Flare: "flare", "Cleared sector": "cleared" };
-const LETTER: Record<string, string> = { bot: "B", mecha: "M", sentinel: "S", gyro: "G", sleeper: "P", flare: "F", cleared: "" };
+/** Sleepers are "Z" (designer 2026-11-16: "P" was their old name). */
+const LETTER: Record<string, string> = { bot: "B", mecha: "M", sentinel: "S", gyro: "G", sleeper: "Z", flare: "F", omega: "O", cleared: "" };
+const FIELD_TYPE: Record<string, string> = { bot: "Bot", mecha: "Mecha", sentinel: "Sentinel", gyro: "Gyro", sleeper: "Sleeper", flare: "Flare", omega: "Omega" };
+const hex = (n: number) => `#${n.toString(16).padStart(6, "0")}`;
+/** Light tiles (Bots, Flares) take a dark letter. */
+const DARK_LETTER = new Set(["bot", "flare"]);
 
-/** A placeholder glyph: a small hexagon with the type's letter (Cleared sector: an empty hexagon). */
+/**
+ * A placeholder glyph (designer 2026-11-16): a hexagon in the unit type's colour as on the Field
+ * (white Bots, blue Sleepers ...), the Unit frame (art/glyphs/Unit.png) on it, then the type's
+ * letter. A Cleared sector: the Field's Cleared sector colour, no frame.
+ */
 export function UnitGlyph({ type }: { type: string }) {
   const t = TYPE_OF[type] ?? type.toLowerCase();
+  const colour = t === "cleared" ? CLEARED_COLOUR : TYPE_COLOUR[FIELD_TYPE[t] ?? ""];
+  const frame = t === "cleared" ? undefined : unitFrameUrl();
   return (
-    <span className={`ug t-${t}`} title={type} aria-label={type}>
-      {LETTER[t] ?? type[0]}
+    <span className={`ug t-${t} ${DARK_LETTER.has(t) ? "dark" : ""}`} title={type} aria-label={type} style={colour !== undefined ? ({ "--ug": hex(colour) } as React.CSSProperties) : undefined}>
+      {frame && <img className="ug-frame" src={frame} alt="" draggable={false} />}
+      <b>{LETTER[t] ?? type[0]}</b>
     </span>
   );
 }

@@ -5,7 +5,7 @@
  * Overload ends.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isStill, noFlying } from "./motion.js";
 import { CORONAL_REACH, drawCoronalWaves } from "./coronalFx.js";
 
@@ -54,14 +54,101 @@ function useCorona(canvas: React.RefObject<HTMLCanvasElement | null>) {
   }, [canvas]);
 }
 
+/** Distance from a point to a pointy-top hexagon (centre cx, cy; corner radius r); 0 inside. */
+function hexDistance(px: number, py: number, cx: number, cy: number, r: number): number {
+  const pts = Array.from({ length: 6 }, (_, k) => {
+    const a = (Math.PI / 3) * k - Math.PI / 2;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)] as const;
+  });
+  let inside = true;
+  let best = Infinity;
+  for (let k = 0; k < 6; k++) {
+    const [ax, ay] = pts[k]!;
+    const [bx, by] = pts[(k + 1) % 6]!;
+    if ((bx - ax) * (py - ay) - (by - ay) * (px - ax) < 0) inside = false;
+    const L = (bx - ax) ** 2 + (by - ay) ** 2;
+    const t = Math.max(0, Math.min(1, ((px - ax) * (bx - ax) + (py - ay) * (by - ay)) / L));
+    best = Math.min(best, Math.hypot(px - (ax + t * (bx - ax)), py - (ay + t * (by - ay))));
+  }
+  return inside ? 0 : best;
+}
+
+/** The button's size before any shrinking (as the style sheet's --eo: phones 64 px, PCs bigger). */
+function naturalSize(): number {
+  const w = window.innerWidth;
+  const vmin = Math.min(window.innerWidth, window.innerHeight) / 100;
+  if (w < 600) return 64;
+  if (w >= 1280) return Math.max(110, Math.min(172, 15 * vmin));
+  return Math.max(96, Math.min(150, 13 * vmin));
+}
+
+/**
+ * Where the button goes (designer 2026-11-16: never over a sector): the free place nearest the
+ * lower right corner of the Field where the whole round button misses every sector; if none at
+ * its full size, it is made smaller (down to 56 px) until one is found. Worked out again whenever
+ * the Field changes size.
+ */
+function usePlace(btn: React.RefObject<HTMLButtonElement | null>) {
+  const [place, setPlace] = useState<{ x: number; y: number; d: number } | undefined>();
+  useLayoutEffect(() => {
+    let last = "";
+    const work = () => {
+      const b = btn.current;
+      const field = document.querySelector<HTMLElement>(".field");
+      const host = b?.offsetParent as HTMLElement | null;
+      if (!b || !field || !host) return;
+      const fr = field.getBoundingClientRect();
+      const hr = host.getBoundingClientRect();
+      const key = `${field.dataset.sectors}|${field.dataset.tile}|${fr.width}x${fr.height}|${hr.left - fr.left},${hr.top - fr.top}|${window.innerWidth}x${window.innerHeight}`;
+      if (key === last) return;
+      last = key;
+      const sectors: [number, number][] = Object.values(JSON.parse(field.dataset.sectors ?? "{}"));
+      const r = Number(field.dataset.tile ?? 0) / 2;
+      // The size the style sheet gives it (the --eo size), before any shrinking.
+      const full = naturalSize();
+      const gap = 4;
+      const fits = (x: number, y: number, d: number) => sectors.every(([sx, sy]) => hexDistance(x, y, sx, sy, r) >= d / 2 + gap);
+      let found: { x: number; y: number; d: number } | undefined;
+      for (let d = full; !found && d >= 56; d = d > 56 && d * 0.88 < 56 ? 56 : d * 0.88) {
+        let best = Infinity;
+        const m = d / 2 + 6;
+        for (let y = fr.height - m; y >= m; y -= 4)
+          for (let x = fr.width - m; x >= m; x -= 4) {
+            const far = Math.hypot(fr.width - m - x, fr.height - m - y);
+            if (far < best && fits(x, y, d)) {
+              best = far;
+              found = { x, y, d };
+            }
+          }
+        if (d === 56) break;
+      }
+      found ??= { x: fr.width - 34, y: fr.height - 34, d: 56 };
+      const next = { x: Math.round(found.x + fr.left - hr.left), y: Math.round(found.y + fr.top - hr.top), d: Math.round(found.d) };
+      setPlace((old) => (old && old.x === next.x && old.y === next.y && old.d === next.d ? old : next));
+    };
+    work();
+    const timer = window.setInterval(work, 500);
+    window.addEventListener("resize", work);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("resize", work);
+    };
+  }, [btn]);
+  return place;
+}
+
 export function EndOverload(p: { onEnd: () => void }) {
   const [burst, setBurst] = useState(false);
   const still = noFlying();
   const plasma = useRef<HTMLCanvasElement>(null);
+  const self = useRef<HTMLButtonElement>(null);
   useCorona(plasma);
+  const place = usePlace(self);
   return (
     <button
-      className={`end-overload ${burst ? "bursting" : ""}`}
+      ref={self}
+      className={`end-overload ${burst ? "bursting" : ""} ${place ? "placed" : ""}`}
+      style={place ? ({ left: place.x - place.d / 2, top: place.y - place.d / 2, width: place.d, height: place.d, fontSize: place.d < 80 ? 10 : undefined } as React.CSSProperties) : { visibility: "hidden" }}
       title="No Alert tokens remain (9.2)"
       disabled={burst}
       onClick={() => {

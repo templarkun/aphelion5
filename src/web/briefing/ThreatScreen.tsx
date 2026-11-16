@@ -6,7 +6,7 @@
  * menacing with the Threat Level. It only answers the engine's question; no rule lives here.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check, Flame, Minus, Plus, Shield, Skull, Swords } from "lucide-react";
 import type { ThreatColumn } from "../../data/campaign.js";
 import type { GameData } from "../../data/index.js";
@@ -48,12 +48,28 @@ function menace(el: Element, level: number): void {
 export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data: GameData; state: GameState; q: Question & { kind: "several" }; onAnswer: (cols: string[]) => void; setAcc: (rgb: string) => void; steps: React.ReactNode }) {
   const camp = data.campaigns.find((c) => c.prefix === state.campaign);
   const m = camp?.missionById.get(state.mission ?? "");
+  const m0 = m;
   const [cols, setCols] = useState<string[]>([]);
   const [open, setOpen] = useState<{ id: string; list: string[] } | undefined>();
   const [pulse, setPulse] = useState(0);
   const [sent, setSent] = useState(false);
   const panels = useRef(new Map<string, HTMLElement>());
   const body = useRef<HTMLDivElement>(null);
+  const grid = useRef<HTMLDivElement>(null);
+  const [gridW, setGridW] = useState(0);
+  useLayoutEffect(() => {
+    const el = grid.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setGridW(el.clientWidth));
+    ro.observe(el);
+    setGridW(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
+  const most = Math.max(4, ...q.options.map((o) => (m0?.threat[o.id as ThreatColumn] ?? []).length));
+  const colW = (gridW - 3 * (gridW >= 768 ? 12 : 6)) / 4;
+  // Wide: the column holds its units in one row with tiles of at least 44 px.
+  const wide = gridW >= 600 && (colW - 22) / most - 6 >= 44;
+  const tile = Math.max(30, Math.floor(wide ? Math.min(80, (colW - 22) / most - 6) : Math.min(72, colW - 14)));
   const level = cols.length;
   // No column yet: the style's own accent; then the colour of the Threat Level.
   const acc = level === 0 ? briefStyle().acc : THREAT_RGB[level]!;
@@ -138,7 +154,9 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
             </div>
           </header>
 
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+          {/* Designer 2026-11-16: the four Threats always side by side. Wide: each Threat's units in one
+              row, sized to fit. Narrow (phones): its units stacked one under another, "+ Add" at the foot. */}
+          <div ref={grid} className="grid grid-cols-4 gap-1.5 md:gap-3" data-threat-layout={wide ? "row" : "stack"}>
             {q.options.map((o) => {
               const on = cols.includes(o.id);
               const ids = m.threat[o.id as ThreatColumn] ?? [];
@@ -148,35 +166,35 @@ export function ThreatScreen({ data, state, q, onAnswer, setAcc, steps }: { data
                 <section
                   key={o.id}
                   ref={(el) => void (el ? panels.current.set(o.id, el) : panels.current.delete(o.id))}
-                  className={`bf-panel flex min-w-0 flex-col p-2 md:p-2.5 xl:p-3 ${on ? "bf-sel bf-col-on" : ""}`}
+                  className={`bf-panel flex min-w-0 flex-col ${wide ? "p-2 md:p-2.5 xl:p-3" : "!px-1 py-1.5"} ${on ? "bf-sel bf-col-on" : ""}`}
                   data-col={o.id}
                   data-on={on ? "1" : "0"}
                   aria-label={`Threat column ${o.id}`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className={`flex items-center ${wide ? "justify-between" : "justify-center"}`}>
                     <div className="flex min-w-0 items-center gap-2">
                       <span className={`grid h-9 w-8 place-items-center text-lg font-extrabold xl:h-11 xl:w-10 xl:text-xl ${on ? "bg-acc text-indigo-950" : "bg-white/25 text-white"}`} style={{ clipPath: "polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)" }}>
                         {o.id}
                       </span>
                       <span className="hidden text-lg font-extrabold uppercase tracking-wider text-white xl:inline">Threat {o.id}</span>
                     </div>
-                    <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-extrabold uppercase tracking-wider ${on ? "bg-acc text-indigo-950" : "bg-white/15 text-sky-100"}`}>{on ? "In play" : `${ids.length} units`}</span>
+                    {wide && <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-extrabold uppercase tracking-wider ${on ? "bg-acc text-indigo-950" : "bg-white/15 text-sky-100"}`}>{on ? "In play" : `${ids.length} units`}</span>}
                   </div>
-                  <div className="my-1.5 flex flex-1 flex-wrap content-start items-start justify-center gap-0.5 xl:gap-1">
+                  <div className={`my-1.5 flex flex-1 items-center justify-center gap-0.5 ${wide ? "flex-nowrap content-start items-start xl:gap-1" : "flex-col"}`}>
                     {list.map((id, k) => {
                       const u = unitOf(id);
                       if (!u) return null;
                       return (
-                        <button key={k} type="button" className="bf-unit !p-0.5 xl:!px-1 xl:!py-1" data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list: [...new Set(list)] }))} aria-label={`${u.type}: open its card`}>
+                        <button key={k} type="button" className="bf-unit shrink !p-0.5" data-unit={id} onClick={() => (playOpenInfo(), setOpen({ id, list: [...new Set(list)] }))} aria-label={`${u.type}: open its card`}>
                           <span className="bf-tw">
-                            <UnitTile unit={u} level={levelOf(u, camp)} size={72} />
+                            <UnitTile unit={u} level={levelOf(u, camp)} size={tile} />
                           </span>
                         </button>
                       );
                     })}
                   </div>
-                  <button type="button" className={`bf-btn w-full !min-h-[40px] !px-2 ${on ? "" : "bf-primary"}`} aria-pressed={on} data-col-btn={o.id} disabled={sent || (!on && level >= q.max)} onClick={() => toggle(o.id)}>
-                    {on ? <Minus size={18} /> : <Plus size={18} />} {on ? "Remove" : <>Add<span className="hidden xl:inline"> this Threat</span></>}
+                  <button type="button" className={`bf-btn w-full !min-h-[40px] ${wide ? "!px-2" : "!gap-0.5 !px-0.5 !text-[13px]"} ${on ? "" : "bf-primary"}`} aria-pressed={on} data-col-btn={o.id} disabled={sent || (!on && level >= q.max)} onClick={() => toggle(o.id)}>
+                    {on ? wide && <Minus size={18} /> : <Plus size={wide ? 18 : 15} />} {on ? "Remove" : <>Add<span className="hidden xl:inline"> this Threat</span></>}
                   </button>
                 </section>
               );

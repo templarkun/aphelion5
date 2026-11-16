@@ -1,6 +1,6 @@
 /**
  * Style "intro2": armour doors. Two plates slide in from the sides and meet, a seam of light
- * runs along the join, the word stands on the closed doors, one flash. Under half a second.
+ * runs along the join, the word stands on the closed doors, one flash. Under a second (designer 2026-11-16: twice as slow).
  */
 
 export function Lock({ title, sub }: { title: string; sub: string }) {

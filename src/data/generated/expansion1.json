@@ -21,7 +21,7 @@
     {
       "id": "H4",
       "title": "Power Node",
-      "text": "When a Power Node is revealed (not uncovered), choose one: place its 3 energy on your Modules as usual, or gain 3 Heat tokens instead. You cannot split the choice."
+      "text": "When a Power Node is revealed (not uncovered), choose one: place its 3 energy on your Modules as usual, or gain 2 Heat tokens instead. You cannot split the choice."
     },
     {
       "id": "H5",

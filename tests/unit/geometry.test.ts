@@ -132,12 +132,12 @@ describe("tests/batch1.txt - GEOMETRY", () => {
 
   it("T_GEO_05 a line of fire continues across a gap (M_02 at f=5, Mission 2x)", () => {
     const m = mapOf("T_GEO_05");
-    expect(arrowsOf("M_02")).toEqual([1, 3]);
+    expect(arrowsOf("M_02")).toEqual([1, 4]);
     const a = m.arrows(c(1, 2), arrowsOf("M_02"), 5);
-    expect(a.map((x) => x.side)).toEqual([6, 2]);
+    expect(a.map((x) => x.side)).toEqual([6, 3]);
     expect(m.has(c(0, 2))).toBe(false); // the gap
     expect(shown(a[0]!.lineOfFire)).toEqual(["(-1,2)"]);
-    expect(m.has(c(2, 1))).toBe(false);
+    // Side 4 -> actual side 3 (arrows 1,4 since 2026-11-16): off the map, so the line is empty.
     expect(a[1]!.lineOfFire).toEqual([]);
   });
 

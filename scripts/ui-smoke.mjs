@@ -403,7 +403,8 @@ if (existsSync(`${out}/bay3-save.json`)) {
   // The scanning aura travels from Bay 3 to the sector (weapon looks, build step 3).
   const scan = await pg.waitForSelector(".weapon-fx.look-scan", { timeout: 2500 }).then(() => true).catch(() => false);
   await pg.waitForTimeout(900);
-  const shown = await pg.locator(".look-card .look-tile").count();
+  // Tiles looked at from the top of one sector are lifted out and shown as units (designer 2026-11-16), else the look card.
+  const shown = (await pg.locator(".look-card .look-tile").count()) + (await pg.locator("[data-stack-picker=look] .sp-tile").count());
   bay3Check = popped && fire && shown >= 1 && scan ? "ok" : `failed (pop-up ${popped}, fire ${fire}, tiles shown ${shown}, scan look ${scan})`;
   await pg.screenshot({ path: `${out}/ui-bay3.png` });
   await pg.close();
@@ -412,6 +413,34 @@ if (existsSync(`${out}/bay3-save.json`)) {
   pg2.on("pageerror", (e) => errors.push(e.message));
   await bayDrag(pg2);
   await pg2.close();
+}
+// V1 Bay 3 (designer 2026-11-16): the three tiles rise out of the sector, a tap puts each back on top,
+// the last one goes by itself and is revealed; only then the engine's order question is answered.
+let stackCheck = "skipped (no save)";
+if (existsSync(`${out}/bay3-V1-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/bay3-V1-save.json`);
+  const btn = pg.locator(".bay-btn", { has: pg.locator("text=Bay 3") });
+  await btn.click();
+  await btn.click();
+  await pg.locator(".unit-pick").first().waitFor({ timeout: 4000 }).catch(() => {});
+  await pg.locator(".unit-pick").first().click();
+  await pg.locator("[data-stack-picker=bay3] .sp-tile.wait").nth(2).waitFor({ timeout: 6000 }).catch(() => {});
+  const tiles = await pg.locator("[data-stack-picker=bay3] .sp-tile").count();
+  const asked = /put them back in which order/.test(await promptOf(pg));
+  await pg.locator(".sp-tile.wait").nth(1).hover();
+  await pg.waitForTimeout(300);
+  const info = await pg.locator(".sp-info").count();
+  await pg.screenshot({ path: `${out}/ui-bay3-v1.png` });
+  await pg.locator(".sp-tile.wait").nth(1).click();
+  await pg.waitForTimeout(900);
+  const still = /put them back in which order/.test(await promptOf(pg));
+  await pg.locator(".sp-tile.wait").first().click();
+  await pg.waitForFunction(() => !document.querySelector("[data-stack-picker]"), null, { timeout: 6000 }).catch(() => {});
+  const done = (await pg.locator("[data-stack-picker]").count()) === 0 && !/put them back/.test(await promptOf(pg));
+  stackCheck = tiles === 3 && asked && info === 1 && still && done ? "ok" : `failed (tiles ${tiles}, asked ${asked}, info ${info}, still asking after one ${still}, answered ${done})`;
+  await pg.close();
 }
 async function bayDrag(pg) {
   await pasteSave(pg, `${out}/bay3-save.json`);
@@ -801,6 +830,22 @@ if (existsSync(`${out}/pickmany-save.json`)) {
   pickCheck = bubblesN >= 3 && card === 0 && sel === want && after !== before ? "ok" : `failed (bubbles ${bubblesN}, card ${card}, selected ${sel}, prompt still "${after}")`;
   await pg.close();
 }
+// P_15 (designer 2026-11-16): pressing a "1 damage" bubble crashed the screen when the next question asked about other units.
+let damagePickCheck = "skipped (no save)";
+if (existsSync(`${out}/pickdamage-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  const before = errors.length;
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/pickdamage-save.json`);
+  await pg.locator(".unit-pick").first().waitFor({ timeout: 6000 }).catch(() => {});
+  const asked = await promptOf(pg);
+  await pg.locator(".unit-pick").first().click();
+  await pg.waitForTimeout(1500);
+  const alive = (await pg.locator(".game").count()) === 1 && (await pg.locator(".crash-card").count()) === 0;
+  const after = alive ? await promptOf(pg) : "";
+  damagePickCheck = alive && errors.length === before && after !== asked ? "ok" : `failed (screen alive ${alive}, errors ${errors.length - before}, prompt "${after}")`;
+  await pg.close();
+}
 // Removing Flagship damage (designer 2026-11-09): green bubbles by the Bays, no card; and the FPS counter.
 let repairCheck = "skipped (no save)";
 if (existsSync(`${out}/repair-save.json`)) {
@@ -973,7 +1018,7 @@ for (const style of ["intro2", "intro1"]) {
   const mark = () => pg.evaluate(() => document.documentElement.dataset.bfStyle);
   const boxes = () => pg.evaluate(() => [...document.querySelectorAll(".brief [data-campaign], .brief [data-mission], .brief [data-action]")].map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)].join(); }).join(";"));
   const first = await mark();
-  await pg.waitForTimeout(800); // the cards have slid in: measure them at rest
+  await pg.waitForTimeout(1600); // the cards have slid in (twice as slow since 2026-11-16): measure them at rest
   const lay2 = await boxes();
   await pg.locator("[aria-label='System options']").click();
   const picks = await pg.locator("[data-style-pick]").count();
@@ -981,7 +1026,7 @@ for (const style of ["intro2", "intro1"]) {
   const second = await mark();
   await pg.screenshot({ path: `${out}/ui-style-options.png` });
   await pg.locator("[aria-label='Close']").click();
-  await pg.waitForTimeout(800);
+  await pg.waitForTimeout(1600);
   const lay1 = await boxes();
   await pg.screenshot({ path: `${out}/ui-style-intro1.png` });
   await pg.reload();
@@ -1021,7 +1066,20 @@ for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone"
   await pg.screenshot({ path: `${out}/ui-brief-mission${name}.png`, fullPage: false });
   await pg.locator("[data-mission=C1_M3]").click();
   const fileClosed = (await pg.locator("[data-mission-detail]").count()) === 0;
-  const missionOk = noFile && maps > 3 && noF01 && fileOpen && fileClosed;
+  // Threats never combined (designer 2026-11-16): one row of four Threats on a PC, four Threat buttons on a phone.
+  await pg.locator("[data-mission=C1_M3]").click();
+  await pg.waitForTimeout(700);
+  let threatsOk;
+  if (width >= 1280) threatsOk = (await pg.locator("[data-threat-row='1'] [data-threat-col]").count()) === 4 && (await pg.locator("[data-threat-row='1'] [data-threat-col] [data-unit]").count()) >= 12;
+  else {
+    await pg.locator("[data-threat-btn=A]").click();
+    threatsOk = (await pg.locator("[data-threat-row='0'] [data-threat-col=A] [data-unit]").count()) >= 3;
+  }
+  // "All": one row per unit type.
+  const typeRows = await pg.locator("[data-type-row]").count();
+  await pg.locator("[data-mission=C1_M3]").click();
+  const missionOk = noFile && maps > 3 && noF01 && fileOpen && fileClosed && threatsOk && typeRows === 4;
+  if (!missionOk) console.log("mission roster", { noFile, maps, noF01, fileOpen, fileClosed, threatsOk, typeRows, width });
   await pg.locator("[data-filter=Sleeper]").click();
   const sleepers = await pg.locator("[data-roster] [data-compact] [data-unit]").evaluateAll((els) => els.every((e) => e.dataset.unit.startsWith("P_")) && els.length > 0);
   await pg.locator("[data-roster] [data-compact] [data-unit]").first().click();
@@ -1096,10 +1154,10 @@ for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone"
   const log = await pg.locator(".log").innerText().catch(() => "");
   await pg.close();
   const prepOk = flagshipTab === 1 && modCards === 3 && keepLocked && allies >= 1 && fieldHidden === 1 && fieldShown && /keep /.test(log) && /your Ally: /.test(log);
-  const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 1200 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && missionOk && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
+  const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 2400 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && missionOk && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
   if (!ok && introCheck === "ok") introCheck = `failed at ${width} px in ${style} (missions: none open ${noFile}, maps ${maps}, no F_01 ${noF01}, opens ${fileOpen}, closes ${fileClosed}; prep: flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
 }
-console.log(JSON.stringify({ introCheck, styleCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
+console.log(JSON.stringify({ introCheck, styleCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck, styleCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck, styleCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

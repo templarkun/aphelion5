@@ -6,7 +6,7 @@
 import { unitEffect } from "../effects/registry.js";
 import { ENERGY_COLOURS } from "../data/units.js";
 import { type Effect, type RunCtx, ask, asEffect, log } from "./effect.js";
-import { gainHeat } from "./heat.js";
+import { gainHeat, powerNodeHeat } from "./heat.js";
 import type { Option } from "./questions.js";
 import { type Ctx, describe, isUnit, isWreck, sectorOf, tile, unitDef, unitType, units } from "./field.js";
 import { emit } from "./events.js";
@@ -29,7 +29,7 @@ export function discardUnit(c: Ctx, id: TileId, rule: string): void {
 
 /**
  * Trial rule (designer 2026-11-08): a Power Node's energy waits on it from its
- * Reveal; with the Heat module, energy or 3 Heat (H4) is chosen when its Alert
+ * Reveal; with the Heat module, energy or Heat (H4) is chosen when its Alert
  * is resolved, not when it is revealed.
  */
 export function powerNodeWaits(c: Ctx, id: TileId): boolean {
@@ -45,7 +45,7 @@ export function splitAlertId(rest: string): [TileId, "energy" | "heat" | undefin
   return [rest.slice(0, i), ch === "heat" ? "heat" : "energy"];
 }
 
-/** The Alert entries of an action menu on the units (shortcuts): a waiting Power Node offers its energy and, with the Heat module, 3 Heat. */
+/** The Alert entries of an action menu on the units (shortcuts): a waiting Power Node offers its energy and, with the Heat module, 2 Heat (H4). */
 export function alertShortcuts(c: Ctx): Option[] {
   const out: Option[] = [];
   for (const u of alertedUnits(c)) {
@@ -54,7 +54,7 @@ export function alertShortcuts(c: Ctx): Option[] {
       const chips = ENERGY_COLOURS.flatMap((col) => Array.from({ length: e[col] }, () => col));
       const what = chips.length ? chips.join(", ") : "nothing (the Supply was empty)";
       out.push({ id: c.state.settings.heatModule ? `alert:${u}|energy` : `alert:${u}`, label: `Gain ${what}`, on: { kind: "unit", id: u }, chips });
-      if (c.state.settings.heatModule) out.push({ id: `alert:${u}|heat`, label: "Gain 3 Heat", on: { kind: "unit", id: u }, chips: ["Heat", "Heat", "Heat"] });
+      if (c.state.settings.heatModule) out.push({ id: `alert:${u}|heat`, label: `Gain ${powerNodeHeat(c)} Heat`, on: { kind: "unit", id: u }, chips: Array.from({ length: powerNodeHeat(c) }, () => "Heat") });
       continue;
     }
     out.push({ id: `alert:${u}`, label: `Resolve the Alert${isWreck(c, u) ? " (Wreck)" : ""}`, on: { kind: "unit", id: u } });
@@ -116,17 +116,17 @@ function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" |
       yield* orFizzle(c, id, unitId, unitEffect(unitId, "activate")(c, id));
       return;
     case "Flare":
-      // Trial rule with the Heat module: a Power Node gives its waiting energy or 3 Heat (H4).
+      // Trial rule with the Heat module: a Power Node gives its waiting energy or Heat (H4).
       if (c.state.settings.heatModule && powerNodeWaits(c, id)) {
         const pick =
           choice ??
           ((yield* ask(c, {
             kind: "option",
-            prompt: "Power Node: gain its energy or 3 Heat?",
+            prompt: `Power Node: gain its energy or ${powerNodeHeat(c)} Heat?`,
             rule: "H4",
             options: [
               { id: "energy", label: "Gain its energy", on: { kind: "unit", id }, chips: ENERGY_COLOURS.flatMap((col) => Array.from({ length: tile(c.state, id).energy![col] }, () => col)) },
-              { id: "heat", label: "Gain 3 Heat", on: { kind: "unit", id }, chips: ["Heat", "Heat", "Heat"] },
+              { id: "heat", label: `Gain ${powerNodeHeat(c)} Heat`, on: { kind: "unit", id }, chips: Array.from({ length: powerNodeHeat(c) }, () => "Heat") },
             ],
           })).value as string);
         if (pick === "heat") {
@@ -134,7 +134,7 @@ function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" |
           for (const col of ENERGY_COLOURS) c.state.supply.energy[col] += t.energy![col];
           delete t.energy;
           log(c, `${describe(c, id)}: its energy goes back to the Supply`, "H4");
-          gainHeat(c, 3, "H4");
+          gainHeat(c, powerNodeHeat(c), "H4");
           return;
         }
       }

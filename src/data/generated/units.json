@@ -85,7 +85,7 @@
     "copies": 10,
     "arrows": [
       1,
-      3
+      4
     ],
     "text": {
       "ability": "Expend: Deal 1 damage to all units in its lines of fire."
@@ -99,7 +99,7 @@
       "on destroy": "remove to Discard",
       "id": "M_02",
       "level": "2",
-      "arrows": "1,3",
+      "arrows": "1,4",
       "ability_kind": "expend",
       "dev_price": "2.1",
       "ability": "Expend: Deal 1 damage to all units in its lines of fire."
@@ -923,7 +923,7 @@
       "dev_price": "2.0",
       "mission_end_reward": "1 Upgrade point per Power Node in the Trophy pile",
       "removal_exception": "goes to the Trophy pile instead of the Discard",
-      "heat_module_note": "see Expansion1 (may gain 3 Heat tokens instead of the energy)"
+      "heat_module_note": "see Expansion1 (may gain 2 Heat tokens instead of the energy)"
     },
     "energyOnReveal": {
       "Yellow": 1,

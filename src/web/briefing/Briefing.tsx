@@ -37,10 +37,10 @@ export interface BriefingProps {
   onReplayIntro: () => void;
 }
 
-/** Confirm animations are short (designer 2026-11-14). */
-const STEP_OUT = 120;
-const LOCK_MS = 430;
-const LAUNCH_MS = 850;
+/** Confirm animations are short (designer 2026-11-14); twice as long since 2026-11-16 (designer). */
+const STEP_OUT = 240;
+const LOCK_MS = 860;
+const LAUNCH_MS = 1700;
 
 export function Briefing(p: BriefingProps) {
   const { data } = p;

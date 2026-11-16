@@ -5,7 +5,7 @@
  * a phone); a type filter opens each unit with its effects written out. A tap opens its card.
  */
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { CampaignDatabase } from "../../data/campaign.js";
 import type { GameData } from "../../data/index.js";
 import type { UnitDef, UnitType } from "../../data/units.js";
@@ -42,6 +42,16 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
   const [filter, setFilter] = useState<UnitType | "all">("all");
   const [open, setOpen] = useState<{ id: string; list: string[] } | undefined>();
   const shown = filter === "all" ? rest : rest.filter((u) => u.type === filter);
+  const allBox = useRef<HTMLDivElement>(null);
+  const [allWidth, setAllWidth] = useState(800);
+  useLayoutEffect(() => {
+    const el = allBox.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setAllWidth(el.clientWidth));
+    ro.observe(el);
+    setAllWidth(el.clientWidth);
+    return () => ro.disconnect();
+  }, [filter]);
   const show = (u: UnitDef, list: UnitDef[], el: Element) => {
     playOpenInfo();
     burstFrom(el, { rgb: "255 255 255", count: 10, speed: 120 });
@@ -93,16 +103,28 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
       </div>
 
       {filter === "all" ? (
-        // Compact: small tiles, no names; on a phone only the glyphs.
-        <div key="all" className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-1 sm:grid-cols-[repeat(auto-fill,minmax(62px,1fr))]" data-compact="1">
-          {shown.map((u, i) => (
-            <button key={u.id} type="button" className="bf-unit bf-rise !p-0.5 sm:!px-1 sm:!py-1" style={{ "--i": Math.min(i, 24) } as React.CSSProperties} data-unit={u.id} onClick={(e) => show(u, shown, e.currentTarget)} aria-label={`${u.type}: open its card`}>
-              <span className="hidden sm:block">
-                <UnitTile unit={u} level={levelOf(u, campaign)} size={52} />
-              </span>
-              <img className="block h-[42px] w-[38px] object-contain sm:hidden" src={glyphBadgeUrl(u.id) ?? ""} alt="" draggable={false} />
-            </button>
-          ))}
+        // Compact: small tiles, no names; one row per unit type on every screen (designer 2026-11-16), the
+        // tiles shrinking to fit the row (a very long row scrolls sideways); on a phone only the glyphs.
+        <div key="all" ref={allBox} className="mt-2 flex flex-col gap-1" data-compact="1">
+          {ORDER.map((t) => {
+            const row = shown.filter((u) => u.type === t);
+            if (!row.length) return null;
+            const phone = allWidth < 640;
+            const cell = Math.max(28, Math.min(phone ? 42 : 62, Math.floor((allWidth - 8) / row.length) - 4));
+            return (
+              <div key={t} className="bf-scroll flex flex-nowrap gap-1" data-type-row={t} aria-label={PLURAL[t]}>
+                {row.map((u, i) => (
+                  <button key={u.id} type="button" className="bf-unit bf-rise shrink-0 !p-0.5 sm:!px-1 sm:!py-1" style={{ "--i": Math.min(i, 24) } as React.CSSProperties} data-unit={u.id} onClick={(e) => show(u, shown, e.currentTarget)} aria-label={`${u.type}: open its card`}>
+                    {phone ? (
+                      <img className="block object-contain" style={{ width: cell * 0.9, height: cell }} src={glyphBadgeUrl(u.id) ?? ""} alt="" draggable={false} />
+                    ) : (
+                      <UnitTile unit={u} level={levelOf(u, campaign)} size={Math.min(52, cell - 10)} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
         </div>
       ) : (
         // One type: every unit opened, its effects written out.

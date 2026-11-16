@@ -21,12 +21,13 @@ when: Reveal (0,1)
 then: no question (no energy-or-Heat choice): 1 Yellow, 1 Red and 1 Blue wait on the Power
       Node, as T10_TRY_02. Overload starts; the Power Node gets an Alert token.
 when: tap the Power Node
-then: two pop-ups on it: "Gain" with the three energy glyphs, and "Gain 3 Heat".
-when: choose "Gain 3 Heat"
-then: its 3 energy goes back to the Supply and you gain 3 Heat (10 at most, H1).
+then: two pop-ups on it: "Gain" with the three energy glyphs, and "Gain 2 Heat".
+when: choose "Gain 2 Heat"
+then: its 3 energy goes back to the Supply and you gain 2 Heat (10 at most, H1).
 when: (instead) choose the energy pop-up
 then: its energy is placed at once as T10_TRY_03.
 note: Games saved before this change (save format 5) still ask at the Reveal.
+note: CHANGED 2026-11-16 (designer): 2 Heat, not 3 (Expansion1 H4). Was: "Gain 3 Heat".
 
 ################################################################################
 === SECTION: SCREEN ===
@@ -56,6 +57,9 @@ then: at the right end of the Anomaly row, always in the same place, the same he
       bar and its cell pops in. The Anomalies scroll sideways when they do not fit; the bar
       does not move. Pressing it shows the full objective, the progress and the whole Trophy
       pile. The old phase / Trophy box under the Modules is gone.
+note: CHANGED 2026-11-16 (designer): the Mission card (pressing the bar) also shows your Upgrade
+      points (the glyph bubble and "N points, spent at Mission End (10.2)") under the
+      objective; its first line reads "Mission 1 · <phase>" (not "Mission C1_M1").
 
 id: T12_SCR_04
 title: Cards for the Anomalies and the Heat bar
@@ -69,6 +73,8 @@ title: Upgrade points in a bubble
 source: designer 2026-11-08
 then: Upgrade points show as a glyph (a double chevron, placeholder art) and the number in a
       bubble, under the Bays.
+note: CHANGED 2026-11-16 (designer): the bubble is no longer under the Bays; it is in the Mission
+      card (T12_SCR_03).
 
 ################################################################################
 === SECTION: ROUND 5 (designer 2026-11-08, later the same day) ===
@@ -87,6 +93,10 @@ when: choose (0,0); put back B_01 (face down) on top, then B_02, then the bottom
 then: (0,0) is Dark, so it is revealed: B_01 on top, B_02 face up beneath it.
 note: A unit left on top is not revealed again; a face-up tile put on top is uncovered,
       not revealed (Q2).
+note: CHANGED 2026-11-16 (designer, screen only): the put-back is played on the Field, not chosen
+      from a list of orders: the 3 tiles rise out of (0,0) (the Field shows what is left there),
+      you tap the third tile first, then B_02; B_01 goes last by itself and lies on top
+      (T13_R18_06). Same result.
 
 id: T12_X_01
 title: A Module whose X would be 0 cannot be run (RULES CHANGE, Core Rules 5.3 rev 140)

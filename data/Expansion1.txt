@@ -17,7 +17,7 @@ H3. Mission End
 Return all your Heat tokens to the Supply. Heat never carries over to the next mission.
 
 H4. Power Node
-When a Power Node is revealed (not uncovered), choose one: place its 3 energy on your Modules as usual, or gain 3 Heat tokens instead. You cannot split the choice.
+When a Power Node is revealed (not uncovered), choose one: place its 3 energy on your Modules as usual, or gain 2 Heat tokens instead. You cannot split the choice.
 
 H5. New Command phase action: Heat Wave
 Pay 1 Heat token: deal 1 damage to one Bot.

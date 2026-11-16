@@ -65,6 +65,9 @@ note: CHANGED 2026-11-09 (designer): only V1 Bay 1 keeps the laser. Every other 
       damage fires a rail slug (it charges, a slug with a spiral trail, two shock rings); an
       Order that deals damage fires a missile (a curved flight with smoke, a fireball). Moves and
       looks keep the tractor beam and the scan.
+note: CHANGED 2026-11-16 (designer): after V1 Bay 3's ring the tiles rise out of the sector and are
+      put back one by one (T13_R18_06); after V2 Bay 3's they rise out and wait to be put back
+      (T13_R18_07). No look card for them.
 
 id: T13_FX_02
 title: A Module's shot starts at the Module, in its colour
@@ -302,6 +305,9 @@ then: its energy sits on the Flare's tile as round tokens. Drag one onto a lit M
       anywhere else, it springs back and a note says to drop it on a lit Module. The pop-ups
       beside the Modules (and "back to the Supply") still work by tapping.
 note: Checked by scripts/ui-smoke.mjs (find-save.ts flarechip).
+note: CHANGED 2026-11-16 (designer): the energy tokens on a Flare are as big as Damage tokens, with no
+      white rim: a border of energy sparks in the energy's colour runs round each token and a
+      glow breathes behind it (on the tile and on the tokens you drag).
 
 ################################################################################
 === SECTION: THE UPGRADE SHEET (build step 4, designer 2026-11-09) ===
@@ -503,6 +509,8 @@ then: round the Field's edge a slow plasma wave like stellar wind and coronal ma
       the edge go half as fast as before. With reduced motion: none.
 note: CHANGED 2026-11-10 (designer, third request): the plasma wave and the coronal waves
       effect swapped places; the coronal waves are now round "End the Overload" (T13_R13_07).
+note: CHANGED 2026-11-16 (designer): the four beams racing round the edge are twice as big (thicker,
+      longer, bigger heads) and half see-through.
 
 id: T13_R13_07
 title: "End the Overload" is a small round sun with the coronal waves effect
@@ -521,6 +529,10 @@ then: near the Field's lower right corner a round, see-through button "End the O
 note: CHANGED 2026-11-10 (designer, third request): the coronal waves instead of the plasma
       wave (swapped with the Field's edge); the button sits a little further from the corner so
       the arcs have room.
+note: CHANGED 2026-11-16 (designer): the button never covers a sector: it goes to the free place
+      nearest the Field's lower right corner where the whole round button misses every sector;
+      if there is none at its full size it is made smaller (not under 56 px) until it fits.
+      Worked out again whenever the Field changes size.
 
 id: T13_R13_08
 title: An Alert with no effect fizzles
@@ -698,6 +710,14 @@ then: three steps in order: Campaign, Vessel, Modules. Campaign: Campaign 1 and 
       seed, Import and Paste a save, and Resume game are under System options (the gear).
       Dust, small marks and light streaks drift behind the panels and lean with the pointer;
       sparks hop off the chosen Campaign card, a glow drifts down from the chosen Company card.
+note: CHANGED 2026-11-16 (designer): "Confirm campaign" (and "Confirm vessel", Launch) animations
+      take twice as long (the lock under a second; a step leaving and the next coming in twice
+      as slow). In a mission's unit roster the tiles are as big as in "All" (smaller on a
+      phone); the Threats are never combined: Threat A to D each show their units one by one
+      (four tiles), all four Threats in one row when they fit, else four buttons "Threat A" ...
+      "Threat D" that show that Threat's units; on a phone the mission deck is one row. "All"
+      in the Campaign unit roster: one row per unit type (Sentinels, Flares, Sleepers, Gyros)
+      on every screen.
 
 id: T13_BRF_03
 title: The Threat screen at Mission Preparation
@@ -723,6 +743,9 @@ then: each column added answers with a particle effect, stronger each time; the 
 when: press "Confirm Threat"
 then: the mission is prepared with columns A, B, C ("Threat Level Siege: columns A, B, C" in
       the log) and the Module screen follows (T13_BRF_05).
+note: CHANGED 2026-11-16 (designer): the four Threat columns always stand side by side in one row.
+      Wide screens: each column's units in one row, sized to fit. Phones: each column's units
+      one under another, "+ Add" at its foot.
 
 id: T13_BRF_04
 title: Later missions ask the Threat the same way
@@ -749,6 +772,9 @@ when: tap a Company and press "Choose this Ally"
 then: "your Ally: <id>" in the log. If more than one Mecha can come, the Allied Drop screen
       shows them as big tiles with Level and ability; "Drop this Mecha". Only then the Field
       shows, and the Mecha is placed on a Dark sector there.
+note: CHANGED 2026-11-16 (designer): the tapped Module's outline glows round the outside of the card;
+      its coloured left edge stays visible. Bigger text on big screens. No unit names on the
+      Ally and Allied Drop screens (under a Company's Mecha, on the Mecha to drop).
 
 ################################################################################
 === SECTION: STYLES OF THE INTRO AND THE MENU (intro1, intro2) ===
@@ -813,3 +839,110 @@ then: two armour doors slide in from the sides and meet across the middle of the
       second, then the Vessel step. "Launch command sequence": a square box, the bar fills
       like a stream of plasma.
 note: Same steps, cards, texts and sizes as T13_BRF_02; only the look differs.
+note: CHANGED 2026-11-16 (designer): the armour doors and the step change take twice as long (the
+      doors under a second).
+
+################################################################################
+=== SECTION: ROUND 18 (designer 2026-11-16) ===
+
+id: T13_R18_01
+title: Pressing a "1 damage" bubble no longer breaks the screen (bug fix)
+source: designer 2026-11-16 (P_15 crashed the game)
+given: an Overload; P_15's Alert is resolved: "deal 1 damage to which Bot?"
+when: press the "1 damage" bubble on a Bot
+then: the hit plays and the next question comes ("... to which Sleeper?" and so on, one per
+      unit type on the Field), each on its own bubbles. The screen never goes blank. Should a
+      screen error ever happen again, a card says so, shows the error text, and "Carry on"
+      goes on from the same question (the game is kept).
+note: Checked by scripts/ui-smoke.mjs (find-save.ts pickdamage).
+
+id: T13_R18_02
+title: Mission names
+source: designer 2026-11-16
+then: the top bar and the Menu say "Mission 1" (phones under 600 px wide: "M1"); "Mission 2X"
+      / "M2X" for an alternative route. Never "C1_M1".
+
+id: T13_R18_03
+title: Anomaly glyphs in the rulebook colours, Sleepers are "Z"
+source: designer 2026-11-16
+then: in the Anomaly bubbles and cards each unit type is a small hexagon in its colour as on
+      the Field (Bots white, Sleepers blue, Sentinels red, Flares yellow, Gyros green, Mecha
+      orange, Omega violet), the Unit frame (the empty hexagon of the unit glyphs) on it, then
+      the letter: B, S, F, Z (Sleeper; "P" was its old name), G, M. A Cleared sector is a hexagon
+      in the Field's Cleared sector colour with no frame and no letter.
+
+id: T13_R18_04
+title: Overload: no "last Alert" line
+source: designer 2026-11-16
+given: an Overload with one Alert left
+when: tap that unit
+then: its pop-up shows its actions only (T9_ACT_07 CHANGED).
+
+id: T13_R18_05
+title: Upgrade points in the Mission card
+source: designer 2026-11-16
+then: the Flagship panel no longer shows the Upgrade points bubble (the Ally line stays). Press
+      the Mission bar: under the objective, "Upgrade points" with the bubble and "N points,
+      spent at Mission End (10.2)".
+
+id: T13_R18_06
+title: V1 Bay 3: the tiles leave the sector and are put back one by one
+source: designer 2026-11-16 (screen only; the rule is unchanged: V1_BAY3)
+given: the V1 Flagship; Bay 3 used on a sector with 4 or more tiles
+then: after the scan ring, the Field dims except that sector. Its top 3 tiles rise out of it
+      and stand in a row as units (tile, glyph, Level, arrows; "was on top", "2nd", "3rd"
+      under them). The sector shows what is left: its fourth tile where it was (face down:
+      "? N tiles"), or a Cleared sector if nothing is left. Mouse over a unit, or hold it
+      0.5 s on a touch screen: its card text (type, Level, Strength, effects). No list of
+      orders to choose from.
+when: tap one unit
+then: it flies onto the sector and lies on top there.
+when: tap another
+then: it flies onto the sector on top of the first; the last one flies there by itself, lies
+      on top and the sector is revealed (8.5): "put them back" is answered with that order (the
+      last one put back is the top).
+note: With fewer than 2 tiles there is nothing to order (as before). Checked by
+      scripts/ui-smoke.mjs (find-save.ts bay3-V1).
+
+id: T13_R18_07
+title: Every effect like it is shown the same way
+source: designer 2026-11-16 ("this behaviour should be applied to all similar abilities and effects")
+then: V2 Bay 3 (look at the top 3 tiles of a Dark sector), V2_P3 / V2_P3A (look at the top 4 /
+      5): the tiles rise out of the sector in the same way, with their order ("on top", "2nd"
+      ...) and their card text on hover or hold; "Put them back" (or your next action) sends
+      them back as they were, the top one last. Gravity Well (Module 71): the tiles taken stand
+      in the same row; tap them one by one, each flies face down onto the chosen sector (from
+      the bottom up); the last one goes by itself. Looks at single tiles or at several
+      sectors (Seismic Sonar, Gravity Well's first look ...) keep the look card.
+
+id: T13_R18_08
+title: Mission roster and Threat screen (see T13_BRF_02, T13_BRF_03, T13_BRF_05 CHANGED)
+source: designer 2026-11-16
+given: Campaign step, Mission 1 open
+then: PC: "Threat A" to "Threat D" side by side in one row, four tiles each (S_12, S_12, F_08,
+      G_22 for A: S_12 twice). Phone: four buttons "Threat A" ... "Threat D"; a press shows
+      that Threat's four tiles. Mission deck in one row on a phone.
+when: launch; the Threat screen
+then: PC and tablet: four columns in a row, each with its four tiles in one row; phone: four
+      narrow columns in a row, the tiles one under another, "+ Add" at the foot of each.
+
+id: T13_R18_09
+title: Power Node with the Heat module gives 2 Heat (RULES CHANGE)
+source: designer 2026-11-16; Expansion1 H4 (the Project copy needs: "or gain 2 Heat tokens instead")
+given: Heat module; a Power Node's Alert (or its Reveal in games saved before 2026-11-08)
+then: the choice is its energy or "Gain 2 Heat" (two Heat chips). Games saved before this
+      change keep 3 Heat, so they replay as they were played.
+note: Batch 7 T7_HEAT_02 and batch 12 T12_TRY_01 CHANGED.
+
+id: T13_R18_10
+title: M_02's arrows point straight left and straight right (RULES CHANGE)
+source: designer 2026-11-16; unit_list_structured.txt M_02 "arrows: 1,4" (was 1,3; the Project copy
+        needs it)
+map: M1
+given: Command phase. (0,0): M_02 > fd.
+when: Command M_02: Expend
+then: 1 damage to every unit on its lines of fire: straight left ((0,-1), (0,-2) ...) and
+      straight right ((0,1), (0,2) ...). M_02 is destroyed. Its tile shows the two arrows on
+      its flat left and right sides.
+note: Batch 1 T_GEO_05 and batch 5 T5_MCH_01 CHANGED.
+

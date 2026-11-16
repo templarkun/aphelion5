@@ -47,6 +47,8 @@ export interface NewGameOptions {
   powerNodeAtReveal?: boolean;
   /** Games saved before format 7: the Flare energy trial rule is still a choice on the expansion list. */
   flareEnergyChoice?: boolean;
+  /** Games saved before format 8: a Power Node gives 3 Heat, not 2. */
+  powerNodeHeat3?: boolean;
   /** Answer questions with one legal answer automatically (spec "Player choices"); fixed for the whole game. */
   autoAnswer?: boolean;
 }
@@ -64,6 +66,7 @@ export function newGame(data: GameData, o: NewGameOptions): GameState {
   if (o.mechaAttacksMecha) s.settings.mechaAttacksMecha = true;
   if (o.powerNodeAtReveal) s.settings.powerNodeAtReveal = true;
   if (o.flareEnergyChoice) s.settings.flareEnergyChoice = true;
+  if (o.powerNodeHeat3) s.settings.powerNodeHeat3 = true;
   s.player.commandTokens = 0;
   // Every tile copy (unit file "copies"): Energy Gyros form the Energy deck, the rest wait in the box.
   for (const u of data.units.units) {

@@ -128,7 +128,10 @@ export function UnitPicks(p: { items: PickItem[]; foot: PickFoot[]; onPress: (id
     <>
       <div className={`unit-picks ${leaving ? "leaving" : ""}`}>
         {spots.map((s, i) => {
-          const it = p.items.find((x) => x.id === s.id)!;
+          // The next question may ask about other units (P_15 asks once per unit type): until the
+          // places are worked out again, a place whose unit is no longer asked shows nothing.
+          const it = p.items.find((x) => x.id === s.id);
+          if (!it) return null;
           return (
             <button
               key={s.id}

@@ -12,6 +12,8 @@ import { damageFlagship, dealHit } from "./tokens.js";
 import { emit } from "./events.js";
 
 export const heatOn = (c: Ctx) => c.state.settings.heatModule;
+/** H4: the Heat a Power Node gives instead of its energy: 2 (designer 2026-11-16; games saved before: 3). */
+export const powerNodeHeat = (c: Ctx) => (c.state.settings.powerNodeHeat3 ? 3 : 2);
 
 /** H1: gain Heat, never above 10 held; limited by the Supply (6.7). */
 export function gainHeat(c: Ctx, n: number, rule: string): void {
@@ -30,11 +32,12 @@ export function payHeat(c: Ctx, n: number, rule: string): void {
   emit(c, { kind: "heat", amount: n, rule });
 }
 
-/** H4: a revealed Power Node: its 3 energy as usual, or 3 Heat instead. Returns true if Heat was chosen. */
+/** H4: a revealed Power Node: its 3 energy as usual, or 2 Heat instead (3 in older games). Returns true if Heat was chosen. */
 export function* powerNodeChoice(c: RunCtx): Effect<boolean> {
-  const a = yield* ask(c, { kind: "option", prompt: "Power Node revealed (Heat module): take its energy or 3 Heat?", rule: "H4", options: [{ id: "energy", label: "Place its 3 energy on your Modules" }, { id: "heat", label: "Gain 3 Heat tokens instead" }] });
+  const n = powerNodeHeat(c);
+  const a = yield* ask(c, { kind: "option", prompt: `Power Node revealed (Heat module): take its energy or ${n} Heat?`, rule: "H4", options: [{ id: "energy", label: "Place its 3 energy on your Modules" }, { id: "heat", label: `Gain ${n} Heat tokens instead` }] });
   if (a.value !== "heat") return false;
-  gainHeat(c, 3, "H4");
+  gainHeat(c, n, "H4");
   return true;
 }
 

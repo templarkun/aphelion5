@@ -57,21 +57,21 @@ button.bf-panel:hover:not(:disabled) { border-color: rgb(var(--acc) / 0.9); tran
 .bf-tab i { display: block; width: 12px; height: 13px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
 
 /* A step comes in and goes out (quick). */
-.bf-step-in { animation: bf-step-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.bf-step-out { animation: bf-step-out 0.13s ease-in both; }
+.bf-step-in { animation: bf-step-in 0.56s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.bf-step-out { animation: bf-step-out 0.26s ease-in both; }
 @keyframes bf-step-in { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
 @keyframes bf-step-out { to { opacity: 0; transform: translateX(-22px); } }
-.bf-rise { animation: bf-rise 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
+.bf-rise { animation: bf-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 44ms); }
 @keyframes bf-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 /* The holographic lock on a confirmed choice: under half a second. */
-.bf-lock { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--bf-lock-veil); animation: bf-fade 0.1s both; }
+.bf-lock { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--bf-lock-veil); animation: bf-fade 0.2s both; }
 .bf-lock > svg { width: min(64vmin, 400px); height: min(64vmin, 400px); overflow: visible; }
-.bf-lock .r1 { transform-origin: center; animation: bf-ring 0.3s cubic-bezier(0.2, 0.9, 0.1, 1) both; }
-.bf-lock .r2 { transform-origin: center; animation: bf-ring2 0.3s cubic-bezier(0.2, 0.9, 0.1, 1) both; }
-.bf-lock .br { transform-origin: center; animation: bf-brackets 0.22s 0.06s cubic-bezier(0.2, 1.4, 0.3, 1) both; }
-.bf-lock .tx { animation: bf-fade 0.16s 0.12s both; }
-.bf-lock .fl { position: absolute; inset: 0; background: #fff; opacity: 0; animation: bf-flash 0.25s 0.14s both; pointer-events: none; }
+.bf-lock .r1 { transform-origin: center; animation: bf-ring 0.6s cubic-bezier(0.2, 0.9, 0.1, 1) both; }
+.bf-lock .r2 { transform-origin: center; animation: bf-ring2 0.6s cubic-bezier(0.2, 0.9, 0.1, 1) both; }
+.bf-lock .br { transform-origin: center; animation: bf-brackets 0.44s 0.12s cubic-bezier(0.2, 1.4, 0.3, 1) both; }
+.bf-lock .tx { animation: bf-fade 0.32s 0.24s both; }
+.bf-lock .fl { position: absolute; inset: 0; background: #fff; opacity: 0; animation: bf-flash 0.5s 0.28s both; pointer-events: none; }
 @keyframes bf-fade { from { opacity: 0; } }
 @keyframes bf-ring { from { transform: scale(1.9) rotate(-80deg); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes bf-ring2 { from { transform: scale(0.4) rotate(120deg); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -161,3 +161,19 @@ html.still .brief *, html.still .brief *::before, html.still .brief *::after, ht
 .bf-modslot:hover .module:not(.selected) { box-shadow: 0 0 0 2px rgb(var(--m) / 0.9), 0 0 18px rgb(var(--m) / 0.5); }
 .bf-modslot.on { transform: translateY(-3px); }
 .bf-modslot > div:last-child { color: var(--bf-soft-ink); }
+
+/* Module draw (designer 2026-11-16): the selection outline goes round the card, outside its coloured
+   left edge (it no longer covers it); bigger text on big screens. */
+.bf-game-skin .bf-modslot .module.selected { overflow: visible; isolation: auto; border-color: var(--line); border-left-color: var(--rim); box-shadow: 0 0 0 3px #ff8a1a, 0 0 0 5px rgb(255 214 120 / 0.55), 0 0 22px 6px rgb(255 110 0 / 0.5); animation: bf-modsel 1.6s ease-in-out infinite; }
+.bf-game-skin .bf-modslot .module.selected::before, .bf-game-skin .bf-modslot .module.selected::after { content: none; }
+@keyframes bf-modsel { 50% { box-shadow: 0 0 0 3px #ffb347, 0 0 0 6px rgb(255 214 120 / 0.75), 0 0 30px 9px rgb(255 110 0 / 0.6); } }
+html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
+@media (min-width: 1024px) {
+  .bf-modslot .module .module-name { font-size: 18px; }
+  .bf-modslot .module .module-text { font-size: 16px; line-height: 1.4; }
+  .bf-modslot > div:last-child { font-size: 15px; }
+}
+@media (min-width: 1440px) {
+  .bf-modslot .module .module-name { font-size: 20px; }
+  .bf-modslot .module .module-text { font-size: 17px; }
+}

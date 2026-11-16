@@ -47,6 +47,10 @@ export const TYPE_COLOUR: Record<string, number> = {
   Flare: 0xf2c94c,
   Omega: 0x9b6bd6,
 };
+/** The Field's Cleared sector colour (FieldView's sector plate). */
+export const CLEARED_COLOUR = 0x2b2d31;
+/** Unit.png, the empty hexagon frame that stands for any unit. */
+export const unitFrameUrl = (): string | undefined => UNIT_URL["Unit"];
 const TYPE_OF_LETTER: Record<string, string> = { B: "Bot", M: "Mecha", G: "Gyro", P: "Sleeper", S: "Sentinel", F: "Flare", O: "Omega" };
 
 /** The glyph file a unit uses (Energy Gyros share three), if the designer has drawn it yet. */

@@ -245,7 +245,9 @@ describe("batch 5 - MECHA", () => {
     const s = given("T5_MCH_01");
     const { state } = cmd(s, [A.option("commandMecha"), A.option("ability:M_02")]);
     expect(tokensAt(state, "0,-1")).toBe("[D1]");
-    expect(tokensAt(state, "1,0")).toBe("[D1]");
+    // Arrows 1 and 4 (designer 2026-11-16): straight left and straight right.
+    expect(tokensAt(state, "0,1")).toBe("[D1]");
+    expect(tokensAt(state, "1,0")).toBe("");
     expect(inPile(state, "discard", "M_02")).toBe(1);
   });
 

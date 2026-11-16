@@ -33,12 +33,14 @@ export function FlareEnergyChips(p: { q: Question & { kind: "option" }; sector: 
     };
   }, [p.sector, p.q]);
   if (!at || chips.length === 0) return null;
-  const gap = 30;
+  // As big as a Damage token, where the Field draws the tokens (designer 2026-11-16; alertFx flareEnergySpots).
+  const d = Math.max(30, at.size * 0.13);
+  const gap = d * 1.25;
   const left0 = at.x - ((chips.length - 1) * gap) / 2;
   return (
     <div className="flare-chips" aria-label="Energy waiting on the Flare: drag it onto a Module">
       {chips.map((col, i) => (
-        <Chip key={`${p.q.prompt}:${i}`} colour={col} x={left0 + i * gap} y={at.y + at.size * 0.22} q={p.q} onPick={p.onPick} onNote={p.onNote} />
+        <Chip key={`${p.q.prompt}:${i}`} colour={col} d={d} x={left0 + i * gap} y={at.y + at.size * 0.15} q={p.q} onPick={p.onPick} onNote={p.onNote} />
       ))}
     </div>
   );
@@ -55,7 +57,7 @@ function moduleAt(q: Question & { kind: "option" }, colour: Colour, x: number, y
   return id !== undefined && q.energy?.[id] === colour ? id : undefined;
 }
 
-function Chip(p: { colour: Colour; x: number; y: number; q: Question & { kind: "option" }; onPick: (id: string) => void; onNote: (text: string) => void }) {
+function Chip(p: { colour: Colour; d: number; x: number; y: number; q: Question & { kind: "option" }; onPick: (id: string) => void; onNote: (text: string) => void }) {
   const st = useRef<{ x: number; y: number; id: number; moved: boolean } | undefined>(undefined);
   const [drag, setDrag] = useState<{ x: number; y: number; over: boolean } | undefined>();
   const [back, setBack] = useState(false);
@@ -65,7 +67,7 @@ function Chip(p: { colour: Colour; x: number; y: number; q: Question & { kind: "
       role="button"
       tabIndex={-1}
       className={`flare-chip glyph ${p.colour.toLowerCase()} ${drag ? "dragging" : ""} ${drag?.over ? "over" : ""} ${back ? "back" : ""}`}
-      style={{ left: pos.x, top: pos.y }}
+      style={{ left: pos.x, top: pos.y, width: p.d, height: p.d, "--spin": `${(p.x % 7) * 0.13}s` } as React.CSSProperties}
       aria-label={`${p.colour} energy: drag it onto a ${p.colour} Module`}
       onPointerDown={(e) => {
         if (e.button !== 0) return;

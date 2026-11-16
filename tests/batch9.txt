@@ -124,6 +124,9 @@ then: the first is resolved. The pop-up of the last Alert on the Field also show
       pop-up. Once no Alert remains, "End the Overload" appears in the top bar (highlighted)
       and the other Overload actions stay highlighted.
 note: Q8 answered 2026-11-04: as 9.2 says, you choose when to end the Overload.
+note: CHANGED 2026-11-16 (designer): the red "This is the last Alert on the Field. After it, you can
+      end the Overload (9.2)." line is gone from the pop-up. End the Overload is the round
+      button in the Field (T13_R13_07).
 
 id: T9_ACT_08
 title: In an Overload, everything clickable is highlighted

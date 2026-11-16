@@ -104,7 +104,7 @@ describe("trial rule: Flare energy waits on the Flare (I2)", () => {
     expect(checkInvariants(ctx(state))).toEqual([]);
   });
 
-  it("with the Heat module, a Power Node asks nothing at Reveal; its Alert offers its energy or 3 Heat on the unit (designer 2026-11-08)", () => {
+  it("with the Heat module, a Power Node asks nothing at Reveal; its Alert offers its energy or 2 Heat on the unit (designer 2026-11-08; 2 Heat since 2026-11-16)", () => {
     const s = trial();
     s.settings.heatModule = true;
     const { state: s0, asked } = cmd(s, [A.option("reveal")]);
@@ -117,7 +117,13 @@ describe("trial rule: Flare energy waits on the Flare (I2)", () => {
     expect(mine[0]!.chips).toEqual(["Yellow", "Red", "Blue"]);
     const heat0 = s0.player.heat;
     const h = ovl(s0, [A.option(`alert:${node}|heat`)]).state;
-    expect(h.player.heat).toBe(Math.min(10, heat0 + 3));
+    expect(h.player.heat).toBe(Math.min(10, heat0 + 2));
+    expect(mine[1]!.label).toBe("Gain 2 Heat");
+    // Games saved before 2026-11-16 (format 7 or older) keep 3 Heat, so they replay as played.
+    const old = structuredClone(s0);
+    old.settings.powerNodeHeat3 = true;
+    old.player.heat = 0;
+    expect(ovl(old, [A.option(`alert:${node}|heat`)]).state.player.heat).toBe(3);
     expect(h.tiles[node]!.energy).toBeUndefined();
     expect(h.supply.energy).toEqual({ Yellow: 15, Red: 15, Blue: 15 });
     expect(checkInvariants(ctx(h))).toEqual([]);

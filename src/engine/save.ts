@@ -25,7 +25,7 @@ import { type GameState, type Profile, emptyProfile } from "./state.js";
  * A game saved in an older format cannot be replayed (its answers no longer fit),
  * except format 4: it replays, an answer to the Meltdown question (no longer asked) is skipped.
  */
-export const SAVE_FORMAT = 7;
+export const SAVE_FORMAT = 8;
 
 export interface GameStart {
   seed: number;
@@ -39,6 +39,8 @@ export interface GameStart {
   powerNodeAtReveal?: boolean;
   /** Saved before format 7: the Flare energy trial rule was a choice on the expansion list. */
   flareEnergyChoice?: boolean;
+  /** Saved before format 8: a Power Node gives 3 Heat (H4), not 2 (designer 2026-11-16). */
+  powerNodeHeat3?: boolean;
   /** Fixed for the whole game, so replays ask the same questions (default on). */
   autoAnswer?: boolean;
   /** The profile as it was when the game started. */
@@ -63,7 +65,7 @@ export interface Game {
 }
 
 function initial(data: GameData, start: GameStart): GameState {
-  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false, powerNodeAtReveal: start.powerNodeAtReveal ?? false, flareEnergyChoice: start.flareEnergyChoice ?? false });
+  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false, powerNodeAtReveal: start.powerNodeAtReveal ?? false, flareEnergyChoice: start.flareEnergyChoice ?? false, powerNodeHeat3: start.powerNodeHeat3 ?? false });
 }
 
 export function startGame(data: GameData, start: GameStart): Game {
@@ -177,6 +179,8 @@ export function readSave(text: string): SaveFile {
     if (f.formatVersion < 6) out.game = { ...out.game, start: { ...out.game.start, powerNodeAtReveal: true } };
     // Format 6 or older: the Flare energy trial rule was chosen on the expansion list (always on since 2026-11-09).
     if (f.formatVersion < 7) out.game = { ...out.game, start: { ...out.game.start, flareEnergyChoice: true } };
+    // Format 7 or older: a Power Node gave 3 Heat (2 since 2026-11-16), so the game replays as played.
+    if (f.formatVersion < 8) out.game = { ...out.game, start: { ...out.game.start, powerNodeHeat3: true } };
   }
   return out;
 }

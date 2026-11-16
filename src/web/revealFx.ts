@@ -379,23 +379,26 @@ export function drawOverloadRing(g: Graphics, w: number, h: number, now: number)
     { t: -now / 14800 + 0.25, col: 0xb07cff, core: 0xf0e6ff },
     { t: -now / 14800 + 0.75, col: 0xb07cff, core: 0xf0e6ff },
   ];
+  // Designer 2026-11-16: the beams twice as big (thickness, length, head) and half see-through.
+  const S = 2;
+  const A = 0.5;
   beams.forEach((b, k) => {
     const dir = k < 2 ? 1 : -1;
-    const n = 28;
-    const len = 0.11;
-    let prev = at(b.t);
+    const n = 40;
+    const len = 0.11 * S;
+    let prev = at(b.t, 2 * S);
     for (let i = 1; i <= n; i++) {
       const tt = b.t - dir * (len * i) / n;
-      const wave = Math.sin(i * 0.8 + now / 90) * 3 * (i / n);
-      const pt = at(tt, 2 + wave);
+      const wave = Math.sin(i * 0.56 + now / 90) * 3 * S * (i / n);
+      const pt = at(tt, 2 * S + wave);
       const f = 1 - i / n;
-      g.moveTo(prev[0], prev[1]).lineTo(pt[0], pt[1]).stroke({ width: 2 + 9 * f, color: b.col, alpha: 0.25 * f });
-      g.moveTo(prev[0], prev[1]).lineTo(pt[0], pt[1]).stroke({ width: 1 + 2.5 * f, color: b.core, alpha: 0.9 * f });
+      g.moveTo(prev[0], prev[1]).lineTo(pt[0], pt[1]).stroke({ width: (2 + 9 * f) * S, color: b.col, alpha: 0.25 * f * A });
+      g.moveTo(prev[0], prev[1]).lineTo(pt[0], pt[1]).stroke({ width: (1 + 2.5 * f) * S, color: b.core, alpha: 0.9 * f * A });
       prev = pt;
     }
-    const head = at(b.t, 2);
-    g.circle(head[0], head[1], 6 + 2 * Math.sin(now / 60 + k)).fill({ color: b.col, alpha: 0.5 });
-    g.circle(head[0], head[1], 3).fill({ color: 0xffffff, alpha: 0.95 });
+    const head = at(b.t, 2 * S);
+    g.circle(head[0], head[1], (6 + 2 * Math.sin(now / 60 + k)) * S).fill({ color: b.col, alpha: 0.5 * A });
+    g.circle(head[0], head[1], 3 * S).fill({ color: 0xffffff, alpha: 0.95 * A });
   });
   // The coronal waves (coronalFx.ts) are drawn by the Field on their own layer.
   // Sparks drifting in from the edge.

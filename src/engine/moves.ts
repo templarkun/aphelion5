@@ -215,7 +215,7 @@ export function requestOverload(c: Ctx, why: string): void {
 /** A Flare fires when revealed (4.6). */
 function* flareFires(c: RunCtx, id: TileId): Effect {
   const d = unitDef(c, id);
-  // H4: a revealed Power Node may give 3 Heat instead of its energy.
+  // H4: a revealed Power Node may give 2 Heat instead of its energy.
   // Trial rule (designer 2026-11-08): a Power Node's energy waits on it; energy or Heat is chosen at its Alert.
   const waits = d.id === "F_01" && !!c.state.settings.trialFlareEnergy && !c.state.settings.powerNodeAtReveal;
   const heat = c.state.settings.heatModule && d.id === "F_01" && !waits ? yield* powerNodeChoice(c) : false;

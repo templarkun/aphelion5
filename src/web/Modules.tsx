@@ -169,7 +169,7 @@ export function HeatBar({ heat, gain, short }: { heat: number; gain: number; sho
               <b>Overclock:</b> when you run a Module, pay 2 more energy of its colour for +1 Heat, then 1 more Yellow for +1 more.
             </li>
             <li>
-              <b>Power Node:</b> gain 3 Heat instead of its energy.
+              <b>Power Node:</b> gain 2 Heat instead of its energy.
             </li>
             <li>
               <b>Meltdown</b> (each Overload End): you pay 1 Heat. With none left, every Bot takes 1 damage, you gain 1 Heat per Bot hit, and your Flagship takes that many + 1 damage.

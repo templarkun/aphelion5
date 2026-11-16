@@ -7,6 +7,8 @@
  * the full objective and the whole Trophy pile.
  */
 
+import { missionLabel } from "./briefing/missionText.js";
+import { UpgradeBubble } from "./Upgrade.js";
 import { UnitGlyph as UnitBadge } from "./UnitGlyph.js";
 import { useEffect, useRef, useState } from "react";
 import { type Ctx, sectorKeys, sectorState } from "../engine/field.js";
@@ -21,6 +23,14 @@ interface Group {
   need: number;
   /** Tiles of this unit still on the Field, face up or face down (designer 2026-11-08); the deck's make-up is known. */
   left?: number;
+}
+
+/** "Mission 2X" and its short form "M2X" (designer 2026-11-16: not "C1_M2X"). */
+export function missionName(c: Ctx): { long: string; short: string } {
+  const m = c.data.campaigns.find((x) => x.prefix === c.state.campaign)?.missionById.get(c.state.mission);
+  if (!m) return { long: `Mission ${c.state.mission}`, short: c.state.mission };
+  const long = missionLabel(m);
+  return { long, short: long.replace("Mission ", "M") };
 }
 
 export function missionGroups(c: Ctx): { type: "salvage" | "eliminate"; groups: Group[]; target?: string } {
@@ -45,7 +55,7 @@ export function missionGroups(c: Ctx): { type: "salvage" | "eliminate"; groups: 
 
 function Glyph({ g }: { g: Group["glyph"] }) {
   if (g === "cleared") return <UnitGlyph type="Cleared sector" />;
-  return <span className={`ug t-${g}`}>{g === "node" ? "N" : "Ω"}</span>;
+  return g === "omega" ? <UnitGlyph type="Omega" /> : <span className={`ug t-${g}`}><b>N</b></span>;
 }
 
 const roleOf = (c: Ctx, u: string) => (u === "F_01" ? "Power Node" : (c.data.units.byId.get(u)?.role ?? u));
@@ -94,7 +104,7 @@ export function MissionBar({ c, phase }: { c: Ctx; phase: string }) {
       {open && (
         <PopCard at={open} label="Mission objective" className="mission-card" keepFor="[data-mission-bar]" onClose={() => setOpen(undefined)}>
           <b>
-            Mission {c.state.mission} · {phase}
+            {missionName(c).long} · {phase}
           </b>
           <p>
             {type === "salvage" ? (
@@ -115,6 +125,11 @@ export function MissionBar({ c, phase }: { c: Ctx; phase: string }) {
             </p>
           ))}
           <p className="small">It is checked before each Command phase action; once it is met, the mission is won (8.2).</p>
+          {/* Upgrade points (designer 2026-11-16: here, not in the Flagship panel). */}
+          <h4>Upgrade points</h4>
+          <p className="m-line m-upgrade">
+            <UpgradeBubble n={c.state.sheet.upgradePoints} /> {c.state.sheet.upgradePoints === 1 ? "1 point" : `${c.state.sheet.upgradePoints} points`}, spent at Mission End (10.2).
+          </p>
           <h4>Trophy pile</h4>
           {pile.size === 0 ? (
             <p className="small">Empty.</p>

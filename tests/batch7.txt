@@ -219,13 +219,15 @@ then: Heat 10 after step 7. At Mission End, Heat 0 (all returned); the next miss
       10 again.
 
 id: T7_HEAT_02
-title: A revealed Power Node: its energy, or 3 Heat
+title: A revealed Power Node: its energy, or 2 Heat
 source: Expansion1 H4
 map: M1
 given: Command phase, Heat module, Heat 8. (0,1): fd:F_01 > fd. Charged Beam ready. Every other
        sector cleared.
-when: Reveal (0,1); choose 3 Heat
-then: Heat 10 (8 + 3, at most 10: 1 is lost). No energy is placed. The Overload starts as usual.
+when: Reveal (0,1); choose 2 Heat
+then: Heat 10 (8 + 2). No energy is placed. The Overload starts as usual.
+note: CHANGED 2026-11-16 (designer): a Power Node gives 2 Heat, not 3 (Expansion1 H4). Was:
+      "choose 3 Heat ... Heat 10 (8 + 3, at most 10: 1 is lost)". Games saved before keep 3.
 
 id: T7_HEAT_03
 title: Heat Wave - pay 1 Heat, 1 damage to a Bot; not with Alerts, not in an Overload

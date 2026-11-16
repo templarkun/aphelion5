@@ -207,7 +207,7 @@ function AllyPick({ data, state, q, steps, setAcc, mecha, onAnswer }: { data: Ga
     setPick(id);
     setAcc("251 191 36");
   };
-  const label = mecha ? (pick ? `Drop ${pick}` : undefined) : pick ? `Ally ${data.companies.byId.get(pick)?.name ?? pick}` : undefined;
+  const label = mecha ? (pick ? `Drop this Level ${levelOf(data.units.byId.get(pick)!) ?? ""} Mecha` : undefined) : pick ? `Ally ${data.companies.byId.get(pick)?.name ?? pick}` : undefined;
   return (
     <Frame
       data={{ "data-ally-pick": mecha ? "mecha" : "company" }}
@@ -237,7 +237,7 @@ function AllyPick({ data, state, q, steps, setAcc, mecha, onAnswer }: { data: Ga
                   <UnitTile unit={u} level={levelOf(u)} size={96} />
                 </span>
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="text-xl font-extrabold tracking-wide text-white">{u.id}</span>
+                  {/* No unit names (designer 2026-11-16). */}
                   <span className="text-[14px] text-sky-100">
                     Level <b className="text-white">{levelOf(u)}</b>
                   </span>
@@ -286,7 +286,6 @@ function AllyPick({ data, state, q, steps, setAcc, mecha, onAnswer }: { data: Ga
                           aria-label={`Mecha ${x.id}: open its card`}
                         >
                           <UnitTile unit={u} level={levelOf(u)} size={60} />
-                          <b className="!text-[12px]">{x.id}</b>
                         </span>
                       );
                     })}
