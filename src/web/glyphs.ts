@@ -50,7 +50,9 @@ export const TYPE_COLOUR: Record<string, number> = {
 /** The Field's Cleared sector colour (FieldView's sector plate). */
 export const CLEARED_COLOUR = 0x2b2d31;
 /** Unit.png, the empty hexagon frame that stands for any unit. */
-export const unitFrameUrl = (): string | undefined => UNIT_URL["Unit"];
+// The designer's Unit.svg (2026-11-16) is the frame on the Anomaly glyphs; Unit.png if it is missing.
+const unitSvg = Object.values(import.meta.glob("../../art/glyphs/Unit.svg", { eager: true, query: "?inline", import: "default" }) as Record<string, string>)[0];
+export const unitFrameUrl = (): string | undefined => unitSvg ?? UNIT_URL["Unit"];
 const TYPE_OF_LETTER: Record<string, string> = { B: "Bot", M: "Mecha", G: "Gyro", P: "Sleeper", S: "Sentinel", F: "Flare", O: "Omega" };
 
 /** The glyph file a unit uses (Energy Gyros share three), if the designer has drawn it yet. */
