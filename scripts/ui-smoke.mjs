@@ -1212,9 +1212,12 @@ if (existsSync(`${out}/won-save.json`)) {
         const el = (Date.now() - t0) / 1000;
         if ((shot === 0 && el > 1.2) || (shot === 1 && el > 3.6) || (shot === 2 && el > 6.4)) await pg.screenshot({ path: `${out}/ui-outro-${++shot}.png` });
         if ((await at("data-phase")) === "debrief") break;
-        await pg.waitForTimeout(120);
+        await pg.waitForTimeout(60);
       }
       filmMs = Date.now() - t0;
+      // The Debrief comes 0.8 s into the last act: on a slow machine the loop above can step over that moment.
+      const last = await at("data-act");
+      if (last && acts[acts.length - 1] !== last) acts.push(last);
     } else {
       await pg.waitForTimeout(900);
       await pg.locator("[data-action=outro-skip]").click();
