@@ -5,7 +5,8 @@
 # "claude/Test scenarios batch 13.txt". One rules ruling (I8, Core Rules 5.3 rev 141); the
 # rest is screen only (Interaction and animation, build step 3). Checked by
 # tests/unit/modules.test.ts, tests/unit/command.test.ts, tests/unit/events.test.ts and
-# scripts/ui-smoke.mjs. The outro (section THE OUTRO, T13_OUT_01-07) was added 2026-11-16.
+# scripts/ui-smoke.mjs. The outro (section THE OUTRO, T13_OUT_01-07) was added 2026-11-16;
+# Terraformer 2.0 and the game's numbers (T13_OUT_08-11, CHANGED notes on T13_OUT_01-07) 2026-11-17.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1019,6 +1020,8 @@ when: instead the game is lost or conceded
 then: no outro: the plain "Game over" card with the score, as before (batch 8 T8_END_01).
 note: Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs (find-save.ts won: a
       Developer-mode game with every mission won by the Developer shortcut).
+note: CHANGED 2026-11-17 (designer): the film is now Terraformer 2.0, about 15 seconds
+      (T13_OUT_08). 1.0 is kept only in System options (T13_OUT_11).
 
 id: T13_OUT_02
 title: The Terraformer outro, act by act
@@ -1048,6 +1051,8 @@ then: Act 4, from 8.5 s, "ORBITAL DAWN": the camera rises and pulls back into a 
       the card for as long as it is shown.
 note: The captions (top left: the vessel's name, the act, one line, four ticks) are flavour, not
       rules. Fewer or more missions won: that many pylons (1 to 12).
+note: CHANGED 2026-11-17 (designer): this is Terraformer 1.0, kept as it was to compare; it no
+      longer plays after a won game (T13_OUT_11). The film that plays is 2.0 (T13_OUT_08).
 
 id: T13_OUT_03
 title: Skip
@@ -1058,6 +1063,8 @@ when: press it (or Escape)
 then: a short white veil, then the end of the film at once: every pylon down, the sector lit,
       the sun up, and the Debrief card slides in. The button is gone. Nothing is lost: the
       score and the card are the same.
+note: CHANGED 2026-11-17: in Terraformer 2.0 the end of the film is every pylon anchored with
+      its beam, the storm cleared over the sector (ocean and green land), the sun up.
 
 id: T13_OUT_04
 title: The Campaign Debrief card
@@ -1085,6 +1092,10 @@ note: TOTAL TURNS: the Core Rules have no turns. Until the designer says what it
       question I13) it shows the number of Overloads of the whole Campaign.
 note: The card's shape follows the chosen menu style (intro1: round corners and a round button;
       intro2: cut corners); its accent colour is the Company's.
+note: CHANGED 2026-11-17 (designer, I13 answered): "TOTAL TURNS" is renamed "OVERLOADS" (the
+      Overloads of the whole Campaign). The card has more rows, see T13_OUT_10. The film's
+      Debrief comes at 13.2 s in Terraformer 2.0 (9.3 s in 1.0). Both versions show the same
+      card.
 
 id: T13_OUT_05
 title: Return to Command Deck
@@ -1107,6 +1118,9 @@ then: every Company gets the Terraformer outro until the designer deals them out
       Kew'n X2 violet and mint; a Company with none: gold) and its own ship outline.
 note: Every outro takes the same four things (the Company's colours, its vessel, the Debrief's
       numbers, what to do when the player is done), so they can be swapped freely.
+note: CHANGED 2026-11-17 (designer): the list is "terraformer2" (Terraformer 2.0) and
+      "terraformer" (1.0). Every Company gets 2.0 until the designer deals them out; 1.0 is only
+      in System options to compare. Same colours and ship outlines in both.
 
 id: T13_OUT_07
 title: Speed, reduced motion, and a preview
@@ -1123,4 +1137,83 @@ then: that Company's outro plays with sample numbers, marked "PREVIEW - SAMPLE N
 note: Silent, like the intro: playBayDoorsOpen, playReentryStreak, playTerraformShockwave (once per
       hit) and playVictoryResolve in soundHooks.ts are empty and already called at their moments.
       On a machine that cannot keep up, the film is drawn with fewer points (softer), not slower.
+note: CHANGED 2026-11-17 (designer): System options lists both versions: "Play Terraformer 2.0
+      (<Company>)" and "Play Terraformer 1.0 (<Company>)"; the badge names the version
+      ("PREVIEW - TERRAFORMER 2.0 - SAMPLE NUMBERS"). The still picture of reduced motion is
+      2.0's end. 2.0 also calls playRetroThrust (once per pylon, as its thrusters light).
+
+id: T13_OUT_08
+title: Terraformer 2.0, act by act
+source: designer 2026-11-17 ("visually it currently reads too much like an orbital missile
+        bombardment rather than industrial terraforming ... refine the pacing, silhouette geometry,
+        and impact physics"; "Copy TerraformerVictoryOutro.tsx ... All modifications do to a new
+        copy; name it TerraformerVictoryOutro2.0.tsx")
+given: Terraformer 2.0, Normal speed, a Campaign of 7 missions won
+then: Act 1, 0 - 4.2 s, "ORBITAL DEPLOYMENT": under the belly of the Company's ship the bay doors
+      slide apart over a lit hold where the 7 pylons lie across the bay. From 1.75 s, one after
+      another, each is lowered out of the bay on its cradle (0.7 s), let go, and drifts free for
+      1.2 s, spreading out in a fan under the ship while it slowly turns upright (spike down,
+      mast up) and turns about its own axis. Then its braking thrusters light: four blue-white
+      plumes pointing up from its top. All seven are lit by 4.1 s.
+then: Act 2, 4.2 - 9.0 s, "CONTROLLED DESCENT": the camera follows them down, slow and heavy:
+      gently away at first, faster through the high air, braking hard into a hover over the
+      sector at 8.4 s, just above the deck of toxic storm clouds (rust red and ash grey, red
+      glows and lightning inside it). In the upper air (about 6.3 s) their wings open a little;
+      no fire, only a pale glow at the spike's tip. Their beacons blink.
+then: Act 3, 9.0 - 12.2 s, "ANCHOR LOCK": one after another, about every 0.42 s from 9.15 s,
+      each sinks on its thrusters through the deck (their wash thins the cloud round it in a pale
+      cyan swirl) and anchors gently, spike into the ground; its thrusters fade, its wings open
+      wide. 0.35 s later it fires a blue-green beam straight up through the clouds; where the
+      beam pierces the deck, soft emerald and cyan rings and swirling fronts spread out, the
+      storm clears behind them, and beneath it the dark ash ground turns to deep blue ocean and
+      green and teal land, with thin white clouds curling over it. No grid, no explosions.
+      Each pylon carries the tag of its mission ("M1" ... "M7", "M2X" for a route).
+then: Act 4, from 12.2 s, "ORBITAL DAWN": the camera rises and pulls back; the sun comes over the
+      edge of the planet beyond the cleared sector; at 13.2 s the Campaign Debrief slides in. The
+      film is over at 15 s; the picture keeps drifting slowly under the card.
+note: Deployment and descent (first pylon out of the bay to first anchor) take about 7.4 s,
+      3.15 s longer than 1.0 (designer: 2.5 to 4 s longer). Fewer or more missions won: that many
+      pylons (1 to 12). Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+note: The designer asked for the braking plumes to point up ("top-mounted retro-braking
+      thrusters (glowing blue/white upward plumes)"); built as asked.
+
+id: T13_OUT_09
+title: Terraformer 2.0: the pylon
+source: designer 2026-11-17 ("articulated, multi-layered vertical atmospheric processors / drill
+        rigs")
+then: each pylon is a solid, lit from one side: from the bottom up, a heavy conical anchor spike,
+      an anchor collar, the cylindrical reactor core with a glowing reactor ring in the Company's
+      colour, four solar / radiator wings hinged under the head (folded along the core, a little
+      open in the air, wide open once anchored), the head with four braking thrusters, and a
+      mast with the beam emitter. Light and shade run across the cylinder; a metal rim of light
+      along the edge away from the light; blinking status beacons on the hull.
+
+id: T13_OUT_10
+title: The Debrief shows the game's numbers
+source: designer 2026-11-17 ("rename it [Total Turns]. And also display this data: a. Expansion
+        used (if any) b. How many times each Module ran during the game. c. How many Units were
+        destroyed: Omega units, Bots, Sentinels, Gyro, Sleepers d. How many Flares, Sleepers were
+        triggered. And how many Gyros were drained.")
+given: a won Campaign
+then: the Debrief rows, top to bottom: VESSEL; EXPANSION ("Heat module", or "None");
+      THREAT LEVELS CONQUERED; OVERLOADS (the Overloads of the whole Campaign); UNITS DESTROYED
+      (the total, then Omega, Bots, Sentinels, Gyros, Sleepers, each with its number, in the
+      unit type's colour); TRIGGERED AND DRAINED (Flares triggered, Sleepers triggered, Gyros
+      drained); MODULES (how many held, how many of each colour, the runs in all, then each
+      Module with "xN", the times it ran; Modules run during the game but no longer held come
+      last, dashed and paler).
+then: a unit destroyed counts once, when it is destroyed (a Wreck when it is made); a Flare or
+      Sleeper "triggered" is its Alert resolved (its effect carried out; Wrecks not counted); a
+      Gyro drained in the Command phase or by an Alert counts; a Module run counts each time it
+      is run (paid or free).
+note: The game counts these as it is played and keeps them with the game (a save replays them,
+      older saves too), for a statistics and achievements page later (docs/next-sessions.md
+      item 10). Checked by tests/unit/outro.test.ts.
+
+id: T13_OUT_11
+title: Terraformer 1.0 stays in the menu
+source: designer 2026-11-17 ("leave this version in the menu for me to see")
+given: the briefing, System options
+then: "Play Terraformer 1.0 (<Company>)" plays the 1.0 film exactly as before (T13_OUT_02), with
+      the same Debrief card as 2.0 (T13_OUT_10). It never plays after a real game.
 

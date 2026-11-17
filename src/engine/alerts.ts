@@ -70,7 +70,8 @@ export function* resolveAlert(c: RunCtx, id: TileId, choice?: "energy" | "heat")
   const d = unitDef(c, id);
   log(c, `resolve ${describe(c, id)}`, "6.5");
   const type = unitType(c, id);
-  emit(c, { kind: "activated", tile: id, unitId: d.id, type, sector: sectorOf(c.state, id)!, how: type === "Gyro" && !isWreck(c, id) ? "drain" : "alert" });
+  const wreck = isWreck(c, id);
+  emit(c, { kind: "activated", tile: id, unitId: d.id, type, sector: sectorOf(c.state, id)!, how: type === "Gyro" && !wreck ? "drain" : "alert", ...(wreck ? { wreck: true as const } : {}) });
   yield* asEffect(c, alertEffect(c, id, d.id, choice));
 }
 

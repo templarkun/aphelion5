@@ -26,12 +26,20 @@ export interface CompanyTheme {
   livery: Rgb;
 }
 
-/** One Module the player ended the Campaign with. */
+/** One Module of the Campaign: held at the end, or run at least once. */
 export interface ModuleStat {
   id: number;
   name: string;
   colour: "Yellow" | "Red" | "Blue";
+  /** Times it was run in the whole game (8.6). */
+  runs: number;
+  /** Still held when the Campaign ended. */
+  held: boolean;
 }
+
+/** The unit types counted on the Debrief (designer 2026-11-17). */
+export const DESTROYED_TYPES = ["Omega", "Bot", "Sentinel", "Gyro", "Sleeper"] as const;
+export type DestroyedType = (typeof DESTROYED_TYPES)[number];
 
 /** One mission the player completed (Core Rules 10.3: each of its Threat columns scores 1). */
 export interface MissionStat {
@@ -52,13 +60,22 @@ export interface CampaignStats {
   campaignNote?: string | undefined;
   vesselName: string;
   freshness: "fresh" | "veteran";
+  /** The expansion modules played with ("Heat module"); empty: none. */
+  expansions: string[];
+  /** The Modules held at the end, then any others that were run: each with how often it ran. */
   modules: ModuleStat[];
   /** The missions completed, in the order played: one terraformer pylon each. */
   missions: MissionStat[];
   /** All Threat columns of the completed missions together (10.3: +1 point each). */
   threatLevelsConquered: number;
-  /** See stats.ts `totalTurnsOf`: the Core Rules have no turns (open question I13). */
-  totalTurns: number;
+  /** Overloads started in the whole Campaign (9.1). Shown as "Overloads" (designer 2026-11-17, I13). */
+  overloads: number;
+  /** Units destroyed, by type (a Wreck counts once, when it is made). */
+  destroyed: Record<DestroyedType, number>;
+  /** Alerts resolved: Flares and Sleepers triggered. */
+  triggered: { Flare: number; Sleeper: number };
+  /** Gyros drained. */
+  drained: number;
   /** The final score (10.3) and the lines that add up to it. */
   score: number;
   scoreParts: string[];

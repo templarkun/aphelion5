@@ -95,7 +95,7 @@ export function App() {
   // The intro plays over the screen when the page opens: the chosen style's long one on a first visit, then its short one.
   const [intro, setIntro] = useState<IntroMode>(() => introMode(briefStyle().id));
   // An outro looked at from System options (made-up numbers; no game is touched).
-  const [outroPreview, setOutroPreview] = useState<{ campaign: string; company: string } | undefined>();
+  const [outroPreview, setOutroPreview] = useState<{ campaign: string; company: string; outro: string } | undefined>();
 
   useEffect(() => {
     void loadSave().then((f) => {
@@ -143,7 +143,7 @@ export function App() {
       {screen()}
       {box && <TextBox {...box} onClose={() => setBox(undefined)} />}
       {intro !== "off" && <IntroSequence key={intro} mode={intro} onDone={() => setIntro("off")} />}
-      {outroPreview && <OutroPreview data={data} campaign={outroPreview.campaign} company={outroPreview.company} onClose={() => setOutroPreview(undefined)} />}
+      {outroPreview && <OutroPreview data={data} campaign={outroPreview.campaign} company={outroPreview.company} outro={outroPreview.outro} onClose={() => setOutroPreview(undefined)} />}
       <GateHost />
     </>
   );
@@ -160,7 +160,7 @@ export function App() {
         setAutoAnswer={setAutoAnswer}
         error={error}
         onReplayIntro={() => setIntro("full")}
-        onPreviewOutro={(campaign, company) => setOutroPreview({ campaign, company })}
+        onPreviewOutro={(campaign, company, outro) => setOutroPreview({ campaign, company, outro })}
         onLaunch={(l) => {
           // The compiled loadout answers the engine's setup questions (7.1); the Threat screen comes next (7.2 step 3).
           setError(undefined);

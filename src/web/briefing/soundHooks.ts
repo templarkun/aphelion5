@@ -48,9 +48,11 @@ export function playFlyBy(): void {}
  */
 /** Terraformer outro, Act 1: the bay doors in the ship's belly start to slide open. */
 export function playBayDoorsOpen(): void {}
-/** Terraformer outro, Act 2: the pylons meet the air and begin to burn. */
+/** Terraformer outro, Act 2: the pylons meet the air and begin to burn (2.0: they reach the upper air and open their wings a little). */
 export function playReentryStreak(): void {}
-/** Terraformer outro, Act 3: a pylon hits and its shock wave goes out. `index` 0 = the first; `of` = how many pylons. */
+/** Terraformer outro, Act 3: a pylon hits and its shock wave goes out (2.0: a pylon has anchored and fires its beam). `index` 0 = the first; `of` = how many pylons. */
 export function playTerraformShockwave(_index: number, _of: number): void {}
 /** Terraformer outro, Act 4: the sun comes over the edge; the Debrief follows. */
 export function playVictoryResolve(): void {}
+/** Terraformer 2.0, Act 1: a pylon's braking thrusters light. `index` 0 = the first; `of` = how many pylons. (2.0 also calls the four above: doors, entering the air, each anchor lock with its beam, the sunrise.) */
+export function playRetroThrust(_index: number, _of: number): void {}

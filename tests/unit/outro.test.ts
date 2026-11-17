@@ -5,9 +5,11 @@ import { newRng } from "../../src/engine/rng.js";
 import { playAnswer, startGame, type Game } from "../../src/engine/save.js";
 import { emptyProfile } from "../../src/engine/state.js";
 import { DEFAULT_OUTRO, OUTROS, outroFor } from "../../src/web/outro/index.js";
-import { campaignStatsOf, sampleStats, totalTurnsOf } from "../../src/web/outro/stats.js";
+import { newEvents, type GameEvent } from "../../src/engine/events.js";
+import { campaignStatsOf, overloadsOf, sampleStats } from "../../src/web/outro/stats.js";
 import { ACT_AT, actAt, DEBRIEF_AT, DOORS_AT, DOORS_OPEN_AT, FILM_SECONDS, impactsBy, impactTimes, LAST_IMPACT, pylonCount, REENTRY_AT, releaseTimes, RESOLVE_AT, sitePlaces } from "../../src/web/outro/terraformer/timeline.js";
 import { companyTheme, FALLBACK_THEME } from "../../src/web/outro/themes.js";
+import * as T2 from "../../src/web/outro/terraformer2/timeline.js";
 import { hasOutro } from "../../src/web/outro/VictoryOutro.js";
 import { randomAnswer } from "./campaignFuzz.js";
 import { data } from "./helpers.js";
@@ -100,9 +102,73 @@ test("the Debrief shows the finished game: the engine's score, every mission won
   expect(st.highScore).toBeUndefined(); // Developer mode never writes a high score
   expect(st.modules.map((m) => m.id).sort((a, b) => a - b)).toEqual(s.player.modules.map((m) => m.id).sort((a, b) => a - b));
   for (const m of st.modules) expect(m.name).toBe(data().modules.byId.get(m.id)!.name);
-  // "Total turns": the Overloads of the whole Campaign, until the designer says otherwise (I13).
-  expect(st.totalTurns).toBe(s.log.filter((e) => e.text === "an Overload starts").length);
-  expect(totalTurnsOf({ ...s, log: [...s.log, { text: "an Overload starts", rule: "9.1" }] })).toBe(st.totalTurns + 1);
+  // "Overloads" (I13, designer 2026-11-17): the Overloads of the whole Campaign; without the game's numbers, from the log.
+  expect(st.overloads).toBe(s.log.filter((e) => e.text === "an Overload starts").length);
+  const { stats: _counted, ...uncounted } = s;
+  expect(overloadsOf({ ...uncounted, log: [...s.log, { text: "an Overload starts", rule: "9.1" }] })).toBe(st.overloads + 1);
+  expect(st.expansions).toEqual(s.settings.heatModule ? ["Heat module"] : []);
+});
+
+/** A Developer-mode game with real play: in each mission some random actions, then the mission won by the Developer shortcut. Every event of every answer is kept. */
+function playWithEvents(seed: number, actions: number): { game: Game; events: GameEvent[] } {
+  const r = newRng(seed * 7 + 1);
+  let g = startGame(data(), { seed, date: "2026-11-17", profile: emptyProfile(), developerMode: true, autoAnswer: true });
+  const events: GameEvent[] = [];
+  let done = 0;
+  for (let n = 0; n < 4000 && g.view.status === "question"; n++) {
+    const q = g.view.question;
+    let a = randomAnswer(r, q);
+    for (let k = 0; k < 40 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, q);
+    if (q.kind === "option" && q.options.some((o) => o.id === "devWin")) {
+      if (done++ < actions) {
+        for (let k = 0; k < 40 && a.kind === "option" && (a.value === "devWin" || a.value === "concede"); k++) a = randomAnswer(r, q);
+        if (a.kind === "option" && (a.value === "devWin" || a.value === "concede")) a = { kind: "option", value: "devWin" };
+      } else {
+        a = { kind: "option", value: "devWin" };
+        done = 0;
+      }
+    } else if (q.upgrade) a = q.kind === "yesno" ? { kind: "yesno", value: true } : { kind: "option", value: "done" };
+    const before = g.view.state.events;
+    const res = playAnswer(data(), g, a);
+    if (res.result.status === "illegal" || res.result.status === "blocked") continue;
+    g = res.game;
+    events.push(...newEvents(before, g.view.state.events));
+  }
+  return { game: g, events };
+}
+
+test("the game counts its own numbers from its events: Overloads, Module runs, units destroyed, Alerts resolved, Gyros drained", () => {
+  for (const seed of [11, 12]) {
+    const { game, events } = playWithEvents(seed, 30);
+    const s = game.view.state;
+    expect(s.stats).toBeDefined();
+    const st = s.stats!;
+    const count = (f: (e: GameEvent) => boolean) => events.filter(f).length;
+    expect(st.overloads).toBe(count((e) => e.kind === "overload" && e.how === "start"));
+    expect(st.overloads).toBe(s.log.filter((e) => e.text === "an Overload starts").length);
+    expect(st.drained).toBe(count((e) => e.kind === "activated" && e.how === "drain"));
+    for (const type of ["Bot", "Sentinel", "Gyro", "Sleeper", "Omega", "Flare"]) {
+      expect(st.destroyed[type] ?? 0).toBe(count((e) => e.kind === "destroyed" && e.type === type));
+      expect(st.triggered[type] ?? 0).toBe(count((e) => e.kind === "activated" && e.how === "alert" && !e.wreck && e.type === type));
+    }
+    const runs = Object.values(st.moduleRuns).reduce((a, b) => a + b, 0);
+    expect(runs).toBe(count((e) => e.kind === "used" && e.what === "module"));
+    // Something really happened in these games.
+    expect(runs + Object.values(st.destroyed).reduce((a, b) => a + b, 0)).toBeGreaterThan(0);
+    // The Debrief shows them: held Modules first with their runs, then Modules run but no longer held.
+    const d = campaignStatsOf(data(), s);
+    expect(d.overloads).toBe(st.overloads);
+    expect(d.drained).toBe(st.drained);
+    expect(d.destroyed.Bot).toBe(st.destroyed.Bot ?? 0);
+    expect(d.triggered.Flare).toBe(st.triggered.Flare ?? 0);
+    expect(d.triggered.Sleeper).toBe(st.triggered.Sleeper ?? 0);
+    expect(d.modules.filter((m) => m.held).map((m) => m.id).sort((a, b) => a - b)).toEqual(s.player.modules.map((m) => m.id).sort((a, b) => a - b));
+    for (const m of d.modules) expect(m.runs).toBe(st.moduleRuns[m.id] ?? 0);
+    for (const m of d.modules.filter((x) => !x.held)) expect(m.runs).toBeGreaterThan(0);
+    expect(d.modules.reduce((n, m) => n + m.runs, 0)).toBe(runs);
+    const firstGone = d.modules.findIndex((m) => !m.held);
+    if (firstGone >= 0) expect(d.modules.slice(firstGone).every((m) => !m.held)).toBe(true);
+  }
 });
 
 test("a conceded or lost game has no outro: it keeps the plain Game over card", () => {
@@ -115,10 +181,13 @@ test("a conceded or lost game has no outro: it keeps the plain Game over card", 
   expect(campaignStatsOf(data(), s).missions.length).toBe(2);
 });
 
-test("every Company gets an outro (the Terraformer until the designer deals them out) and colours", () => {
-  expect(OUTROS.map((o) => o.id)).toContain(DEFAULT_OUTRO);
+test("every Company gets an outro (Terraformer 2.0 until the designer deals them out, 1.0 kept to compare) and colours", () => {
+  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "terraformer"]);
+  expect(DEFAULT_OUTRO).toBe("terraformer2");
+  expect(outroFor("V1", "terraformer").id).toBe("terraformer");
+  expect(outroFor("V1", "nonsense").id).toBe("terraformer2");
   for (const c of [...data().companies.companies.map((x) => x.id), "V9"]) {
-    expect(outroFor(c).id).toBe("terraformer");
+    expect(outroFor(c).id).toBe("terraformer2");
     const th = companyTheme(c);
     expect(th.id).toBe(c);
     for (const rgb of [th.primary, th.secondary, th.glow, th.hull, th.livery]) expect(rgb).toMatch(/^\d{1,3} \d{1,3} \d{1,3}$/);
@@ -131,5 +200,38 @@ test("the preview's sample numbers add up like a real score", () => {
   const st = sampleStats(data(), "C1", "V2");
   expect(st.missions.length).toBe(7);
   expect(st.vesselName).toBe("Kew'n X2");
-  expect(st.score).toBe(st.threatLevelsConquered + 5);
+  expect(st.expansions).toEqual(["Heat module"]);
+  expect(st.score).toBe(st.threatLevelsConquered + 5 - 2);
+  expect(st.scoreParts).toContain("Heat module (-2)");
+});
+
+test("Terraformer 2.0: slower and heavier than 1.0, in four acts; every pylon lowered, drifting 1.2 s, then braking, anchoring one by one", () => {
+  // Deployment and descent (first pylon away to first anchor) 2.5 to 4 s longer than 1.0's (release to first hit).
+  const longer = T2.FIRST_ANCHOR - T2.RELEASE_AT - (impactTimes(7)[0]! - releaseTimes(7)[0]!);
+  expect(longer).toBeGreaterThanOrEqual(2.5);
+  expect(longer).toBeLessThanOrEqual(4);
+  expect(T2.DRIFT).toBe(1.2);
+  expect([0, 4.1, 4.2, 8.9, 9.0, 12.1, 12.2, 30].map(T2.actAt)).toEqual([1, 1, 2, 2, 3, 3, 4, 4]);
+  expect(T2.actAt(T2.DOORS_AT)).toBe(1);
+  expect(T2.actAt(T2.ENTRY_AT)).toBe(2);
+  expect(T2.actAt(T2.RESOLVE_AT)).toBe(4);
+  expect(T2.DEBRIEF_AT).toBeGreaterThan(T2.RESOLVE_AT);
+  expect(T2.DEBRIEF_AT).toBeLessThan(T2.FILM_SECONDS);
+  for (const n of [1, 2, 5, 7, 9, 12]) {
+    const rel = T2.releaseTimes(n);
+    const ign = T2.ignitionTimes(n);
+    const anc = T2.anchorTimes(n);
+    for (let i = 0; i < n; i++) {
+      expect(rel[i]!).toBeGreaterThan(T2.DOORS_AT);
+      // Lowered, drifting, thrusters lit: all within the first act.
+      expect(ign[i]! - rel[i]!).toBeCloseTo(T2.LOWER + T2.DRIFT, 9);
+      expect(T2.actAt(ign[i]!)).toBe(1);
+      expect(T2.actAt(anc[i]!)).toBe(3);
+      // Each fires its beam before the dawn.
+      expect(T2.actAt(anc[i]! + T2.BEAM_DELAY)).toBe(3);
+      if (i) expect(anc[i]!).toBeGreaterThan(anc[i - 1]!);
+    }
+    expect(T2.anchorsBy(anc[0]! - 0.01, n)).toBe(0);
+    expect(T2.anchorsBy(anc[n - 1]!, n)).toBe(n);
+  }
 });

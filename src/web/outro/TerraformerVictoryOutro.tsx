@@ -17,10 +17,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { isStill, speedFactor } from "../motion.js";
 import { playBayDoorsOpen, playConfirm, playHover, playReentryStreak, playTerraformShockwave, playVictoryResolve } from "../briefing/soundHooks.js";
-import { THREAT_NAMES, THREAT_RGB } from "../briefing/types.js";
 import { createTerraformerScene, type FreeArea } from "./terraformer/scene.js";
 import { ACT_NAMES, actAt, DEBRIEF_AT, DOORS_AT, FILM_SECONDS, impactsBy, impactTimes, pylonCount, REENTRY_AT, RESOLVE_AT, STILL_AT } from "./terraformer/timeline.js";
-import type { CampaignStats, OutroProps } from "./types.js";
+import { Debrief } from "./Debrief.js";
+import type { OutroProps } from "./types.js";
 
 export type TerraformerVictoryOutroProps = OutroProps;
 
@@ -232,142 +232,5 @@ export function TerraformerVictoryOutro({ companyTheme, vesselId, campaignStats,
         onComplete();
       }} />
     </div>
-  );
-}
-
-const ENERGY_CLASS = { Yellow: "y", Red: "r", Blue: "b" } as const;
-
-/** The number runs up to the score when the card comes in. */
-function useCountUp(to: number, on: boolean, still: boolean): number {
-  const [v, setV] = useState(still ? to : 0);
-  useEffect(() => {
-    if (!on || still) return void setV(on || still ? to : 0);
-    let raf = 0;
-    const t0 = performance.now() + 450;
-    const step = (now: number) => {
-      const k = Math.min(1, Math.max(0, (now - t0) / 900));
-      setV(Math.round(to * (1 - Math.pow(1 - k, 3))));
-      if (k < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [on, to, still]);
-  return v;
-}
-
-/**
- * The Campaign Debrief: the final score (Core Rules 10.3) with the lines that add up to it, the
- * vessel, the Modules held, the Threat Level of every mission won, the turns, and the way back.
- * It is on the page from the start (out of sight), so the film knows which part of the picture
- * it will leave open.
- */
-function Debrief({ cardRef, stats, shown, still, back, onBack }: { cardRef: React.Ref<HTMLElement>; stats: CampaignStats; shown: boolean; still: boolean; back: React.Ref<HTMLButtonElement>; onBack: () => void }) {
-  const score = useCountUp(stats.score, shown, still);
-  // The engine's score lines: the missions go into the Threat row, the rest is listed under the score.
-  const ids = new Set(stats.missions.map((m) => m.id));
-  const extra = stats.scoreParts
-    .filter((p) => !ids.has(p.split(":")[0]!))
-    .map((p) => {
-      const m = /^(.*?)\s*\(([+-]\d+)\)$/.exec(p);
-      const text = m ? m[1]! : p;
-      return { text: text.charAt(0).toUpperCase() + text.slice(1), value: m ? m[2]!.replace("-", "−") : "" };
-    });
-  const colours = (["Yellow", "Red", "Blue"] as const).map((c) => ({ c, n: stats.modules.filter((m) => m.colour === c).length })).filter((x) => x.n > 0);
-  return (
-    <aside ref={cardRef} className={`ou-card ${shown ? "in" : ""}`} data-debrief={shown ? "1" : "0"} aria-hidden={!shown} aria-label="Campaign debrief">
-      <div className="ou-card-body">
-        <header className="ou-head">
-          <div className="ou-label">Campaign debrief</div>
-          <h2 className="ou-title">{stats.campaignName}</h2>
-          <div className="ou-note">{[stats.campaignNote, "Campaign complete"].filter(Boolean).join(" · ")}</div>
-        </header>
-
-        <section className="ou-score" aria-label={`Final score ${stats.score}`}>
-          <div className="ou-score-n" data-score={stats.score}>
-            {score}
-          </div>
-          <div className="ou-score-side">
-            <div className="ou-label">Final score</div>
-            {stats.highScore && <div className="ou-high">New {stats.highScore === "veteran" ? "Veteran ★ " : ""}high score</div>}
-          </div>
-        </section>
-        <ul className="ou-parts">
-          <li>
-            <span>
-              {stats.threatLevelsConquered} Threat column{stats.threatLevelsConquered === 1 ? "" : "s"} in {stats.missions.length} mission{stats.missions.length === 1 ? "" : "s"}
-            </span>
-            <b>+{stats.threatLevelsConquered}</b>
-          </li>
-          {extra.map((p, i) => (
-            <li key={i}>
-              <span>{p.text}</span>
-              <b>{p.value}</b>
-            </li>
-          ))}
-        </ul>
-
-        <dl className="ou-rows">
-          <div className="ou-row" data-row="vessel">
-            <dt>Vessel</dt>
-            <dd>
-              <b>{stats.vesselName}</b>
-              <small>{stats.freshness === "veteran" ? "Veteran campaign" : "Fresh campaign"}</small>
-            </dd>
-          </div>
-          <div className="ou-row" data-row="threat">
-            <dt>Threat Levels conquered</dt>
-            <dd>
-              <b>{stats.threatLevelsConquered}</b>
-              <ul className="ou-missions">
-                {stats.missions.map((m) => {
-                  const lv = Math.min(4, m.threat.length);
-                  return (
-                    <li key={m.id} style={{ "--c": THREAT_RGB[lv] } as CSSProperties} title={`${m.label}: ${THREAT_NAMES[lv] || "no Threat"}${m.threat.length ? `, column${m.threat.length === 1 ? "" : "s"} ${m.threat.join(" + ")}` : ""}`}>
-                      <span className="ou-tag">{m.tag}</span>
-                      <span className="ou-pips" role="img" aria-label={`Threat Level ${lv}${THREAT_NAMES[lv] ? `, ${THREAT_NAMES[lv]}` : ""}`}>
-                        {[1, 2, 3, 4].map((i) => (
-                          <i key={i} className={i <= lv ? "on" : ""} />
-                        ))}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </dd>
-          </div>
-          <div className="ou-row" data-row="modules">
-            <dt>Modules</dt>
-            <dd>
-              <b>{stats.modules.length}</b>
-              <small>
-                {colours.map((x) => (
-                  <span key={x.c} className={`ou-energy ${ENERGY_CLASS[x.c]}`}>
-                    {x.n} {x.c}
-                  </span>
-                ))}
-              </small>
-              <div className="ou-mods">
-                {stats.modules.map((m) => (
-                  <span key={m.id} className={`ou-mod ${ENERGY_CLASS[m.colour]}`}>
-                    {m.name}
-                  </span>
-                ))}
-              </div>
-            </dd>
-          </div>
-          <div className="ou-row" data-row="turns">
-            <dt>Total turns</dt>
-            <dd>
-              <b>{stats.totalTurns}</b>
-            </dd>
-          </div>
-        </dl>
-      </div>
-      <footer className="ou-foot">
-        <button ref={back} type="button" className="bf-btn bf-primary ou-return" data-action="outro-return" tabIndex={shown ? 0 : -1} onPointerEnter={playHover} onClick={onBack}>
-          Return to Command Deck
-        </button>
-      </footer>
-    </aside>
   );
 }

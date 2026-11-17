@@ -5,6 +5,7 @@
  * This shell holds the state, the frame and the transitions between steps.
  */
 
+import { DEFAULT_OUTRO, OUTROS } from "../outro/index.js";
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Play, Rocket, Settings, X } from "lucide-react";
 import type { GameData } from "../../data/index.js";
@@ -36,8 +37,8 @@ export interface BriefingProps {
   onImport: () => void;
   onPaste: () => void;
   onReplayIntro: () => void;
-  /** Look at the outro of the Company chosen in the briefing, with made-up numbers. */
-  onPreviewOutro?: ((campaign: string, company: string) => void) | undefined;
+  /** Look at an outro (OUTROS id) with the Company chosen in the briefing and made-up numbers. */
+  onPreviewOutro?: ((campaign: string, company: string, outro: string) => void) | undefined;
 }
 
 /** Step changes (Back, the step tabs); a confirmed choice plays the logo gate (Gate.tsx, designer 2026-11-16). */
@@ -282,10 +283,12 @@ export function Briefing(p: BriefingProps) {
               {p.onPreviewOutro && (
                 <>
                   <div className="bf-label mt-2">Outro · after the last mission is won</div>
-                  <button type="button" className="bf-btn" data-action="outro-preview" onClick={() => (setDrawer(false), p.onPreviewOutro?.(campaign, company))}>
-                    Play the outro ({co.name})
-                  </button>
-                  <p className="text-[14px] text-sky-100">A preview with sample numbers. It uses the Company chosen on the Vessel step.</p>
+                  {OUTROS.map((o) => (
+                    <button key={o.id} type="button" className="bf-btn" data-action="outro-preview" data-outro-id={o.id} onClick={() => (setDrawer(false), p.onPreviewOutro?.(campaign, company, o.id))}>
+                      Play {o.name} ({co.name})
+                    </button>
+                  ))}
+                  <p className="text-[14px] text-sky-100">A preview with sample numbers. It uses the Company chosen on the Vessel step. A won Campaign plays {OUTROS.find((o) => o.id === DEFAULT_OUTRO)?.name}.</p>
                 </>
               )}
             </div>

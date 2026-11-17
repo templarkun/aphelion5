@@ -10,7 +10,7 @@
 
 import type { Ctx } from "./field.js";
 import type { EnergyColour } from "../data/units.js";
-import type { SectorKey, TileId } from "./state.js";
+import type { GameState, SectorKey, TileId } from "./state.js";
 import type { FuseKind } from "./rules.js";
 
 export type GameEventBody =
@@ -36,7 +36,7 @@ export type GameEventBody =
    * A unit acts (designer 2026-11-09, for its particle effect): a Sleeper wakes (4.4, no Dark sector
    * left: `wake`) or its Alert is resolved (`alert`); a Gyro is drained (4.3, `drain`), before its effect.
    */
-  | { kind: "activated"; tile: TileId; unitId: string; type: string; sector: SectorKey; how: "wake" | "alert" | "drain" }
+  | { kind: "activated"; tile: TileId; unitId: string; type: string; sector: SectorKey; how: "wake" | "alert" | "drain"; wreck?: true }
   /** A resolved Alert's effect changed nothing on the board (designer 2026-11-10, its fizzle look; screen only). */
   | { kind: "fizzled"; tile: TileId; unitId: string; type: string; sector: SectorKey }
   /** A Fuse token goes off (6.6), before its effect. */
@@ -76,6 +76,49 @@ export function emit(c: Ctx, e: GameEventBody): void {
   const seq = (list[list.length - 1]?.seq ?? 0) + 1;
   list.push({ ...e, seq } as GameEvent);
   if (list.length > KEEP) list.splice(0, list.length - KEEP);
+  tally(c.state, e);
+}
+
+/**
+ * The numbers of the whole game (designer 2026-11-17): shown on the Campaign Debrief at Game End,
+ * and kept for a statistics and achievements page planned for later. Counted from the events
+ * above, so they change no rule. A save is its start and its answers: the numbers are counted
+ * again whenever a game is loaded or undone, older saves included.
+ */
+export interface GameStats {
+  /** Overloads started (9.1). */
+  overloads: number;
+  /** Times each Module was run (8.6), by Module id. */
+  moduleRuns: Record<number, number>;
+  /** Units destroyed (3.3), by type ("Bot", "Sentinel", "Omega" ...). A Wreck counts once, when it is made (4.8). */
+  destroyed: Record<string, number>;
+  /** Alerts resolved (6.5), by type: a Flare or Sleeper "triggered" is its Alert resolved (its effect carried out). Wrecks not counted. */
+  triggered: Record<string, number>;
+  /** Gyros drained (4.3), in the Command phase or by an Alert. */
+  drained: number;
+}
+
+export function newStats(): GameStats {
+  return { overloads: 0, moduleRuns: {}, destroyed: {}, triggered: {}, drained: 0 };
+}
+
+function tally(s: GameState, e: GameEventBody): void {
+  const st = (s.stats ??= newStats());
+  switch (e.kind) {
+    case "overload":
+      if (e.how === "start") st.overloads++;
+      break;
+    case "used":
+      if (e.what === "module" && e.module !== undefined) st.moduleRuns[e.module] = (st.moduleRuns[e.module] ?? 0) + 1;
+      break;
+    case "destroyed":
+      st.destroyed[e.type] = (st.destroyed[e.type] ?? 0) + 1;
+      break;
+    case "activated":
+      if (e.how === "drain") st.drained++;
+      else if (e.how === "alert" && !e.wreck) st.triggered[e.type] = (st.triggered[e.type] ?? 0) + 1;
+      break;
+  }
 }
 
 /** The events in `after` that are newer than everything in `before` (none when going back, as after Undo). */

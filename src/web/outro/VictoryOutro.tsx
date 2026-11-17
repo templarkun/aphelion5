@@ -21,9 +21,9 @@ export function hasOutro(state: GameState): boolean {
   return state.ending !== undefined && state.outcome?.result === "won";
 }
 
-function Show({ company, stats, preview, onLeave }: { company: string; stats: CampaignStats; preview?: boolean; onLeave: () => void }) {
+function Show({ company, stats, preview, outro, onLeave }: { company: string; stats: CampaignStats; preview?: boolean; outro?: string | undefined; onLeave: () => void }) {
   const theme = useMemo(() => companyTheme(company), [company]);
-  const { Component } = outroFor(company);
+  const { Component, name } = outroFor(company, outro);
   if (typeof document === "undefined") return null;
   return createPortal(
     <>
@@ -37,7 +37,7 @@ function Show({ company, stats, preview, onLeave }: { company: string; stats: Ca
           runGate({ title: "COMMAND DECK", sub: stats.campaignName, acc: theme.primary, onMid: onLeave });
         }}
       />
-      {preview && <div className="ou-preview">Preview · sample numbers</div>}
+      {preview && <div className="ou-preview">Preview · {name} · sample numbers</div>}
     </>,
     document.body,
   );
@@ -49,7 +49,8 @@ export function VictoryOutro({ data, state, onLeave }: { data: GameData; state: 
   return <Show company={state.player.company} stats={stats} onLeave={onLeave} />;
 }
 
-export function OutroPreview({ data, campaign, company, onClose }: { data: GameData; campaign: string; company: string; onClose: () => void }) {
+/** `outro`: which one to show (System options lists them all); none: the Company's own. */
+export function OutroPreview({ data, campaign, company, outro, onClose }: { data: GameData; campaign: string; company: string; outro?: string | undefined; onClose: () => void }) {
   const stats = useMemo(() => sampleStats(data, campaign, company), [data, campaign, company]);
-  return <Show company={company} stats={stats} preview onLeave={onClose} />;
+  return <Show company={company} stats={stats} preview outro={outro} onLeave={onClose} />;
 }

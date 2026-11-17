@@ -78,6 +78,22 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    To look at it without playing: System options > "Play the outro". Waiting on I13 ("Total
    Turns"), I14 (a loss), I15 (Company colours). Still to do there: more outros; the ship in
    Act 1 is a flat stand-in drawn from the Vessel screen's outlines until the ship art; sound.
+   2026-11-17 round 2: Terraformer 2.0 (`TerraformerVictoryOutro2.0.tsx`, `terraformer2/`):
+   slower deployment (lowered, 1.2 s zero-G drift turning upright, braking thrusters firing
+   upwards), atmospheric processors instead of rockets, gentle anchoring, blue-green beams, the
+   toxic storm cleared in rings over ocean and green land. It plays after a won Campaign; 1.0
+   stays in System options to compare. The Debrief (`Debrief.tsx`, shared) shows "Overloads"
+   (I13 answered), the expansion, Module runs, units destroyed, Flares / Sleepers triggered and
+   Gyros drained, counted by the engine (`GameStats`). I14 answered (a loss outro later).
+   Waiting on I15 (Company colours) and on the designer's look at 2.0.
+10. **Statistics and achievements page** (designer 2026-11-17, later). The game collects and
+   saves the statistics of every game: Overloads, Module runs (per Module), units destroyed (per
+   type), Alerts resolved per type (Flares and Sleepers "triggered"), Gyros drained
+   (`GameStats` in `src/engine/events.ts`, kept in the game state; a save is its start and its
+   answers, so the numbers come back whenever a game is loaded, older saves too). Today they show
+   on the Campaign Debrief. Still to build: keep each finished game's numbers (and lifetime
+   totals) in the profile, a statistics / achievements menu to show them, achievements to earn.
+   Other counts can be added the same way (one line in `tally`) when that page is designed.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    The Flagship picture on the Upgrade sheet (`FlagshipArt` in `src/web/UpgradeSheet.tsx`) is a

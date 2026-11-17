@@ -1179,11 +1179,12 @@ for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone"
   const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 3400 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && missionOk && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
   if (!ok && introCheck === "ok") introCheck = `failed at ${width} px in ${style} (missions: none open ${noFile}, maps ${maps}, no F_01 ${noF01}, opens ${fileOpen}, closes ${fileClosed}; prep: gate ${gateSeen}, mission intro ${missionIntro}, flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
 }
-// The outro (designer 2026-11-16): the last mission won, the Upgrade sheet closed -> the Company's outro plays over the
-// page (four acts in order, one hit per mission won, a Skip button), then the Campaign Debrief slides in beside the
-// glowing sector (at the side on a wide screen, along the foot on a phone) with the game's own score; "Return to
-// Command Deck" plays the logo gate and lands on the briefing with no game left to resume. A preview from System
-// options plays the same film with sample numbers; with reduced motion there is no film, only the Debrief.
+// The outro (designer 2026-11-16; Terraformer 2.0 and the game's numbers 2026-11-17): the last mission won, the
+// Upgrade sheet closed -> Terraformer 2.0 plays over the page (four acts in order, one anchor per mission won, a Skip
+// button), then the Campaign Debrief slides in beside the cleared sector (at the side on a wide screen, along the foot
+// on a phone) with the game's own score and numbers; "Return to Command Deck" plays the logo gate and lands on the
+// briefing with no game left to resume. System options lists both versions (1.0 kept to compare), each with sample
+// numbers; with reduced motion there is no film, only the Debrief.
 let outroCheck = "skipped (no save)";
 if (existsSync(`${out}/won-save.json`)) {
   const fails = [];
@@ -1196,7 +1197,7 @@ if (existsSync(`${out}/won-save.json`)) {
     if (w < 600) await pg.locator(".up-tabs button").first().waitFor({ timeout: 3000 }).catch(() => {});
     await pg.locator(".up-done").click();
     await pg.getByRole("button", { name: /Finish and lose/ }).click();
-    const shown = await pg.waitForSelector("[data-outro=terraformer]", { timeout: 6000 }).then(() => true, () => false);
+    const shown = await pg.waitForSelector("[data-outro=terraformer2]", { timeout: 6000 }).then(() => true, () => false);
     const t0 = Date.now();
     const at = async (k) => (await pg.locator("[data-outro]").getAttribute(k).catch(() => null)) ?? "";
     const plainCard = await pg.locator(".q-card").count();
@@ -1204,8 +1205,8 @@ if (existsSync(`${out}/won-save.json`)) {
     let acts = "";
     let filmMs = 0;
     if (w >= 600) {
-      // The whole film, untouched (a screenshot would hold the page up): the Debrief comes by itself, at about 9.3 s.
-      await pg.waitForSelector("[data-outro][data-phase=debrief]", { timeout: 25000 }).catch(() => {});
+      // The whole film, untouched (a screenshot would hold the page up): the Debrief comes by itself, at about 13.2 s.
+      await pg.waitForSelector("[data-outro][data-phase=debrief]", { timeout: 32000 }).catch(() => {});
       filmMs = Date.now() - t0;
       // The page notes the acts it has shown: all four, in order.
       acts = await at("data-acts");
@@ -1236,29 +1237,32 @@ if (existsSync(`${out}/won-save.json`)) {
     await pg.getByRole("button", { name: "System options" }).click();
     const resume = await pg.getByRole("button", { name: "Resume game" }).count();
     await pg.close();
+    const counts = await pg.locator(".ou-counts li").count();
     const ok =
-      shown && plainCard === 0 && skip === 1 && debrief && hits === "7" && skipGone && room && cells === 7 && rows === 4 && mods > 0 && scoreShown === scoreWant && Number(scoreWant) >= 12 &&
-      /campaign debrief/.test(text) && /campaign 1/.test(text) && /final score/.test(text) && /support vessel of ko and van/.test(text) && /threat levels conquered/.test(text) && /modules/.test(text) && /total turns/.test(text) && /return to command deck/.test(text) && /whole campaign completed/.test(text) &&
-      (w < 600 || (acts === "1234" && filmMs > 8500 && filmMs < 18000)) && gate && left && resume === 0 && sw <= w + 2;
-    if (!ok) fails.push(`${w} px: shown ${shown}, plain card ${plainCard}, skip ${skip}, acts ${acts}, film ${filmMs} ms, debrief ${debrief}, hits ${hits}, skip gone ${skipGone}, room ${room} (${JSON.stringify(card)}), cells ${cells}, rows ${rows}, modules ${mods}, score ${scoreShown}/${scoreWant}, gate ${gate}, left ${left}, resume ${resume}, width ${sw}, text "${text.slice(0, 160)}"`);
+      shown && plainCard === 0 && skip === 1 && debrief && hits === "7" && skipGone && room && cells === 7 && rows === 7 && counts === 8 && mods > 0 && scoreShown === scoreWant && Number(scoreWant) >= 12 &&
+      /campaign debrief/.test(text) && /campaign 1/.test(text) && /final score/.test(text) && /support vessel of ko and van/.test(text) && /expansion/.test(text) && /threat levels conquered/.test(text) && /modules/.test(text) && /overloads/.test(text) && !/total turns/.test(text) &&
+      /units destroyed/.test(text) && /sleepers triggered/.test(text) && /flares triggered/.test(text) && /gyros drained/.test(text) && /return to command deck/.test(text) && /whole campaign completed/.test(text) &&
+      (w < 600 || (acts === "1234" && filmMs > 12000 && filmMs < 26000)) && gate && left && resume === 0 && sw <= w + 2;
+    if (!ok) fails.push(`${w} px: shown ${shown}, plain card ${plainCard}, skip ${skip}, acts ${acts}, film ${filmMs} ms, debrief ${debrief}, hits ${hits}, skip gone ${skipGone}, room ${room} (${JSON.stringify(card)}), cells ${cells}, rows ${rows}, counts ${counts}, modules ${mods}, score ${scoreShown}/${scoreWant}, gate ${gate}, left ${left}, resume ${resume}, width ${sw}, text "${text.slice(0, 160)}"`);
   }
-  // The preview from System options (sample numbers, the Company chosen in the briefing), in both styles.
-  for (const style of ["intro1", "intro2"]) {
+  // The preview from System options (sample numbers, the Company chosen in the briefing): 1.0 in one style, 2.0 in the other.
+  for (const [style, version] of [["intro1", "terraformer"], ["intro2", "terraformer2"]]) {
     const pg = await plainPage({ viewport: { width: 1100, height: 760 }, deviceScaleFactor: 1 });
     pg.on("pageerror", (e) => errors.push(e.message));
     await pg.addInitScript((st) => { try { localStorage.setItem("aphelion5.intro", "off"); localStorage.setItem("aphelion5.style", st); } catch {} }, style);
     await pg.goto(url);
     await briefAt(pg, "campaign");
     await pg.getByRole("button", { name: "System options" }).click();
-    await pg.locator("[data-action=outro-preview]").click();
-    const shown = await pg.waitForSelector("[data-outro]", { timeout: 4000 }).then(() => true, () => false);
+    const listed = await pg.locator("[data-action=outro-preview]").count();
+    await pg.locator(`[data-action=outro-preview][data-outro-id=${version}]`).click();
+    const shown = await pg.waitForSelector(`[data-outro=${version}]`, { timeout: 4000 }).then(() => true, () => false);
     const badge = await pg.locator(".ou-preview").count();
     await pg.waitForTimeout(1500);
     const act = await pg.locator("[data-outro]").getAttribute("data-act").catch(() => "");
-    if (style === "intro2") {
-      // Pictures of the film on its way (the bay, the fall, the hits), for looking at; nothing here is timed.
+    if (version === "terraformer2") {
+      // Pictures of the film on its way (the drift under the bay, the descent, the anchors and the clearing), for looking at; nothing here is timed.
       const p0 = Date.now() - 1500;
-      for (const [i, sec] of [1.6, 4.0, 6.6].entries()) {
+      for (const [i, sec] of [3.4, 6.4, 11.4].entries()) {
         await pg.waitForTimeout(Math.max(0, sec * 1000 - (Date.now() - p0)));
         await pg.screenshot({ path: `${out}/ui-outro-${i + 1}.png` });
       }
@@ -1271,7 +1275,7 @@ if (existsSync(`${out}/won-save.json`)) {
     await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 6000 }).catch(() => {});
     const back = (await pg.locator("[data-outro]").count()) === 0 && (await pg.locator('.brief[data-step=campaign]').count()) === 1;
     await pg.close();
-    if (!(shown && badge === 1 && act === "1" && debrief && back)) fails.push(`preview in ${style}: shown ${shown}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
+    if (!(shown && listed === 2 && badge === 1 && act === "1" && debrief && back)) fails.push(`preview of ${version} in ${style}: shown ${shown}, listed ${listed}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
   }
   // Reduced motion: no film, the still picture of its end and the Debrief at once.
   {
@@ -1281,8 +1285,8 @@ if (existsSync(`${out}/won-save.json`)) {
     await pg.goto(url);
     await briefAt(pg, "campaign");
     await pg.getByRole("button", { name: "System options" }).click();
-    await pg.locator("[data-action=outro-preview]").click();
-    const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 1500 }).then(() => true, () => false);
+    await pg.locator("[data-action=outro-preview][data-outro-id=terraformer2]").click();
+    const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 2500 }).then(() => true, () => false);
     const skip = await pg.locator("[data-action=outro-skip]").count();
     const hits = await pg.locator("[data-outro]").getAttribute("data-hits").catch(() => "");
     await pg.waitForTimeout(500);

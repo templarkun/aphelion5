@@ -80,8 +80,17 @@
 .ou-row dd > small { font-size: 13px; color: var(--bf-soft-ink, #cfe3ee); display: inline-flex; gap: 10px; flex-wrap: wrap; }
 .ou-energy::before, .ou-mod::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; background: rgb(var(--e)); box-shadow: 0 0 6px rgb(var(--e) / 0.9); }
 .ou .y { --e: 250 204 21; } .ou .r { --e: 248 113 113; } .ou .b { --e: 96 165 250; }
-.ou-mods { flex: 1 0 100%; display: flex; flex-wrap: wrap; gap: 4px 5px; margin-top: 4px; }
-.ou-mod { padding: 1px 8px 2px; font-size: 13px; line-height: 1.35; white-space: nowrap; background: rgb(255 255 255 / 0.08); border: 1px solid rgb(var(--e) / 0.55); border-radius: var(--bf-panel-radius, 4px); }
+.ou-mods { flex: 1 0 100%; display: flex; flex-wrap: wrap; gap: 4px 5px; margin-top: 4px !important; }
+.ou-mod { display: inline-flex; align-items: center; gap: 6px; padding: 1px 4px 2px 8px; font-size: 13px; line-height: 1.35; white-space: nowrap; background: rgb(255 255 255 / 0.08); border: 1px solid rgb(var(--e) / 0.55); border-radius: var(--bf-panel-radius, 4px); }
+.ou-mod::before { margin-right: -1px; }
+.ou-mod b { padding: 0 5px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; background: rgb(var(--e) / 0.28); border-radius: 3px; }
+/* A Module run during the game but no longer held at the end. */
+.ou-mod.gone { opacity: 0.62; border-style: dashed; }
+.ou-counts { flex: 1 0 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 5px; margin-top: 4px !important; }
+.ou-counts li { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 4px 7px 5px; background: rgb(var(--c) / 0.1); border-left: 3px solid rgb(var(--c) / 0.85); border-radius: 2px; }
+.ou-counts b { font-size: 17px; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
+.ou-counts span { font-size: 11.5px; line-height: 1.2; font-weight: 700; letter-spacing: 0.04em; color: var(--bf-soft-ink, #cfe3ee); }
+.ou-counts li.zero b { color: rgb(255 255 255 / 0.55); }
 .ou-missions { flex: 1 0 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px; margin-top: 4px !important; }
 .ou-missions li { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 2px 5px; background: rgb(var(--c) / 0.13); border: 1px solid rgb(var(--c) / 0.6); border-radius: var(--bf-panel-radius, 4px); }
 .ou-tag { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; color: #fff; }
@@ -92,8 +101,9 @@
 /* The parts of the card come up one after another once it is in. */
 .ou-card.in .ou-head, .ou-card.in .ou-score, .ou-card.in .ou-parts, .ou-card.in .ou-row, .ou-card.in .ou-foot { animation: ou-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .ou-card.in .ou-head { animation-delay: 0.25s; } .ou-card.in .ou-score { animation-delay: 0.4s; } .ou-card.in .ou-parts { animation-delay: 0.5s; }
-.ou-card.in .ou-row:nth-child(1) { animation-delay: 0.6s; } .ou-card.in .ou-row:nth-child(2) { animation-delay: 0.68s; } .ou-card.in .ou-row:nth-child(3) { animation-delay: 0.76s; } .ou-card.in .ou-row:nth-child(4) { animation-delay: 0.84s; }
-.ou-card.in .ou-foot { animation-delay: 0.95s; }
+.ou-card.in .ou-row:nth-child(1) { animation-delay: 0.6s; } .ou-card.in .ou-row:nth-child(2) { animation-delay: 0.66s; } .ou-card.in .ou-row:nth-child(3) { animation-delay: 0.72s; } .ou-card.in .ou-row:nth-child(4) { animation-delay: 0.78s; }
+.ou-card.in .ou-row:nth-child(5) { animation-delay: 0.84s; } .ou-card.in .ou-row:nth-child(6) { animation-delay: 0.9s; } .ou-card.in .ou-row:nth-child(n + 7) { animation-delay: 0.96s; }
+.ou-card.in .ou-foot { animation-delay: 1.02s; }
 
 @media (max-width: 599px) {
   .ou-card-body { padding: 12px 14px 16px; }
@@ -103,7 +113,9 @@
 
 /* A preview (System options > Play the outro): says so, over the film. */
 .ou-preview { position: fixed; left: 50%; top: max(12px, env(safe-area-inset-top)); z-index: 161; transform: translateX(-50%); padding: 3px 12px; pointer-events: none;
-  font: 800 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; color: #201400; background: #f5c451; }
+  font: 800 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; color: #201400; background: #f5c451;
+  max-width: calc(100vw - 220px); overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 599px) { .ou-preview { font-size: 10px; letter-spacing: 0.08em; padding: 2px 8px; } }
 
 /* Reduced motion and the Instant speed: no movement. */
 html.still .ou, html.still .ou *, html.still .ou *::before, .ou-still, .ou-still * { animation-duration: 0.01s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0.01s !important; }

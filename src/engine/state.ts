@@ -11,7 +11,7 @@ import type { EnergyColour } from "../data/units.js";
 import type { Coord, Facing } from "../geometry/hex.js";
 import type { RngState } from "./rng.js";
 import type { FuseKind, LimitedToken } from "./rules.js";
-import type { GameEvent } from "./events.js";
+import type { GameEvent, GameStats } from "./events.js";
 
 export type TileId = string;
 export type SectorKey = string; // "q,r"
@@ -200,6 +200,8 @@ export interface GameState {
   log: LogEntry[];
   /** Recent changes on the board, for the screen's animations (engine events; optional for older states). */
   events?: GameEvent[];
+  /** The numbers of the whole game, counted from the events (events.ts `GameStats`; no rule). */
+  stats?: GameStats;
 }
 
 export function noTokens(): Tokens {
