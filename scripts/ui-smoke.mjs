@@ -1226,6 +1226,7 @@ if (existsSync(`${out}/won-save.json`)) {
     const cells = await pg.locator(".ou-missions li").count();
     const rows = await pg.locator(".ou-row").count();
     const mods = await pg.locator(".ou-mod").count();
+    const counts = await pg.locator(".ou-counts li").count();
     // The card leaves the glowing sector in view: beside it on a wide screen, above it on a phone.
     const room = card && (w >= 900 ? card.width <= w * 0.42 && card.x >= w * 0.55 : card.height <= h * 0.6 && card.y >= h * 0.38);
     const sw = await pg.evaluate(() => document.documentElement.scrollWidth);
@@ -1237,7 +1238,6 @@ if (existsSync(`${out}/won-save.json`)) {
     await pg.getByRole("button", { name: "System options" }).click();
     const resume = await pg.getByRole("button", { name: "Resume game" }).count();
     await pg.close();
-    const counts = await pg.locator(".ou-counts li").count();
     const ok =
       shown && plainCard === 0 && skip === 1 && debrief && hits === "7" && skipGone && room && cells === 7 && rows === 7 && counts === 8 && mods > 0 && scoreShown === scoreWant && Number(scoreWant) >= 12 &&
       /campaign debrief/.test(text) && /campaign 1/.test(text) && /final score/.test(text) && /support vessel of ko and van/.test(text) && /expansion/.test(text) && /threat levels conquered/.test(text) && /modules/.test(text) && /overloads/.test(text) && !/total turns/.test(text) &&
