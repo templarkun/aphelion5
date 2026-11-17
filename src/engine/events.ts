@@ -92,7 +92,7 @@ export interface GameStats {
   moduleRuns: Record<number, number>;
   /** Units destroyed (3.3), by type ("Bot", "Sentinel", "Omega" ...). A Wreck counts once, when it is made (4.8). */
   destroyed: Record<string, number>;
-  /** Alerts resolved (6.5), by type: a Flare or Sleeper "triggered" is its Alert resolved (its effect carried out). Wrecks not counted. */
+  /** Alerts resolved (6.5), by type: a unit "triggered" (Omega, Sentinel, Flare, Sleeper on the Debrief) is its Alert resolved (its effect carried out). Wrecks not counted. */
   triggered: Record<string, number>;
   /** Gyros drained (4.3), in the Command phase or by an Alert. */
   drained: number;

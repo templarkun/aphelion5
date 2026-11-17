@@ -86,6 +86,8 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    (I13 answered), the expansion, Module runs, units destroyed, Flares / Sleepers triggered and
    Gyros drained, counted by the engine (`GameStats`). I14 answered (a loss outro later).
    Waiting on I15 (Company colours) and on the designer's look at 2.0.
+   2026-11-17 round 3: the braking plumes fire down (designer), "Tap twice to skip" at the foot as
+   in the intro (`SkipHint.tsx`, both versions), Omega and Sentinels triggered on the Debrief.
 10. **Statistics and achievements page** (designer 2026-11-17, later). The game collects and
    saves the statistics of every game: Overloads, Module runs (per Module), units destroyed (per
    type), Alerts resolved per type (Flares and Sleepers "triggered"), Gyros drained
@@ -118,3 +120,7 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    `src/effects/bays.ts` checks a Dark sector's top tile for tokens too). When the rule comes,
    check every effect that chooses a Dark sector, the Reveal, Moves onto Dark sectors and the
    screen (tokens drawn on face-down tiles).
+11. **Campaign editor** (designer 2026-11-17, a Developer page to make new Campaigns): a palette
+   of chosen units, the units put into missions and Threat columns, a map tool. Proposal in
+   `docs/campaign-editor.md` (layout, Omega units, mission events, Orders, checks, export to the
+   `Campaign1.txt` format); waiting for the designer's answers C1-C5 there before building.

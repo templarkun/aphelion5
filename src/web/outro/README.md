@@ -9,7 +9,7 @@ choice: `OUTRO_OF_COMPANY` in `index.ts` (empty for now, so every Company gets `
 
 | Outro | What it is |
 | --- | --- |
-| `terraformer2` | Terraformer 2.0 (designer 2026-11-17), plays after a won Campaign. Industrial terraforming: the bay doors open, the pylons (atmospheric processors: reactor core, four folding wings, anchor spike, braking thrusters on top) are lowered out, drift free for 1.2 s while they turn upright, then come down slowly on their thrusters; one by one they anchor and fire blue-green beams up through the toxic storm, which clears in emerald and cyan rings over ocean and green land; the sun rises. About 15 seconds. |
+| `terraformer2` | Terraformer 2.0 (designer 2026-11-17), plays after a won Campaign. Industrial terraforming: the bay doors open, the pylons (atmospheric processors: reactor core, four folding wings, anchor spike, braking thrusters on top, firing down) are lowered out, drift free for 1.2 s while they turn upright, then come down slowly on their thrusters; one by one they anchor and fire blue-green beams up through the toxic storm, which clears in emerald and cyan rings over ocean and green land; the sun rises. About 15 seconds. |
 | `terraformer` | Terraformer 1.0, kept as it was to compare (System options only). Bay doors, one pylon per mission won falls through the air, each hit sends a shock wave over the ground and turns it into a lit sector in the Company's colours; the sun rises. About 11.5 seconds. |
 
 ## What every outro is given (`types.ts`)

@@ -3,7 +3,7 @@
  * bottom up: a heavy conical anchor spike, an anchor collar, the reactor core (a cylinder with a
  * glowing reactor ring), four solar / radiator wings hinged under the head (folded along the core,
  * opening a little in the air and wide once anchored), the head with four braking thrusters that
- * fire upwards, and the emitter mast that fires the beam. Status beacons blink on the hull.
+ * fire downwards, and the emitter mast that fires the beam. Status beacons blink on the hull.
  *
  * It is drawn as a real solid: every point is a point of the pylon's own frame, put into the
  * picture by `pose.at` (so it turns, shortens and leans with the camera by itself), and every
@@ -82,7 +82,10 @@ const POD_R = 0.112;
 const POD_H0 = 0.83;
 const POD_H1 = 0.935;
 const POD_RAD = 0.026;
-const NOZZLE = 0.96;
+/** The nozzles: at the pods' lower ends, firing down and a little outwards (braking). */
+const NOZZLE = 0.815;
+/** How far the plumes lean out from the body (so they clear the wings and the hull). */
+const PLUME_OUT = 0.5;
 /** The beacons: [h, angle from the first wing, colour 0 main 1 second 2 red]. */
 const BEACONS: [number, number, number][] = [
   [0.36, 0.5, 1],
@@ -297,7 +300,7 @@ export function drawRig(g: CanvasRenderingContext2D, pose: RigPose, s: RigState,
       g.stroke();
     }
   };
-  const pod = (ph: number) => part(POD_H0, POD_H1, POD_RAD, POD_RAD * 1.25, darkMetal, 0.5, POD_R * Math.cos(ph), POD_R * Math.sin(ph));
+  const pod = (ph: number) => part(POD_H0, POD_H1, POD_RAD * 1.25, POD_RAD, darkMetal, 0.5, POD_R * Math.cos(ph), POD_R * Math.sin(ph));
 
   for (const w of wings) if (w.front < 0) wing(w.ph);
   for (const p of pods) if (p.front < 0) pod(p.ph);
@@ -346,7 +349,7 @@ function shadeLit(rgb: string, k: number, glint = 0): string {
   return `rgb(${ch(r)} ${ch(gg)} ${ch(b)})`;
 }
 
-/** The pylon's own lights: thruster plumes (upwards, blue and white), beacons, the emitter, the pale sheath of the upper air. */
+/** The pylon's own lights: thruster plumes (down and a little outwards, blue and white), beacons, the emitter, the pale sheath of the upper air. */
 function lights(g: CanvasRenderingContext2D, pose: RigPose, s: RigState, theme: CompanyTheme, sp: RigSprites, near: boolean): void {
   const { at, px, view } = pose;
   g.save();
@@ -359,7 +362,7 @@ function lights(g: CanvasRenderingContext2D, pose: RigPose, s: RigState, theme: 
       const x = POD_R * Math.cos(ph);
       const y = POD_R * Math.sin(ph);
       const a = at(NOZZLE, x, y);
-      const b = at(NOZZLE + len, x, y);
+      const b = at(NOZZLE - len, x * (1 + (PLUME_OUT * len) / POD_R), y * (1 + (PLUME_OUT * len) / POD_R));
       const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
       const wide = Math.max(1.2, px * (0.03 + 0.02 * s.thrust));
       if (L > 1) {

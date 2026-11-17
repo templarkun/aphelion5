@@ -7,7 +7,7 @@
  * open, the pylons (one for every mission won) are lowered out, drift free while they turn
  * upright and light their braking thrusters; they come down slowly over the storm; one by one
  * they anchor and fire their beams, and the toxic clouds clear in rings over ocean and green
- * land; the camera pulls back as the sun rises. Over it, small captions, a [SKIP] button, and at
+ * land; the camera pulls back as the sun rises. Over it, small captions, "Tap twice to skip" at the foot, and at
  * the end the Campaign Debrief card (Debrief.tsx, shared with 1.0), at the side (from below on a
  * phone), leaving the cleared sector in view.
  *
@@ -21,6 +21,7 @@ import { isStill, speedFactor } from "../motion.js";
 import { playBayDoorsOpen, playConfirm, playHover, playReentryStreak, playRetroThrust, playTerraformShockwave, playVictoryResolve } from "../briefing/soundHooks.js";
 import { createTerraformer2Scene, type FreeArea } from "./terraformer2/scene.js";
 import { ACT_NAMES, actAt, anchorsBy, anchorTimes, BEAM_DELAY, DEBRIEF_AT, DOORS_AT, ENTRY_AT, FILM_SECONDS, ignitionTimes, pylonCount, RESOLVE_AT, STILL_AT } from "./terraformer2/timeline.js";
+import { SkipHint, useTwoTapSkip } from "./SkipHint.js";
 import { Debrief } from "./Debrief.js";
 import type { OutroProps } from "./types.js";
 
@@ -168,13 +169,7 @@ export function TerraformerVictoryOutro2({ companyTheme, vesselId, campaignStats
     setVeil((v) => v + 1);
     setPhase("debrief");
   }
-  useEffect(() => {
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape" || ((e.key === "Enter" || e.key === " ") && document.activeElement?.tagName !== "BUTTON")) skip();
-    };
-    window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
-  });
+  const twoTaps = useTwoTapSkip(phase === "film" && !still, skip);
   // Once the Debrief is in, its button takes the keyboard.
   useEffect(() => {
     if (phase !== "debrief") return;
@@ -203,6 +198,7 @@ export function TerraformerVictoryOutro2({ companyTheme, vesselId, campaignStats
       data-phase={phase}
       data-hits={hits}
       role="dialog"
+      onPointerDown={twoTaps.tap}
       aria-label={`${stats.campaignName} complete`}
       style={{ "--acc": companyTheme.primary, "--acc2": companyTheme.secondary } as CSSProperties}
     >
@@ -225,11 +221,7 @@ export function TerraformerVictoryOutro2({ companyTheme, vesselId, campaignStats
         </div>
       </div>
 
-      {phase === "film" && (
-        <button type="button" className="ou-skip" data-action="outro-skip" onPointerEnter={playHover} onClick={skip}>
-          Skip
-        </button>
-      )}
+      {phase === "film" && <SkipHint armed={twoTaps.armed} hintOn={twoTaps.hintOn} />}
 
       <Debrief cardRef={card} stats={stats} shown={phase === "debrief"} still={still} back={back} onBack={() => {
         if (left.current) return;

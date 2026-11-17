@@ -160,6 +160,8 @@ test("the game counts its own numbers from its events: Overloads, Module runs, u
     expect(d.overloads).toBe(st.overloads);
     expect(d.drained).toBe(st.drained);
     expect(d.destroyed.Bot).toBe(st.destroyed.Bot ?? 0);
+    expect(d.triggered.Omega).toBe(st.triggered.Omega ?? 0);
+    expect(d.triggered.Sentinel).toBe(st.triggered.Sentinel ?? 0);
     expect(d.triggered.Flare).toBe(st.triggered.Flare ?? 0);
     expect(d.triggered.Sleeper).toBe(st.triggered.Sleeper ?? 0);
     expect(d.modules.filter((m) => m.held).map((m) => m.id).sort((a, b) => a - b)).toEqual(s.player.modules.map((m) => m.id).sort((a, b) => a - b));

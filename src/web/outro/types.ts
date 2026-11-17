@@ -72,8 +72,8 @@ export interface CampaignStats {
   overloads: number;
   /** Units destroyed, by type (a Wreck counts once, when it is made). */
   destroyed: Record<DestroyedType, number>;
-  /** Alerts resolved: Flares and Sleepers triggered. */
-  triggered: { Flare: number; Sleeper: number };
+  /** Alerts resolved: Omega, Sentinels, Flares and Sleepers triggered (Wrecks not counted). */
+  triggered: { Omega: number; Sentinel: number; Flare: number; Sleeper: number };
   /** Gyros drained. */
   drained: number;
   /** The final score (10.3) and the lines that add up to it. */

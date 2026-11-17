@@ -1,7 +1,7 @@
 /**
  * The Campaign Debrief card of the outros: the final score (Core Rules 10.3) with the lines that
  * add up to it, the vessel, the expansion played with, the Threat Level of every mission won, the
- * game's own counts (Overloads, units destroyed, Flares and Sleepers triggered, Gyros drained),
+ * game's own counts (Overloads, units destroyed, Omega, Sentinels, Flares and Sleepers triggered, Gyros drained),
  * the Modules with how often each ran, and the way back. Shared by every outro, so they all
  * show the same numbers. It is on the page from the start (out of sight), so the film knows
  * which part of the picture it will leave open. Screen only.
@@ -155,6 +155,8 @@ export function Debrief({ cardRef, stats, shown, still, back, onBack }: { cardRe
             <dd>
               <Counts
                 items={[
+                  { key: "Omega", label: "Omega triggered", n: stats.triggered.Omega, rgb: typeRgb("Omega") },
+                  { key: "Sentinel", label: "Sentinels triggered", n: stats.triggered.Sentinel, rgb: typeRgb("Sentinel") },
                   { key: "Flare", label: "Flares triggered", n: stats.triggered.Flare, rgb: typeRgb("Flare") },
                   { key: "Sleeper", label: "Sleepers triggered", n: stats.triggered.Sleeper, rgb: typeRgb("Sleeper") },
                   { key: "Gyro", label: "Gyros drained", n: stats.drained, rgb: typeRgb("Gyro") },

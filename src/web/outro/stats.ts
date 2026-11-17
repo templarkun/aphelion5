@@ -2,7 +2,7 @@
  * The numbers of the Campaign Debrief, read from the finished game. Nothing is worked out anew:
  * the score and its lines are the engine's own (Core Rules 10.3, `state.ending`), the missions and
  * their Threat columns are `state.run.completed`, the Modules are the ones the player holds, and
- * the counts (Overloads, Module runs, units destroyed, Flares and Sleepers triggered, Gyros
+ * the counts (Overloads, Module runs, units destroyed, Omega, Sentinels, Flares and Sleepers triggered, Gyros
  * drained) are the game's own numbers, `state.stats` (engine events.ts `GameStats`).
  */
 
@@ -59,7 +59,7 @@ export function campaignStatsOf(data: GameData, state: GameState): CampaignStats
     threatLevelsConquered: missions.reduce((sum, m) => sum + m.threat.length, 0),
     overloads: overloadsOf(state),
     destroyed: Object.fromEntries(DESTROYED_TYPES.map((k) => [k, st?.destroyed[k] ?? 0])) as Record<DestroyedType, number>,
-    triggered: { Flare: st?.triggered.Flare ?? 0, Sleeper: st?.triggered.Sleeper ?? 0 },
+    triggered: { Omega: st?.triggered.Omega ?? 0, Sentinel: st?.triggered.Sentinel ?? 0, Flare: st?.triggered.Flare ?? 0, Sleeper: st?.triggered.Sleeper ?? 0 },
     drained: st?.drained ?? 0,
     score: state.ending?.score ?? 0,
     scoreParts: state.ending?.parts ?? [],
@@ -104,7 +104,7 @@ export function sampleStats(data: GameData, campaign: string, company: string): 
     threatLevelsConquered: threat,
     overloads: 31,
     destroyed: { Omega: 2, Bot: 57, Sentinel: 23, Gyro: 9, Sleeper: 6 },
-    triggered: { Flare: 34, Sleeper: 5 },
+    triggered: { Omega: 9, Sentinel: 21, Flare: 34, Sleeper: 5 },
     drained: 14,
     // As the engine scores it (campaign.ts): playing with the Heat module costs 2.
     score: threat + 5 - 2,

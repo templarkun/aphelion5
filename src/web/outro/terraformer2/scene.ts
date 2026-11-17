@@ -4,7 +4,7 @@
  *   Act 1  under the belly of the Company's capital vessel: the bay doors open on a lit hold where
  *          the pylons (one for every mission won) lie across the bay. One by one they are lowered
  *          out on their cradles, let go, and drift free for 1.2 s while they turn upright; then
- *          their braking thrusters light, blue-white plumes pointing up.
+ *          their braking thrusters light, blue-white plumes firing down.
  *   Act 2  the camera follows them down, slow and heavy, braking all the way. In the upper air
  *          their wings open a little (no fire, only a pale glow at the spike's tip). They gather
  *          over the sector and hang above the deck of toxic storm clouds.
