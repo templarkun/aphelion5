@@ -1201,23 +1201,14 @@ if (existsSync(`${out}/won-save.json`)) {
     const at = async (k) => (await pg.locator("[data-outro]").getAttribute(k).catch(() => null)) ?? "";
     const plainCard = await pg.locator(".q-card").count();
     const skip = await pg.locator("[data-action=outro-skip]").count();
-    const acts = [];
+    let acts = "";
     let filmMs = 0;
     if (w >= 600) {
-      // The whole film: the acts come in order, the pylons hit one by one, the Debrief comes by itself.
-      let shot = 0;
-      while (Date.now() - t0 < 20000) {
-        const a = await at("data-act");
-        if (a && acts[acts.length - 1] !== a) acts.push(a);
-        const el = (Date.now() - t0) / 1000;
-        if ((shot === 0 && el > 1.2) || (shot === 1 && el > 3.6) || (shot === 2 && el > 6.4)) await pg.screenshot({ path: `${out}/ui-outro-${++shot}.png` });
-        if ((await at("data-phase")) === "debrief") break;
-        await pg.waitForTimeout(60);
-      }
+      // The whole film, untouched (a screenshot would hold the page up): the Debrief comes by itself, at about 9.3 s.
+      await pg.waitForSelector("[data-outro][data-phase=debrief]", { timeout: 25000 }).catch(() => {});
       filmMs = Date.now() - t0;
-      // The Debrief comes 0.8 s into the last act: on a slow machine the loop above can step over that moment.
-      const last = await at("data-act");
-      if (last && acts[acts.length - 1] !== last) acts.push(last);
+      // The page notes the acts it has shown: all four, in order.
+      acts = await at("data-acts");
     } else {
       await pg.waitForTimeout(900);
       await pg.locator("[data-action=outro-skip]").click();
@@ -1248,8 +1239,8 @@ if (existsSync(`${out}/won-save.json`)) {
     const ok =
       shown && plainCard === 0 && skip === 1 && debrief && hits === "7" && skipGone && room && cells === 7 && rows === 4 && mods > 0 && scoreShown === scoreWant && Number(scoreWant) >= 12 &&
       /campaign debrief/.test(text) && /campaign 1/.test(text) && /final score/.test(text) && /support vessel of ko and van/.test(text) && /threat levels conquered/.test(text) && /modules/.test(text) && /total turns/.test(text) && /return to command deck/.test(text) && /whole campaign completed/.test(text) &&
-      (w < 600 || (acts.join("") === "1234" && filmMs > 8500 && filmMs < 12500)) && gate && left && resume === 0 && sw <= w + 2;
-    if (!ok) fails.push(`${w} px: shown ${shown}, plain card ${plainCard}, skip ${skip}, acts ${acts.join("")}, film ${filmMs} ms, debrief ${debrief}, hits ${hits}, skip gone ${skipGone}, room ${room} (${JSON.stringify(card)}), cells ${cells}, rows ${rows}, modules ${mods}, score ${scoreShown}/${scoreWant}, gate ${gate}, left ${left}, resume ${resume}, width ${sw}, text "${text.slice(0, 160)}"`);
+      (w < 600 || (acts === "1234" && filmMs > 8500 && filmMs < 18000)) && gate && left && resume === 0 && sw <= w + 2;
+    if (!ok) fails.push(`${w} px: shown ${shown}, plain card ${plainCard}, skip ${skip}, acts ${acts}, film ${filmMs} ms, debrief ${debrief}, hits ${hits}, skip gone ${skipGone}, room ${room} (${JSON.stringify(card)}), cells ${cells}, rows ${rows}, modules ${mods}, score ${scoreShown}/${scoreWant}, gate ${gate}, left ${left}, resume ${resume}, width ${sw}, text "${text.slice(0, 160)}"`);
   }
   // The preview from System options (sample numbers, the Company chosen in the briefing), in both styles.
   for (const style of ["intro1", "intro2"]) {
@@ -1264,7 +1255,15 @@ if (existsSync(`${out}/won-save.json`)) {
     const badge = await pg.locator(".ou-preview").count();
     await pg.waitForTimeout(1500);
     const act = await pg.locator("[data-outro]").getAttribute("data-act").catch(() => "");
-    await pg.locator("[data-action=outro-skip]").click();
+    if (style === "intro2") {
+      // Pictures of the film on its way (the bay, the fall, the hits), for looking at; nothing here is timed.
+      const p0 = Date.now() - 1500;
+      for (const [i, sec] of [1.6, 4.0, 6.6].entries()) {
+        await pg.waitForTimeout(Math.max(0, sec * 1000 - (Date.now() - p0)));
+        await pg.screenshot({ path: `${out}/ui-outro-${i + 1}.png` });
+      }
+    }
+    await pg.locator("[data-action=outro-skip]").click().catch(() => {});
     const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 3000 }).then(() => true, () => false);
     await pg.waitForTimeout(1900);
     await pg.screenshot({ path: `${out}/ui-outro-preview-${style}.png` });

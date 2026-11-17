@@ -47,6 +47,8 @@ export function TerraformerVictoryOutro({ companyTheme, vesselId, campaignStats,
   const [phase, setPhase] = useState<"film" | "debrief">(still ? "debrief" : "film");
   const [act, setAct] = useState<1 | 2 | 3 | 4>(still ? 4 : 1);
   const [hits, setHits] = useState(still ? n : 0);
+  // The acts shown so far, in order ("1234" once the film has run through): for the browser check.
+  const [acts, setActs] = useState("");
   const [veil, setVeil] = useState(0);
   const canvas = useRef<HTMLCanvasElement>(null);
   const card = useRef<HTMLElement>(null);
@@ -132,7 +134,10 @@ export function TerraformerVictoryOutro({ companyTheme, vesselId, campaignStats,
         if (!still && (!clock.current.skipped || c.keep)) c.play();
       }
       const a = actAt(t);
-      if (a !== shownAct) setAct((shownAct = a));
+      if (a !== shownAct) {
+        setAct((shownAct = a));
+        setActs((seen) => seen + a);
+      }
       const hit = impactsBy(t, n);
       if (hit !== shownHits) setHits((shownHits = hit));
       if (!debrief && t >= DEBRIEF_AT) {
@@ -188,6 +193,7 @@ export function TerraformerVictoryOutro({ companyTheme, vesselId, campaignStats,
       className={`ou ${phase === "debrief" ? "ou-end" : ""} ${still ? "ou-still" : ""}`}
       data-outro="terraformer"
       data-act={act}
+      data-acts={acts}
       data-phase={phase}
       data-hits={hits}
       role="dialog"
