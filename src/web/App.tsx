@@ -21,6 +21,7 @@ import { type IntroMode, introMode } from "./briefing/prefs.js";
 import { briefStyle } from "./briefing/styles/index.js";
 import { GateHost } from "./briefing/Gate.js";
 import { MissionIntro } from "./briefing/MissionIntro.js";
+import { hasOutro, OutroPreview, VictoryOutro } from "./outro/VictoryOutro.js";
 import { MissionPrep, prepKind } from "./briefing/MissionPrep.js";
 import { type Game, type SaveFile, canUndo, playAnswer, readSave, replayGame, startGame, toSave, undo } from "../engine/save.js";
 import { type GameState, type Profile, emptyProfile } from "../engine/state.js";
@@ -93,6 +94,8 @@ export function App() {
   const [box, setBox] = useState<TextBoxProps | undefined>();
   // The intro plays over the screen when the page opens: the chosen style's long one on a first visit, then its short one.
   const [intro, setIntro] = useState<IntroMode>(() => introMode(briefStyle().id));
+  // An outro looked at from System options (made-up numbers; no game is touched).
+  const [outroPreview, setOutroPreview] = useState<{ campaign: string; company: string } | undefined>();
 
   useEffect(() => {
     void loadSave().then((f) => {
@@ -140,6 +143,7 @@ export function App() {
       {screen()}
       {box && <TextBox {...box} onClose={() => setBox(undefined)} />}
       {intro !== "off" && <IntroSequence key={intro} mode={intro} onDone={() => setIntro("off")} />}
+      {outroPreview && <OutroPreview data={data} campaign={outroPreview.campaign} company={outroPreview.company} onClose={() => setOutroPreview(undefined)} />}
       <GateHost />
     </>
   );
@@ -156,6 +160,7 @@ export function App() {
         setAutoAnswer={setAutoAnswer}
         error={error}
         onReplayIntro={() => setIntro("full")}
+        onPreviewOutro={(campaign, company) => setOutroPreview({ campaign, company })}
         onLaunch={(l) => {
           // The compiled loadout answers the engine's setup questions (7.1); the Threat screen comes next (7.2 step 3).
           setError(undefined);
@@ -1121,9 +1126,12 @@ function GameScreen(p: GameProps) {
             </button>
           ) : null
         ) : !q ? (
-          <QCard>
-            <GameOver state={s} onLeave={p.onLeave} />
-          </QCard>
+          // Game End (10.3). A won Campaign gets its Company's outro and the Debrief (below); a loss this card.
+          hasOutro(s) ? null : (
+            <QCard>
+              <GameOver state={s} onLeave={p.onLeave} />
+            </QCard>
+          )
         ) : damageQ ? (
           <FlagshipDamage total={damageQ.total} from={/^\d/.test(damageQ.rule) ? `rule ${damageQ.rule}` : `from ${damageQ.rule}`} buckets={damageQ.buckets} split={split} onAdd={addSplit} onReset={() => setSplit({})} repair={/^Remove/.test(damageQ.prompt)} />
         ) : stackQ && q?.kind === "option" && hasField ? (
@@ -1183,6 +1191,8 @@ function GameScreen(p: GameProps) {
 
 
       {missionIntro === s.mission && !prepQ && <MissionIntro data={data} state={s} onDone={() => setMissionIntro(undefined)} />}
+      {/* The outro (designer 2026-11-16): the last mission is won and scored, the Upgrade sheet closed. */}
+      {!realQ && hasOutro(real.state) && !upOpen && <VictoryOutro data={data} state={real.state} onLeave={p.onLeave} />}
       {prepQ && <MissionPrep data={data} state={s} q={prepQ} onAnswer={(kind, value) => send(kind === "several" ? { kind, value: value as string[] } : { kind, value: value as string })} />}
       {upOpen && (
         <UpgradeSheet

@@ -41,3 +41,16 @@ export function stopEngineHum(): void {}
 export function playOrbitLock(): void {}
 /** The short fly-by of a returning player. */
 export function playFlyBy(): void {}
+
+/**
+ * The outros (designer 2026-11-16; src/web/outro/). Silent like the rest: empty places called at
+ * the right moments of the film, for real audio files later.
+ */
+/** Terraformer outro, Act 1: the bay doors in the ship's belly start to slide open. */
+export function playBayDoorsOpen(): void {}
+/** Terraformer outro, Act 2: the pylons meet the air and begin to burn. */
+export function playReentryStreak(): void {}
+/** Terraformer outro, Act 3: a pylon hits and its shock wave goes out. `index` 0 = the first; `of` = how many pylons. */
+export function playTerraformShockwave(_index: number, _of: number): void {}
+/** Terraformer outro, Act 4: the sun comes over the edge; the Debrief follows. */
+export function playVictoryResolve(): void {}

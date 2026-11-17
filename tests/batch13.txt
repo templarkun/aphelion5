@@ -5,7 +5,7 @@
 # "claude/Test scenarios batch 13.txt". One rules ruling (I8, Core Rules 5.3 rev 141); the
 # rest is screen only (Interaction and animation, build step 3). Checked by
 # tests/unit/modules.test.ts, tests/unit/command.test.ts, tests/unit/events.test.ts and
-# scripts/ui-smoke.mjs.
+# scripts/ui-smoke.mjs. The outro (section THE OUTRO, T13_OUT_01-07) was added 2026-11-16.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1001,3 +1001,126 @@ given: the Module draw screen of a Mission Preparation
 then: Phone: the three Modules to choose from in big type (name, effect text, the cost line);
       your Modules below in middle type; no other sizes mixed in. Tablet: as before.
       PC (1280 px and wider): your Modules as big as the three drawn, three to a row.
+
+################################################################################
+=== SECTION: THE OUTRO (designer 2026-11-16, screen only, no rule change) ===
+
+id: T13_OUT_01
+title: The outro plays when the last mission is won
+source: designer 2026-11-16 ("we start creating the game's outro, what the player sees when the
+        game ends ... after the last mission is won"); Core Rules 10.3 (unchanged)
+given: Mission 7 of Campaign 1 won; its Mission End is done and the Upgrade sheet closed, so the
+       game is over and scored (10.3)
+then: the outro of the player's Company covers the whole page (no "Game over" card, no top bar):
+      a film of about 11.5 seconds, then the Campaign Debrief card (T13_OUT_04). The score was
+      already worked out and the high score written by the game before the film starts; the
+      film changes nothing.
+when: instead the game is lost or conceded
+then: no outro: the plain "Game over" card with the score, as before (batch 8 T8_END_01).
+note: Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs (find-save.ts won: a
+      Developer-mode game with every mission won by the Developer shortcut).
+
+id: T13_OUT_02
+title: The Terraformer outro, act by act
+source: designer 2026-11-16 ("the corporation permanently claiming and reshaping the hostile alien
+        planet ... 4 chronological acts")
+given: the Terraformer outro, Normal speed, a Campaign of 7 missions won
+then: Act 1, 0 - 2.5 s, "ORBITAL DEPLOYMENT": from under the belly of the Company's ship (its
+      own outline: Ko and Van's broad hull with wings and one long bay; Kew'n X2's twin hulls
+      with a bay in each), high over the dark curve of the planet with its glowing rifts. The
+      bay doors slide apart; lamps come on in the hold one after another; light falls out.
+      7 pylons hang there (one for every mission won); from about 1.35 s they let go one by one,
+      light their engines and dive towards the planet.
+then: Act 2, 2.5 - 5.5 s, "ATMOSPHERIC ENTRY": the camera follows them down. Each pylon's nose
+      burns white inside a bow of plasma edged in the Company's colour; sparks are torn off
+      behind; long trails of fire and vapour curve away over the night side.
+then: Act 3, 5.5 - 8.5 s, "PLANETARY IMPACT": the pylons hit one after another, about every
+      0.36 s from 5.6 s, jumping from side to side of the sector, the middle one last. Each hit:
+      a flash, a shake of the picture, rock thrown up, a beam of light into the sky, and a
+      shock wave ring running out over the curve of the planet. Behind each wave the ground
+      changes for good: the rifts and their embers go out; a six-sided energy grid, rings and
+      spokes round each pylon, lit conduits between the pylons with pulses running along
+      them, domes and thousands of small lights come on, in the Company's colours. Each pylon
+      carries the tag of its mission ("M1" ... "M7", "M2X" for a route).
+then: Act 4, from 8.5 s, "ORBITAL DAWN": the camera rises and pulls back into a slow drift; the
+      sun comes over the edge of the planet beyond the glowing sector; at 9.3 s the Campaign
+      Debrief slides in. The film is over at 11.5 s; the picture keeps drifting slowly under
+      the card for as long as it is shown.
+note: The captions (top left: the vessel's name, the act, one line, four ticks) are flavour, not
+      rules. Fewer or more missions won: that many pylons (1 to 12).
+
+id: T13_OUT_03
+title: Skip
+source: designer 2026-11-16 ("with a [SKIP] button")
+given: the film is playing
+then: a "[ SKIP ]" button at the top right (44 px high at least).
+when: press it (or Escape)
+then: a short white veil, then the end of the film at once: every pylon down, the sector lit,
+      the sun up, and the Debrief card slides in. The button is gone. Nothing is lost: the
+      score and the card are the same.
+
+id: T13_OUT_04
+title: The Campaign Debrief card
+source: designer 2026-11-16 ("a translucent, sleek Corporate Debrief Overlay slides in cleanly on
+        the side without obscuring the glowing planet, displaying passed-in stats (Campaign Name,
+        Vessel, Modules, Threat Levels Conquered, Total Turns) and a RETURN TO COMMAND DECK
+        button"); Core Rules 10.3 for the score
+given: the film has reached 9.3 s (or was skipped)
+then: a see-through card slides in: at the right side on a wide screen (700 px and wider and
+      at least 5:4; at most 440 px or 42% of the width), along the foot on an upright phone or
+      tablet (at most 58% of the height).
+      The film slides its picture so the glowing sector and the sun stay in the open part.
+      On it, top to bottom: "CAMPAIGN DEBRIEF"; the Campaign's name; its sector line and
+      "CAMPAIGN COMPLETE"; the FINAL SCORE, big, counting up to the game's own score, with
+      "NEW HIGH SCORE" ("NEW VETERAN * HIGH SCORE") when one was written; the lines that add up
+      to it ("N Threat columns in 7 missions +N", "The whole campaign completed +5", "Heat
+      module -2" when used); VESSEL: the Company's name, "Fresh campaign" or "Veteran
+      campaign"; THREAT LEVELS CONQUERED: the number of Threat columns in all, and one cell per
+      mission won with its tag and 1 to 4 pips in that Level's colour; MODULES: how many, how
+      many of each colour, and each one's name; TOTAL TURNS (see note); and the button
+      "RETURN TO COMMAND DECK".
+then: every number is the finished game's: the score and its lines are the ones the game worked
+      out (10.3), the missions and Threat columns the ones played, the Modules the ones held.
+note: TOTAL TURNS: the Core Rules have no turns. Until the designer says what it counts (open
+      question I13) it shows the number of Overloads of the whole Campaign.
+note: The card's shape follows the chosen menu style (intro1: round corners and a round button;
+      intro2: cut corners); its accent colour is the Company's.
+
+id: T13_OUT_05
+title: Return to Command Deck
+source: designer 2026-11-16
+given: the Debrief card
+when: press "RETURN TO COMMAND DECK"
+then: the logo gate closes over the outro ("COMMAND DECK", the Campaign's name; T13_R19_01), the
+      command briefing is put in place behind the doors, the doors open on its Campaign step.
+      The finished game is gone (no "Resume game"); the Campaign card shows the new high score
+      when one was written.
+
+id: T13_OUT_06
+title: One outro per Company, in the Company's colours
+source: designer 2026-11-16 ("We will have several Outro ... one Outro for each upcoming Company.
+        I will later decide which company will have which outro")
+given: the list of outros (src/web/outro/index.ts): "terraformer" so far
+then: every Company gets the Terraformer outro until the designer deals them out
+      (OUTRO_OF_COMPANY: Company -> outro, empty for now). Each Company's film uses its own
+      colours (placeholders the designer can change, themes.ts: Ko and Van ion cyan and amber;
+      Kew'n X2 violet and mint; a Company with none: gold) and its own ship outline.
+note: Every outro takes the same four things (the Company's colours, its vessel, the Debrief's
+      numbers, what to do when the player is done), so they can be swapped freely.
+
+id: T13_OUT_07
+title: Speed, reduced motion, and a preview
+source: designer 2026-11-16 (the same settings as the intro, the gate and the mission intro)
+given: Menu > settings: speed Slow / Fast
+then: the film takes twice as long / half as long.
+given: reduced motion on (or speed Instant)
+then: no film and no Skip button: one still picture of the film's end (the lit sector under the
+      risen sun) and the Debrief card at once.
+given: the briefing, System options (the gear)
+when: press "Play the outro (<the Company chosen on the Vessel step>)"
+then: that Company's outro plays with sample numbers, marked "PREVIEW - SAMPLE NUMBERS" at the
+      top; Return to Command Deck comes back to the briefing. No game is started or changed.
+note: Silent, like the intro: playBayDoorsOpen, playReentryStreak, playTerraformShockwave (once per
+      hit) and playVictoryResolve in soundHooks.ts are empty and already called at their moments.
+      On a machine that cannot keep up, the film is drawn with fewer points (softer), not slower.
+

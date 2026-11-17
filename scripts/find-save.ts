@@ -2,7 +2,7 @@
  * Plays random legal answers (from seed 1 up) until the game asks a question
  * of the given kind, then writes that game as a save file, for the browser
  * check (scripts/ui-smoke.mjs pastes it in). Usage:
- *   tsx scripts/find-save.ts rows|energy|bubbles|drag <out.json>
+ *   tsx scripts/find-save.ts rows|energy|bubbles|drag|won ... <out.json>
  */
 import { writeFileSync } from "node:fs";
 import { loadGameData } from "../src/data/nodeLoad.js";
@@ -64,6 +64,12 @@ const FX: Record<string, (q: Question, g: Game) => string | undefined> = {
 };
 for (const t of ["Flare", "Omega", "Sentinel", "Gyro", "Sleeper"]) FX[`reveal-${t}`] = (q, g) => (revealOf(t)(q, g) ? shortcutWith(q, g, (es) => es.some((e) => e.kind === "revealed" && e.type === t), /^reveal:/) : undefined);
 
+/** Is the mission under way the last of its Campaign? */
+function isFinalMission(g: Game): boolean {
+  const camp = data.campaigns.find((c) => c.prefix === g.view.state.campaign);
+  const m = camp?.missionById.get(g.view.state.mission);
+  return !!camp && !!m && m.number === Math.max(...camp.missions.map((x) => x.number));
+}
 const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   ...Object.fromEntries(Object.entries(FX).map(([k, f]) => [k, (q: Question, g: Game) => /choose an action/i.test(q.prompt) && f(q, g) !== undefined])),
   // End the Overload offered (its button, designer 2026-11-09).
@@ -93,6 +99,9 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   // The Upgrade sheet at Mission End with a few points (designer 2026-11-09, step 4).
   upgrade: (q, g) => q.upgrade === true && q.kind === "option" && g.view.state.sheet.upgradePoints >= 3,
   "upgrade-V2": (q, g) => q.upgrade === true && q.kind === "option" && g.view.state.sheet.upgradePoints >= 3 && g.view.state.player.company === "V2",
+  // The outro (designer 2026-11-16): the last mission of a Developer-mode game is won and its Upgrade sheet is open;
+  // "Done" and "Finish" end the game as a won Campaign.
+  won: (q, g) => q.upgrade === true && q.kind === "option" && g.view.state.phase === "missionEnd" && isFinalMission(g),
   // A question that chooses one unit, answered on bubbles on the units (designer 2026-11-09).
   pickunit: (q) => q.kind === "units" && q.min === 1 && q.max === 1 && q.options.length >= 2 && !/Attacks/.test(q.prompt),
   // A unit effect that deals damage to one chosen unit (designer 2026-11-16: "1 damage" bubbles crashed).
@@ -172,7 +181,7 @@ if (!wanted) throw new Error(`unknown question kind ${what}`);
 for (let seed = 1; seed < 400; seed++) {
   const r = newRng(seed * 7 + 1);
   // The Upgrade sheet: a Developer-mode game, won at once with the Developer shortcut.
-  const dev = what.startsWith("upgrade");
+  const dev = what.startsWith("upgrade") || what === "won";
   let g = startGame(data, { seed, date: "2026-11-07", profile: emptyProfile(), developerMode: dev, autoAnswer: true });
   for (let n = 0; n < 400 && g.view.status === "question"; n++) {
     const q = g.view.question;
@@ -213,6 +222,9 @@ for (let seed = 1; seed < 400; seed++) {
     // The V1 ship's Bay 3 (put the tiles back one by one, designer 2026-11-16).
     if (what === "bay3-V1" && q.kind === "option" && /^Choose your Company/.test(q.prompt)) a = { kind: "option", value: "V1" };
     if (dev && q.kind === "option" && q.options.some((o) => o.id === "devWin")) a = { kind: "option", value: "devWin" };
+    // On the way to the last mission: leave every Upgrade sheet at once.
+    if (what === "won" && q.upgrade) a = q.kind === "yesno" ? { kind: "yesno", value: true } : { kind: "option", value: "done" };
+    if (what === "won" && q.kind === "option" && /^Choose your Company/.test(q.prompt)) a = { kind: "option", value: "V1" };
     for (let k = 0; k < 30 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, q);
     // Crippled: never Overhaul, Reveal as much as possible (the Flagship takes damage sooner).
     if (what === "crippled" && q.kind === "option" && q.shortcuts) {

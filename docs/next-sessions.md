@@ -1,4 +1,4 @@
-# Next sessions (plan, updated 2026-11-16)
+# Next sessions (plan, updated 2026-11-17)
 
 All 8 build stages are built and all test batches (1-9) are agreed and in the Project. What
 is left for version 1 (spec "Scope", "Acceptance") and after:
@@ -71,6 +71,13 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    Field (`StackPicker.tsx`), briefing roster / Threat layout, slower transitions.
    Round 19: the logo gate between setup screens (`Gate.tsx`), a short mission intro before the
    Field (`MissionIntro.tsx`), Module draw text sizes. Next: the game's outro (new session).
+   2026-11-17 the outro: what a won game shows at Game End (10.3). First outro "Terraformer"
+   (`src/web/outro/`, its README says how to add more): bay doors, pylons, re-entry, shock waves
+   that turn the ground into a lit sector, sunrise, then the Campaign Debrief card. One outro is
+   planned per Company; the designer says later which Company gets which (`OUTRO_OF_COMPANY`).
+   To look at it without playing: System options > "Play the outro". Waiting on I13 ("Total
+   Turns"), I14 (a loss), I15 (Company colours). Still to do there: more outros; the ship in
+   Act 1 is a flat stand-in drawn from the Vessel screen's outlines until the ship art; sound.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    The Flagship picture on the Upgrade sheet (`FlagshipArt` in `src/web/UpgradeSheet.tsx`) is a

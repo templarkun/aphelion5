@@ -1179,7 +1179,121 @@ for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone"
   const ok = prepOk && vip === 3 && sleepers && card > 0 && closed && confirmMs < 3400 && mechaCard > 0 && plugged === 1 && locked && tiles === 4 && missionOk && level === "3" && threatCard === 1 && fits && /Kew'n X2/.test(log) && /Threat Level Siege: columns A, B, C/.test(log);
   if (!ok && introCheck === "ok") introCheck = `failed at ${width} px in ${style} (missions: none open ${noFile}, maps ${maps}, no F_01 ${noF01}, opens ${fileOpen}, closes ${fileClosed}; prep: gate ${gateSeen}, mission intro ${missionIntro}, flagship tab ${flagshipTab}, modules ${modCards}, keep locked ${keepLocked}, allies ${allies}, field hidden ${fieldHidden}, field shown ${fieldShown}; omega ${vip}, filter ${sleepers}, card ${card}, closed ${closed}, confirm ${confirmMs} ms, mecha card ${mechaCard}, chip ${plugged}, confirm locked ${locked}, tiles ${tiles}, level ${level}, threat card ${threatCard}, fits ${fits}, company ${/Kew'n X2/.test(log)}, threat ${/Threat Level Siege/.test(log)})`;
 }
-console.log(JSON.stringify({ introCheck, styleCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
+// The outro (designer 2026-11-16): the last mission won, the Upgrade sheet closed -> the Company's outro plays over the
+// page (four acts in order, one hit per mission won, a Skip button), then the Campaign Debrief slides in beside the
+// glowing sector (at the side on a wide screen, along the foot on a phone) with the game's own score; "Return to
+// Command Deck" plays the logo gate and lands on the briefing with no game left to resume. A preview from System
+// options plays the same film with sample numbers; with reduced motion there is no film, only the Debrief.
+let outroCheck = "skipped (no save)";
+if (existsSync(`${out}/won-save.json`)) {
+  const fails = [];
+  for (const [w, h] of [[1400, 900], [390, 844]]) {
+    const name = w < 600 ? "-phone" : "";
+    const pg = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+    pg.on("pageerror", (e) => errors.push(e.message));
+    await pasteSave(pg, `${out}/won-save.json`);
+    await pg.locator(".upsheet").waitFor({ timeout: 6000 }).catch(() => {});
+    if (w < 600) await pg.locator(".up-tabs button").first().waitFor({ timeout: 3000 }).catch(() => {});
+    await pg.locator(".up-done").click();
+    await pg.getByRole("button", { name: /Finish and lose/ }).click();
+    const shown = await pg.waitForSelector("[data-outro=terraformer]", { timeout: 6000 }).then(() => true, () => false);
+    const t0 = Date.now();
+    const at = async (k) => (await pg.locator("[data-outro]").getAttribute(k).catch(() => null)) ?? "";
+    const plainCard = await pg.locator(".q-card").count();
+    const skip = await pg.locator("[data-action=outro-skip]").count();
+    const acts = [];
+    let filmMs = 0;
+    if (w >= 600) {
+      // The whole film: the acts come in order, the pylons hit one by one, the Debrief comes by itself.
+      let shot = 0;
+      while (Date.now() - t0 < 20000) {
+        const a = await at("data-act");
+        if (a && acts[acts.length - 1] !== a) acts.push(a);
+        const el = (Date.now() - t0) / 1000;
+        if ((shot === 0 && el > 1.2) || (shot === 1 && el > 3.6) || (shot === 2 && el > 6.4)) await pg.screenshot({ path: `${out}/ui-outro-${++shot}.png` });
+        if ((await at("data-phase")) === "debrief") break;
+        await pg.waitForTimeout(120);
+      }
+      filmMs = Date.now() - t0;
+    } else {
+      await pg.waitForTimeout(900);
+      await pg.locator("[data-action=outro-skip]").click();
+    }
+    const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 4000 }).then(() => true, () => false);
+    await pg.waitForTimeout(2300);
+    await pg.screenshot({ path: `${out}/ui-outro-debrief${name}.png` });
+    const hits = await at("data-hits");
+    const skipGone = (await pg.locator("[data-action=outro-skip]").count()) === 0;
+    const card = await pg.locator(".ou-card").boundingBox();
+    const text = ((await pg.locator(".ou-card").innerText().catch(() => "")) ?? "").toLowerCase();
+    const scoreWant = await pg.locator(".ou-score-n").getAttribute("data-score");
+    const scoreShown = (await pg.locator(".ou-score-n").innerText()).trim();
+    const cells = await pg.locator(".ou-missions li").count();
+    const rows = await pg.locator(".ou-row").count();
+    const mods = await pg.locator(".ou-mod").count();
+    // The card leaves the glowing sector in view: beside it on a wide screen, above it on a phone.
+    const room = card && (w >= 900 ? card.width <= w * 0.42 && card.x >= w * 0.55 : card.height <= h * 0.6 && card.y >= h * 0.38);
+    const sw = await pg.evaluate(() => document.documentElement.scrollWidth);
+    await pg.locator("[data-action=outro-return]").click();
+    const gate = await pg.waitForSelector("[data-gate]", { timeout: 2000 }).then(() => true, () => false);
+    await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 6000 }).catch(() => {});
+    await pg.waitForSelector("[data-gate]", { state: "detached", timeout: 6000 }).catch(() => {});
+    const left = (await pg.locator("[data-outro]").count()) === 0 && (await pg.locator('.brief[data-step=campaign]').count()) === 1;
+    await pg.getByRole("button", { name: "System options" }).click();
+    const resume = await pg.getByRole("button", { name: "Resume game" }).count();
+    await pg.close();
+    const ok =
+      shown && plainCard === 0 && skip === 1 && debrief && hits === "7" && skipGone && room && cells === 7 && rows === 4 && mods > 0 && scoreShown === scoreWant && Number(scoreWant) >= 12 &&
+      /campaign debrief/.test(text) && /campaign 1/.test(text) && /final score/.test(text) && /support vessel of ko and van/.test(text) && /threat levels conquered/.test(text) && /modules/.test(text) && /total turns/.test(text) && /return to command deck/.test(text) && /whole campaign completed/.test(text) &&
+      (w < 600 || (acts.join("") === "1234" && filmMs > 8500 && filmMs < 12500)) && gate && left && resume === 0 && sw <= w + 2;
+    if (!ok) fails.push(`${w} px: shown ${shown}, plain card ${plainCard}, skip ${skip}, acts ${acts.join("")}, film ${filmMs} ms, debrief ${debrief}, hits ${hits}, skip gone ${skipGone}, room ${room} (${JSON.stringify(card)}), cells ${cells}, rows ${rows}, modules ${mods}, score ${scoreShown}/${scoreWant}, gate ${gate}, left ${left}, resume ${resume}, width ${sw}, text "${text.slice(0, 160)}"`);
+  }
+  // The preview from System options (sample numbers, the Company chosen in the briefing), in both styles.
+  for (const style of ["intro1", "intro2"]) {
+    const pg = await plainPage({ viewport: { width: 1100, height: 760 }, deviceScaleFactor: 1 });
+    pg.on("pageerror", (e) => errors.push(e.message));
+    await pg.addInitScript((st) => { try { localStorage.setItem("aphelion5.intro", "off"); localStorage.setItem("aphelion5.style", st); } catch {} }, style);
+    await pg.goto(url);
+    await briefAt(pg, "campaign");
+    await pg.getByRole("button", { name: "System options" }).click();
+    await pg.locator("[data-action=outro-preview]").click();
+    const shown = await pg.waitForSelector("[data-outro]", { timeout: 4000 }).then(() => true, () => false);
+    const badge = await pg.locator(".ou-preview").count();
+    await pg.waitForTimeout(1500);
+    const act = await pg.locator("[data-outro]").getAttribute("data-act").catch(() => "");
+    await pg.locator("[data-action=outro-skip]").click();
+    const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 3000 }).then(() => true, () => false);
+    await pg.waitForTimeout(1900);
+    await pg.screenshot({ path: `${out}/ui-outro-preview-${style}.png` });
+    await pg.locator("[data-action=outro-return]").click();
+    await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 6000 }).catch(() => {});
+    const back = (await pg.locator("[data-outro]").count()) === 0 && (await pg.locator('.brief[data-step=campaign]').count()) === 1;
+    await pg.close();
+    if (!(shown && badge === 1 && act === "1" && debrief && back)) fails.push(`preview in ${style}: shown ${shown}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
+  }
+  // Reduced motion: no film, the still picture of its end and the Debrief at once.
+  {
+    const pg = await plainPage({ viewport: { width: 1100, height: 760 }, deviceScaleFactor: 1, reducedMotion: "reduce" });
+    pg.on("pageerror", (e) => errors.push(e.message));
+    await pg.addInitScript(() => { try { localStorage.setItem("aphelion5.intro", "off"); } catch {} });
+    await pg.goto(url);
+    await briefAt(pg, "campaign");
+    await pg.getByRole("button", { name: "System options" }).click();
+    await pg.locator("[data-action=outro-preview]").click();
+    const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 1500 }).then(() => true, () => false);
+    const skip = await pg.locator("[data-action=outro-skip]").count();
+    const hits = await pg.locator("[data-outro]").getAttribute("data-hits").catch(() => "");
+    await pg.waitForTimeout(500);
+    await pg.screenshot({ path: `${out}/ui-outro-still.png` });
+    await pg.locator("[data-action=outro-return]").click();
+    await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 3000 }).catch(() => {});
+    const back = (await pg.locator("[data-outro]").count()) === 0;
+    await pg.close();
+    if (!(debrief && skip === 0 && hits === "7" && back)) fails.push(`reduced motion: debrief ${debrief}, skip ${skip}, hits ${hits}, back ${back}`);
+  }
+  outroCheck = fails.length ? `failed (${fails.join(" | ")})` : "ok";
+}
+console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck, styleCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck, styleCheck, outroCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

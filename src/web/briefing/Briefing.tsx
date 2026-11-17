@@ -36,6 +36,8 @@ export interface BriefingProps {
   onImport: () => void;
   onPaste: () => void;
   onReplayIntro: () => void;
+  /** Look at the outro of the Company chosen in the briefing, with made-up numbers. */
+  onPreviewOutro?: ((campaign: string, company: string) => void) | undefined;
 }
 
 /** Step changes (Back, the step tabs); a confirmed choice plays the logo gate (Gate.tsx, designer 2026-11-16). */
@@ -277,6 +279,15 @@ export function Briefing(p: BriefingProps) {
               <button type="button" className="bf-btn" onClick={() => (setDrawer(false), p.onReplayIntro())}>
                 Replay the full intro of {style.name}
               </button>
+              {p.onPreviewOutro && (
+                <>
+                  <div className="bf-label mt-2">Outro · after the last mission is won</div>
+                  <button type="button" className="bf-btn" data-action="outro-preview" onClick={() => (setDrawer(false), p.onPreviewOutro?.(campaign, company))}>
+                    Play the outro ({co.name})
+                  </button>
+                  <p className="text-[14px] text-sky-100">A preview with sample numbers. It uses the Company chosen on the Vessel step.</p>
+                </>
+              )}
             </div>
           </aside>
         </div>

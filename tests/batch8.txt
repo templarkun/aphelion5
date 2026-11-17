@@ -151,6 +151,11 @@ source: Core Rules 10.3
 when: the game ends (won, lost or conceded)
 then: the score with each part (Threat columns per mission, +5, -2 for Heat) and "New high
       score" when one was written. Back to the menu: the high scores show the new value.
+note: CHANGED 2026-11-16 (designer, the outro): a WON game shows its Company's outro and then
+      the Campaign Debrief card instead of this plain card (batch 13 T13_OUT_01, T13_OUT_04):
+      the same score, its parts (Threat columns per mission as cells, the total, +5, -2 for
+      Heat) and "New high score"; "Return to Command Deck" goes back to the menu. A lost or
+      conceded game shows the plain card as written here.
 
 id: T8_PHN_01
 title: Phones
