@@ -15,6 +15,8 @@ import { describe, level, sectorKeys, sectorOf, strength, tile, unitDef } from "
 import { moduleCost, moduleDef, xWouldBeZero } from "../engine/modules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
 import { Briefing } from "./briefing/Briefing.js";
+import { StatsPage } from "./briefing/stats/StatsPage.js";
+import { CampaignEditor } from "./briefing/editor/CampaignEditor.js";
 import { IntroSequence } from "./briefing/IntroSequence.js";
 import { applyLoadout } from "./briefing/launch.js";
 import { type IntroMode, introMode } from "./briefing/prefs.js";
@@ -95,6 +97,8 @@ export function App() {
   // The intro plays over the screen when the page opens: the chosen style's long one on a first visit, then its short one.
   const [intro, setIntro] = useState<IntroMode>(() => introMode(briefStyle().id));
   // An outro looked at from System options (made-up numbers; no game is touched).
+  // A page over the briefing: statistics and achievements, or the Campaign editor (Developer tools).
+  const [page, setPage] = useState<"stats" | "editor" | undefined>();
   const [outroPreview, setOutroPreview] = useState<{ campaign: string; company: string; outro: string } | undefined>();
 
   useEffect(() => {
@@ -143,6 +147,8 @@ export function App() {
       {screen()}
       {box && <TextBox {...box} onClose={() => setBox(undefined)} />}
       {intro !== "off" && <IntroSequence key={intro} mode={intro} onDone={() => setIntro("off")} />}
+      {page === "stats" && <StatsPage data={data} profile={profile} onBack={() => setPage(undefined)} />}
+      {page === "editor" && <CampaignEditor data={data} onBack={() => setPage(undefined)} />}
       {outroPreview && <OutroPreview data={data} campaign={outroPreview.campaign} company={outroPreview.company} outro={outroPreview.outro} onClose={() => setOutroPreview(undefined)} />}
       <GateHost />
     </>
@@ -161,6 +167,8 @@ export function App() {
         error={error}
         onReplayIntro={() => setIntro("full")}
         onPreviewOutro={(campaign, company, outro) => setOutroPreview({ campaign, company, outro })}
+        onStats={() => setPage("stats")}
+        onEditor={() => setPage("editor")}
         onLaunch={(l) => {
           // The compiled loadout answers the engine's setup questions (7.1); the Threat screen comes next (7.2 step 3).
           setError(undefined);

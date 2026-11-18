@@ -1,9 +1,25 @@
-# Campaign editor (proposal, 2026-11-17)
+# Campaign editor (proposal 2026-11-17; first version built 2026-11-18)
 
-A Developer page for the designer to make new Campaigns. PROPOSAL: nothing is built yet; the
-designer's answers to the questions at the end come first. It changes no rule: what it writes is
+A Developer page for the designer to make new Campaigns. It changes no rule: what it writes is
 a Campaign file in the same format as `data/Campaign1.txt`, which the designer copies into the
 Project (component data stays the master).
+
+**Built 2026-11-18** (`src/web/briefing/editor/`: `model.ts`, `CampaignEditor.tsx`,
+`EffectEditor.tsx`, `MapTool.tsx`), with the designer's answers C1-C5 (below): palette, Omega
+units (Level, dev price, Destroyed and At Overload effects), Campaign Orders, missions (deck with
+copy limits, Threat columns, map tool with gold Omega sectors, objective, event, mission Order),
+dev prices per unit and summed per mission roster, per Threat column and for the whole Campaign
+(Threat columns not counted), live checks, New / Start from C1 / Import (Campaign file or editor
+file), Export (Campaign file for the Project, editor file to go on with). The draft is kept in
+this browser (localStorage `aphelion5.editor`).
+Changes from the proposal: no "pick an effect that already exists" (C3: blocks or text only); the
+Omega units placed follow the Campaign file's format (item 7: the chosen Omega types each stand on
+every gold sector), not one unit per sector.
+**Not built yet:** "Play this mission" (the game loading an edited Campaign), and programming
+what the game does not know: the new mission events (gain set colours, take N Modules, take
+Anomaly cards, remove damage) and effects from blocks (one general program could play every block
+effect). Open: C6 (G_00 price), C7 (Campaign 1's Omega prices), C8 (routes in the Campaign sum),
+in `docs/open-questions.md`.
 
 ## Where it lives
 
@@ -100,12 +116,7 @@ briefing) needs the file in `data/` (from the Project), as today.
 
 ## Questions for the designer
 
-- C1. May a mission (deck + all four Threats) use more copies of a unit than exist (`copies`)?
-  Campaign 1 never does. Should the editor stop it, or only warn?
-- C2. Omega units: is a Campaign always three (Alpha, Beta, Gamma on the tiles O_01-O_03, 10 / 4 /
-  4 copies), or may a Campaign have more or other Omega tiles?
-- C3. Effect blocks for Orders and Omega units: is the three-way plan (pick existing / blocks /
-  text "needs programming") what you want, or only one of them to start with?
-- C4. Mission events: are the four types enough for now?
-- C5. Should the editor also handle a Campaign's look (name, lore, picture) for the briefing's
-  Campaign card, or only the rules data?
+Answered 2026-11-18 (`docs/open-questions.md`): C1 copies are limited, the editor allows only the
+copies that exist; C2 always O_01-O_03 (maybe O_04 later); C3 blocks and text; C4 events: gain
+energy (colour and amount), take Modules, take an Anomaly, call for an Ally, remove damage from the
+Flagship; C5 no Campaign look. New: C6, C7, C8.

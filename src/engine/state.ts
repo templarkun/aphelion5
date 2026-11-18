@@ -81,6 +81,30 @@ export interface Profile {
   sheets: Record<string, Record<string, number>>;
   /** Per Campaign: the plain field (Fresh) and the starred field (Veteran). */
   highScores: Record<string, { fresh?: HighScore; veteran?: HighScore }>;
+  /**
+   * Every finished game, oldest first (designer 2026-11-17, for the statistics and achievements
+   * page; display only, no rule reads it). Written at Game End (10.3). Absent in older profiles.
+   */
+  history?: GameRecord[];
+}
+
+/** One finished game, as the statistics page shows it. */
+export interface GameRecord {
+  /** The game's date (its start). */
+  date: string;
+  /** Campaign prefix ("C1"), Company id ("V1"), Fresh or Veteran. */
+  campaign: string;
+  company: string;
+  freshness: "fresh" | "veteran";
+  result: "won" | "lost" | "conceded";
+  score: number;
+  /** Missions completed, in order, with their Threat columns. */
+  missions: MissionResult[];
+  heatModule: boolean;
+  /** Played in Developer mode: listed, but not in the totals or the achievements. */
+  developer: boolean;
+  /** The game's own counts (events.ts `GameStats`). */
+  stats: GameStats;
 }
 
 export function emptyProfile(): Profile {

@@ -17,6 +17,7 @@ import { ENERGY_COLOURS } from "../data/units.js";
 import { key } from "../geometry/hex.js";
 import { ability } from "../effects/registry.js";
 import { type Effect, type RunCtx, ask, log, registerRoot } from "./effect.js";
+import { newStats } from "./events.js";
 import { type Ctx, sectorKeys, stack, tile, unitDef } from "./field.js";
 import { moduleDef } from "./modules.js";
 import { isOpenSector } from "./moves.js";
@@ -306,7 +307,7 @@ function* missionPreparation(c: RunCtx): Effect {
       s.player.modules.push({ id, ready: true, energy: { Yellow: 0, Red: 0, Blue: 0 } });
       log(c, `take ${moduleDef(c, id).name} from the top of the Module deck`, "7.2");
     }
-  }
+  } else if (ev.type !== "none") throw new Error(`the mission event "${ev.type}" (from the Campaign editor) is not built into the game yet`);
   s.phase = "command";
   log(c, "the Command phase begins", "7.2");
 }
@@ -529,6 +530,19 @@ function* gameEnd(c: RunCtx): Effect {
       log(c, `new ${field === "fresh" ? "" : "Veteran "}high score: ${n}`, "10.3");
     }
   }
+  // The statistics page's record of this game (display only, no rule reads it).
+  (s.profile.history ??= []).push({
+    date: s.run.date,
+    campaign: s.campaign,
+    company: s.player.company,
+    freshness: s.run.freshness,
+    result: s.outcome?.result ?? "lost",
+    score: n,
+    missions: structuredClone(s.run.completed),
+    heatModule: !!s.settings.heatModule,
+    developer: !!s.settings.developerMode,
+    stats: structuredClone(s.stats ?? newStats()),
+  });
   // Clean up (10.3): the sheet keeps its upgrade marks; Upgrade track, Overhaul slots and Ally are erased.
   s.profile.sheets[s.player.company] = { ...s.sheet.marks };
   s.sheet.upgradePoints = 0;

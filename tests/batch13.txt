@@ -7,7 +7,9 @@
 # tests/unit/modules.test.ts, tests/unit/command.test.ts, tests/unit/events.test.ts and
 # scripts/ui-smoke.mjs. The outro (section THE OUTRO, T13_OUT_01-07) was added 2026-11-16;
 # Terraformer 2.0 and the game's numbers (T13_OUT_08-11, CHANGED notes on T13_OUT_01-07) 2026-11-17;
-# round 3 the same day: CHANGED notes on T13_OUT_03, 07, 08, 10.
+# round 3 the same day: CHANGED notes on T13_OUT_03, 07, 08, 10. The statistics page and the
+# Campaign editor (sections STATISTICS AND ACHIEVEMENTS, CAMPAIGN EDITOR, T13_STAT_01-03,
+# T13_ED_01-09) 2026-11-18; checked by tests/unit/editor.test.ts and scripts/ui-pages.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1226,3 +1228,141 @@ given: the briefing, System options
 then: "Play Terraformer 1.0 (<Company>)" plays the 1.0 film exactly as before (T13_OUT_02), with
       the same Debrief card as 2.0 (T13_OUT_10). It never plays after a real game.
 
+=== SECTION: STATISTICS AND ACHIEVEMENTS (designer 2026-11-18, screen only, no rule change) ===
+
+id: T13_STAT_01
+title: Every finished game is kept
+source: designer 2026-11-17/18 ("Write somewhere that the game collects and saves these numbers";
+        "create ... Statistics and achievements page")
+given: a game reaches Game End (10.3): won, lost or conceded
+then: the profile keeps a record of it: date, Campaign, Company, Fresh or Veteran, result, score,
+      missions completed with their Threat columns, Heat module or not, Developer mode or not,
+      and the game's own counts (Overloads, Module runs, units destroyed per type, Alerts resolved
+      per type, Gyros drained). The record travels with the save file (Export save, Paste a save).
+note: Display only: no rule reads it. Records start with games finished from this version on.
+
+id: T13_STAT_02
+title: The statistics page
+given: the briefing; press the chart button in the top bar (left of the gear)
+then: a page in the menu style with three tabs. STATISTICS: games, won, lost, conceded, best
+      score, missions done, Threat columns conquered, Overloads; units destroyed per type;
+      Omega, Sentinels, Flares, Sleepers triggered and Gyros drained; Modules run (most run first,
+      a bar in the Module's colour); games and wins per Vessel. GAMES: every finished game, newest
+      first (date, Campaign, Vessel, Fresh / Veteran, Heat, result, score); pressing one shows its
+      missions and numbers. "Command deck" goes back to the briefing as it was.
+then: games played in Developer mode are listed (marked "Developer") but never counted in the
+      totals or the achievements.
+
+id: T13_STAT_03
+title: Achievements
+given: the ACHIEVEMENTS tab
+then: each achievement shows its name, what to do, and either "Earned <date of the game that
+      earned it>" or a bar with how far along (e.g. "77 / 100").
+note: The list is a PLACEHOLDER (I16): the designer gives the real achievements.
+
+=== SECTION: CAMPAIGN EDITOR (designer 2026-11-17/18, Developer tools, no rule change) ===
+
+id: T13_ED_01
+title: Opening the editor
+source: designer 2026-11-17 (palette, missions and Threats, map tool), answers C1-C5 2026-11-18
+given: the briefing, System options
+then: "Developer tools > Campaign editor" is offered only while "Developer mode" is ticked.
+when: press it
+then: a page with three parts side by side on a wide screen (Palette, Campaign, the open mission),
+      tabs for them on a tablet or phone. The draft is kept in this browser: leaving and coming
+      back finds it as it was. "New / Import": New campaign, Start from C1 (a copy named C2),
+      a file chosen or pasted (a Campaign file, or an editor file).
+
+id: T13_ED_02
+title: The palette
+given: "Add units", a type chosen
+then: every unit of that type not yet chosen is shown as its tile with its id and dev price; a tap
+      adds it ("Add every <type>" adds them all). Mecha are never offered (they come with the
+      Company). O_01, O_02, O_03 are always in the palette (C2). A unit used in a mission cannot
+      be taken out of the palette until it is taken out there.
+
+id: T13_ED_03
+title: dev_price on every unit, and the sums
+source: designer 2026-11-18 ("dev_price ... should be displayed for each unit. And the sum must be
+        calculated for each mission roster (separately from the threat roster) and for each threat
+        roster (separately from the others). And also for the whole campaign (except threat roster
+        sums).")
+then: every unit tile in the editor shows its dev_price under its id (Omega units: the price set
+      on the Campaign; none set: "–").
+then: the open mission shows "Mission roster Σ" = its deck plus its Omega units placed; each
+      Threat column shows its own Σ; the Campaign shows "Whole Campaign Σ" = every mission roster
+      added up, no Threat column. Tiles with no price (G_00, Omega with no price) count as nothing
+      and are listed beside the sum ("no price: 6× G_00").
+note: dev_price is never shown to players (only in Developer tools). Open: C6 (G_00), C7 (Campaign
+      1's Omega prices), C8 (both alternative routes are in the Campaign's sum).
+
+id: T13_ED_04
+title: Copies are limited
+source: designer 2026-11-18 (C1: "All copies are limited. The editor allows only available
+        copies.")
+given: a mission
+then: a unit's copies used by the mission (its deck, its Omega units placed on every gold sector,
+      and all four Threat columns together) never go past the copies that exist: the deck's "+"
+      stops there ("0 of 10 free"), and a used-up unit is greyed out in the Threat column's Add
+      list. G_00 (a tile from the Energy deck) shares the Energy deck's 42 tiles with the Energy
+      Gyros G_01-G_09 the mission names.
+then: Campaign 1 (Start from C1) breaks no limit.
+
+id: T13_ED_05
+title: Deck and Threat columns
+then: DECK: every palette unit, the three Omega units and G_00, each with "- n +" and "n of N
+      free"; the tiles in all. THREATS: four columns A-D side by side (two by two on a tablet, one
+      above the other on a phone); "Add" opens the palette, a tap adds that tile (one copy each, a
+      repeated tile is several copies); tapping a tile in the column takes it out.
+
+id: T13_ED_06
+title: The map tool
+then: a hex grid laid out as the Field (Core Rules 3.8). SECTORS: tap or drag over hexagons to add
+      or take away sectors; (0, 0), marked with a ring, always stays. OMEGA SECTORS: a tap marks a
+      sector gold or unmarks it; the Omega units ticked above ("on every gold sector, one of each")
+      stand there, as the Campaign file's format has it. Mirror (left-right), Clear, Copy a map
+      from another mission. Under it: the sector count and how the deck is dealt (7.2 step 5:
+      tiles over the sectors without an Omega unit, how many each, how many get one more).
+
+id: T13_ED_07
+title: Objective, event and Order
+source: designer 2026-11-18 (C4: "a way to choose the energy type and the amount. Take Modules.
+        Take Anomaly. Call for Ally. Remove damage from Flagship.")
+then: OBJECTIVE: Salvage, or Eliminate N of one Omega unit (8.2). EVENT (7.2 step 9): None; Gain
+      energy (Yellow, Red, Blue and "your choice", each with its amount); Take Modules (N from the
+      top of the Module deck); Take an Anomaly card (N); Call for an Ally (Allied Drop, Level);
+      Remove damage from your Flagship (N). The event's words are shown under it. ORDER: the
+      mission may have its own Order (Command tokens, Overload only or not, effect).
+note: The game already plays Campaign 1's events (Allied Drop, gain energy of your choice, take
+      the top Module); the new ones are listed on the Check tab as "needs programming".
+
+id: T13_ED_08
+title: Effects from blocks or text
+source: designer 2026-11-18 (C3: the second and third way)
+given: an Omega unit's Destroyed or At Overload effect, or an Order's effect
+then: BLOCKS: steps one after another, each an action (Deal N damage to, Destroy, Boost, Place a
+      token on, Swap with another unit, Teleport to a Dark sector, Deal N damage to / Remove N
+      damage from your Flagship, Gain / Lose N energy, Gain / Lose N Command tokens) and, where
+      it chooses units: how many (this unit, one, all, two to five different), other, damaged /
+      undamaged, Level, which units (unit, non-Mecha, non-Bot, Bot, Mecha, Sentinel, Sleeper,
+      Gyro, Omega, Alpha, Beta, Gamma unit) and where (anywhere, adjacent, in a row through this
+      unit, in one horizontal row of your choice). Omega effects may start "If adjacent to ...".
+      The card text is written under it ("Deal 1 damage to all Gyros.", "[1] ... [2] ..." for
+      several steps). Orders have no "this unit", "other", "adjacent" or "row through this unit".
+then: TEXT: free words, marked "Needs programming" (and listed on the Check tab).
+
+id: T13_ED_09
+title: Check and export
+then: CHECK lists, for the mission and for the Campaign: errors (copies past the limit, an
+      alternative route without its partner, a mission number used twice, no (0, 0), an empty
+      deck, a gold sector off the map, gold sectors with no Omega unit chosen or the other way
+      round, an Order with no effect, an Omega unit with no Level, a Campaign id not like C2),
+      warnings (sectors that get no tile, an Eliminate the deck cannot meet without Threats, an
+      Omega on (0, 0), an Omega unit with no dev price, an id already in the game) and what needs
+      programming.
+then: EXPORT shows the Campaign file (the Campaign1.txt format, mission ids C2_M1 ..., Campaign
+      Orders C2_ORDER_1 ...; additions written in its header: Omega dev_price, event_energy,
+      take_modules, take_anomaly, remove_damage) with Copy and Download, and the editor file
+      (keeps the blocks) with Copy and Download.
+note: Campaign 1 exported by the editor is read back by the game's own reader unchanged
+      (tests/unit/editor.test.ts). Not built yet: playing an edited Campaign in the game.

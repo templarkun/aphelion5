@@ -96,6 +96,10 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    on the Campaign Debrief. Still to build: keep each finished game's numbers (and lifetime
    totals) in the profile, a statistics / achievements menu to show them, achievements to earn.
    Other counts can be added the same way (one line in `tally`) when that page is designed.
+   2026-11-18 BUILT: every finished game (won, lost or conceded) is kept in the profile
+   (`Profile.history`, Game End 10.3; travels with saves); the page (`src/web/briefing/stats/`,
+   the chart button in the briefing's top bar): totals, achievements (PLACEHOLDERS, I16), every
+   game with its numbers. Developer-mode games are listed but not counted.
 3. **Art.** Load the designer's art from `art/` in the spec's Art format (tiles, back,
    plate, Modules, Anomalies, tokens), falling back to placeholders file by file.
    The Flagship picture on the Upgrade sheet (`FlagshipArt` in `src/web/UpgradeSheet.tsx`) is a
@@ -123,4 +127,6 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
 11. **Campaign editor** (designer 2026-11-17, a Developer page to make new Campaigns): a palette
    of chosen units, the units put into missions and Threat columns, a map tool. Proposal in
    `docs/campaign-editor.md` (layout, Omega units, mission events, Orders, checks, export to the
-   `Campaign1.txt` format); waiting for the designer's answers C1-C5 there before building.
+   `Campaign1.txt` format). 2026-11-18 first version BUILT (System options > Developer mode >
+   Campaign editor). Next: "Play this mission" (the game loads an edited Campaign) and programming
+   the new mission events and the effects made from blocks; open C6-C8.

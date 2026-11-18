@@ -7,7 +7,7 @@
 
 import { DEFAULT_OUTRO, OUTROS } from "../outro/index.js";
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Play, Rocket, Settings, X } from "lucide-react";
+import { BarChart3, Check, ChevronLeft, ChevronRight, Hexagon, Play, Rocket, Settings, X } from "lucide-react";
 import type { GameData } from "../../data/index.js";
 import type { Profile } from "../../engine/state.js";
 import { CampaignSelect, loreOf } from "./CampaignSelect.js";
@@ -39,6 +39,10 @@ export interface BriefingProps {
   onReplayIntro: () => void;
   /** Look at an outro (OUTROS id) with the Company chosen in the briefing and made-up numbers. */
   onPreviewOutro?: ((campaign: string, company: string, outro: string) => void) | undefined;
+  /** Open the statistics and achievements page. */
+  onStats?: (() => void) | undefined;
+  /** Open the Campaign editor (Developer tools). */
+  onEditor?: (() => void) | undefined;
 }
 
 /** Step changes (Back, the step tabs); a confirmed choice plays the logo gate (Gate.tsx, designer 2026-11-16). */
@@ -144,6 +148,11 @@ export function Briefing(p: BriefingProps) {
             <span className="sm:hidden">Resume</span>
           </button>
         )}
+        {p.onStats && (
+          <button type="button" className="grid h-11 w-11 place-items-center rounded-full text-white hover:bg-white/15" aria-label="Statistics and achievements" data-action="open-stats" onClick={() => (playSelect(), p.onStats?.())}>
+            <BarChart3 size={22} />
+          </button>
+        )}
         <button type="button" className="grid h-11 w-11 place-items-center rounded-full text-white hover:bg-white/15" aria-label="System options" aria-expanded={drawer} onClick={() => setDrawer(true)}>
           <Settings size={22} />
         </button>
@@ -232,6 +241,14 @@ export function Briefing(p: BriefingProps) {
                 Seed (optional)
                 <input className="w-32 rounded-md border border-white/50 bg-indigo-950/50 px-2 py-1.5 text-white" style={{ userSelect: "text" }} value={seed} inputMode="numeric" onChange={(e) => setSeed(e.target.value.replace(/\D/g, ""))} placeholder="random" />
               </label>
+              {dev && p.onEditor && (
+                <>
+                  <div className="bf-label mt-2">Developer tools</div>
+                  <button type="button" className="bf-btn" data-action="open-editor" onClick={() => (setDrawer(false), p.onEditor?.())}>
+                    <Hexagon size={16} /> Campaign editor
+                  </button>
+                </>
+              )}
               <div className="bf-label mt-2">Saved games</div>
               {p.onContinue && (
                 <button type="button" className="bf-btn" onClick={p.onContinue}>

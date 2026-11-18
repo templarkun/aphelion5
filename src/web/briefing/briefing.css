@@ -310,3 +310,8 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
   .bf-own .module .module-name { font-size: 20px; }
   .bf-own .module .module-text { font-size: 17px; }
 }
+
+/* The statistics page and the Campaign editor (PageShell): plain lists, no page-wide overflow. */
+.brief[data-page] ul { list-style: none; margin: 0; padding: 0; }
+.brief[data-page] section, .brief[data-page] .grid > * { min-width: 0; }
+.brief[data-page] select { max-width: 100%; }

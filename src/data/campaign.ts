@@ -14,6 +14,8 @@ export interface OmegaDef {
   role: string;
   /** Campaign board value; counts as the unit's Level for every effect (Core Rules 3.2). */
   level: number;
+  /** Developer-only balance number for this Campaign's Omega unit (unit list: dev_price per_campaign). Not a game rule. */
+  devPrice?: number;
   destroyed?: string;
   atOverload?: string;
   fields: Fields;
@@ -33,10 +35,19 @@ export type Objective =
   | { type: "salvage" }
   | { type: "eliminate"; target: string; count: number };
 
+/**
+ * The mission event (7.2 step 9). Campaign 1 uses allied_drop, gain_energy (colours of your
+ * choice), take_module_top and none. The Campaign editor (designer 2026-11-18, C4) adds:
+ * gain_energy with set colours (`event_energy`), take_modules (N from the top), take_anomaly (N),
+ * remove_damage (N from the Flagship). The game plays only Campaign 1's kinds so far.
+ */
 export type MissionEvent =
   | { type: "allied_drop"; level: number }
-  | { type: "gain_energy"; amount: number }
+  | { type: "gain_energy"; amount: number; energy?: Partial<Record<"Yellow" | "Red" | "Blue", number>> }
   | { type: "take_module_top" }
+  | { type: "take_modules"; amount: number }
+  | { type: "take_anomaly"; amount: number }
+  | { type: "remove_damage"; amount: number }
   | { type: "none" };
 
 export interface MissionDef {
@@ -132,6 +143,7 @@ export function parseCampaign(text: string, fileName = "Campaign1.txt"): Campaig
       switch (section.name) {
         case "OMEGA": {
           const o: OmegaDef = { id: rec.id, role: req(f, "role", where), level: int(f.level, where, "level"), fields: f };
+          if (f.dev_price !== undefined && Number.isFinite(Number(f.dev_price))) o.devPrice = Number(f.dev_price);
           if (f.destroyed !== undefined) o.destroyed = f.destroyed;
           if (f.at_overload !== undefined) o.atOverload = f.at_overload;
           omega.push(o);
@@ -182,7 +194,18 @@ function parseMission(id: string, f: Fields, where: string): MissionDef {
   const et = req(f, "event_type", where);
   let event: MissionEvent;
   if (et === "allied_drop") event = { type: "allied_drop", level: int(f.event_level, where, "event_level") };
-  else if (et === "gain_energy") event = { type: "gain_energy", amount: int(f.event_amount, where, "event_amount") };
+  else if (et === "gain_energy") {
+    const g: MissionEvent = { type: "gain_energy", amount: f.event_amount === undefined && f.event_energy !== undefined ? 0 : int(f.event_amount, where, "event_amount") };
+    if (f.event_energy !== undefined) {
+      g.energy = {};
+      for (const part of splitList(f.event_energy)) {
+        const em = /^(\d+) (Yellow|Red|Blue)$/.exec(part);
+        if (!em) throw new Error(`${where}: cannot read event_energy "${part}"`);
+        g.energy[em[2] as "Yellow"] = Number(em[1]);
+      }
+    }
+    event = g;
+  } else if (et === "take_modules" || et === "take_anomaly" || et === "remove_damage") event = { type: et, amount: int(f.event_amount, where, "event_amount") };
   else if (et === "take_module_top" || et === "none") event = { type: et };
   else throw new Error(`${where}: unknown event_type "${et}"`);
 
