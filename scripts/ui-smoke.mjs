@@ -1220,6 +1220,9 @@ if (existsSync(`${out}/won-save.json`)) {
       await pg.waitForTimeout(150);
       armed = (await pg.locator("[data-action=outro-skip]").getAttribute("data-skip").catch(() => "")) ?? "";
       oneTapFilm = (await at("data-phase")) === "film";
+      // Let the second run out (a slow machine can take that long to read the page), then two taps in a row.
+      await pg.waitForTimeout(1200);
+      await pg.mouse.click(w / 2, h * 0.3);
       await pg.mouse.click(w / 2, h * 0.3);
     }
     const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 4000 }).then(() => true, () => false);
