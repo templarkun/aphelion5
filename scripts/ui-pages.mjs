@@ -106,7 +106,7 @@ export async function pagesCheck(browser, url, out) {
     await pg.screenshot({ path: `${out}/ui-editor-threats${name}.png` });
     await pg.locator("[data-mtab=map]").click();
     const sectorsBefore = await pg.locator("[data-hex][data-on='1']").count();
-    await pg.locator("[data-hex='3,3']").dispatchEvent("pointerdown");
+    await pg.locator("[data-hex='2,2']").dispatchEvent("pointerdown");
     const sectorsAfter = await pg.locator("[data-hex][data-on='1']").count();
     await pg.screenshot({ path: `${out}/ui-editor-map${name}.png` });
     await pg.locator("[data-mtab=goal]").click();
