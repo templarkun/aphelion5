@@ -101,13 +101,45 @@ function texRows(n: number, data: Uint8ClampedArray, from: number, until: number
   return row;
 }
 
+/** The quick ground picture made smoothly bigger (colour and lava glow apart, so the glow does not darken the colour), so it shows no blocks. */
+function enlarge(src: Tex, n: number): Tex {
+  if (typeof document === "undefined") return src;
+  const m = src.n;
+  const rgb = new ImageData(m, m);
+  const glow = new ImageData(m, m);
+  for (let i = 0; i < m * m * 4; i += 4) {
+    rgb.data[i] = src.data[i]!;
+    rgb.data[i + 1] = src.data[i + 1]!;
+    rgb.data[i + 2] = src.data[i + 2]!;
+    rgb.data[i + 3] = 255;
+    glow.data[i] = glow.data[i + 1] = glow.data[i + 2] = src.data[i + 3]!;
+    glow.data[i + 3] = 255;
+  }
+  const big = (img: ImageData): Uint8ClampedArray => {
+    const c0 = document.createElement("canvas");
+    c0.width = c0.height = m;
+    c0.getContext("2d")!.putImageData(img, 0, 0);
+    const c1 = document.createElement("canvas");
+    c1.width = c1.height = n;
+    const g1 = c1.getContext("2d", { willReadFrequently: true })!;
+    g1.imageSmoothingEnabled = true;
+    g1.imageSmoothingQuality = "high";
+    g1.drawImage(c0, 0, 0, n, n);
+    return g1.getImageData(0, 0, n, n).data;
+  };
+  const a = big(rgb);
+  const b = big(glow);
+  for (let i = 3; i < a.length; i += 4) a[i] = b[i - 3]!;
+  return { n, data: a };
+}
+
 /** Make the ground pictures: the quick one at once, then the full one a little at a time. True when finished. */
 export function prepareGround(budget: number): boolean {
   if (full) return true;
   if (!quick) {
     const data = new Uint8ClampedArray(QUICK * QUICK * 4);
     texRows(QUICK, data, 0, Infinity);
-    quick = { n: QUICK, data };
+    quick = enlarge({ n: QUICK, data }, TEX / 2);
   }
   making ??= { row: 0, data: new Uint8ClampedArray(TEX * TEX * 4) };
   making.row = texRows(TEX, making.data, making.row, performance.now() + budget);

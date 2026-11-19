@@ -22,12 +22,12 @@
 
 import { add, cameraAxes, clamp, ease, easeOut, lerp, mul, rng, seg, smooth, TAU, unit, type V3 } from "../../briefing/styles/intro2/math3.js";
 import { createRenderer, type Lights, type Pose } from "../../briefing/styles/intro2/mesh.js";
-import { mixRgb, shade, softSprite } from "../terraformer/pylon.js";
+import { mixRgb, softSprite } from "../terraformer/pylon.js";
 import { track } from "../terraformer/view.js";
 import type { CompanyTheme } from "../types.js";
 import { flagshipFor } from "./flagship.js";
 import { createGlobe, facing, groundPoint, prepareGround, RP, type GlobeCam } from "./globe.js";
-import { ARRIVE_AT, ARRIVE_FROM, BEAM_AT, BEAM_CLIMB, DEBRIEF_AT, GRID_AT, gridReach, LATTICE_AT, LOCK_AT, RESOLVE_AT, RING_EVERY, RING_FROM, satLaunch, SATS, satSnap, SECURED_AT, snappedBy, TETHER_FULL } from "./timeline.js";
+import { ARRIVE_AT, ARRIVE_FROM, BEAM_AT, BEAM_CLIMB, DEBRIEF_AT, GRID_AT, gridReach, LATTICE_AT, LOCK_AT, RING_EVERY, RING_FROM, satLaunch, SATS, satSnap, SECURED_AT, snappedBy, TETHER_FULL } from "./timeline.js";
 
 /** The part of the picture the Debrief card leaves open, CSS px: ship and planet are kept inside it. */
 export interface FreeArea {
@@ -883,10 +883,16 @@ export function createOrbitalScene(o: SceneSetup): OrbitalScene {
     const sec = t - SECURED_AT;
     if (sec > 0 && mid[2] > 1) {
       const k = smooth(0, 0.25, sec) * (1 - 0.35 * smooth(2.5, 3.5, sec));
-      const big = s * 1.55;
       const SUB = "SECTOR ANNEXED · ORBITAL TETHER STABLE";
-      const wide = Math.max(textW(g, "ASSET SECURED", big), textW(g, SUB, s * 0.8));
-      const x = beside(mid[0], s * 2.4, wide);
+      // Smaller on a narrow picture, so it fits beside the tether on one side or the other.
+      const gap = s * 2.4;
+      const full = Math.max(textW(g, "ASSET SECURED", s * 1.55), textW(g, SUB, s * 0.8));
+      const room = Math.max(cam.w - 10 - (mid[0] + gap), mid[0] - gap - 10);
+      const fit = clamp(room / full, 0.55, 1);
+      const big = s * 1.55 * fit;
+      const small = s * 0.8 * fit;
+      const wide = full * fit;
+      const x = beside(mid[0], gap, wide);
       const left = x < mid[0];
       const y = mid[1];
       // The brackets close in, the words lock, a bright rule under them.
@@ -910,7 +916,7 @@ export function createOrbitalScene(o: SceneSetup): OrbitalScene {
         g.globalAlpha = 1;
         g.globalCompositeOperation = "source-over";
       }
-      label(g, x, y + big * 1.5, SUB, s * 0.8, P, 0.75 * k, (sec - 0.3) / 0.7);
+      label(g, x, y + big * 1.5, SUB, small, P, 0.75 * k, (sec - 0.3) / 0.7);
     }
     g.restore();
   }
@@ -1026,8 +1032,6 @@ export function createOrbitalScene(o: SceneSetup): OrbitalScene {
         g.fillStyle = `rgb(2 4 10 / ${open.toFixed(3)})`;
         g.fillRect(0, 0, w, h);
       }
-      void RESOLVE_AT;
-      void shade;
     },
   };
 }
