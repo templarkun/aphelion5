@@ -87,6 +87,39 @@ const RAMP: [number, number, number, number][] = [
   [1, 240, 234, 226],
 ];
 
+/**
+ * The ground's colour at a point of the unit globe (r, g, b 0..255 into `out`: deserts, basins,
+ * ridges and cloud), and the lava glow there (returned, 0..1). Shared with the Orbital Claim outro,
+ * which shows the same planet.
+ */
+export function groundAt(px: number, py: number, pz: number, out: V3): number {
+  // Land: broad basins and deserts, then ridges.
+  const wx = px + 0.07 * noise3(px * 5 + 3, py * 5, pz * 5);
+  const wz = pz + 0.07 * noise3(px * 5, py * 5 + 9, pz * 5);
+  let hgt = fbm(wx * 5.2 + 11.3, py * 5.2 + 4.1, wz * 5.2 + 2.2, 5) * 1.25;
+  const ridge = 1 - Math.abs(noise3(px * 19 + 5, py * 19 + 5, pz * 19 + 5));
+  hgt += 0.07 * ridge * ridge - 0.02;
+  let k = 0;
+  while (k < RAMP.length - 2 && hgt > RAMP[k + 1]![0]) k++;
+  const a = RAMP[k]!;
+  const b = RAMP[k + 1]!;
+  const t = clamp((hgt - a[0]) / (b[0] - a[0]));
+  const shade = 0.82 + 0.3 * fbm(px * 40, py * 40, pz * 40, 2);
+  let r = lerp(a[1], b[1], t) * shade;
+  let g = lerp(a[2], b[2], t) * shade;
+  let bl = lerp(a[3], b[3], t) * shade;
+  // Cloud: long swirls pulled along the wind.
+  const sw = noise3(px * 4 + 20, py * 4 + 20, pz * 4 + 20);
+  const cl = smooth(0.06, 0.42, fbm(px * 6 + sw * 0.7 + 9, py * 13 + sw * 0.5, pz * 6 + 3, 4) + 0.04);
+  r = lerp(r, 246, cl * 0.88);
+  g = lerp(g, 240, cl * 0.88);
+  bl = lerp(bl, 236, cl * 0.88);
+  out[0] = r;
+  out[1] = g;
+  out[2] = bl;
+  return clamp(riftGlow(px, py, pz)) * (1 - cl);
+}
+
 /** Make some more rows of the ground picture; true when it is finished. */
 function makeGround(budgetMs: number): boolean {
   if (ground) return true;
@@ -94,40 +127,23 @@ function makeGround(budgetMs: number): boolean {
   making ??= { row: 0, rgb: new ImageData(W0, H0), glow: new ImageData(W0, H0) };
   const m = making;
   const until = performance.now() + budgetMs;
+  const col: V3 = [0, 0, 0];
   while (m.row < H0) {
     const y = m.row;
     const lat = LAT0 + ((y + 0.5) / H0) * (LAT1 - LAT0);
     for (let x = 0; x < W0; x++) {
       const lon = LON0 + ((x + 0.5) / W0) * (LON1 - LON0);
       const [px, py, pz] = globe(lon, lat);
-      // Land: broad basins and deserts, then ridges.
-      const wx = px + 0.07 * noise3(px * 5 + 3, py * 5, pz * 5);
-      const wz = pz + 0.07 * noise3(px * 5, py * 5 + 9, pz * 5);
-      let hgt = fbm(wx * 5.2 + 11.3, py * 5.2 + 4.1, wz * 5.2 + 2.2, 5) * 1.25;
-      const ridge = 1 - Math.abs(noise3(px * 19 + 5, py * 19 + 5, pz * 19 + 5));
-      hgt += 0.07 * ridge * ridge - 0.02;
-      let k = 0;
-      while (k < RAMP.length - 2 && hgt > RAMP[k + 1]![0]) k++;
-      const a = RAMP[k]!;
-      const b = RAMP[k + 1]!;
-      const t = clamp((hgt - a[0]) / (b[0] - a[0]));
-      const shade = 0.82 + 0.3 * fbm(px * 40, py * 40, pz * 40, 2);
-      let r = lerp(a[1], b[1], t) * shade;
-      let g = lerp(a[2], b[2], t) * shade;
-      let bl = lerp(a[3], b[3], t) * shade;
-      // Cloud: long swirls pulled along the wind.
-      const sw = noise3(px * 4 + 20, py * 4 + 20, pz * 4 + 20);
-      const cl = smooth(0.06, 0.42, fbm(px * 6 + sw * 0.7 + 9, py * 13 + sw * 0.5, pz * 6 + 3, 4) + 0.04);
-      r = lerp(r, 246, cl * 0.88);
-      g = lerp(g, 240, cl * 0.88);
-      bl = lerp(bl, 236, cl * 0.88);
+      const lava = groundAt(px, py, pz, col);
+      const r = col[0];
+      const g = col[1];
+      const bl = col[2];
       const i = (y * W0 + x) * 4;
       m.rgb.data[i] = r;
       m.rgb.data[i + 1] = g;
       m.rgb.data[i + 2] = bl;
       m.rgb.data[i + 3] = 255;
-      const lava = clamp(riftGlow(px, py, pz)) * (1 - cl) * 255;
-      m.glow.data[i] = m.glow.data[i + 1] = m.glow.data[i + 2] = lava;
+      m.glow.data[i] = m.glow.data[i + 1] = m.glow.data[i + 2] = lava * 255;
       m.glow.data[i + 3] = 255;
     }
     m.row++;
@@ -194,14 +210,14 @@ export interface Planet {
 }
 
 /** Bright light rolls off softly instead of stopping dead at white (no hard-edged white patches). */
-const soft = (v: number) => 1 - Math.exp(-1.35 * v);
+export const soft = (v: number) => 1 - Math.exp(-1.35 * v);
 
 /**
  * The colour of the lit air: `day` is the sine of the sun's height at that place, `high` how far
  * up the air it is (0 at the ground, 1 at the top of the glow). Low air goes from the red of
  * first light through gold to white; higher air is blue. Returns how strongly it is lit, 0..1.
  */
-function airColour(day: number, high: number, out: V3): number {
+export function airColour(day: number, high: number, out: V3): number {
   const warm = smooth(-0.2, -0.02, day);
   const white = smooth(-0.02, 0.22, day);
   let r = lerp(lerp(0.16, 1.0, warm), 0.82, white);

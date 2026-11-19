@@ -15,8 +15,21 @@ export const FILM_SECONDS = 12.5;
 export const ACT_AT = [0, 3.0, 6.5, 10.0] as const;
 export const ACT_NAMES = ["Spire ignition", "Atmospheric cleansing", "Biosphere bloom", "Living world"] as const;
 
-/** The three spires (always three: the valley shows three of the pylons; designer 2026-11-19). */
+/** The three spires near the camera (the valley shows three of the pylons; designer 2026-11-19). */
 export const SPIRES = 3;
+/**
+ * The other pylons (one for every mission won, as in 2.0, less the three spires) stand far off
+ * beyond the horizon and show as thin beams (designer 2026-11-19, I17). They fire one by one after
+ * the spires, from FAR_AT, at most FAR_STEP apart, all within Act 1.
+ */
+export const FAR_AT = 2.2;
+export const FAR_STEP = 0.18;
+export const farCount = (pylons: number): number => Math.max(0, Math.round(pylons) - SPIRES);
+/** When each far beam fires (n of them). */
+export function farTimes(n: number): number[] {
+  const step = n > 1 ? Math.min(FAR_STEP, (ACT_AT[1] - 0.2 - FAR_AT) / (n - 1)) : 0;
+  return Array.from({ length: n }, (_, k) => FAR_AT + k * step);
+}
 /** When each spire's radiator wings start to flare open (the order: the great one, the near one, the far one). */
 export const FLARE_AT = [0.85, 1.2, 1.5] as const;
 /** How long the wings take to open, s. */

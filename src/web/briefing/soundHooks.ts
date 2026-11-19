@@ -66,3 +66,13 @@ export function playSpireIgnition(): void {}
 export function playAtmosphereClear(): void {}
 /** Act 3: water starts to run down the dry canyon beds from the spires' feet. */
 export function playWaterFlow(): void {}
+/**
+ * Orbital Claim (designer 2026-11-19), the Company claims the sector from orbit. (It also calls
+ * playVictoryResolve as the camera settles into its vigil, Act 4.)
+ */
+/** Act 1: the beacon beam fires from the liberated sector and climbs into space. */
+export function playSkyBeamFire(): void {}
+/** Act 2: the Flagship's belly clamps lock on the beam with a flash: the orbital tether. */
+export function playOrbitalLock(): void {}
+/** Act 3: the hexagonal territory grid sweeps out over the region. */
+export function playGridSweep(): void {}

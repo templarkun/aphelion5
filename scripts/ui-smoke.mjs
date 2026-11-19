@@ -1287,7 +1287,7 @@ if (existsSync(`${out}/won-save.json`)) {
     await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 6000 }).catch(() => {});
     const back = (await pg.locator("[data-outro]").count()) === 0 && (await pg.locator('.brief[data-step=campaign]').count()) === 1;
     await pg.close();
-    if (!(shown && listed === 3 && badge === 1 && act === "1" && debrief && back)) fails.push(`preview of ${version} in ${style}: shown ${shown}, listed ${listed}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
+    if (!(shown && listed === 4 && badge === 1 && act === "1" && debrief && back)) fails.push(`preview of ${version} in ${style}: shown ${shown}, listed ${listed}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
   }
   // Surface Terraform (designer 2026-11-19), from System options: at 1400 px the whole film untouched (four acts in order, three
   // spires firing, the Debrief by itself beside the valley at about 10.6 s); at 1100 px pictures of it on its way (nothing timed);
@@ -1309,12 +1309,14 @@ if (existsSync(`${out}/won-save.json`)) {
     let acts = "1234";
     let filmMs = 0;
     let spires = "3";
+    let far = "4";
     if (w === 1400) {
       // The whole film, untouched (a screenshot would hold the page up).
       await pg.waitForSelector("[data-outro][data-phase=debrief]", { timeout: 30000 }).catch(() => {});
       filmMs = Date.now() - t0;
       acts = await at("data-acts");
       spires = await at("data-spires");
+      far = await at("data-far");
     } else if (w === 1100) {
       for (const [i, sec] of [2.4, 4.9, 8.2].entries()) {
         await pg.waitForTimeout(Math.max(0, sec * 1000 - (Date.now() - t0)));
@@ -1339,9 +1341,62 @@ if (existsSync(`${out}/won-save.json`)) {
     await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 6000 }).catch(() => {});
     const back = (await pg.locator("[data-outro]").count()) === 0 && (await pg.locator(".brief[data-step=campaign]").count()) === 1;
     await pg.close();
-    const ok = shown && /^play surface terraform \(/i.test(label) && /surface terraform/i.test(badge) && skip === 1 && debrief && room && acts === "1234" && spires === "3" && (w !== 1400 || (filmMs > 9500 && filmMs < 24000)) &&
+    const ok = shown && /^play surface terraform \(/i.test(label) && /surface terraform/i.test(badge) && skip === 1 && debrief && room && acts === "1234" && spires === "3" && far === "4" && (w !== 1400 || (filmMs > 9500 && filmMs < 24000)) &&
       /campaign debrief/.test(text) && /final score/.test(text) && /return to command deck/.test(text) && back && sw <= w + 2;
-    if (!ok) fails.push(`Surface Terraform at ${w} px: shown ${shown}, label "${label}", badge "${badge}", skip ${skip}, acts ${acts}, spires ${spires}, film ${filmMs} ms, debrief ${debrief}, room ${room} (${JSON.stringify(card)}), back ${back}, width ${sw}`);
+    if (!ok) fails.push(`Surface Terraform at ${w} px: shown ${shown}, label "${label}", badge "${badge}", skip ${skip}, acts ${acts}, spires ${spires}, far ${far}, film ${filmMs} ms, debrief ${debrief}, room ${room} (${JSON.stringify(card)}), back ${back}, width ${sw}`);
+  }
+  // Orbital Claim (designer 2026-11-19), from System options: at 1400 px the whole film untouched (four acts in order, the
+  // clamps locked, twelve satellites in the lattice, ASSET SECURED, the Debrief by itself beside ship and planet at about
+  // 10.1 s); at 1100 px pictures of it on its way (nothing timed); at 390 px two taps skip it and the card lies along the foot.
+  for (const [w, h] of [[1400, 900], [1100, 760], [390, 844]]) {
+    const pg = await plainPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+    pg.on("pageerror", (e) => errors.push(e.message));
+    await pg.addInitScript(() => { try { localStorage.setItem("aphelion5.intro", "off"); } catch {} });
+    await pg.goto(url);
+    await briefAt(pg, "campaign");
+    await pg.getByRole("button", { name: "System options" }).click();
+    const button = pg.locator("[data-action=outro-preview][data-outro-id=orbital]");
+    const label = ((await button.innerText().catch(() => "")) ?? "").trim();
+    await button.click();
+    const shown = await pg.waitForSelector("[data-outro=orbital]", { timeout: 4000 }).then(() => true, () => false);
+    const t0 = Date.now();
+    const at = async (k) => (await pg.locator("[data-outro]").getAttribute(k).catch(() => null)) ?? "";
+    const skip = await pg.locator("[data-action=outro-skip]").count();
+    let acts = "1234";
+    let filmMs = 0;
+    let claimed = "1/12/1";
+    if (w === 1400) {
+      await pg.waitForSelector("[data-outro][data-phase=debrief]", { timeout: 30000 }).catch(() => {});
+      filmMs = Date.now() - t0;
+      acts = await at("data-acts");
+      claimed = `${await at("data-locked")}/${await at("data-sats")}/${await at("data-secured")}`;
+    } else if (w === 1100) {
+      for (const [i, sec] of [1.8, 5.9, 8.6].entries()) {
+        await pg.waitForTimeout(Math.max(0, sec * 1000 - (Date.now() - t0)));
+        await pg.screenshot({ path: `${out}/ui-outro-orbital-${i + 1}.png` });
+      }
+      await pg.mouse.click(w / 2, h * 0.3);
+      await pg.mouse.click(w / 2, h * 0.3);
+    } else {
+      await pg.waitForTimeout(1500);
+      await pg.mouse.click(w / 2, h * 0.3);
+      await pg.mouse.click(w / 2, h * 0.3);
+    }
+    const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 4000 }).then(() => true, () => false);
+    await pg.waitForTimeout(2300);
+    if (w !== 1100) await pg.screenshot({ path: `${out}/ui-outro-orbital-debrief${w < 600 ? "-phone" : ""}.png` });
+    const card = await pg.locator(".ou-card").boundingBox();
+    const room = card && (w >= 900 ? card.width <= w * 0.42 && card.x >= w * 0.55 : card.height <= h * 0.6 && card.y >= h * 0.38);
+    const text = ((await pg.locator(".ou-card").innerText().catch(() => "")) ?? "").toLowerCase();
+    const badge = await pg.locator(".ou-preview").innerText().catch(() => "");
+    const sw = await pg.evaluate(() => document.documentElement.scrollWidth);
+    await pg.locator("[data-action=outro-return]").click();
+    await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 6000 }).catch(() => {});
+    const back = (await pg.locator("[data-outro]").count()) === 0 && (await pg.locator(".brief[data-step=campaign]").count()) === 1;
+    await pg.close();
+    const ok = shown && /^play orbital claim \(/i.test(label) && /orbital claim/i.test(badge) && skip === 1 && debrief && room && acts === "1234" && claimed === "1/12/1" && (w !== 1400 || (filmMs > 9000 && filmMs < 24000)) &&
+      /campaign debrief/.test(text) && /final score/.test(text) && /return to command deck/.test(text) && back && sw <= w + 2;
+    if (!ok) fails.push(`Orbital Claim at ${w} px: shown ${shown}, label "${label}", badge "${badge}", skip ${skip}, acts ${acts}, locked/sats/secured ${claimed}, film ${filmMs} ms, debrief ${debrief}, room ${room} (${JSON.stringify(card)}), back ${back}, width ${sw}`);
   }
   // Reduced motion: no film, the still picture of its end and the Debrief at once.
   {
@@ -1375,6 +1430,7 @@ if (existsSync(`${out}/won-save.json`)) {
     const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 3000 }).then(() => true, () => false);
     const skip = await pg.locator("[data-action=outro-skip]").count();
     const spires = await pg.locator("[data-outro]").getAttribute("data-spires").catch(() => "");
+    const far = await pg.locator("[data-outro]").getAttribute("data-far").catch(() => "");
     const act = await pg.locator("[data-outro]").getAttribute("data-act").catch(() => "");
     await pg.waitForTimeout(500);
     await pg.screenshot({ path: `${out}/ui-outro-surface-still.png` });
@@ -1382,7 +1438,28 @@ if (existsSync(`${out}/won-save.json`)) {
     await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 3000 }).catch(() => {});
     const back = (await pg.locator("[data-outro]").count()) === 0;
     await pg.close();
-    if (!(debrief && skip === 0 && spires === "3" && act === "4" && back)) fails.push(`Surface Terraform, reduced motion: debrief ${debrief}, skip ${skip}, spires ${spires}, act ${act}, back ${back}`);
+    if (!(debrief && skip === 0 && spires === "3" && far === "4" && act === "4" && back)) fails.push(`Surface Terraform, reduced motion: debrief ${debrief}, skip ${skip}, spires ${spires}, far ${far}, act ${act}, back ${back}`);
+  }
+  // Reduced motion, Orbital Claim: its still picture (the region claimed) and the Debrief at once.
+  {
+    const pg = await plainPage({ viewport: { width: 1100, height: 760 }, deviceScaleFactor: 1, reducedMotion: "reduce" });
+    pg.on("pageerror", (e) => errors.push(e.message));
+    await pg.addInitScript(() => { try { localStorage.setItem("aphelion5.intro", "off"); } catch {} });
+    await pg.goto(url);
+    await briefAt(pg, "campaign");
+    await pg.getByRole("button", { name: "System options" }).click();
+    await pg.locator("[data-action=outro-preview][data-outro-id=orbital]").click();
+    const debrief = await pg.waitForSelector("[data-debrief='1']", { timeout: 3000 }).then(() => true, () => false);
+    const skip = await pg.locator("[data-action=outro-skip]").count();
+    const at = async (k) => (await pg.locator("[data-outro]").getAttribute(k).catch(() => null)) ?? "";
+    const [act, locked, sats, secured] = [await at("data-act"), await at("data-locked"), await at("data-sats"), await at("data-secured")];
+    await pg.waitForTimeout(500);
+    await pg.screenshot({ path: `${out}/ui-outro-orbital-still.png` });
+    await pg.locator("[data-action=outro-return]").click();
+    await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 3000 }).catch(() => {});
+    const back = (await pg.locator("[data-outro]").count()) === 0;
+    await pg.close();
+    if (!(debrief && skip === 0 && act === "4" && locked === "1" && sats === "12" && secured === "1" && back)) fails.push(`Orbital Claim, reduced motion: debrief ${debrief}, skip ${skip}, act ${act}, locked ${locked}, sats ${sats}, secured ${secured}, back ${back}`);
   }
   outroCheck = fails.length ? `failed (${fails.join(" | ")})` : "ok";
 }

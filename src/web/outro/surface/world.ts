@@ -32,6 +32,21 @@ export const SPIRE_PLACES: Spire[] = [
   { X: 1.15, Z: 4.6, L: 1.5, spin: 0.6 },
   { X: -4.35, Z: 15, L: 2.8, spin: 1.0 },
 ];
+/**
+ * Where the far pylons stand, beyond the horizon (designer 2026-11-19, I17): u across the picture
+ * (X / Z) and Z, km. Used in this order; 2.0 drops at most twelve pylons, so nine places at most.
+ */
+export const FAR_PLACES: { u: number; Z: number }[] = [
+  { u: -0.6, Z: 58 },
+  { u: 0.4, Z: 52 },
+  { u: -0.15, Z: 70 },
+  { u: 0.72, Z: 64 },
+  { u: -0.85, Z: 66 },
+  { u: 0.18, Z: 76 },
+  { u: -0.4, Z: 80 },
+  { u: 0.95, Z: 72 },
+  { u: 0.55, Z: 84 },
+];
 /** How much of a spire is under the rock (a share of its length): the anchor spike and a little more. */
 export const BURY = 0.2;
 

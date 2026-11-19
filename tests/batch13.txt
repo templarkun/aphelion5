@@ -11,6 +11,8 @@
 # Campaign editor (sections STATISTICS AND ACHIEVEMENTS, CAMPAIGN EDITOR, T13_STAT_01-03,
 # T13_ED_01-09) 2026-11-18; checked by tests/unit/editor.test.ts and scripts/ui-pages.mjs.
 # Surface Terraform, the third outro (T13_OUT_12-16, CHANGED note on T13_OUT_07) 2026-11-19.
+# The same day: I17 answered (far beams, T13_OUT_17, CHANGED notes on T13_OUT_13 and T13_OUT_15),
+# and Orbital Claim, the fourth outro (T13_OUT_18-23, CHANGED notes on T13_OUT_07 and T13_OUT_12).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1153,6 +1155,9 @@ note: CHANGED 2026-11-17 (designer): System options lists both versions: "Play T
 note: CHANGED 2026-11-19 (designer): System options lists three: "Play Terraformer 2.0
       (<Company>)", "Play Surface Terraform (<Company>)" and "Play Terraformer 1.0 (<Company>)"
       (T13_OUT_12). A won game still plays 2.0.
+note: CHANGED 2026-11-19 (designer, later the same day): System options lists four: "Play
+      Terraformer 2.0 (<Company>)", "Play Surface Terraform (<Company>)", "Play Orbital Claim
+      (<Company>)" and "Play Terraformer 1.0 (<Company>)" (T13_OUT_18). A won game still plays 2.0.
 
 id: T13_OUT_08
 title: Terraformer 2.0, act by act
@@ -1246,6 +1251,8 @@ given: a won Campaign (T13_OUT_01)
 then: Terraformer 2.0 plays, as before. Surface Terraform never plays after a real game until the
       designer says so (or gives it to a Company).
 note: Screen only, no rule. Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+note: CHANGED 2026-11-19 (designer): a fourth button, "Play Orbital Claim (<Company>)", between
+      Surface Terraform and 1.0 (T13_OUT_18).
 
 id: T13_OUT_13
 title: Surface Terraform, act by act
@@ -1283,6 +1290,10 @@ then: Act 4, from 10.0 s, "LIVING WORLD": a slow panoramic drift over the living
 note: Always three spires, whatever the number of missions won (I17 asks about the other four
       pylons). Every moving thing is worked out from the time alone, so the same moment always
       looks the same. Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+note: CHANGED 2026-11-19 (designer, I17: "Show the other four too, as thin beams far off beyond
+      the horizon"): three spires near the camera, and the other pylons far off beyond the
+      horizon as thin beams (T13_OUT_17). The caption after the spires: "3 terraformer spires
+      online · 4 more beyond the horizon".
 
 id: T13_OUT_14
 title: Surface Terraform: the spires
@@ -1305,6 +1316,7 @@ then: "Tap twice to skip" at the foot (T13_OUT_03): two taps or key presses with
 then: Slow / Fast speed: the film takes twice as long / half as long. Reduced motion or Instant: no
       film, no "Tap twice to skip": one still picture of the living valley and the Debrief at once.
       On a machine that cannot keep up, the picture is drawn with fewer points (softer), not slower.
+note: CHANGED 2026-11-19 (I17): the still picture also shows the far beams beyond the horizon.
 
 id: T13_OUT_16
 title: Surface Terraform: sound hooks
@@ -1316,6 +1328,125 @@ then: the film is silent. soundHooks.ts holds empty functions, already called at
       run, 6.6 s), playVictoryResolve (the living world, 10.0 s; also when the film is skipped,
       and at once with reduced motion). Skipping silences the hooks not yet played except
       playVictoryResolve.
+
+id: T13_OUT_17
+title: Surface Terraform: the other pylons, far off beyond the horizon
+source: designer 2026-11-19 (I17: "You are correct. Show the other four too, as thin beams far off
+        beyond the horizon.")
+given: a Campaign of 7 missions won (Campaign 1; the preview's sample numbers)
+then: besides the three spires, 4 thin cyan-emerald beams rise from far beyond the horizon, behind
+      the distant mountains (their feet hidden), up through the storm into the sky; where each
+      meets the far clouds they glow. They fire one after another after the three spires (from
+      2.2 s, 0.18 s apart), all within Act 1, and stay on to the end, faint against the blue sky.
+      They hardly move as the camera drifts (they are very far). The caption reads "3 terraformer
+      spires online · 4 more beyond the horizon".
+given: a Campaign with a different number of missions won
+then: as many far beams as missions won less the three spires (one pylon per mission, as in 2.0,
+      at least one and at most twelve): none for three missions or fewer.
+note: Silent: no sound hook for the far beams (playSpireIgnition stays one per spire). Screen
+      only, no rule. Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+
+=== SECTION: ORBITAL CLAIM, THE FOURTH OUTRO (designer 2026-11-19, screen only, no rule change) ===
+
+id: T13_OUT_18
+title: Orbital Claim: a fourth outro, in System options
+source: designer 2026-11-19 ("start building a standalone Campaign Victory Outro ...
+        OrbitalClaimOutro.tsx, depicting Ending: The Orbital Claim & Extraction Beacon"; earlier
+        the same day: "Keep 2.0 as the default after a won game until I say otherwise")
+given: the briefing, System options (the gear)
+then: four outro buttons: "Play Terraformer 2.0 (<Company>)", "Play Surface Terraform
+      (<Company>)", "Play Orbital Claim (<Company>)", "Play Terraformer 1.0 (<Company>)". Orbital
+      Claim plays with sample numbers, marked "PREVIEW - ORBITAL CLAIM - SAMPLE NUMBERS"; Return to
+      Command Deck plays the gate and comes back to the briefing. No game is started or changed.
+given: a won Campaign (T13_OUT_01)
+then: Terraformer 2.0 plays, as before. Orbital Claim never plays after a real game until the
+      designer says so (or gives it to a Company).
+note: Screen only, no rule. Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+
+id: T13_OUT_19
+title: Orbital Claim, act by act
+source: designer 2026-11-19 (the four acts, 10-12 seconds; "triumphant corporate-military conquest
+        and territorial annexation")
+given: Orbital Claim, Normal speed
+then: Act 1, 0 - 3.0 s, "EXTRACTION BEACON": low orbit over the night side of the planet of the
+      intro, its curved edge ahead with the first light of the sun on it; round the liberated
+      sector fires still glow under drifting smoke and lightning flickers in the clouds on the
+      night side. Thin brackets mark the sector: "SECTOR LIBERATED", "BEACON ARMED". At 0.7 s a
+      beam in the Company's main colour fires from the sector straight up through the clouds (a
+      ring of light runs out through them) and the air into space ("BEACON ... KM" counts up),
+      ringed by rings of ionised dust that rise along it and fade.
+then: Act 2, 3.0 - 6.5 s, "GEOSTATIONARY LOCK": the camera rises along the beam, looking up it. The
+      Company's Flagship glides in from astern, high over the beam, slowing (main drives dimming,
+      the forward thrusters braking), and comes to rest over the beacon at 5.4 s; a reticle closes
+      on the clamps under its belly ("GEOSTATIONARY APPROACH", "RANGE ... M"). At 5.65 s the four
+      clamps lock on the beam with a crisp flash (a burst and a star of light, a faint flash over
+      the picture): "TETHER LOCKED", "CLAMPS 4 / 4". From then on the beam is one tether of light
+      from the ground to the ship's belly, brighter; small thrusters puff now and then to hold
+      the ship on station.
+then: Act 3, 6.5 - 9.5 s, "TERRITORY ANNEXATION": the camera swings out and up to look down on
+      ship, tether and ground. From the tether point twelve small relay satellites fly out one
+      after another and snap into a lattice of two rings round the tether, each with a small
+      flash ("RELAY LATTICE n / 12"); thin lines of light join them. From 7.6 s a wave of
+      see-through hexagonal borders in the Company's colour sweeps out over the curve of the
+      ground from the sector (bright at its front, faint lines of light from the lattice down to
+      it, "GRID SWEEP n%") until the whole region is under the grid by 9.4 s; the seven hexagons of
+      the sector itself are edged in the Company's second colour. The fires and lightning die
+      down. At 8.9 s "ASSET SECURED" locks in beside the tether (brackets close in, a bright rule,
+      "SECTOR ANNEXED · ORBITAL TETHER STABLE").
+then: Act 4, from 9.5 s, "GEOSTATIONARY VIGIL": the camera settles into a slow orbital drift round
+      the tether, the Flagship standing guard over the claimed grid under the stars; at 10.1 s
+      the Debrief card slides in (T13_OUT_21). The film is over at 11.5 s; the picture keeps
+      drifting slowly under the card.
+note: Every moving thing (camera, ship, beam, rings, satellites, the grid) is worked out from the
+      time alone, so the same moment always looks the same. The readings beside the brackets are
+      looks only. Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+
+id: T13_OUT_20
+title: Orbital Claim: the Flagship
+source: designer 2026-11-19 ("multi-layered capital ship hull geometry (matching the player's
+        chosen vessel palette/silhouette)"; "deep volumetric shading, armor panel lines, bridge
+        lights, and soft station-keeping thruster plumes (no flat clipart shapes)")
+given: the Company chosen on the Vessel step
+then: the Flagship is a lit solid ship, drawn like the intro's capital ship, in the Company's
+      outline from the Vessel screen: Support Vessel Of Ko and Van (V1) one broad deep hull with
+      short swept wings, a raised spine and a tall bridge tower; Kew'n X2 (V2) two long hulls joined
+      by struts round a hexagonal pod with the bridge dome on top. Hull plating in the Company's
+      hull colour with seams and lighter and darker plates, the Company's paint stripes, rows of
+      lit windows, a lit bridge, running lights (green to starboard, red to port), drive glow in
+      the Company's main colour, and under the belly the clamp housing with its four jaws.
+note: A stand-in until the designer's ship art. A Company without an outline of its own gets V1's.
+
+id: T13_OUT_21
+title: Orbital Claim: the Debrief, skipping, speed, reduced motion
+source: designer 2026-11-19 ("Build it the exact same way our existing Terraformer outros are built")
+then: the same Campaign Debrief card as the other outros (T13_OUT_04, T13_OUT_10), sliding in at
+      the side on a wide screen and along the foot on a phone; the picture moves and turns so the
+      ship, the tether and the planet stay in the part the card leaves open.
+then: "Tap twice to skip" at the foot (T13_OUT_03): two taps or key presses within 1 s jump to the
+      claimed region behind a short white veil and bring the Debrief.
+then: Slow / Fast speed: the film takes twice as long / half as long. Reduced motion or Instant: no
+      film, no "Tap twice to skip": one still picture of the Flagship over the claimed grid and the
+      Debrief at once. On a machine that cannot keep up, the picture is drawn with fewer points
+      (softer), not slower.
+
+id: T13_OUT_22
+title: Orbital Claim: sound hooks
+source: designer 2026-11-19 ("Wire silent sound hooks into soundHooks.ts (playSkyBeamFire(),
+        playOrbitalLock(), playGridSweep(), playVictoryResolve())")
+then: the film is silent. soundHooks.ts holds empty functions, already called at their moments:
+      playSkyBeamFire (the beacon fires, 0.7 s), playOrbitalLock (the clamps lock, 5.65 s),
+      playGridSweep (the grid starts to sweep out, 7.6 s), playVictoryResolve (the vigil, 9.5 s;
+      also when the film is skipped, and at once with reduced motion). Skipping silences the hooks
+      not yet played except playVictoryResolve.
+
+id: T13_OUT_23
+title: Orbital Claim: on a phone
+source: designer 2026-11-19 (every screen works on PC and phones)
+given: a phone (390 px wide, held upright)
+then: the camera stands nearer, so the Flagship fills most of the narrow picture's width and the
+      tether runs down its height; the readings move to the other side of the tether when they
+      would run off the picture. With the Debrief along the foot, the ship and the tether stay in
+      the top part.
 
 === SECTION: STATISTICS AND ACHIEVEMENTS (designer 2026-11-18, screen only, no rule change) ===
 

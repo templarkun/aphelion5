@@ -19,7 +19,8 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactEle
 import { isStill, speedFactor } from "../motion.js";
 import { playAtmosphereClear, playConfirm, playSpireIgnition, playVictoryResolve, playWaterFlow } from "../briefing/soundHooks.js";
 import { createSurfaceScene, type FreeArea } from "./surface/scene.js";
-import { ACT_NAMES, actAt, DEBRIEF_AT, FILM_SECONDS, fireTimes, firedBy, RESOLVE_AT, SPIRES, STILL_AT, VORTEX_AT, WATER_AT } from "./surface/timeline.js";
+import { ACT_NAMES, actAt, DEBRIEF_AT, farCount, farTimes, FILM_SECONDS, fireTimes, firedBy, RESOLVE_AT, SPIRES, STILL_AT, VORTEX_AT, WATER_AT } from "./surface/timeline.js";
+import { pylonCount } from "./terraformer2/timeline.js";
 import { SkipHint, useTwoTapSkip } from "./SkipHint.js";
 import { Debrief } from "./Debrief.js";
 import type { OutroProps } from "./types.js";
@@ -50,6 +51,10 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
   const [phase, setPhase] = useState<"film" | "debrief">(still ? "debrief" : "film");
   const [act, setAct] = useState<1 | 2 | 3 | 4>(still ? 4 : 1);
   const [fired, setFired] = useState(still ? SPIRES : 0);
+  // The other pylons 2.0 dropped (one per mission won), far off beyond the horizon (designer 2026-11-19, I17).
+  const pylons = pylonCount(stats.missions.length);
+  const far = farCount(pylons);
+  const [farOn, setFarOn] = useState(still ? far : 0);
   // The acts shown so far, in order ("1234" once the film has run through): for the browser check.
   const [acts, setActs] = useState("");
   const [veil, setVeil] = useState(0);
@@ -58,7 +63,7 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
   const back = useRef<HTMLButtonElement>(null);
   const clock = useRef({ start: 0, jump: 0, skipped: false });
   const left = useRef(false);
-  const scene = useMemo(() => createSurfaceScene({ theme: companyTheme, vesselId }), [companyTheme, vesselId]);
+  const scene = useMemo(() => createSurfaceScene({ theme: companyTheme, vesselId, pylons }), [companyTheme, vesselId, pylons]);
 
   useEffect(() => {
     const cv = canvas.current;
@@ -77,6 +82,8 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
     let free: FreeArea | undefined;
     let shownAct = 0;
     let shownFired = -1;
+    let shownFar = -1;
+    const farAt = farTimes(far);
     let debrief = still;
     let lastKey = "";
     // The picture is drawn smaller (and stretched) on a machine that cannot keep up: smooth before sharp.
@@ -145,6 +152,8 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
       }
       const f = firedBy(t);
       if (f !== shownFired) setFired((shownFired = f));
+      const ff = farAt.filter((x) => t >= x).length;
+      if (ff !== shownFar) setFarOn((shownFar = ff));
       if (!debrief && t >= DEBRIEF_AT) {
         debrief = true;
         setPhase("debrief");
@@ -179,7 +188,9 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
     act === 1
       ? fired < SPIRES
         ? `Radiator wings open · ${fired} of ${SPIRES} beams firing`
-        : `${SPIRES} terraformer spires online`
+        : farOn > 0
+          ? `${SPIRES} terraformer spires online · ${farOn} more beyond the horizon`
+          : `${SPIRES} terraformer spires online`
       : act === 2
         ? "Clear-sky vortex · the storm pulls back"
         : act === 3
@@ -194,6 +205,7 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
       data-acts={acts}
       data-phase={phase}
       data-spires={fired}
+      data-far={farOn}
       role="dialog"
       onPointerDown={twoTaps.tap}
       aria-label={`${stats.campaignName} complete`}

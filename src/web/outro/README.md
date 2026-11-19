@@ -11,6 +11,7 @@ choice: `OUTRO_OF_COMPANY` in `index.ts` (empty for now, so every Company gets `
 | --- | --- |
 | `terraformer2` | Terraformer 2.0 (designer 2026-11-17), plays after a won Campaign. Industrial terraforming: the bay doors open, the pylons (atmospheric processors: reactor core, four folding wings, anchor spike, braking thrusters on top, firing down) are lowered out, drift free for 1.2 s while they turn upright, then come down slowly on their thrusters; one by one they anchor and fire blue-green beams up through the toxic storm, which clears in emerald and cyan rings over ocean and green land; the sun rises. About 15 seconds. |
 | `surface` | Surface Terraform (designer 2026-11-19), System options only for now. Goes on from 2.0 on the planet's surface: a barren volcanic valley under a toxic amber-grey sky; three spires (2.0's pylons, drawn by the same `rig.ts`) open their radiator wings and fire cyan-emerald beams; a clear-sky vortex spirals open over the great spire, rain and bright mist fall, sunlight breaks onto the ridges; water fills the dry canyon beds and pools, green and glowing life spreads from the spires like a tide, flocks glide in; a slow panoramic drift while the Debrief slides in. About 12.5 seconds. |
+| `orbital` | Orbital Claim (designer 2026-11-19), System options only for now. No terraforming: a corporate-military claim. From low orbit over the night side of the intro's planet a beacon beam in the Company's colour climbs from the liberated sector into space; the camera rises along it as the Company's Flagship (a lit solid in the Company's outline from the Vessel screen) glides in and locks its belly clamps on the beam with a flash; twelve relay satellites snap into a lattice and a hexagonal territory grid sweeps over the curve of the ground, "ASSET SECURED"; a slow orbital drift while the Debrief slides in. About 11.5 seconds. |
 | `terraformer` | Terraformer 1.0, kept as it was to compare (System options only). Bay doors, one pylon per mission won falls through the air, each hit sends a shock wave over the ground and turns it into a lit sector in the Company's colours; the sun rises. About 11.5 seconds. |
 
 ## What every outro is given (`types.ts`)
@@ -52,6 +53,11 @@ surface/world.ts             Surface: the valley in km (spires, streams, pools, 
 surface/layers.ts            Surface: the painted parallax layers (far mountains, valley floor, ridges, near rocks), barren and living, and the tide passing over them
 surface/sky.ts               Surface: the sky, sun and moons, the storm deck and its clear-sky vortex
 surface/scene.ts             Surface: the film: camera drift, layers far to near, spires, beams, water, glowing flowers, flocks, rain, mist, sunlight
+OrbitalClaimOutro.tsx        Orbital Claim: the same page with the orbital film
+orbital/timeline.ts          Orbital: when things happen (seconds)
+orbital/globe.ts             Orbital: the intro's planet for a moving camera; the sector's place on it; points of the grid on the ground
+orbital/flagship.ts          Orbital: the Company's Flagship as a lit solid, in its outline from the Vessel screen; the clamps, the thrusters
+orbital/scene.ts             Orbital: the film: camera, stars, sun, smoke and lightning, the beacon and its rings, the ship, the lock, satellites, lattice, the hexagonal grid, telemetry
 ```
 
 Surface Terraform is drawn on one canvas in layers, each painted once (barren and living) and moved
@@ -75,8 +81,9 @@ Sleepers triggered, Gyros drained. A statistics and achievements page will use t
 Sound: the films are silent. `../briefing/soundHooks.ts` holds empty functions already called
 at the right moments (`playBayDoorsOpen`, `playReentryStreak`, `playTerraformShockwave`,
 `playVictoryResolve`, for 2.0 `playRetroThrust`, for Surface Terraform `playSpireIgnition` (once
-per spire), `playAtmosphereClear`, `playWaterFlow` and `playVictoryResolve`); fill them in when
-there are audio files.
+per spire; the far beams are silent), `playAtmosphereClear`, `playWaterFlow` and `playVictoryResolve`,
+for Orbital Claim `playSkyBeamFire`, `playOrbitalLock`, `playGridSweep` and `playVictoryResolve`);
+fill them in when there are audio files.
 
 To look at an outro without playing a Campaign: System options (the gear) > "Play Terraformer 2.0",
-"Play Surface Terraform" or "Play Terraformer 1.0".
+"Play Surface Terraform", "Play Orbital Claim" or "Play Terraformer 1.0".

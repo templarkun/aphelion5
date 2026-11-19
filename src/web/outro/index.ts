@@ -10,6 +10,7 @@
 import { TerraformerVictoryOutro } from "./TerraformerVictoryOutro.js";
 import { TerraformerVictoryOutro2 } from "./TerraformerVictoryOutro2.0.js";
 import { SurfaceTerraformOutro } from "./SurfaceTerraformOutro.js";
+import { OrbitalClaimOutro } from "./OrbitalClaimOutro.js";
 import type { OutroDef } from "./types.js";
 
 export type { CampaignStats, CompanyTheme, MissionStat, ModuleStat, OutroDef, OutroProps } from "./types.js";
@@ -29,6 +30,13 @@ export const OUTROS: OutroDef[] = [
     Component: SurfaceTerraformOutro,
   },
   {
+    // Designer 2026-11-19: the fourth, a corporate-military claim from orbit. In System options only until the designer says.
+    id: "orbital",
+    name: "Orbital Claim",
+    note: "The Company claims the sector from orbit: a beacon beam climbs from the liberated sector into space, the Flagship locks on it, relay satellites snap into a lattice and a hexagonal territory grid sweeps over the region.",
+    Component: OrbitalClaimOutro,
+  },
+  {
     // Kept as it was for comparison (designer 2026-11-17: "leave this version in the menu for me to see").
     id: "terraformer",
     name: "Terraformer 1.0",
@@ -37,7 +45,7 @@ export const OUTROS: OutroDef[] = [
   },
 ];
 
-/** Terraformer 2.0 plays after a won Campaign (designer 2026-11-19: "Keep 2.0 as the default after a won game until I say otherwise"); Surface Terraform and 1.0 are in System options. */
+/** Terraformer 2.0 plays after a won Campaign (designer 2026-11-19: "Keep 2.0 as the default after a won game until I say otherwise"); Surface Terraform, Orbital Claim and 1.0 are in System options. */
 export const DEFAULT_OUTRO = "terraformer2";
 
 /** Company id -> outro id. THE DESIGNER'S CHOICE, still open: empty until they say. */

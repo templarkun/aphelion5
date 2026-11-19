@@ -28,8 +28,8 @@ import type { CompanyTheme } from "../types.js";
 import { drawRig, RIG_RADIUS, type RigSprites, type RigState } from "../terraformer2/rig.js";
 import { createValley, drawMix, layerState, volcanoTop, VOLCANO_U, type Layer, type Valley } from "./layers.js";
 import { createSky } from "./sky.js";
-import { CLIMB, FLARE, FLARE_AT, FLOCKS_AT, fireTimes, RAIN, SUN_AT } from "./timeline.js";
-import { bloomAt, BURY, CEIL, HC, poolAt, POOL_DEFS, project, SPIRE_PLACES, streamPaths, waterReach, type View } from "./world.js";
+import { CLIMB, FLARE, FLARE_AT, FLOCKS_AT, farCount, farTimes, fireTimes, RAIN, SPIRES, SUN_AT } from "./timeline.js";
+import { bloomAt, BURY, CEIL, FAR_PLACES, HC, poolAt, POOL_DEFS, project, SPIRE_PLACES, streamPaths, waterReach, type View } from "./world.js";
 
 /** The part of the picture the Debrief card leaves open, CSS px: the valley is kept inside it. */
 export interface FreeArea {
@@ -47,6 +47,8 @@ export interface SurfaceScene {
 export interface SceneSetup {
   theme: CompanyTheme;
   vesselId: string;
+  /** How many pylons 2.0 dropped (one per mission won): those beyond the three spires show as far beams. None if left out. */
+  pylons?: number;
 }
 
 /** The horizon's height in the picture (a share of its height), wide and tall pictures: [time, share]. */
@@ -105,6 +107,7 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
   const hyTall = track(HY_TALL);
   const sky = createSky();
   const fire = fireTimes();
+  const farFire = farTimes(Math.min(FAR_PLACES.length, farCount(o.pylons ?? SPIRES)));
   let valley: Valley | undefined;
   let built = { U: 0, vmax: 0, R: 0 };
   let prepared = false;
@@ -466,6 +469,60 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
     g.restore();
   }
 
+  // ---- The far pylons (I17): thin beams rising from beyond the horizon, behind the far mountains.
+  function drawFarBeams(g: CanvasRenderingContext2D, v: View, t: number, day: number): void {
+    if (!farFire.length) return;
+    const unitW = clamp(v.f * 0.0017, 0.7, 1.8);
+    g.save();
+    g.globalCompositeOperation = "lighter";
+    g.lineCap = "round";
+    for (let k = 0; k < farFire.length; k++) {
+      const since = t - farFire[k]!;
+      if (since <= 0) continue;
+      const p = FAR_PLACES[k]!;
+      const X = p.u * p.Z;
+      const x = project(v, X, 0, p.Z, P)[0];
+      if (x < -40 || x > v.w + 40) continue;
+      const yA = P[1];
+      const yDeck = project(v, X, CEIL, p.Z, P)[1];
+      const grow = easeOut(clamp(since / 0.7));
+      const yTop = lerp(yA, Math.min(-10, yDeck - v.f), grow);
+      const power = (1 + 1.6 * Math.exp(-since * 3)) * (0.9 + 0.1 * Math.sin(t * 6 + k * 1.9)) * (1 - 0.35 * day);
+      for (const [wide, rgb, al] of [
+        [6, "30 190 150", 0.06],
+        [2.6, "60 230 190", 0.14],
+        [1.1, "150 255 230", 0.42],
+        [0.45, "240 255 250", 0.8],
+      ] as const) {
+        g.lineWidth = wide * unitW;
+        const grd = g.createLinearGradient(0, yA, 0, yTop);
+        grd.addColorStop(0, `rgb(${rgb} / ${clamp(al * power).toFixed(3)})`);
+        grd.addColorStop(0.35, `rgb(${rgb} / ${clamp(al * power * 0.7).toFixed(3)})`);
+        grd.addColorStop(1, `rgb(${rgb} / 0)`);
+        g.strokeStyle = grd;
+        g.beginPath();
+        g.moveTo(x, yA);
+        g.lineTo(x, yTop);
+        g.stroke();
+      }
+      // Where it lights the far edge of the cloud deck.
+      if (yTop < yDeck) {
+        const rx = v.f * 0.05;
+        const ry = Math.max(2, v.f * 0.01);
+        g.save();
+        g.translate(x, yDeck);
+        g.scale(1, ry / rx);
+        const gl = g.createRadialGradient(0, 0, 0, 0, 0, rx);
+        gl.addColorStop(0, `rgb(120 255 214 / ${clamp(0.3 * power * (1 - 0.6 * day)).toFixed(3)})`);
+        gl.addColorStop(1, "rgb(120 255 214 / 0)");
+        g.fillStyle = gl;
+        g.fillRect(-rx, -rx, rx * 2, rx * 2);
+        g.restore();
+      }
+    }
+    g.restore();
+  }
+
   // ---- A beam: from the emitter straight up through the deck, and on into the clear sky.
   function drawBeam(g: CanvasRenderingContext2D, v: View, i: number, t: number): void {
     const s = SPIRE_PLACES[i]!;
@@ -710,6 +767,7 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
       const day = smooth(6.5, 10.5, t);
 
       sky.draw(g, v, t, clamp(w / 300, 3, 5) / Math.sqrt(clamp(quality, 0.3, 1)));
+      drawFarBeams(g, v, t, day);
       const crestK = sunK * (0.85 - 0.55 * day);
       const L = valley!.layers;
       const layer = (id: Layer["id"]) => L.find((l) => l.id === id);

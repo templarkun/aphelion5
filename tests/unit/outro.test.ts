@@ -14,6 +14,9 @@ import * as TS from "../../src/web/outro/surface/timeline.js";
 import { BLOOM_AT, BLOOM_FULL, WATER_AT, WATER_FULL } from "../../src/web/outro/surface/timeline.js";
 import { bloomAt, poolAt, POOL_DEFS, SPIRE_PLACES, streamPaths, waterAt, waterReach } from "../../src/web/outro/surface/world.js";
 import { createSky, vortexRadius } from "../../src/web/outro/surface/sky.js";
+import { FAR_PLACES } from "../../src/web/outro/surface/world.js";
+import * as TO from "../../src/web/outro/orbital/timeline.js";
+import { facing, groundPoint, RP } from "../../src/web/outro/orbital/globe.js";
 import * as sound from "../../src/web/briefing/soundHooks.js";
 import { hasOutro } from "../../src/web/outro/VictoryOutro.js";
 import { randomAnswer } from "./campaignFuzz.js";
@@ -188,9 +191,10 @@ test("a conceded or lost game has no outro: it keeps the plain Game over card", 
   expect(campaignStatsOf(data(), s).missions.length).toBe(2);
 });
 
-test("every Company gets an outro (Terraformer 2.0 until the designer deals them out; Surface Terraform and 1.0 in System options) and colours", () => {
-  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "surface", "terraformer"]);
+test("every Company gets an outro (Terraformer 2.0 until the designer deals them out; Surface Terraform, Orbital Claim and 1.0 in System options) and colours", () => {
+  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "surface", "orbital", "terraformer"]);
   expect(outroFor("V2", "surface").name).toBe("Surface Terraform");
+  expect(outroFor("V1", "orbital").name).toBe("Orbital Claim");
   expect(DEFAULT_OUTRO).toBe("terraformer2");
   expect(outroFor("V1", "terraformer").id).toBe("terraformer");
   expect(outroFor("V1", "nonsense").id).toBe("terraformer2");
@@ -309,6 +313,79 @@ test("Surface Terraform: the sky opens over the great spire and the sun shows in
 
 test("Surface Terraform calls its own silent sound hooks", () => {
   for (const f of [sound.playSpireIgnition, sound.playAtmosphereClear, sound.playWaterFlow, sound.playVictoryResolve]) {
+    expect(typeof f).toBe("function");
+    expect(f()).toBeUndefined();
+  }
+});
+
+test("Surface Terraform (I17): the pylons beyond the three spires stand far off as beams, one for every other mission won, all fired in Act 1", () => {
+  expect(TS.farCount(7)).toBe(4);
+  expect(TS.farCount(3)).toBe(0);
+  expect(TS.farCount(1)).toBe(0);
+  // 2.0 drops at most twelve pylons: nine far places are enough.
+  expect(FAR_PLACES.length).toBeGreaterThanOrEqual(T2.pylonCount(99) - TS.SPIRES);
+  for (const n of [1, 4, 9]) {
+    const at = TS.farTimes(n);
+    expect(at.length).toBe(n);
+    for (const [i, x] of at.entries()) {
+      // After the spires' own beams, before the storm opens.
+      expect(x).toBeGreaterThan(TS.fireTimes()[2]!);
+      expect(TS.actAt(x)).toBe(1);
+      if (i) expect(x).toBeGreaterThan(at[i - 1]!);
+    }
+  }
+  // Far beyond the valley's far mountains.
+  for (const p of FAR_PLACES) expect(p.Z).toBeGreaterThan(40);
+});
+
+test("Orbital Claim: 10 to 12 seconds in four acts; the beacon fires in Act 1, the lock in Act 2, lattice and grid in Act 3", () => {
+  expect(TO.FILM_SECONDS).toBeGreaterThanOrEqual(10);
+  expect(TO.FILM_SECONDS).toBeLessThanOrEqual(12);
+  expect([...TO.ACT_AT]).toEqual([0, 3.0, 6.5, 9.5]);
+  expect([0, 2.9, 3.0, 6.4, 6.5, 9.4, 9.5, 30].map(TO.actAt)).toEqual([1, 1, 2, 2, 3, 3, 4, 4]);
+  expect(TO.actAt(TO.BEAM_AT)).toBe(1);
+  expect(TO.actAt(TO.BEAM_AT + TO.BEAM_CLIMB)).toBe(1);
+  expect(TO.actAt(TO.ARRIVE_AT)).toBe(2);
+  expect(TO.actAt(TO.LOCK_AT)).toBe(2);
+  expect(TO.LOCK_AT).toBeGreaterThan(TO.ARRIVE_AT);
+  expect(TO.actAt(TO.TETHER_FULL)).toBe(2);
+  // Twelve relay satellites leave the tether point one after another and are all in the lattice within Act 3.
+  expect(TO.SATS).toBe(12);
+  expect(TO.actAt(TO.satLaunch(0))).toBe(3);
+  expect(TO.actAt(TO.satSnap(TO.SATS - 1))).toBe(3);
+  expect(TO.snappedBy(TO.satSnap(0) - 0.01)).toBe(0);
+  expect(TO.snappedBy(TO.satSnap(TO.SATS - 1))).toBe(TO.SATS);
+  // The grid sweeps out (sound hook) and claims the whole region in Act 3; only ever growing.
+  expect(TO.actAt(TO.GRID_AT)).toBe(3);
+  expect(TO.gridReach(TO.GRID_AT)).toBe(0);
+  expect(TO.gridReach(TO.GRID_FULL)).toBe(1);
+  for (let t = 0; t < 14; t += 0.1) expect(TO.gridReach(t + 0.1)).toBeGreaterThanOrEqual(TO.gridReach(t));
+  expect(TO.GRID_FULL).toBeLessThan(TO.ACT_AT[3]);
+  expect(TO.actAt(TO.SECURED_AT)).toBe(3);
+  expect(TO.actAt(TO.RESOLVE_AT)).toBe(4);
+  expect(TO.DEBRIEF_AT).toBeGreaterThan(TO.RESOLVE_AT);
+  expect(TO.DEBRIEF_AT).toBeLessThan(TO.FILM_SECONDS);
+  expect(TO.STILL_AT).toBeGreaterThan(TO.FILM_SECONDS);
+});
+
+test("Orbital Claim: the territory grid lies on the curve of the planet, and only its near side is drawn", () => {
+  // A place of the grid's plane lands on the ground (radius RP from the planet's middle), the sector itself at the origin.
+  expect(groundPoint(0, 0)).toEqual([0, 0, 0]);
+  for (const [a, b] of [[10, 0], [-60, 40], [110, 110]]) {
+    const p = groundPoint(a!, b!, 0);
+    expect(Math.hypot(p[0], p[1] + RP, p[2])).toBeCloseTo(RP, 6);
+    expect(p[1]).toBeLessThan(0);
+    const q = groundPoint(a!, b!, 2);
+    expect(Math.hypot(q[0], q[1] + RP, q[2])).toBeCloseTo(RP + 2, 6);
+  }
+  const cam = { pos: [0, 40, 30] as [number, number, number], r: [1, 0, 0] as [number, number, number], d: [0, -1, 0] as [number, number, number], f: [0, 0, -1] as [number, number, number], focal: 900, cx: 0, cy: 0, w: 1, h: 1 };
+  expect(facing(cam, groundPoint(0, 0))).toBe(true);
+  // The far side of the planet faces away.
+  expect(facing(cam, [0, -2 * RP, 0])).toBe(false);
+});
+
+test("Orbital Claim calls its own silent sound hooks", () => {
+  for (const f of [sound.playSkyBeamFire, sound.playOrbitalLock, sound.playGridSweep, sound.playVictoryResolve]) {
     expect(typeof f).toBe("function");
     expect(f()).toBeUndefined();
   }
