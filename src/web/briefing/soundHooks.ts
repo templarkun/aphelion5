@@ -52,7 +52,17 @@ export function playBayDoorsOpen(): void {}
 export function playReentryStreak(): void {}
 /** Terraformer outro, Act 3: a pylon hits and its shock wave goes out (2.0: a pylon has anchored and fires its beam). `index` 0 = the first; `of` = how many pylons. */
 export function playTerraformShockwave(_index: number, _of: number): void {}
-/** Terraformer outro, Act 4: the sun comes over the edge; the Debrief follows. */
+/** Terraformer outro, Act 4: the sun comes over the edge; the Debrief follows. (Surface Terraform: the living world settles, Act 4.) */
 export function playVictoryResolve(): void {}
 /** Terraformer 2.0, Act 1: a pylon's braking thrusters light. `index` 0 = the first; `of` = how many pylons. (2.0 also calls the four above: doors, entering the air, each anchor lock with its beam, the sunrise.) */
 export function playRetroThrust(_index: number, _of: number): void {}
+/**
+ * Surface Terraform (designer 2026-11-19), on the planet's surface. (It also calls playVictoryResolve
+ * as the living world settles in Act 4.)
+ */
+/** Act 1: a spire's radiator wings have opened and it fires its beam into the storm. Called once for each of the three spires. */
+export function playSpireIgnition(): void {}
+/** Act 2: the clear-sky vortex starts to turn and open the storm clouds. */
+export function playAtmosphereClear(): void {}
+/** Act 3: water starts to run down the dry canyon beds from the spires' feet. */
+export function playWaterFlow(): void {}

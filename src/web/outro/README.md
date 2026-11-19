@@ -10,6 +10,7 @@ choice: `OUTRO_OF_COMPANY` in `index.ts` (empty for now, so every Company gets `
 | Outro | What it is |
 | --- | --- |
 | `terraformer2` | Terraformer 2.0 (designer 2026-11-17), plays after a won Campaign. Industrial terraforming: the bay doors open, the pylons (atmospheric processors: reactor core, four folding wings, anchor spike, braking thrusters on top, firing down) are lowered out, drift free for 1.2 s while they turn upright, then come down slowly on their thrusters; one by one they anchor and fire blue-green beams up through the toxic storm, which clears in emerald and cyan rings over ocean and green land; the sun rises. About 15 seconds. |
+| `surface` | Surface Terraform (designer 2026-11-19), System options only for now. Goes on from 2.0 on the planet's surface: a barren volcanic valley under a toxic amber-grey sky; three spires (2.0's pylons, drawn by the same `rig.ts`) open their radiator wings and fire cyan-emerald beams; a clear-sky vortex spirals open over the great spire, rain and bright mist fall, sunlight breaks onto the ridges; water fills the dry canyon beds and pools, green and glowing life spreads from the spires like a tide, flocks glide in; a slow panoramic drift while the Debrief slides in. About 12.5 seconds. |
 | `terraformer` | Terraformer 1.0, kept as it was to compare (System options only). Bay doors, one pylon per mission won falls through the air, each hit sends a shock wave over the ground and turns it into a lit sector in the Company's colours; the sun rises. About 11.5 seconds. |
 
 ## What every outro is given (`types.ts`)
@@ -32,6 +33,7 @@ VictoryOutro.tsx             picks the Company's outro for a finished game; the 
 Debrief.tsx                  the Campaign Debrief card, shared by every outro
 TerraformerVictoryOutro.tsx  Terraformer 1.0: canvas, captions, SKIP (kept as it was)
 TerraformerVictoryOutro2.0.tsx  Terraformer 2.0: the same page with the 2.0 film
+SurfaceTerraformOutro.tsx    Surface Terraform: the same page with the surface film
 outro.css                    their looks (colours and shapes follow the chosen menu style, --bf-*)
 terraformer/timeline.ts      when things happen (seconds); pylon places
 terraformer/scene.ts         the film: camera, pylons, trails, plasma, hits
@@ -45,12 +47,23 @@ terraformer2/scene.ts        2.0: the film: camera, the pylons' way out of the b
 terraformer2/rig.ts          2.0: one pylon, an atmospheric processor drawn as a lit solid
 terraformer2/world.ts        2.0: the storm and the ground, cleared and changed point by point over time
 terraformer2/globe.ts        2.0: space, the globe's edge, its air, the sun (1.0's globe without its ground)
+surface/timeline.ts          Surface: when things happen (seconds)
+surface/world.ts             Surface: the valley in km (spires, streams, pools, sun, moons), when water and the green tide reach each place, the projection
+surface/layers.ts            Surface: the painted parallax layers (far mountains, valley floor, ridges, near rocks), barren and living, and the tide passing over them
+surface/sky.ts               Surface: the sky, sun and moons, the storm deck and its clear-sky vortex
+surface/scene.ts             Surface: the film: camera drift, layers far to near, spires, beams, water, glowing flowers, flocks, rain, mist, sunlight
 ```
+
+Surface Terraform is drawn on one canvas in layers, each painted once (barren and living) and moved
+by the camera's slow sideways drift as much as its distance asks; the valley floor is drawn sheared,
+so its near part moves more than its far part. Every point of a layer knows the moment the green
+tide reaches it, so any moment of the film can be drawn by itself.
 
 ## To add an outro
 
 1. Write its component beside `TerraformerVictoryOutro.tsx`. It takes `OutroProps` and calls
-   `onComplete` when the player is done. Give it a `[SKIP]` button and the Debrief.
+   `onComplete` when the player is done. Give it "Tap twice to skip" (`SkipHint.tsx`) and the
+   Debrief (`Debrief.tsx`). System options gets its preview button from `OUTROS` by itself.
 2. List it in `OUTROS` (`index.ts`).
 3. When the designer says which Company it belongs to, add the line to `OUTRO_OF_COMPANY`.
 
@@ -61,7 +74,9 @@ Sleepers triggered, Gyros drained. A statistics and achievements page will use t
 
 Sound: the films are silent. `../briefing/soundHooks.ts` holds empty functions already called
 at the right moments (`playBayDoorsOpen`, `playReentryStreak`, `playTerraformShockwave`,
-`playVictoryResolve`, and for 2.0 `playRetroThrust`); fill them in when there are audio files.
+`playVictoryResolve`, for 2.0 `playRetroThrust`, for Surface Terraform `playSpireIgnition` (once
+per spire), `playAtmosphereClear`, `playWaterFlow` and `playVictoryResolve`); fill them in when
+there are audio files.
 
-To look at an outro without playing a Campaign: System options (the gear) > "Play Terraformer 2.0"
-or "Play Terraformer 1.0".
+To look at an outro without playing a Campaign: System options (the gear) > "Play Terraformer 2.0",
+"Play Surface Terraform" or "Play Terraformer 1.0".

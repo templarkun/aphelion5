@@ -10,6 +10,7 @@
 # round 3 the same day: CHANGED notes on T13_OUT_03, 07, 08, 10. The statistics page and the
 # Campaign editor (sections STATISTICS AND ACHIEVEMENTS, CAMPAIGN EDITOR, T13_STAT_01-03,
 # T13_ED_01-09) 2026-11-18; checked by tests/unit/editor.test.ts and scripts/ui-pages.mjs.
+# Surface Terraform, the third outro (T13_OUT_12-16, CHANGED note on T13_OUT_07) 2026-11-19.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1149,6 +1150,9 @@ note: CHANGED 2026-11-17 (designer): System options lists both versions: "Play T
       (<Company>)" and "Play Terraformer 1.0 (<Company>)"; the badge names the version
       ("PREVIEW - TERRAFORMER 2.0 - SAMPLE NUMBERS"). The still picture of reduced motion is
       2.0's end. 2.0 also calls playRetroThrust (once per pylon, as its thrusters light).
+note: CHANGED 2026-11-19 (designer): System options lists three: "Play Terraformer 2.0
+      (<Company>)", "Play Surface Terraform (<Company>)" and "Play Terraformer 1.0 (<Company>)"
+      (T13_OUT_12). A won game still plays 2.0.
 
 id: T13_OUT_08
 title: Terraformer 2.0, act by act
@@ -1227,6 +1231,91 @@ source: designer 2026-11-17 ("leave this version in the menu for me to see")
 given: the briefing, System options
 then: "Play Terraformer 1.0 (<Company>)" plays the 1.0 film exactly as before (T13_OUT_02), with
       the same Debrief card as 2.0 (T13_OUT_10). It never plays after a real game.
+
+id: T13_OUT_12
+title: Surface Terraform: a third outro, in System options
+source: designer 2026-11-19 ("a third victory outro, next to Terraformer 1.0 and 2.0 ... a direct
+        continuation after our capital ship drops 7 orbital terraformer pylons onto the alien
+        planet"; "Keep 2.0 as the default after a won game until I say otherwise")
+given: the briefing, System options (the gear)
+then: three outro buttons: "Play Terraformer 2.0 (<Company>)", "Play Surface Terraform
+      (<Company>)", "Play Terraformer 1.0 (<Company>)". Surface Terraform plays with sample
+      numbers, marked "PREVIEW - SURFACE TERRAFORM - SAMPLE NUMBERS"; Return to Command Deck plays
+      the gate and comes back to the briefing. No game is started or changed.
+given: a won Campaign (T13_OUT_01)
+then: Terraformer 2.0 plays, as before. Surface Terraform never plays after a real game until the
+      designer says so (or gives it to a Company).
+note: Screen only, no rule. Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+
+id: T13_OUT_13
+title: Surface Terraform, act by act
+source: designer 2026-11-19 (the four acts, 11-13 seconds)
+given: Surface Terraform, Normal speed
+then: the camera stands on the planet's surface at the near end of a rugged valley, looking across
+      it to the horizon. The picture is in layers (sky, distant mountains, the valley floor, the
+      jagged ridges at its sides, rocks in front); the camera drifts slowly sideways, so the near
+      layers move more than the far ones.
+then: Act 1, 0 - 3.0 s, "SPIRE IGNITION": a barren wasteland: dark jagged volcanic ridges, dusty
+      red and ash ground cracked with dry canyon beds and a few glowing vents, a thick toxic
+      amber-grey sky with red lightning, ash blowing, a smoking volcano far off. Three terraformer
+      spires stand anchored deep in the rock: a far one on the horizon, the great one in the
+      middle distance, a nearer one to its right. One after another (0.85, 1.2, 1.5 s) their
+      radiator wings flare open and, about half a second later, each fires a cyan-emerald beam
+      straight up into the clouds; where a beam meets the clouds they glow.
+then: Act 2, 3.0 - 6.5 s, "ATMOSPHERIC CLEANSING": over the great spire, where its beam pierces
+      the clouds, a clear-sky vortex turns and opens, spiralling outwards, pushing the storm back
+      to the horizon: behind it a deep cerulean sky, the alien sun low over the valley and two
+      pale moons. Condensation rain falls through the valley (heaviest about 4.9 s, gone by 8 s)
+      with bright mist; at about 5 s, as the opening reaches the sun, golden sunlight and rays
+      break through onto the ridges. The camera looks up a little at the opening sky.
+then: Act 3, 6.5 - 10.0 s, "BIOSPHERE BLOOM": from the spires' feet water runs down the dry
+      canyon beds, shimmering and reflecting the sky, and fills pools and a lake. From the same
+      places green, teal and glowing life spreads over the barren rock like a tide (a glowing
+      front where it is passing; glowing flowers light up as it reaches them): over the valley
+      floor, up the lower slopes of the ridges, over the rocks in front; the distant mountains
+      turn green and blue with snow on their peaks; the volcano stops smoking; what is left of
+      the storm at the horizon turns to white cloud. From 7.3 s flocks of sky creatures glide in
+      round the spires. All of the valley is alive by 10 s.
+then: Act 4, from 10.0 s, "LIVING WORLD": a slow panoramic drift over the living, sunlit valley,
+      the spires humming on the horizon (their beams and lights pulse gently); at 10.6 s the
+      Debrief card slides in (T13_OUT_15). The film is over at 12.5 s; the picture keeps drifting
+      slowly under the card.
+note: Always three spires, whatever the number of missions won (I17 asks about the other four
+      pylons). Every moving thing is worked out from the time alone, so the same moment always
+      looks the same. Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+
+id: T13_OUT_14
+title: Surface Terraform: the spires
+source: designer 2026-11-19 ("central cylindrical reactor core + unfolded radiator wings, matching
+        the orbital drop units")
+then: each spire is the pylon of Terraformer 2.0 (T13_OUT_09), drawn the same way, now standing
+      upright with its anchor spike buried in the rock and a broken mound round its foot: reactor
+      core with its glowing ring in the Company's colour, the four radiator wings (a little open
+      at first, flaring wide open in Act 1), blinking beacons, the emitter on top that fires the
+      beam. Glowing seams run from its foot into the ground. The thrusters stay off.
+
+id: T13_OUT_15
+title: Surface Terraform: the Debrief, skipping, speed, reduced motion
+source: designer 2026-11-19 ("Build it the exact same way our existing Terraformer outro is built")
+then: the same Campaign Debrief card as the other outros (T13_OUT_04, T13_OUT_10), sliding in at
+      the side on a wide screen and along the foot on a phone; the picture turns so the valley and
+      the spires stay in the part the card leaves open.
+then: "Tap twice to skip" at the foot (T13_OUT_03): two taps or key presses within 1 s jump to the
+      living valley behind a short white veil and bring the Debrief.
+then: Slow / Fast speed: the film takes twice as long / half as long. Reduced motion or Instant: no
+      film, no "Tap twice to skip": one still picture of the living valley and the Debrief at once.
+      On a machine that cannot keep up, the picture is drawn with fewer points (softer), not slower.
+
+id: T13_OUT_16
+title: Surface Terraform: sound hooks
+source: designer 2026-11-19 ("Wire silent sound hooks into soundHooks.ts (playSpireIgnition(),
+        playAtmosphereClear(), playWaterFlow(), playVictoryResolve())")
+then: the film is silent. soundHooks.ts holds empty functions, already called at their moments:
+      playSpireIgnition (once for each spire as it fires its beam: 1.4, 1.75, 2.05 s),
+      playAtmosphereClear (the vortex starts to open, 3.15 s), playWaterFlow (the water starts to
+      run, 6.6 s), playVictoryResolve (the living world, 10.0 s; also when the film is skipped,
+      and at once with reduced motion). Skipping silences the hooks not yet played except
+      playVictoryResolve.
 
 === SECTION: STATISTICS AND ACHIEVEMENTS (designer 2026-11-18, screen only, no rule change) ===
 

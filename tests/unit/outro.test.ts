@@ -10,6 +10,11 @@ import { campaignStatsOf, overloadsOf, sampleStats } from "../../src/web/outro/s
 import { ACT_AT, actAt, DEBRIEF_AT, DOORS_AT, DOORS_OPEN_AT, FILM_SECONDS, impactsBy, impactTimes, LAST_IMPACT, pylonCount, REENTRY_AT, releaseTimes, RESOLVE_AT, sitePlaces } from "../../src/web/outro/terraformer/timeline.js";
 import { companyTheme, FALLBACK_THEME } from "../../src/web/outro/themes.js";
 import * as T2 from "../../src/web/outro/terraformer2/timeline.js";
+import * as TS from "../../src/web/outro/surface/timeline.js";
+import { BLOOM_AT, BLOOM_FULL, WATER_AT, WATER_FULL } from "../../src/web/outro/surface/timeline.js";
+import { bloomAt, poolAt, POOL_DEFS, SPIRE_PLACES, streamPaths, waterAt, waterReach } from "../../src/web/outro/surface/world.js";
+import { createSky, vortexRadius } from "../../src/web/outro/surface/sky.js";
+import * as sound from "../../src/web/briefing/soundHooks.js";
 import { hasOutro } from "../../src/web/outro/VictoryOutro.js";
 import { randomAnswer } from "./campaignFuzz.js";
 import { data } from "./helpers.js";
@@ -183,8 +188,9 @@ test("a conceded or lost game has no outro: it keeps the plain Game over card", 
   expect(campaignStatsOf(data(), s).missions.length).toBe(2);
 });
 
-test("every Company gets an outro (Terraformer 2.0 until the designer deals them out, 1.0 kept to compare) and colours", () => {
-  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "terraformer"]);
+test("every Company gets an outro (Terraformer 2.0 until the designer deals them out; Surface Terraform and 1.0 in System options) and colours", () => {
+  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "surface", "terraformer"]);
+  expect(outroFor("V2", "surface").name).toBe("Surface Terraform");
   expect(DEFAULT_OUTRO).toBe("terraformer2");
   expect(outroFor("V1", "terraformer").id).toBe("terraformer");
   expect(outroFor("V1", "nonsense").id).toBe("terraformer2");
@@ -235,5 +241,75 @@ test("Terraformer 2.0: slower and heavier than 1.0, in four acts; every pylon lo
     }
     expect(T2.anchorsBy(anc[0]! - 0.01, n)).toBe(0);
     expect(T2.anchorsBy(anc[n - 1]!, n)).toBe(n);
+  }
+});
+
+test("Surface Terraform: 11 to 13 seconds in four acts; three spires fire in Act 1, the vortex opens in Act 2, water and life in Act 3", () => {
+  expect(TS.FILM_SECONDS).toBeGreaterThanOrEqual(11);
+  expect(TS.FILM_SECONDS).toBeLessThanOrEqual(13);
+  expect([...TS.ACT_AT]).toEqual([0, 3.0, 6.5, 10.0]);
+  expect([0, 2.9, 3.0, 6.4, 6.5, 9.9, 10.0, 30].map(TS.actAt)).toEqual([1, 1, 2, 2, 3, 3, 4, 4]);
+  expect(TS.SPIRES).toBe(3);
+  expect(SPIRE_PLACES.length).toBe(3);
+  const fire = TS.fireTimes();
+  expect(fire.length).toBe(3);
+  for (const [i, f] of fire.entries()) {
+    expect(TS.actAt(TS.FLARE_AT[i]!)).toBe(1);
+    expect(TS.actAt(f)).toBe(1);
+    // Each beam reaches the storm before the vortex opens.
+    expect(f + TS.CLIMB).toBeLessThan(TS.VORTEX_AT);
+    if (i) expect(f).toBeGreaterThan(fire[i - 1]!);
+  }
+  expect(TS.firedBy(fire[0]! - 0.01)).toBe(0);
+  expect(TS.firedBy(fire[2]!)).toBe(3);
+  expect(TS.actAt(TS.VORTEX_AT)).toBe(2);
+  expect(TS.actAt(TS.SUN_AT)).toBe(2);
+  expect(TS.actAt(TS.RAIN[1])).toBe(2);
+  expect(TS.actAt(WATER_AT)).toBe(3);
+  expect(TS.actAt(BLOOM_AT)).toBe(3);
+  expect(TS.actAt(TS.FLOCKS_AT)).toBe(3);
+  expect(WATER_FULL).toBeLessThan(TS.ACT_AT[3]);
+  expect(BLOOM_FULL).toBeLessThanOrEqual(TS.ACT_AT[3]);
+  expect(TS.actAt(TS.RESOLVE_AT)).toBe(4);
+  expect(TS.DEBRIEF_AT).toBeGreaterThan(TS.RESOLVE_AT);
+  expect(TS.DEBRIEF_AT).toBeLessThan(TS.FILM_SECONDS);
+  expect(TS.STILL_AT).toBeGreaterThan(TS.FILM_SECONDS);
+});
+
+test("Surface Terraform: the sky opens over the great spire and the sun shows in Act 2; water and the green tide come from the spires' feet in Act 3, worked out from the time alone", () => {
+  // The vortex only grows; the sun is hidden in the storm, then shows through the opening.
+  for (let t = 0; t < 14; t += 0.25) expect(vortexRadius(t + 0.25)).toBeGreaterThanOrEqual(vortexRadius(t));
+  const sky = createSky();
+  expect(sky.sunShows(1)).toBeLessThan(0.05);
+  expect(sky.sunShows(TS.VORTEX_AT)).toBeLessThan(0.05);
+  expect(sky.sunShows(TS.ACT_AT[2])).toBeGreaterThan(0.9);
+  expect(sky.coverOver(0, 1)).toBeGreaterThan(0.95);
+  expect(sky.coverOver(0, TS.ACT_AT[2])).toBeLessThan(0.05);
+  // The same moment always gives the same answer (nothing is counted from frame to frame).
+  expect(sky.sunShows(5.123)).toBe(createSky().sunShows(5.123));
+  // Each canyon bed fills from its spire's foot, all of them by WATER_FULL; each pool when its stream reaches it.
+  const paths = streamPaths();
+  expect(paths.length).toBeGreaterThanOrEqual(3);
+  for (const [k, p] of paths.entries()) {
+    const sp = SPIRE_PLACES[p.def.from]!;
+    expect(Math.hypot(p.x[0]! - sp.X, p.z[0]! - sp.Z)).toBeLessThan(1e-9);
+    expect(waterReach(k, WATER_AT - 0.01)).toBe(0);
+    expect(waterReach(k, WATER_FULL)).toBeCloseTo(p.length, 6);
+    for (const d of [0.2, 0.5, 0.9].map((x) => x * p.length)) expect(waterReach(k, waterAt(k, d))).toBeCloseTo(d, 6);
+  }
+  for (let i = 0; i < POOL_DEFS.length; i++) expect(TS.actAt(poolAt(i))).toBe(3);
+  // The green tide: first at the spires' feet, everywhere in the valley by BLOOM_FULL.
+  for (const s of SPIRE_PLACES) expect(bloomAt(s.X, s.Z)).toBeLessThan(BLOOM_AT + 1.2);
+  for (const [X, Z] of [[0, 1], [-3, 2], [4, 6], [-8, 20], [10, 40], [0.3, 2.25]]) {
+    const a = bloomAt(X!, Z!);
+    expect(a).toBeGreaterThanOrEqual(BLOOM_AT);
+    expect(a).toBeLessThanOrEqual(BLOOM_FULL + 0.06);
+  }
+});
+
+test("Surface Terraform calls its own silent sound hooks", () => {
+  for (const f of [sound.playSpireIgnition, sound.playAtmosphereClear, sound.playWaterFlow, sound.playVictoryResolve]) {
+    expect(typeof f).toBe("function");
+    expect(f()).toBeUndefined();
   }
 });
