@@ -112,6 +112,64 @@ export interface CloseupPiece<P> {
   sounds: (crossed: (at: number) => boolean) => void;
 }
 
+let sparkTex: Texture | undefined;
+/** A particle: a bright point with a short soft falloff (sharper than the puff). */
+export function spark(): Texture {
+  if (sparkTex) return sparkTex;
+  const c = document.createElement("canvas");
+  c.width = c.height = 32;
+  const g = c.getContext("2d")!;
+  const r = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  r.addColorStop(0, "rgba(255,255,255,1)");
+  r.addColorStop(0.18, "rgba(255,255,255,0.9)");
+  r.addColorStop(0.45, "rgba(255,255,255,0.28)");
+  r.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = r;
+  g.fillRect(0, 0, 32, 32);
+  sparkTex = Texture.from(c);
+  return sparkTex;
+}
+
+/**
+ * A pool of particles (designer 2026-11-20: things made of energy are drawn with particles). Each
+ * frame: `begin()`, then `dot()` for every particle shown, then `end()` hides the rest.
+ */
+export interface Motes {
+  begin: () => void;
+  /** A particle at (x, y), `size` pixels across; `stretch` > 1 draws it long along angle `rot` (radians). */
+  dot: (x: number, y: number, size: number, tint: number, alpha: number, stretch?: number, rot?: number) => void;
+  end: () => void;
+}
+export function motes(parent: Container, n: number): Motes {
+  const pool: Sprite[] = [];
+  for (let i = 0; i < n; i++) {
+    const s = new Sprite({ texture: spark(), anchor: 0.5 });
+    s.blendMode = "add";
+    s.visible = false;
+    parent.addChild(s);
+    pool.push(s);
+  }
+  let used = 0;
+  return {
+    begin: () => {
+      used = 0;
+    },
+    dot: (x, y, size, tint, alpha, stretch = 1, rot = 0) => {
+      if (used >= pool.length || alpha < 0.01 || size < 0.2) return;
+      const s = pool[used++]!;
+      s.visible = true;
+      s.position.set(x, y);
+      s.tint = tint;
+      s.alpha = Math.min(1, alpha);
+      s.rotation = rot;
+      s.scale.set((size * stretch) / 32, size / 32);
+    },
+    end: () => {
+      for (let i = used; i < pool.length; i++) pool[i]!.visible = false;
+    },
+  };
+}
+
 /** A small fixed random sequence (the same every time). */
 export function seq(seed: number): () => number {
   let x = seed >>> 0 || 1;

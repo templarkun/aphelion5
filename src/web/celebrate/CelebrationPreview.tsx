@@ -13,7 +13,6 @@ import type { GameData } from "../../data/index.js";
 import type { GameState } from "../../engine/state.js";
 import { FieldView } from "../FieldView.js";
 import { MissionBar } from "../Mission.js";
-import { companyTheme } from "../outro/themes.js";
 import { CelebrationSkip } from "./CelebrationSkip.js";
 import { type WinShow, winShowOf } from "./detect.js";
 import { MissionWin, type Shake } from "./MissionWin.js";
@@ -96,7 +95,6 @@ export function CelebrationPreview({ data, company, what, onClose }: { data: Gam
       {win && (
         <MissionWin
           show={win}
-          theme={companyTheme(company)}
           onHold={setHold}
           onShake={(f) => (shakeRef.current = f)}
           onDone={() => {

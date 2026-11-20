@@ -53,7 +53,6 @@ import { MissionWin, type Shake } from "./celebrate/MissionWin.js";
 import { CelebrationSkip } from "./celebrate/CelebrationSkip.js";
 import { CelebrationPreview } from "./celebrate/CelebrationPreview.js";
 import type { PreviewWhat } from "./celebrate/previewBoards.js";
-import { companyTheme } from "./outro/themes.js";
 import type { SessionView } from "../engine/session.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -1242,7 +1241,6 @@ function GameScreen(p: GameProps) {
         <MissionWin
           key={win.state.events?.at(-1)?.seq ?? 0}
           show={win}
-          theme={companyTheme(win.state.player.company)}
           onHold={setHold}
           onShake={(f) => (shakeRef.current = f)}
           onDone={() => setWin(undefined)}

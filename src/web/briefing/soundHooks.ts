@@ -97,7 +97,7 @@ export function playBetaDetonation(): void {}
 /** The win, Mission Complete: the mission is won (8.2). */
 /** Win: a Trophy that came in with the winning answer lands in the Mission bar. */
 export function playTrophyLand(): void {}
-/** Win, Act 2: the band of light in the Company's colour sweeps across the Field. */
+/** Win, Act 2: the energy sweep crosses the Field. */
 export function playWinSweep(): void {}
 /** Win, Act 3: MISSION COMPLETE slams in. Also the still picture (reduced motion, Instant). */
 export function playMissionComplete(): void {}

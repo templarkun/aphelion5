@@ -16,7 +16,9 @@
 # The mission celebrations (section THE MISSION CELEBRATIONS, T13_CEL_01-08, CHANGED note on
 # T13_UPG_05) 2026-11-20; checked by tests/unit/celebrate.test.ts and scripts/ui-celebrate.mjs.
 # Later the same day (I21-I23): the win's shine, Alpha Purge, Beta Breach, Mission Complete for Beta
-# (T13_CEL_09-11, CHANGED notes on T13_CEL_01, 04, 06, 07, 08).
+# (T13_CEL_09-11, CHANGED notes on T13_CEL_01, 04, 06, 07, 08). Round 3 the same day (I24, I25):
+# the energy sweep, Alpha Purge's particle walls, the same for every Company (CHANGED notes on
+# T13_CEL_04, 06, 07, 09, 11).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1672,6 +1674,16 @@ note: CHANGED 2026-11-20 (designer, I23: the ring stopped at its full size and f
       beyond one edge and goes out beyond the other, so it never stands still on the Field. Each
       sector's edge lights as the band reaches it, with a glint on its top corner; the units still
       shiver. The hook is playWinSweep (was playWinShockwave). Also for Beta missions (T13_CEL_11).
+note: CHANGED 2026-11-20 (designer, I24: the shine looked like a detergent advert): act 2 is now
+      an energy sweep, the same way across the Field. A crackling front of energy made of
+      particles (they ride along it and flicker), a thin white-hot core, short filaments
+      crackling off it; behind it a faint ionised wake with violet in it and three ripples; it
+      throws off a spray of particles, a few running ahead, most left behind to fade. Each
+      sector's edge is traced by a thin line of energy from the side the front reaches first,
+      both ways round, a bright particle at each end, throwing off sparks; then it fades. No glint
+      on the hexes. It comes in from beyond one edge and leaves beyond the other with its whole
+      wake. The colours are the same for every Company (cyan energy, violet in the wake; I25): no
+      Company colour in Mission Complete any more, the line under the banner too.
 
 id: T13_CEL_05
 title: Both in one answer
@@ -1693,6 +1705,8 @@ then: the kill: a still close-up of the Wreck with "ALPHA DOWN · 6 / 6" for abo
 note: CHANGED 2026-11-20: Alpha Purge's still: the Wreck with a cold glowing edge, a few motes,
       "ALPHA PURGED · 6 / 6". Beta Breach's still: the scorched sector (what lies beneath shows),
       a few embers and smoke, "BETA DOWN · 3 / 3".
+note: CHANGED 2026-11-20 (I24): Alpha Purge's still also has a few particles rising over the Wreck
+      (no lines).
 
 id: T13_CEL_07
 title: Which piece plays (several of a kind)
@@ -1703,6 +1717,9 @@ then: with several pieces for one kind (none yet), one is picked for each missio
       game's own random numbers are never used.
 note: CHANGED 2026-11-20 (I21): Alpha now has two kills, Alpha Down and Alpha Purge; each Alpha
       mission plays one of them, picked this way (over many games both come up).
+note: CHANGED 2026-11-20 (designer, I25): every kill and win looks the same whatever the Company's
+      vessel, and the pick is the same for every Company: Alpha Down or Alpha Purge can come up for
+      V1 and for V2.
 
 id: T13_CEL_08
 title: The Developer tool and the preview
@@ -1746,6 +1763,15 @@ then: about 4.5 s (Normal speed), centred on the unit:
       4 (3.6-4.5 s) the zoom eases back.
 then: one tap does not skip it, two taps do (T13_CEL_03); the speed and reduced motion as T13_CEL_06.
 note: Silent hooks: playTargetLock (the cage locks), playPurgeBeam (the pillar), playKillConfirmed.
+note: CHANGED 2026-11-20 (designer, I24: the panels looked like flat blocks): the cage's six walls
+      are energy walls made of particles. In act 1 each wall's particles stream in from outside
+      as a swirling cloud (drawn long while they fly) and settle along the wall, where they flow
+      to and fro and flicker over a faint plane of light; at the lock a ring of particles flashes
+      out round the cage and sparks fly from its corners, and each corner keeps a glow with three
+      particles circling it. In act 2 the particles seethe and turn white as the cage closes and
+      crushes; each arc strikes with a few sparks. At the purge the walls' particles are flung up
+      the pillar of light; the sector's outline flash sheds particles; the motes rising up the
+      pillar are particles too.
 
 id: T13_CEL_10
 title: Beta Breach, the kill for Beta (more spectacular than Alpha's)
@@ -1782,5 +1808,6 @@ given: Mission 3; the 3rd O_02 destroyed. A Beta goes straight to the Trophy pil
 then: Beta Breach plays; as its camera pulls out the Trophy flies into the Mission bar; then
       Mission Complete (T13_CEL_04) with "BETA ELIMINATED · 3 / 3" and three Beta badges, the
       shine starting from the Beta's sector. Mission 5: "BETA ELIMINATED · 1 / 1", one badge.
+note: CHANGED 2026-11-20 (I24): the energy sweep (T13_CEL_04) in place of the shine.
       Then the Upgrade sheet.
 then: Gamma missions (Mission 7) and Salvage missions show neither piece yet.

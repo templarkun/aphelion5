@@ -97,9 +97,10 @@ export const WIN = {
   /** The last cell bursts this long after its flare. */
   burstAfter: 0.14,
   /**
-   * Act 2, shine (designer 2026-11-20, I23: no ring): a broad band of light in the Company's colour sweeps
-   * across the whole Field, away from the sector the unit left, lighting each sector as it passes; it
-   * comes in and goes out beyond the Field's edges, so it never stops on the Field (playWinSweep).
+   * Act 2, energy sweep (designer 2026-11-20, I23: no ring; I24: no shine): a crackling front of energy
+   * made of particles sweeps across the whole Field, away from the sector the unit left, tracing each
+   * sector's edge as it passes; it comes in and goes out beyond the Field's edges, wake and all, so it
+   * never stops on the Field (playWinSweep). The same colours for every Company (I25).
    */
   wave: [1.0, 2.2] as const,
   /** Act 3, banner: MISSION COMPLETE slams in (playMissionComplete), the line under it, the badges drop. */

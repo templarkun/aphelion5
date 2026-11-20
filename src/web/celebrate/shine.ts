@@ -1,6 +1,7 @@
 /**
- * The shine of Mission Complete (designer 2026-11-20, I23: in place of the ring that stopped and faded):
- * where its band of light lies at each moment of WIN.wave. Pure, for MissionWin.tsx and the tests.
+ * The energy sweep of Mission Complete (designer 2026-11-20: I23 in place of the ring that stopped and
+ * faded; I24 an energy front of particles in place of the shine): where its front lies at each moment
+ * of WIN.wave. Pure, for MissionWin.tsx and the tests.
  */
 
 import { WIN } from "./timeline.js";
@@ -9,9 +10,11 @@ export interface ShinePath {
   /** The way it sweeps (a unit vector, on the screen). */
   ux: number;
   uy: number;
-  /** Half the band's width (pixels). */
+  /** The front's reach ahead of its line (its glow, filaments, wobble), in pixels. */
   band: number;
-  /** Where the band's middle starts and ends, along that way, from the Field's top left corner: the whole band beyond the Field's edges. */
+  /** How far its wake trails behind the front (pixels). */
+  wake: number;
+  /** Where the front starts and ends, along that way, from the Field's top left corner: all of it (wake too) beyond the Field's edges. */
   s0: number;
   s1: number;
 }
@@ -30,7 +33,8 @@ export function shinePath(w: number, h: number, tile: number, from?: readonly [n
   const uy = vy / d;
   const band = Math.max(tile * 1.3, Math.min(w, h) * 0.2);
   const ends = [0, ux * w, uy * h, ux * w + uy * h];
-  return { ux, uy, band, s0: Math.min(...ends) - band, s1: Math.max(...ends) + band };
+  const wake = band * 2.2;
+  return { ux, uy, band, wake, s0: Math.min(...ends) - band, s1: Math.max(...ends) + wake };
 }
 
 /** How far along its path the band is at p (0-1 through WIN.wave): slower coming in and going out, never still. */
@@ -39,12 +43,12 @@ export function sweep(p: number): number {
   return 0.35 * q + 0.65 * ((1 - Math.cos(Math.PI * q)) / 2);
 }
 
-/** The band's middle at time t (s), along its way. */
+/** The front at time t (s), along its way. */
 export function shineAt(path: ShinePath, t: number): number {
   return path.s0 + (path.s1 - path.s0) * sweep((t - WIN.wave[0]) / (WIN.wave[1] - WIN.wave[0]));
 }
 
-/** When the band's middle passes a point (x, y) of the Field (s). */
+/** When the front passes a point (x, y) of the Field (s). */
 export function arrival(path: ShinePath, x: number, y: number): number {
   const e = Math.max(0, Math.min(1, (x * path.ux + y * path.uy - path.s0) / (path.s1 - path.s0)));
   let lo = 0;

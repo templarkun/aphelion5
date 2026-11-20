@@ -5,10 +5,12 @@
  *
  * 1. Trophy (0-1.0 s): the Field dims a little; the Mission bar's cells flare one after another, and the
  *    last one bursts.
- * 2. Shine (1.0-2.2 s; designer 2026-11-20, I23, was a ring): a broad band of light in the Company's
- *    colour sweeps across the whole Field, away from the sector the unit left (left to right after the
- *    Developer tool), lighting each sector's edge with a glint as it passes; the units only shiver. It
- *    comes in and goes out beyond the Field's edges, so it never stands still on the Field.
+ * 2. Energy sweep (1.0-2.2 s; designer 2026-11-20, I23 then I24: was a ring, then a shine): a crackling
+ *    front of energy sweeps across the whole Field, away from the sector the unit left (left to right
+ *    after the Developer tool), an ionised wake and ripples behind it, filaments and a spray of particles
+ *    off it; energy traces each sector's edge as it passes, throwing off sparks; the units shiver. It comes
+ *    in and goes out beyond the Field's edges, so it never stands still on the Field. The same colours
+ *    for every Company.
  * 3. Banner (2.2-3.8 s): "MISSION COMPLETE" slams in across the middle of the Field, "ALPHA ELIMINATED
  *    · 6 / 6" under it (I20, to try), and one badge per unit of the objective drops into a row, 0.1 s apart.
  * 4. Clear (3.8-5.0 s): sparks drift, everything fades.
@@ -24,7 +26,6 @@ import { playMissionComplete, playTrophyLand, playWinSweep } from "../briefing/s
 import { trophyFlights } from "../flyers.js";
 import { glyphBadgeUrl } from "../glyphs.js";
 import { isStill, speedFactor } from "../motion.js";
-import type { CompanyTheme } from "../outro/types.js";
 import type { WinShow } from "./detect.js";
 import { type ShinePath, arrival, shineAt, shinePath } from "./shine.js";
 import { FLY, KILL_TIMES, STILL, WIN, span } from "./timeline.js";
@@ -33,7 +34,6 @@ export type Shake = (key: string, now: number) => { dx: number; dy: number } | u
 
 export interface MissionWinProps {
   show: WinShow;
-  theme: CompanyTheme;
   /** How many of the objective's Trophies the Mission bar holds back (still flying in). */
   onHold: (n: number) => void;
   /** The units' shiver as the shine passes (installed while the piece plays). */
@@ -59,6 +59,13 @@ interface Geo {
   cells: DOMRect[];
 }
 
+/**
+ * One energy colour for every Company (designer 2026-11-20: the mission celebrations look the same for
+ * every Company's vessel), with violet in the wake.
+ */
+const ENERGY = "92 214 255";
+const VIOLET = "170 128 255";
+
 const rgba = (rgb: string, a: number) => `rgba(${rgb.trim().split(/\s+/).join(",")},${Math.max(0, Math.min(1, a)).toFixed(3)})`;
 
 /** A small fixed random sequence (the same every time). */
@@ -75,6 +82,39 @@ const DRIFT = (() => {
   const r = seq(5150);
   return Array.from({ length: 48 }, () => ({ x: r(), born: 2.45 + r() * 2.2, life: 1.1 + r() * 0.9, rise: 0.18 + r() * 0.3, size: 1.2 + r() * 2.2, gold: r() < 0.55, wob: r() * 6 }));
 })();
+/** The sweep's spray: where across the front (0-1), when it leaves the front (0-1 of the sweep), how it moves and fades. */
+const SPRAY = (() => {
+  const r = seq(4417);
+  return Array.from({ length: 340 }, () => ({ v: r(), born: r(), kick: r() < 0.25 ? 0.2 + r() * 0.5 : -0.1 - r() * 0.25, drift: (r() - 0.5) * 0.8, life: 0.45 + r() * 0.9, size: 0.5 + r() * 1.3, c: r() < 0.35 ? 0 : r() < 0.8 ? 1 : 2 }));
+})();
+/** Particles riding the front: where along it, how they flow and flicker. */
+const RIDE = (() => {
+  const r = seq(2291);
+  return Array.from({ length: 110 }, () => ({ v: r(), flow: (r() - 0.5) * 0.12, off: r() - 0.5, size: 0.4 + r(), fq: 8 + r() * 20 }));
+})();
+/** Sparks off a sector's edge as its energy trace passes (a few sets, so neighbours differ). */
+const SECTOR_SPARKS = Array.from({ length: 7 }, (_, k) => {
+  const r = seq(700 + k * 31);
+  return Array.from({ length: 16 }, (_, j) => ({ along: r(), side: j % 2 ? 1 : -1, speed: 0.6 + r() * 1.1, swirl: (r() - 0.5) * 0.8, life: 0.35 + r() * 0.45, size: 0.6 + r() * 0.9, white: r() < 0.45 }));
+});
+/** A soft round particle of one colour (made once). */
+const DOTS = new Map<string, HTMLCanvasElement>();
+function dot(rgb: string): HTMLCanvasElement {
+  let c = DOTS.get(rgb);
+  if (c) return c;
+  c = document.createElement("canvas");
+  c.width = c.height = 32;
+  const g = c.getContext("2d")!;
+  const grd = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  grd.addColorStop(0, "rgba(255,255,255,1)");
+  grd.addColorStop(0.2, rgba(rgb, 0.95));
+  grd.addColorStop(0.5, rgba(rgb, 0.3));
+  grd.addColorStop(1, rgba(rgb, 0));
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 32, 32);
+  DOTS.set(rgb, c);
+  return c;
+}
 const BURST = (() => {
   const r = seq(808);
   return Array.from({ length: 16 }, () => ({ a: r() * Math.PI * 2, far: 1.6 + r() * 2.2, gold: r() < 0.6 }));
@@ -107,9 +147,9 @@ function hexPath(g: CanvasRenderingContext2D, x: number, y: number, r: number): 
 }
 
 /** One frame of the canvas at time t (s); `still`: the held picture. */
-function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, theme: CompanyTheme, still: boolean, fade: number, badges: DOMRect[], bandBox: DOMRect | undefined): void {
+function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, still: boolean, fade: number, badges: DOMRect[], bandBox: DOMRect | undefined): void {
   const { fx, fy, fw, fh, tile } = geo;
-  const P = theme.primary;
+  const P = ENERGY;
   const out = still ? 1 - fade : span(t, WIN.out);
   const all = 1 - out;
   // The Field dims a little.
@@ -159,69 +199,180 @@ function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, theme: CompanyT
   }
   g.restore();
 
-  // Act 2: the shine, clipped to the Field: a broad band of light sweeping across it, a fainter one behind.
+  // Act 2: the energy sweep, clipped to the Field: a crackling front of energy with an ionised wake,
+  // filaments and a spray of particles; each sector's edge is traced by energy that throws off sparks.
   g.save();
   g.beginPath();
   g.rect(fx, fy, fw, fh);
   g.clip();
   g.globalCompositeOperation = "lighter";
+  const sh = geo.shine;
+  const px = -sh.uy;
+  const py = sh.ux;
+  // The front's wobble across its length (pixels along the sweep), alive in time.
+  const wob = (v: number, at: number) => {
+    const w = v / tile;
+    return sh.band * 0.1 * (0.6 * Math.sin(w * 1.1 + at * 7) + 0.3 * Math.sin(w * 2.7 - at * 13) + 0.15 * Math.sin(w * 6.1 + at * 29));
+  };
+  const proj = [0, px * fw, py * fh, px * fw + py * fh];
+  const v0 = Math.min(...proj) - tile;
+  const v1 = Math.max(...proj) + tile;
+  const at = (s0: number, v: number): [number, number] => [fx + sh.ux * s0 + px * v, fy + sh.uy * s0 + py * v];
+  const mid = shineAt(sh, t);
+  const STEPS = 44;
+  const line = (back: number, lag: number) => {
+    g.beginPath();
+    for (let i = 0; i <= STEPS; i++) {
+      const v = v0 + ((v1 - v0) * i) / STEPS;
+      const [x, y] = at(mid - back + wob(v, t - lag), v);
+      if (i === 0) g.moveTo(x, y);
+      else g.lineTo(x, y);
+    }
+  };
   if (t >= WIN.wave[0] && t <= WIN.wave[1]) {
-    const sh = geo.shine;
-    const mid = shineAt(sh, t);
-    const band = (at: number, half: number, a: number) => {
-      const x0 = fx + sh.ux * (at - half);
-      const y0 = fy + sh.uy * (at - half);
-      const grd = g.createLinearGradient(x0, y0, fx + sh.ux * (at + half), fy + sh.uy * (at + half));
-      grd.addColorStop(0, rgba(P, 0));
-      grd.addColorStop(0.3, rgba(P, 0.1 * a));
-      grd.addColorStop(0.44, rgba(P, 0.3 * a));
-      grd.addColorStop(0.485, `rgba(255,255,255,${(0.5 * a).toFixed(3)})`);
-      grd.addColorStop(0.5, `rgba(255,255,255,${(0.72 * a).toFixed(3)})`);
-      grd.addColorStop(0.515, `rgba(255,255,255,${(0.5 * a).toFixed(3)})`);
-      grd.addColorStop(0.56, rgba(P, 0.3 * a));
-      grd.addColorStop(0.7, rgba(P, 0.1 * a));
-      grd.addColorStop(1, rgba(P, 0));
-      g.fillStyle = grd;
-      g.fillRect(fx, fy, fw, fh);
-    };
-    band(mid, sh.band, all);
-    band(mid - sh.band * 0.95, sh.band * 0.32, 0.55 * all);
-  }
-  // Each sector's edge lights as the band comes over it, with a glint on its top corner as its middle passes.
-  for (const [, x, y] of geo.sectors) {
-    const age = t - arrival(geo.shine, x, y);
-    if (age < -0.14) continue;
-    const k = (age < 0 ? 1 + age / 0.14 : Math.exp(-age / 0.6)) * all;
-    if (k < 0.02) continue;
-    hexPath(g, fx + x, fy + y, tile * 0.45);
-    g.fillStyle = rgba(P, 0.16 * k);
-    g.fill();
-    g.strokeStyle = rgba(P, 0.45 * k);
-    g.lineWidth = 6 + 6 * k;
+    const flick = 0.82 + 0.18 * Math.sin(t * 61) * Math.sin(t * 23);
+    // The ionised wake behind the front, and a faint glow ahead of it.
+    const L = sh.wake;
+    const [ax, ay] = at(mid + sh.band * 0.3, 0);
+    const [bx, by] = at(mid - L, 0);
+    const wake = g.createLinearGradient(ax, ay, bx, by);
+    wake.addColorStop(0, rgba(ENERGY, 0));
+    wake.addColorStop(0.12, rgba(ENERGY, 0.2 * all));
+    wake.addColorStop(0.2, rgba(VIOLET, 0.12 * all));
+    wake.addColorStop(1, rgba(VIOLET, 0));
+    g.fillStyle = wake;
+    g.fillRect(fx, fy, fw, fh);
+    // Interference ripples trailing behind it.
+    [0.45, 0.95, 1.5].forEach((o, i) => {
+      line(sh.band * o, 0.05 * (i + 1));
+      g.strokeStyle = rgba(i === 2 ? VIOLET : ENERGY, [0.4, 0.24, 0.14][i]! * all);
+      g.lineWidth = 1.6;
+      g.stroke();
+    });
+    // The front itself: a wide glow, a bright body, a white-hot core.
+    line(0, 0);
+    g.lineJoin = "round";
+    g.strokeStyle = rgba(ENERGY, 0.14 * all * flick);
+    g.lineWidth = tile * 0.24;
     g.stroke();
-    g.strokeStyle = `rgba(255,255,255,${(0.9 * k).toFixed(3)})`;
-    g.lineWidth = 1.5 + 1.5 * k;
+    g.strokeStyle = rgba(ENERGY, 0.45 * all * flick);
+    g.lineWidth = tile * 0.045;
     g.stroke();
-    if (age >= 0 && age < 0.42) {
-      const gl = Math.sin((Math.PI * age) / 0.42) * all;
-      const gx = fx + x + tile * 0.2;
-      const gy = fy + y - tile * 0.36;
-      const L = tile * 0.34 * gl;
-      const glow = g.createRadialGradient(gx, gy, 0, gx, gy, L * 0.7);
-      glow.addColorStop(0, `rgba(255,255,255,${(0.85 * gl).toFixed(3)})`);
-      glow.addColorStop(1, rgba(P, 0));
-      g.fillStyle = glow;
-      g.fillRect(gx - L, gy - L, 2 * L, 2 * L);
-      g.strokeStyle = `rgba(255,255,255,${(0.9 * gl).toFixed(3)})`;
-      g.lineWidth = 1.4;
+    g.strokeStyle = `rgba(255,255,255,${(0.95 * all * flick).toFixed(3)})`;
+    g.lineWidth = 1.8;
+    g.stroke();
+    // Filaments crackle off the front, new every 0.045 s.
+    const tick = Math.floor(t / 0.045);
+    const rnd = seq(tick * 97 + 3);
+    for (let j = 0; j < 14; j++) {
+      const v = v0 + (v1 - v0) * rnd();
+      let s0 = mid + wob(v, t);
+      let vv = v;
       g.beginPath();
-      g.moveTo(gx - L, gy);
-      g.lineTo(gx + L, gy);
-      g.moveTo(gx, gy - L * 0.7);
-      g.lineTo(gx, gy + L * 0.7);
+      g.moveTo(...at(s0, vv));
+      const dir = rnd() < 0.7 ? -1 : 1;
+      for (let k = 0; k < 4; k++) {
+        s0 += dir * sh.band * (0.03 + 0.06 * rnd());
+        vv += (rnd() - 0.5) * tile * 0.3;
+        g.lineTo(...at(s0, vv));
+      }
+      g.strokeStyle = rgba(ENERGY, 0.35 * all);
+      g.lineWidth = 2.5;
+      g.stroke();
+      g.strokeStyle = `rgba(255,255,255,${(0.75 * all).toFixed(3)})`;
+      g.lineWidth = 0.9;
       g.stroke();
     }
+    // Particles ride the front, flowing along it and flickering: the front is made of them.
+    for (const [i, p] of RIDE.entries()) {
+      const v = v0 + (v1 - v0) * ((((p.v + p.flow * t) % 1) + 1) % 1);
+      const [x, y] = at(mid + wob(v, t) + p.off * sh.band * 0.06, v);
+      const r = tile * 0.06 * p.size * (0.7 + 0.3 * Math.sin(t * p.fq + i));
+      g.globalAlpha = Math.min(1, all * (0.55 + 0.45 * Math.sin(t * p.fq * 1.7 + i * 2)));
+      g.drawImage(dot(i % 3 ? ENERGY : "255 255 255"), x - r, y - r, 2 * r, 2 * r);
+    }
+    g.globalAlpha = 1;
   }
+  // The spray of particles the front throws off: a few run ahead and slow, most are left behind to fade.
+  if (t >= WIN.wave[0] && t <= WIN.wave[1] + 1.4) {
+    const dur = WIN.wave[1] - WIN.wave[0];
+    for (const p of SPRAY) {
+      const tb = WIN.wave[0] + p.born * dur;
+      const age = t - tb;
+      if (age < 0 || age > p.life) continue;
+      const v = v0 + (v1 - v0) * p.v;
+      const s0 = shineAt(sh, tb) + wob(v, tb) + sh.band * p.kick * (1 - Math.exp(-age * 4));
+      const [x, y] = at(s0, v + p.drift * tile * age);
+      const a = (1 - age / p.life) ** 1.3 * all;
+      const r = tile * 0.038 * p.size * (1 - 0.4 * (age / p.life));
+      g.globalAlpha = Math.min(1, a);
+      g.drawImage(dot(p.c === 0 ? "255 255 255" : p.c === 1 ? ENERGY : VIOLET), x - r, y - r, 2 * r, 2 * r);
+    }
+    g.globalAlpha = 1;
+  }
+  // Each sector's edge is traced by energy from the side the front reaches first, both ways round to the
+  // far side, throwing off sparks as it runs; then the edge fades.
+  const entry = (((Math.atan2(-sh.uy, -sh.ux) * 180) / Math.PI + 30) / 60 + 6) % 6;
+  const R = tile * 0.45;
+  const onHex = (cx: number, cy: number, f: number): [number, number] => {
+    const ff = ((f % 6) + 6) % 6;
+    const i = Math.floor(ff);
+    const a = (Math.PI / 180) * (60 * i - 30);
+    const b = (Math.PI / 180) * (60 * (i + 1) - 30);
+    const u = ff - i;
+    return [cx + R * ((1 - u) * Math.cos(a) + u * Math.cos(b)), cy + R * ((1 - u) * Math.sin(a) + u * Math.sin(b))];
+  };
+  geo.sectors.forEach(([, sx, sy], si) => {
+    const age = t - arrival(sh, sx, sy);
+    if (age < 0 || age > 1.6) return;
+    const cx = fx + sx;
+    const cy = fy + sy;
+    const q = easeOut(Math.min(1, age / 0.32));
+    const k = (age < 0.32 ? 1 : Math.exp(-(age - 0.32) / 0.22)) * all;
+    if (k > 0.02) {
+      for (const side of [-1, 1]) {
+        g.beginPath();
+        const n = 12;
+        for (let i = 0; i <= n; i++) {
+          const [x, y] = onHex(cx, cy, entry + side * 3 * q * (i / n));
+          if (i === 0) g.moveTo(x, y);
+          else g.lineTo(x, y);
+        }
+        g.strokeStyle = rgba(ENERGY, 0.22 * k);
+        g.lineWidth = Math.max(2.5, tile * 0.035);
+        g.stroke();
+        g.strokeStyle = `rgba(255,255,255,${(0.7 * k).toFixed(3)})`;
+        g.lineWidth = 1;
+        g.stroke();
+        if (q < 1) {
+          const [hx, hy] = onHex(cx, cy, entry + side * 3 * q);
+          const hr = tile * 0.09;
+          g.globalAlpha = all;
+          g.drawImage(dot("255 255 255"), hx - hr, hy - hr, 2 * hr, 2 * hr);
+          g.globalAlpha = 1;
+        }
+      }
+    }
+    // Sparks thrown off the edge where the energy passes.
+    const rr = SECTOR_SPARKS[si % SECTOR_SPARKS.length]!;
+    for (const sp of rr) {
+      const born = 0.32 * sp.along;
+      const sa = age - born;
+      if (sa < 0 || sa > sp.life) continue;
+      const [ex, ey] = onHex(cx, cy, entry + sp.side * 3 * sp.along);
+      const dx = ex - cx;
+      const dy = ey - cy;
+      const dl = Math.hypot(dx, dy) || 1;
+      const d = tile * sp.speed * (1 - Math.exp(-sa * 5)) / 5;
+      const x = ex + (dx / dl) * d + (-dy / dl) * d * sp.swirl;
+      const y = ey + (dy / dl) * d + (dx / dl) * d * sp.swirl - tile * 0.15 * sa;
+      const a = (1 - sa / sp.life) * all;
+      const r = tile * 0.035 * sp.size;
+      g.globalAlpha = Math.min(1, a);
+      g.drawImage(dot(sp.white ? "255 255 255" : ENERGY), x - r, y - r, 2 * r, 2 * r);
+    }
+    g.globalAlpha = 1;
+  });
   g.restore();
 
   // Act 3: light streaks out from the banner as it lands; a spark burst as each badge drops in.
@@ -275,7 +426,7 @@ function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, theme: CompanyT
   g.restore();
 }
 
-export function MissionWin({ show, theme, onHold, onShake, onDone, killOn }: MissionWinProps) {
+export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWinProps) {
   // The speed and motion settings as they were when it began.
   const still = useRef(isStill() || speedFactor() === 0).current;
   const speed = useRef(speedFactor() || 1).current;
@@ -417,7 +568,7 @@ export function MissionWin({ show, theme, onHold, onShake, onDone, killOn }: Mis
           g.setTransform(k, 0, 0, k, 0, 0);
           g.clearRect(0, 0, window.innerWidth, window.innerHeight);
           const badges = badgeRow.current ? [...badgeRow.current.children].map((e) => e.getBoundingClientRect()) : [];
-          paint(g, geo, t, theme, still, fade, badges, band.current?.getBoundingClientRect());
+          paint(g, geo, t, still, fade, badges, band.current?.getBoundingClientRect());
         }
         style(t, fade);
         if (!still) {
@@ -456,7 +607,7 @@ export function MissionWin({ show, theme, onHold, onShake, onDone, killOn }: Mis
   const fs = box ? Math.round(Math.max(20, Math.min(60, box.w / 14))) : 32;
   const bs = Math.round(Math.max(24, Math.min(46, fs * 0.9)));
   return createPortal(
-    <div ref={root} className="cb-win" data-win={show.piece.id} data-phase={phase} data-act={act} data-acts={acts} data-still={still ? "1" : "0"} data-from={show.from ?? ""} aria-live="polite" style={{ "--cb-acc": theme.primary } as React.CSSProperties}>
+    <div ref={root} className="cb-win" data-win={show.piece.id} data-phase={phase} data-act={act} data-acts={acts} data-still={still ? "1" : "0"} data-from={show.from ?? ""} aria-live="polite" style={{ "--cb-acc": ENERGY } as React.CSSProperties}>
       <canvas ref={cv} className="cb-win-cv" />
       {box && phase === "play" && (
         <div className="cb-over" style={{ left: box.x, top: box.y, width: box.w, height: box.h }}>

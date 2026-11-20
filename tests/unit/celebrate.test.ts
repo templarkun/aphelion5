@@ -1,7 +1,7 @@
 // The mission celebrations (designer 2026-11-20; screen only): which piece plays (I19), when the kill
 // plays (the destroyed event that reaches the Eliminate objective's number, 8.2), when the win plays
 // (the engine's display event "won") and the board it shows, the animation player's two-tap steps; the
-// second Alpha kill (I21), the Beta kill and Mission Complete for Beta (I22), the win's shine (I23).
+// second Alpha kill (I21), the Beta kill and Mission Complete for Beta (I22), the win's energy sweep (I23, I24); the same for every Company (I25).
 import { expect, test } from "vitest";
 import { newEvents, type GameEvent } from "../../src/engine/events.js";
 import { newRng } from "../../src/engine/rng.js";
@@ -216,7 +216,7 @@ test("the celebrations' timing (the plan agreed 2026-11-20)", () => {
   for (const f of [sound.playTargetLock, sound.playOmegaBreak, sound.playKillConfirmed, sound.playPurgeBeam, sound.playBetaSurge, sound.playBetaDetonation, sound.playTrophyLand, sound.playWinSweep, sound.playMissionComplete]) expect(typeof f).toBe("function");
 });
 
-test("the win's shine (I23): it sweeps right across the Field, starting and ending beyond its edges, never standing still on it", () => {
+test("the win's energy sweep (I23, I24): it sweeps right across the Field, starting and ending beyond its edges, never standing still on it", () => {
   for (const [w, h, from] of [
     [1100, 700, [300, 420]],
     [390, 600, [195, 200]],
@@ -226,9 +226,10 @@ test("the win's shine (I23): it sweeps right across the Field, starting and endi
     const p = shinePath(w, h, tile, from);
     expect(Math.hypot(p.ux, p.uy)).toBeCloseTo(1, 6);
     const corners = [0, p.ux * w, p.uy * h, p.ux * w + p.uy * h];
-    // At its start the whole band is before the Field; at its end the whole band is past it.
+    // At its start the front and all ahead of it is before the Field; at its end the front and its whole wake are past it.
     expect(shineAt(p, WIN.wave[0]) + p.band).toBeLessThanOrEqual(Math.min(...corners) + 1e-6);
-    expect(shineAt(p, WIN.wave[1]) - p.band).toBeGreaterThanOrEqual(Math.max(...corners) - 1e-6);
+    expect(shineAt(p, WIN.wave[1]) - p.wake).toBeGreaterThanOrEqual(Math.max(...corners) - 1e-6);
+    expect(p.wake).toBeGreaterThan(p.band);
     // Always moving: its speed is never below a third of the average, at the ends too.
     const avg = (p.s1 - p.s0) / (WIN.wave[1] - WIN.wave[0]);
     for (let i = 0; i < 20; i++) {
@@ -240,6 +241,25 @@ test("the win's shine (I23): it sweeps right across the Field, starting and endi
   }
   expect(sweep(0)).toBe(0);
   expect(sweep(1)).toBeCloseTo(1, 9);
+});
+
+test("I25: the celebrations are the same for every Company: the same pieces, picked at random alike", () => {
+  // The same made-up Field flown by each Company's vessel: for every seed the same kill and win.
+  const v1 = previewBoards(data(), "V1")!;
+  const v2 = previewBoards(data(), "V2")!;
+  expect(v1.start.player.company).not.toBe(v2.start.player.company);
+  const e1 = newEvents(v1.start.events, v1.wonJoined.events);
+  const e2 = newEvents(v2.start.events, v2.wonJoined.events);
+  const kills = new Set<string>();
+  for (let seed = 1; seed < 30; seed++) {
+    const k1 = killOf(data(), v1.start, e1, seed)?.piece.id;
+    expect(k1).toBeDefined();
+    expect(killOf(data(), v2.start, e2, seed)?.piece.id).toBe(k1);
+    expect(winShowOf(data(), v2.start, v2.wonJoined, seed)?.piece.id).toBe(winShowOf(data(), v1.start, v1.wonJoined, seed)?.piece.id);
+    kills.add(k1!);
+  }
+  // Either Alpha kill comes up for either Company.
+  expect([...kills].sort()).toEqual(["alphaDown", "alphaPurge"]);
 });
 
 test("the Field's player: one tap finishes animations up to a celebration, which only two taps (skip) end", () => {
