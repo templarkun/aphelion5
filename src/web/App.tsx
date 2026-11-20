@@ -51,7 +51,8 @@ import { MotionSettings } from "./MotionSettings.js";
 import { type WinShow, winOf } from "./celebrate/detect.js";
 import { MissionWin, type Shake } from "./celebrate/MissionWin.js";
 import { CelebrationSkip } from "./celebrate/CelebrationSkip.js";
-import { CelebrationPreview, type PreviewKind } from "./celebrate/CelebrationPreview.js";
+import { CelebrationPreview } from "./celebrate/CelebrationPreview.js";
+import type { PreviewWhat } from "./celebrate/previewBoards.js";
 import { companyTheme } from "./outro/themes.js";
 import type { SessionView } from "../engine/session.js";
 
@@ -106,8 +107,8 @@ export function App() {
   // A page over the briefing: statistics and achievements, or the Campaign editor (Developer tools).
   const [page, setPage] = useState<"stats" | "editor" | undefined>();
   const [outroPreview, setOutroPreview] = useState<{ campaign: string; company: string; outro: string } | undefined>();
-  // A mission celebration looked at from System options (a made-up Mission 1 Field; no game is touched).
-  const [celebPreview, setCelebPreview] = useState<{ company: string; kind: PreviewKind } | undefined>();
+  // A mission celebration looked at from System options (a made-up Field; no game is touched).
+  const [celebPreview, setCelebPreview] = useState<{ company: string; what: PreviewWhat } | undefined>();
 
   useEffect(() => {
     void loadSave().then((f) => {
@@ -158,7 +159,7 @@ export function App() {
       {page === "stats" && <StatsPage data={data} profile={profile} onBack={() => setPage(undefined)} />}
       {page === "editor" && <CampaignEditor data={data} onBack={() => setPage(undefined)} />}
       {outroPreview && <OutroPreview data={data} campaign={outroPreview.campaign} company={outroPreview.company} outro={outroPreview.outro} onClose={() => setOutroPreview(undefined)} />}
-      {celebPreview && <CelebrationPreview key={`${celebPreview.kind}:${celebPreview.company}`} data={data} company={celebPreview.company} kind={celebPreview.kind} onClose={() => setCelebPreview(undefined)} />}
+      {celebPreview && <CelebrationPreview key={`${celebPreview.what.kind}:${celebPreview.what.omega}:${celebPreview.what.piece}:${celebPreview.company}`} data={data} company={celebPreview.company} what={celebPreview.what} onClose={() => setCelebPreview(undefined)} />}
       <GateHost />
     </>
   );
@@ -176,7 +177,7 @@ export function App() {
         error={error}
         onReplayIntro={() => setIntro("full")}
         onPreviewOutro={(campaign, company, outro) => setOutroPreview({ campaign, company, outro })}
-        onPreviewCelebration={(company, kind) => setCelebPreview({ company, kind })}
+        onPreviewCelebration={(company, what) => setCelebPreview({ company, what })}
         onStats={() => setPage("stats")}
         onEditor={() => setPage("editor")}
         onLaunch={(l) => {

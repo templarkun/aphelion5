@@ -15,6 +15,8 @@
 # and Orbital Claim, the fourth outro (T13_OUT_18-23, CHANGED notes on T13_OUT_07 and T13_OUT_12).
 # The mission celebrations (section THE MISSION CELEBRATIONS, T13_CEL_01-08, CHANGED note on
 # T13_UPG_05) 2026-11-20; checked by tests/unit/celebrate.test.ts and scripts/ui-celebrate.mjs.
+# Later the same day (I21-I23): the win's shine, Alpha Purge, Beta Breach, Mission Complete for Beta
+# (T13_CEL_09-11, CHANGED notes on T13_CEL_01, 04, 06, 07, 08).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1621,6 +1623,8 @@ then: after the shot and the hit, the kill plays, about 4.5 s (Normal speed), ce
 then: the 7th O_01 destroyed (the 6th already counted), or any other unit: no kill.
 note: The number counted is the objective's own (8.2): units of its type in the Trophy pile, plus
       those on the Field as Wrecks. Silent hooks: playTargetLock, playOmegaBreak, playKillConfirmed.
+note: CHANGED 2026-11-20 (designer, I21): this is Alpha Down, one of two kills for Alpha; the other
+      is Alpha Purge (T13_CEL_09). Which one plays in a mission: T13_CEL_07.
 
 id: T13_CEL_02
 title: Several Alphas destroyed by one blow
@@ -1661,6 +1665,13 @@ then: the Field's animations of that answer play, the Trophy flies from the sect
       Then the Upgrade sheet opens (or, with no points to spend, the next mission's preparation;
       after the last mission, the outro). Until then the Field shows the board as it was won.
 note: Silent hooks: playTrophyLand, playWinShockwave, playMissionComplete.
+note: CHANGED 2026-11-20 (designer, I23: the ring stopped at its full size and faded there, which
+      looked out of place): act 2 is now a shine. A broad band of light in the Company's colour
+      (a bright white middle, a fainter band just behind it) sweeps across the whole Field, away
+      from that sector through the Field's middle, as light over polished metal. It comes in from
+      beyond one edge and goes out beyond the other, so it never stands still on the Field. Each
+      sector's edge lights as the band reaches it, with a glint on its top corner; the units still
+      shiver. The hook is playWinSweep (was playWinShockwave). Also for Beta missions (T13_CEL_11).
 
 id: T13_CEL_05
 title: Both in one answer
@@ -1679,6 +1690,9 @@ then: both pieces take twice as long / half as long (the Trophy's flight keeps i
 given: reduced motion on (or speed Instant)
 then: the kill: a still close-up of the Wreck with "ALPHA DOWN · 6 / 6" for about 1.5 s; the win:
       the banner and badges still over the dimmed Field for about 1.5 s. Two taps skip them too.
+note: CHANGED 2026-11-20: Alpha Purge's still: the Wreck with a cold glowing edge, a few motes,
+      "ALPHA PURGED · 6 / 6". Beta Breach's still: the scorched sector (what lies beneath shows),
+      a few embers and smoke, "BETA DOWN · 3 / 3".
 
 id: T13_CEL_07
 title: Which piece plays (several of a kind)
@@ -1687,6 +1701,8 @@ source: designer 2026-11-20 (I19: "one at random each mission, same one again if
 then: with several pieces for one kind (none yet), one is picked for each mission from the game's
       seed and the mission: the same game and mission always give the same one, a reload too. The
       game's own random numbers are never used.
+note: CHANGED 2026-11-20 (I21): Alpha now has two kills, Alpha Down and Alpha Purge; each Alpha
+      mission plays one of them, picked this way (over many games both come up).
 
 id: T13_CEL_08
 title: The Developer tool and the preview
@@ -1701,3 +1717,70 @@ then: "Mission celebrations · Eliminate Alpha": "Play the kill: Alpha Down (<Co
       Mission 1 Field (five Alphas in the Trophy pile, the sixth destroyed by a Mecha's shell, its
       Wreck boosting the Sentinel beside it), with a Close button; back to System options at the
       end. No game is started or changed.
+note: CHANGED 2026-11-20: the Developer tool's win now has the shine (T13_CEL_04), from the left
+      edge of the Field (no sector to start from). System options has one button per piece:
+      "Mission celebrations · Eliminate Alpha": Play Alpha Down / Alpha Purge / Mission Complete /
+      Alpha Down, then Mission Complete / Alpha Purge, then Mission Complete; "Mission
+      celebrations · Eliminate Beta": Play Beta Breach / Mission Complete / Beta Breach, then
+      Mission Complete; each with (<Company>). The Beta ones use the same made-up Field, called
+      Mission 3: two Betas in the Trophy pile, the third on the Field. On both Fields the unit
+      destroyed already carries Damage tokens, so the Mecha's 2 damage is enough.
+
+id: T13_CEL_09
+title: Alpha Purge, the second kill for Alpha
+source: designer 2026-11-20 (I21: "Create an alternative one more version for Alpha unit")
+map: M1
+given: as T13_CEL_01, and the mission picked Alpha Purge (T13_CEL_07)
+when: an action destroys the 6th O_01
+then: about 4.5 s (Normal speed), centred on the unit:
+      1 (0-0.8 s) the Field zooms in on it and the rest darkens; six wall panels of a cold blue
+      containment cage fly in from all sides and lock round the tile: its corners light up with a
+      flash.
+      2 (0.8-1.62 s) the cage closes in; arcs of light crackle from its corners into the unit; the
+      tile glows violet, its glyph white; then the cage crushes it to a point.
+      3 (1.62-3.6 s) a pillar of light fires straight up out of the sector to the top of the Field,
+      a flat flare streaks sideways, the sector's outline flashes, motes rise up the pillar, a
+      small jolt. The pillar thins away; the Wreck forms again under a scan line running down the
+      tile, its edge glowing cold for a while; a label beside it "ALPHA PURGED · 5 / 6" turns to
+      "6 / 6".
+      4 (3.6-4.5 s) the zoom eases back.
+then: one tap does not skip it, two taps do (T13_CEL_03); the speed and reduced motion as T13_CEL_06.
+note: Silent hooks: playTargetLock (the cage locks), playPurgeBeam (the pillar), playKillConfirmed.
+
+id: T13_CEL_10
+title: Beta Breach, the kill for Beta (more spectacular than Alpha's)
+source: designer 2026-11-20 ("create an animation for destroying Beta unit ... more spectacular
+        than destroying an alpha unit")
+map: M1
+given: Mission 3 (Eliminate 3 Beta units): 2 O_02 in the Trophy pile, an O_02 on the Field. Or
+       Mission 5 (Eliminate 1 Beta unit): an O_02 on the Field.
+when: an action destroys that O_02 (it has no Destroyed effect, so it leaves no Wreck and goes
+      straight to the Trophy pile, 4.8)
+then: about 6.2 s (Normal speed), centred on the unit, the sectors round it kept in view:
+      1 (0-1.0 s) the Field zooms in and the rest darkens; a red reticle of two turning rings and
+      four chevrons closes in and locks with a flash.
+      2 (1.0-2.9 s) the Beta fights the lock: three surges, each a throb of violet light, a beat of
+      the tile, arcs lashing out at the sectors round it (those units shiver) and a harder shake;
+      hot orange cracks spread over it; three small blasts break out on its edge; then its core
+      sucks the light in.
+      3 (2.9-3.9 s) the breach: the whole Field flashes white; a fireball (white, orange, violet);
+      two shock fronts race off the screen; big shards fly, some at the camera; the units round it
+      are knocked back and spring home; a heavy shake; embers rain.
+      4 (3.9-5.3 s) the sector is left scorched and smoking, its edge glowing and cooling; what
+      lies beneath shows again; a bigger label "BETA DOWN · 2 / 3" turns to "3 / 3" (Mission 5:
+      "0 / 1" to "1 / 1").
+      5 (5.3-6.2 s) the zoom eases back.
+then: one tap does not skip it, two taps do (T13_CEL_03); the speed and reduced motion as T13_CEL_06.
+note: Silent hooks: playTargetLock, playBetaSurge (each surge), playBetaDetonation, playKillConfirmed.
+
+id: T13_CEL_11
+title: Mission Complete for Beta missions
+source: designer 2026-11-20 (I22: Mission Complete also for Beta missions, until a Beta win is built)
+map: M1
+given: Mission 3; the 3rd O_02 destroyed. A Beta goes straight to the Trophy pile, so the mission
+       is usually won in the same answer (8.2: checked before the next Command phase action)
+then: Beta Breach plays; as its camera pulls out the Trophy flies into the Mission bar; then
+      Mission Complete (T13_CEL_04) with "BETA ELIMINATED · 3 / 3" and three Beta badges, the
+      shine starting from the Beta's sector. Mission 5: "BETA ELIMINATED · 1 / 1", one badge.
+      Then the Upgrade sheet.
+then: Gamma missions (Mission 7) and Salvage missions show neither piece yet.

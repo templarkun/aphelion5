@@ -5,8 +5,9 @@
  * This shell holds the state, the frame and the transitions between steps.
  */
 
+import { CELEBRATION_PREVIEWS, type PreviewWhat } from "../celebrate/previewBoards.js";
 import { DEFAULT_OUTRO, OUTROS } from "../outro/index.js";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { BarChart3, Check, ChevronLeft, ChevronRight, Hexagon, Play, Rocket, Settings, X } from "lucide-react";
 import type { GameData } from "../../data/index.js";
 import type { Profile } from "../../engine/state.js";
@@ -39,8 +40,8 @@ export interface BriefingProps {
   onReplayIntro: () => void;
   /** Look at an outro (OUTROS id) with the Company chosen in the briefing and made-up numbers. */
   onPreviewOutro?: ((campaign: string, company: string, outro: string) => void) | undefined;
-  /** The mission celebrations (designer 2026-11-20): "kill", "win" or "both", on a made-up Mission 1 Field. */
-  onPreviewCelebration?: ((company: string, kind: "kill" | "win" | "both") => void) | undefined;
+  /** The mission celebrations (designer 2026-11-20): a kill, the win or both, on a made-up Field. */
+  onPreviewCelebration?: ((company: string, what: PreviewWhat) => void) | undefined;
   /** Open the statistics and achievements page. */
   onStats?: (() => void) | undefined;
   /** Open the Campaign editor (Developer tools). */
@@ -312,19 +313,17 @@ export function Briefing(p: BriefingProps) {
               )}
               {p.onPreviewCelebration && (
                 <>
-                  <div className="bf-label mt-2">Mission celebrations · Eliminate Alpha</div>
-                  {(
-                    [
-                      ["kill", "Play the kill: Alpha Down"],
-                      ["win", "Play the win: Mission Complete"],
-                      ["both", "Play both together"],
-                    ] as const
-                  ).map(([kind, label]) => (
-                    <button key={kind} type="button" className="bf-btn" data-action="celebration-preview" data-kind={kind} onClick={() => (setDrawer(false), p.onPreviewCelebration?.(company, kind))}>
-                      {label} ({co.name})
-                    </button>
+                  {(["Alpha", "Beta"] as const).map((omega) => (
+                    <Fragment key={omega}>
+                      <div className="bf-label mt-2">Mission celebrations · Eliminate {omega}</div>
+                      {CELEBRATION_PREVIEWS.filter((w) => w.omega === omega).map((w) => (
+                        <button key={`${w.kind}:${w.piece ?? ""}`} type="button" className="bf-btn" data-action="celebration-preview" data-kind={w.kind} data-omega={w.omega} data-piece={w.piece ?? ""} onClick={() => (setDrawer(false), p.onPreviewCelebration?.(company, w))}>
+                          Play {w.label} ({co.name})
+                        </button>
+                      ))}
+                    </Fragment>
                   ))}
-                  <p className="text-[14px] text-sky-100">On a made-up Mission 1 Field. In a game the kill plays when the last required Alpha is destroyed, the win when the mission is won (8.2); with several of a kind, one is picked at random each mission.</p>
+                  <p className="text-[14px] text-sky-100">On a made-up Field (Mission 1 for Alpha, Mission 3 for Beta). In a game the kill plays when the last required Omega unit is destroyed, the win when the mission is won (8.2); with several of a kind, one is picked at random each mission.</p>
                 </>
               )}
             </div>

@@ -86,10 +86,18 @@ export function playTargetLock(): void {}
 export function playOmegaBreak(): void {}
 /** Kill, Act 3: the count beside the Wreck goes up to the objective's number ("6 / 6"). Also the still picture (reduced motion, Instant). */
 export function playKillConfirmed(): void {}
+/** Alpha Purge: the pillar of light fires up from the crushed unit (the cage's lock is playTargetLock). */
+export function playPurgeBeam(): void {}
+/** Beta Breach, Act 2: one of the Beta's three surges against the lock (index 0, 1, 2). */
+export function playBetaSurge(index: number): void {
+  void index;
+}
+/** Beta Breach, Act 3: the core breaches, white-out and fireball. */
+export function playBetaDetonation(): void {}
 /** The win, Mission Complete: the mission is won (8.2). */
 /** Win: a Trophy that came in with the winning answer lands in the Mission bar. */
 export function playTrophyLand(): void {}
-/** Win, Act 2: the shock wave in the Company's colour sweeps across the Field. */
-export function playWinShockwave(): void {}
+/** Win, Act 2: the band of light in the Company's colour sweeps across the Field. */
+export function playWinSweep(): void {}
 /** Win, Act 3: MISSION COMPLETE slams in. Also the still picture (reduced motion, Instant). */
 export function playMissionComplete(): void {}

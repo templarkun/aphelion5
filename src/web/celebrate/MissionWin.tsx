@@ -5,9 +5,10 @@
  *
  * 1. Trophy (0-1.0 s): the Field dims a little; the Mission bar's cells flare one after another, and the
  *    last one bursts.
- * 2. Wave (1.0-2.2 s): a ring in the Company's colour sweeps across the Field from the sector the unit
- *    left (the middle of the Field after the Developer tool), lighting each sector's edge as it passes;
- *    the units still on the Field only shiver.
+ * 2. Shine (1.0-2.2 s; designer 2026-11-20, I23, was a ring): a broad band of light in the Company's
+ *    colour sweeps across the whole Field, away from the sector the unit left (left to right after the
+ *    Developer tool), lighting each sector's edge with a glint as it passes; the units only shiver. It
+ *    comes in and goes out beyond the Field's edges, so it never stands still on the Field.
  * 3. Banner (2.2-3.8 s): "MISSION COMPLETE" slams in across the middle of the Field, "ALPHA ELIMINATED
  *    · 6 / 6" under it (I20, to try), and one badge per unit of the objective drops into a row, 0.1 s apart.
  * 4. Clear (3.8-5.0 s): sparks drift, everything fades.
@@ -19,13 +20,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { easeOut, easeOutBack } from "../anim.js";
-import { playMissionComplete, playTrophyLand, playWinShockwave } from "../briefing/soundHooks.js";
+import { playMissionComplete, playTrophyLand, playWinSweep } from "../briefing/soundHooks.js";
 import { trophyFlights } from "../flyers.js";
 import { glyphBadgeUrl } from "../glyphs.js";
 import { isStill, speedFactor } from "../motion.js";
 import type { CompanyTheme } from "../outro/types.js";
 import type { WinShow } from "./detect.js";
-import { FLY, KILL, STILL, WIN, span } from "./timeline.js";
+import { type ShinePath, arrival, shineAt, shinePath } from "./shine.js";
+import { FLY, KILL_TIMES, STILL, WIN, span } from "./timeline.js";
 
 export type Shake = (key: string, now: number) => { dx: number; dy: number } | undefined;
 
@@ -34,7 +36,7 @@ export interface MissionWinProps {
   theme: CompanyTheme;
   /** How many of the objective's Trophies the Mission bar holds back (still flying in). */
   onHold: (n: number) => void;
-  /** The units' shiver as the wave passes (installed while the piece plays). */
+  /** The units' shiver as the shine passes (installed while the piece plays). */
   onShake: (f: Shake | undefined) => void;
   onDone: () => void;
   /** The kill celebration is playing on the Field (both in one answer: the Trophy flies as its camera pulls out). */
@@ -51,11 +53,8 @@ interface Geo {
   tile: number;
   /** Sector centres, in the Field's own pixels. */
   sectors: [string, number, number][];
-  /** Where the wave starts, in the Field's own pixels. */
-  cx: number;
-  cy: number;
-  /** How far the wave goes. */
-  reach: number;
+  /** The shine's way across the Field (shine.ts). */
+  shine: ShinePath;
   /** The objective's cells in the Mission bar, on the page. */
   cells: DOMRect[];
 }
@@ -81,12 +80,6 @@ const BURST = (() => {
   return Array.from({ length: 16 }, () => ({ a: r() * Math.PI * 2, far: 1.6 + r() * 2.2, gold: r() < 0.6 }));
 })();
 
-/** When the wave reaches a point `d` from where it starts (s): the ring grows with easeOut over WIN.wave. */
-function arrival(d: number, reach: number): number {
-  const f = Math.min(1, d / reach);
-  return WIN.wave[0] + (WIN.wave[1] - WIN.wave[0]) * (1 - Math.cbrt(1 - f));
-}
-
 function measure(show: WinShow): Geo | undefined {
   const el = document.querySelector<HTMLElement>(".field");
   if (!el) return undefined;
@@ -95,12 +88,10 @@ function measure(show: WinShow): Geo | undefined {
   const raw: Record<string, [number, number]> = JSON.parse(el.dataset.sectors ?? "{}");
   const sectors = Object.entries(raw).map(([k, [x, y]]) => [k, x, y] as [string, number, number]);
   const tile = Number(el.dataset.tile) || Math.min(r.width, r.height) / 6;
-  const from = show.from ? raw[show.from] : undefined;
-  const cx = from ? from[0] : r.width / 2;
-  const cy = from ? from[1] : r.height / 2;
-  const reach = Math.max(tile, ...sectors.map(([, x, y]) => Math.hypot(x - cx, y - cy))) + tile;
+  // The shine sweeps away from the sector the unit left, through the Field's middle.
+  const shine = shinePath(r.width, r.height, tile, show.from ? raw[show.from] : undefined);
   const cells = [...document.querySelectorAll<HTMLElement>("[data-mission-bar] [data-mission-group] .m-cell")].map((c) => c.getBoundingClientRect());
-  return { fx: r.left, fy: r.top, fw: r.width, fh: r.height, tile, sectors, cx, cy, reach, cells };
+  return { fx: r.left, fy: r.top, fw: r.width, fh: r.height, tile, sectors, shine, cells };
 }
 
 function hexPath(g: CanvasRenderingContext2D, x: number, y: number, r: number): void {
@@ -168,50 +159,39 @@ function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, theme: CompanyT
   }
   g.restore();
 
-  // Act 2: the wave, clipped to the Field.
+  // Act 2: the shine, clipped to the Field: a broad band of light sweeping across it, a fainter one behind.
   g.save();
   g.beginPath();
   g.rect(fx, fy, fw, fh);
   g.clip();
   g.globalCompositeOperation = "lighter";
-  const cx = fx + geo.cx;
-  const cy = fy + geo.cy;
-  const p = span(t, WIN.wave);
-  if (t >= WIN.wave[0] && t < WIN.wave[1] + 0.45) {
-    const r = geo.reach * easeOut(p);
-    const tail = t > WIN.wave[1] ? 1 - (t - WIN.wave[1]) / 0.45 : 1;
-    // A soft band behind the front, a brighter band, a thin white front.
-    for (const [wd, a] of [
-      [tile * 0.3, 0.2],
-      [tile * 0.09, 0.6],
-    ] as const) {
-      g.strokeStyle = rgba(P, a * tail * all);
-      g.lineWidth = wd;
-      g.beginPath();
-      g.arc(cx, cy, Math.max(1, r - wd / 2), 0, Math.PI * 2);
-      g.stroke();
-    }
-    g.strokeStyle = `rgba(255,255,255,${(0.85 * tail * (1 - 0.5 * p) * all).toFixed(3)})`;
-    g.lineWidth = 2.5;
-    g.beginPath();
-    g.arc(cx, cy, Math.max(1, r), 0, Math.PI * 2);
-    g.stroke();
-    // A flash where it starts.
-    const f = span(t, [WIN.wave[0], WIN.wave[0] + 0.3]);
-    if (f < 1) {
-      const R = tile * (0.6 + 0.9 * f);
-      const grd = g.createRadialGradient(cx, cy, 0, cx, cy, R);
-      grd.addColorStop(0, `rgba(255,255,255,${(0.9 * (1 - f)).toFixed(3)})`);
+  if (t >= WIN.wave[0] && t <= WIN.wave[1]) {
+    const sh = geo.shine;
+    const mid = shineAt(sh, t);
+    const band = (at: number, half: number, a: number) => {
+      const x0 = fx + sh.ux * (at - half);
+      const y0 = fy + sh.uy * (at - half);
+      const grd = g.createLinearGradient(x0, y0, fx + sh.ux * (at + half), fy + sh.uy * (at + half));
+      grd.addColorStop(0, rgba(P, 0));
+      grd.addColorStop(0.3, rgba(P, 0.1 * a));
+      grd.addColorStop(0.44, rgba(P, 0.3 * a));
+      grd.addColorStop(0.485, `rgba(255,255,255,${(0.5 * a).toFixed(3)})`);
+      grd.addColorStop(0.5, `rgba(255,255,255,${(0.72 * a).toFixed(3)})`);
+      grd.addColorStop(0.515, `rgba(255,255,255,${(0.5 * a).toFixed(3)})`);
+      grd.addColorStop(0.56, rgba(P, 0.3 * a));
+      grd.addColorStop(0.7, rgba(P, 0.1 * a));
       grd.addColorStop(1, rgba(P, 0));
       g.fillStyle = grd;
-      g.fillRect(cx - R, cy - R, 2 * R, 2 * R);
-    }
+      g.fillRect(fx, fy, fw, fh);
+    };
+    band(mid, sh.band, all);
+    band(mid - sh.band * 0.95, sh.band * 0.32, 0.55 * all);
   }
-  // Each sector's edge lights as the wave passes.
+  // Each sector's edge lights as the band comes over it, with a glint on its top corner as its middle passes.
   for (const [, x, y] of geo.sectors) {
-    const age = t - arrival(Math.hypot(x - geo.cx, y - geo.cy), geo.reach);
-    if (age < 0) continue;
-    const k = Math.exp(-age / 0.65) * all;
+    const age = t - arrival(geo.shine, x, y);
+    if (age < -0.14) continue;
+    const k = (age < 0 ? 1 + age / 0.14 : Math.exp(-age / 0.6)) * all;
     if (k < 0.02) continue;
     hexPath(g, fx + x, fy + y, tile * 0.45);
     g.fillStyle = rgba(P, 0.16 * k);
@@ -222,6 +202,25 @@ function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, theme: CompanyT
     g.strokeStyle = `rgba(255,255,255,${(0.9 * k).toFixed(3)})`;
     g.lineWidth = 1.5 + 1.5 * k;
     g.stroke();
+    if (age >= 0 && age < 0.42) {
+      const gl = Math.sin((Math.PI * age) / 0.42) * all;
+      const gx = fx + x + tile * 0.2;
+      const gy = fy + y - tile * 0.36;
+      const L = tile * 0.34 * gl;
+      const glow = g.createRadialGradient(gx, gy, 0, gx, gy, L * 0.7);
+      glow.addColorStop(0, `rgba(255,255,255,${(0.85 * gl).toFixed(3)})`);
+      glow.addColorStop(1, rgba(P, 0));
+      g.fillStyle = glow;
+      g.fillRect(gx - L, gy - L, 2 * L, 2 * L);
+      g.strokeStyle = `rgba(255,255,255,${(0.9 * gl).toFixed(3)})`;
+      g.lineWidth = 1.4;
+      g.beginPath();
+      g.moveTo(gx - L, gy);
+      g.lineTo(gx + L, gy);
+      g.moveTo(gx, gy - L * 0.7);
+      g.lineTo(gx, gy + L * 0.7);
+      g.stroke();
+    }
   }
   g.restore();
 
@@ -326,8 +325,8 @@ export function MissionWin({ show, theme, onHold, onShake, onDone, killOn }: Mis
       if (geo) {
         const r = geo;
         setBox({ x: r.fx, y: r.fy, w: r.fw, h: r.fh });
-        const tau = new Map(r.sectors.map(([k, x, y]) => [k, arrival(Math.hypot(x - r.cx, y - r.cy), r.reach)]));
-        // The units shiver as the wave passes (no shiver in the still picture).
+        const tau = new Map(r.sectors.map(([k, x, y]) => [k, arrival(r.shine, x, y)]));
+        // The units shiver as the shine passes (no shiver in the still picture).
         if (!still)
           cbs.current.onShake((key, at) => {
             const age = ((at - t0) / 1000) * speed - (tau.get(key) ?? Infinity);
@@ -373,7 +372,8 @@ export function MissionWin({ show, theme, onHold, onShake, onDone, killOn }: Mis
       if (stage === "wait") {
         // The Field's own animations of this answer first. Both in one answer: the Trophy flies as the kill's
         // camera pulls out (most of the way back first: the chip leaves from the sector's place on the whole Field).
-        const pullOut = killAt.current !== undefined && now >= killAt.current + ((KILL.back[0] + 0.5) * 1000) / speed;
+        const back = (KILL_TIMES[show.kill ?? ""] ?? KILL_TIMES.alphaDown!).back[0];
+        const pullOut = killAt.current !== undefined && now >= killAt.current + ((back + 0.5) * 1000) / speed;
         if (now - born > 120 && (!busy || (pullOut && !still))) {
           if (!still && show.flights) {
             stage = "fly";
@@ -422,7 +422,7 @@ export function MissionWin({ show, theme, onHold, onShake, onDone, killOn }: Mis
         style(t, fade);
         if (!still) {
           const crossed = (at: number) => lastT < at && t >= at;
-          if (crossed(WIN.wave[0])) playWinShockwave();
+          if (crossed(WIN.wave[0])) playWinSweep();
           if (crossed(WIN.slam[1])) playMissionComplete();
           const lastCell = WIN.cellsAt + Math.max(0, (geo?.cells.length ?? 1) - 1) * WIN.cellStep + WIN.burstAfter;
           if (crossed(lastCell)) won(true);

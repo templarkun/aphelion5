@@ -1,7 +1,9 @@
 /**
- * The made-up Mission 1 boards of the celebration preview (System options, designer 2026-11-20): Mission 1
- * dealt as in a game, then units placed for the picture, five Alphas already in the Trophy pile, the sixth
- * on the Field. A picture only: no game is played or touched. Also used by the tests.
+ * The made-up boards of the celebration previews (System options, designer 2026-11-20): Mission 1 dealt
+ * as in a game, then units placed for the picture. Alpha (Mission 1, Eliminate 6 Alphas): five Alphas
+ * already in the Trophy pile, the sixth on the Field. Beta (the same Field, called Mission 3, Eliminate
+ * 3 Betas): two Betas in the Trophy pile, the third on the Field. A picture only: no game is played or
+ * touched. Also used by the tests.
  */
 
 import type { GameData } from "../../data/index.js";
@@ -13,6 +15,29 @@ import { key } from "../../geometry/hex.js";
 import { applyLoadout } from "../briefing/launch.js";
 
 export const PREVIEW_SEED = 20261120;
+
+export type PreviewKind = "kill" | "win" | "both";
+export type PreviewOmega = "Alpha" | "Beta";
+/** One preview button: what plays (the kill piece for "kill" and "both"). */
+export interface PreviewWhat {
+  kind: PreviewKind;
+  omega: PreviewOmega;
+  piece?: string | undefined;
+  label: string;
+}
+/** The buttons in System options, in order. */
+export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
+  { kind: "kill", omega: "Alpha", piece: "alphaDown", label: "Alpha Down" },
+  { kind: "kill", omega: "Alpha", piece: "alphaPurge", label: "Alpha Purge" },
+  { kind: "win", omega: "Alpha", label: "Mission Complete" },
+  { kind: "both", omega: "Alpha", piece: "alphaDown", label: "Alpha Down, then Mission Complete" },
+  { kind: "both", omega: "Alpha", piece: "alphaPurge", label: "Alpha Purge, then Mission Complete" },
+  { kind: "kill", omega: "Beta", piece: "betaBreach", label: "Beta Breach" },
+  { kind: "win", omega: "Beta", label: "Mission Complete" },
+  { kind: "both", omega: "Beta", piece: "betaBreach", label: "Beta Breach, then Mission Complete" },
+];
+/** The mission the preview's board stands for. */
+export const PREVIEW_MISSION: Record<PreviewOmega, { id: string; name: string }> = { Alpha: { id: "C1_M1", name: "Mission 1" }, Beta: { id: "C1_M3", name: "Mission 3" } };
 
 /** A first legal answer, to reach the Command phase of Mission 1 (only for the preview's board). */
 function firstAnswer(q: Question): Answer {
@@ -53,7 +78,7 @@ export interface PreviewBoards {
 }
 
 /** The made-up boards: Mission 1 dealt as in a game, then units placed for the picture. */
-export function previewBoards(data: GameData, company: string): PreviewBoards | undefined {
+export function previewBoards(data: GameData, company: string, omega: PreviewOmega = "Alpha"): PreviewBoards | undefined {
   let g: Game = startGame(data, { seed: PREVIEW_SEED, date: "2026-11-20", profile: emptyProfile(), developerMode: false, autoAnswer: true });
   g = applyLoadout(data, g, { campaign: "C1", company, freshness: "fresh", expansions: [], developerMode: false, seed: PREVIEW_SEED });
   for (let i = 0; i < 80 && g.view.status === "question" && g.view.state.phase !== "command"; i++) {
@@ -84,14 +109,17 @@ export function previewBoards(data: GameData, company: string): PreviewBoards | 
     s.field[k]!.push(t);
     return t;
   };
-  // Five Alphas already destroyed this mission.
-  for (let i = 0; i < 5; i++) {
-    const t = take("O_01");
+  // Alpha: five Alphas already destroyed this mission. Beta: two Betas.
+  const beta = omega === "Beta";
+  const target = beta ? "O_02" : "O_01";
+  if (beta) s.mission = PREVIEW_MISSION.Beta.id;
+  for (let i = 0; i < (beta ? 2 : 5); i++) {
+    const t = take(target);
     if (t === undefined) return undefined;
     s.tiles[t] = { ...s.tiles[t]!, faceUp: true, tokens: noTokens() };
     s.piles.trophy.push(t);
   }
-  const alpha = place(0, 1, "O_01");
+  const alpha = place(0, 1, target);
   place(1, -1, "O_01");
   const mecha = place(-1, 0, "M_07");
   const sentinel = place(1, 1, "S_12");
@@ -105,6 +133,8 @@ export function previewBoards(data: GameData, company: string): PreviewBoards | 
   }
   if (alpha === undefined || mecha === undefined || sentinel === undefined) return undefined;
   if (s.tiles[sentinel]) s.tiles[sentinel]!.tokens.shield = 1;
+  // Already damaged, so the Mecha's 2 damage destroys it (Alpha Level 3, Beta Level 13).
+  s.tiles[alpha]!.tokens.damage = beta ? 11 : 1;
   s.seen = [];
   const at = key({ q: 0, r: 1 });
   const nextSeq = (st: GameState) => (st.events?.at(-1)?.seq ?? 0) + 1;
@@ -113,8 +143,21 @@ export function previewBoards(data: GameData, company: string): PreviewBoards | 
     st.events = [...(st.events ?? []), ...bodies.map((b) => ({ ...b, seq: n++ }) as GameEvent)];
     return st;
   };
-  const hit: GameEventBody = { kind: "hit", tile: alpha, unitId: "O_01", type: "Omega", sector: at, amount: 2, damage: 2, shields: 0, rule: "M_07" };
-  const destroyed: GameEventBody = { kind: "destroyed", tile: alpha, unitId: "O_01", type: "Omega", sector: at, wreck: true };
+  const hit: GameEventBody = { kind: "hit", tile: alpha, unitId: target, type: "Omega", sector: at, amount: 2, damage: 2, shields: 0, rule: "M_07" };
+  const destroyed: GameEventBody = { kind: "destroyed", tile: alpha, unitId: target, type: "Omega", sector: at, wreck: !beta };
+  if (beta) {
+    // A Beta has no Destroyed effect: straight to the Trophy pile, no Wreck; the mission is won in the same answer.
+    const gone = (base: GameState, bodies: GameEventBody[], won: boolean): GameState => {
+      const w = withEvents(structuredClone(base), bodies);
+      w.field[at] = w.field[at]!.filter((t) => t !== alpha);
+      w.tiles[alpha]!.tokens = noTokens();
+      w.piles.trophy.push(alpha);
+      if (won) w.phase = "missionEnd";
+      return w;
+    };
+    const kill = gone(s, [hit, destroyed], false);
+    return { start: s, kill, won: withEvents({ ...structuredClone(kill), phase: "missionEnd" }, [{ kind: "won" }]), wonJoined: gone(s, [hit, destroyed, { kind: "won" }], true) };
+  }
   const resolved: GameEventBody[] = [
     { kind: "activated", tile: alpha, unitId: "O_01", type: "Omega", sector: at, how: "alert", wreck: true },
     { kind: "tokens", tile: sentinel, unitId: "S_12", sector: key({ q: 1, r: 1 }), change: "shield", n: 1, boost: true, rule: "O_01" },

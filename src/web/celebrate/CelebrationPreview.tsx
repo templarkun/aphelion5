@@ -1,9 +1,10 @@
 /**
- * System options > the mission celebrations, previewed on a made-up Mission 1 Field (designer
- * 2026-11-20): five Alphas already in the Trophy pile, the sixth on the Field. "kill": a Mecha's shell
- * destroys it (Alpha Down). "win": its Wreck resolves and the mission is won (Mission Complete). "both":
- * all in one answer, the kill going straight on into the win. The board is a picture for the preview
- * only (no game is played or touched); the pieces are the ones a game plays.
+ * System options > the mission celebrations, previewed on a made-up Field (designer 2026-11-20;
+ * previewBoards.ts): Mission 1 with five Alphas already in the Trophy pile and the sixth on the Field,
+ * or Mission 3 with two Betas in it and the third on the Field. "kill": a Mecha's shell destroys it (the
+ * kill piece chosen on the button). "win": the mission is won (Mission Complete; for Alpha, once its
+ * Wreck resolves). "both": all in one answer, the kill going straight on into the win. The board is a
+ * picture for the preview only (no game is played or touched); the pieces are the ones a game plays.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,12 +17,11 @@ import { companyTheme } from "../outro/themes.js";
 import { CelebrationSkip } from "./CelebrationSkip.js";
 import { type WinShow, winShowOf } from "./detect.js";
 import { MissionWin, type Shake } from "./MissionWin.js";
-import { PREVIEW_SEED as SEED, previewBoards } from "./previewBoards.js";
+import { PREVIEW_MISSION, PREVIEW_SEED as SEED, type PreviewWhat, previewBoards } from "./previewBoards.js";
 
-export type PreviewKind = "kill" | "win" | "both";
-
-export function CelebrationPreview({ data, company, kind, onClose }: { data: GameData; company: string; kind: PreviewKind; onClose: () => void }) {
-  const boards = useMemo(() => previewBoards(data, company), [data, company]);
+export function CelebrationPreview({ data, company, what, onClose }: { data: GameData; company: string; what: PreviewWhat; onClose: () => void }) {
+  const { kind, omega, piece: killPiece } = what;
+  const boards = useMemo(() => previewBoards(data, company, omega), [data, company, omega]);
   const [state, setState] = useState<GameState | undefined>(boards ? (kind === "win" ? boards.kill : boards.start) : undefined);
   const [win, setWin] = useState<WinShow | undefined>();
   const [hold, setHold] = useState(0);
@@ -43,7 +43,7 @@ export function CelebrationPreview({ data, company, kind, onClose }: { data: Gam
       if (kind === "kill") return setState(boards.kill);
       const before = kind === "win" ? boards.kill : boards.start;
       const next = kind === "win" ? boards.won : boards.wonJoined;
-      const w = winShowOf(data, before, next, SEED);
+      const w = winShowOf(data, before, next, SEED, killPiece);
       setState(next);
       setWin(w);
       setHold(w?.fresh ?? 0);
@@ -63,11 +63,12 @@ export function CelebrationPreview({ data, company, kind, onClose }: { data: Gam
   }, [killOn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!boards || !state || typeof document === "undefined") return null;
-  const piece = kind === "kill" ? "Alpha Down" : kind === "win" ? "Mission Complete" : "Alpha Down, then Mission Complete";
   return createPortal(
-    <div className="cb-preview" data-celebration-preview={kind}>
+    <div className="cb-preview" data-celebration-preview={kind} data-omega={omega} data-piece={killPiece ?? ""}>
       <div className="top-strip">
-        <span className="cb-pv-label">Preview · {piece} · a made-up Mission 1</span>
+        <span className="cb-pv-label">
+          Preview · {what.label} · a made-up {PREVIEW_MISSION[omega].name}
+        </span>
         <span className="cb-pv-right">
           <MissionBar c={{ data, state }} phase="Preview" hold={hold} />
           <button type="button" className="bf-btn" onClick={onClose}>
@@ -86,6 +87,7 @@ export function CelebrationPreview({ data, company, kind, onClose }: { data: Gam
           showHidden={false}
           dark
           seed={SEED}
+          killPiece={killPiece}
           skipAll={skipAll}
           onCelebrate={setKillOn}
           shake={shake}

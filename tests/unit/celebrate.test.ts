@@ -1,6 +1,7 @@
 // The mission celebrations (designer 2026-11-20; screen only): which piece plays (I19), when the kill
 // plays (the destroyed event that reaches the Eliminate objective's number, 8.2), when the win plays
-// (the engine's display event "won") and the board it shows, the animation player's two-tap steps.
+// (the engine's display event "won") and the board it shows, the animation player's two-tap steps; the
+// second Alpha kill (I21), the Beta kill and Mission Complete for Beta (I22), the win's shine (I23).
 import { expect, test } from "vitest";
 import { newEvents, type GameEvent } from "../../src/engine/events.js";
 import { newRng } from "../../src/engine/rng.js";
@@ -9,8 +10,10 @@ import { emptyProfile } from "../../src/engine/state.js";
 import { Player, type Step } from "../../src/web/anim.js";
 import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winShowOf, wonStateOf } from "../../src/web/celebrate/detect.js";
 import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
-import { PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
-import { KILL, STILL, WIN } from "../../src/web/celebrate/timeline.js";
+import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
+import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
+import { arrival, shineAt, shinePath, sweep } from "../../src/web/celebrate/shine.js";
+import { BREACH, KILL, KILL_TIMES, PURGE, STILL, WIN } from "../../src/web/celebrate/timeline.js";
 import * as sound from "../../src/web/briefing/soundHooks.js";
 import { randomAnswer } from "./campaignFuzz.js";
 import { data } from "./helpers.js";
@@ -33,9 +36,9 @@ function toFirstAction(seed: number): Game {
 
 test("I19: one piece per mission, picked from the game's seed and the mission, the same again on reload", () => {
   const two: Piece[] = [
-    { id: "a", name: "A", for: "Alpha" },
-    { id: "b", name: "B", for: "Alpha" },
-    { id: "c", name: "C", for: "Beta" },
+    { id: "a", name: "A", for: ["Alpha"] },
+    { id: "b", name: "B", for: ["Alpha"] },
+    { id: "c", name: "C", for: ["Beta"] },
   ];
   // The same game and mission: always the same piece.
   for (let seed = 1; seed < 20; seed++) expect(pickPiece(two, "Alpha", seed, "C1_M1", "win")).toEqual(pickPiece(two, "Alpha", seed, "C1_M1", "win"));
@@ -44,11 +47,39 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   for (let seed = 1; seed < 60; seed++) got.add(pickPiece(two, "Alpha", seed, "C1_M1", "kill")!.id);
   expect([...got].sort()).toEqual(["a", "b"]);
   expect(pickPiece(two, "Gamma", 1, "C1_M1", "kill")).toBeUndefined();
-  // Today: one kill (Alpha Down) and one win (Mission Complete), for Alpha missions only.
-  expect(KILL_PIECES.map((p) => [p.id, p.for])).toEqual([["alphaDown", "Alpha"]]);
-  expect(WIN_PIECES.map((p) => [p.id, p.for])).toEqual([["missionComplete", "Alpha"]]);
-  expect(pickPiece(KILL_PIECES, "Alpha", 7, "C1_M1", "kill")?.id).toBe("alphaDown");
-  expect(pickPiece(WIN_PIECES, "Beta", 7, "C1_M3", "win")).toBeUndefined();
+  // A preview may ask for one piece; only if it fits.
+  expect(pickPiece(two, "Alpha", 1, "C1_M1", "kill", "b")?.id).toBe("b");
+  expect(pickPiece(two, "Alpha", 1, "C1_M1", "kill", "c")?.id).not.toBe("c");
+  // Today: two kills for Alpha (Alpha Down, Alpha Purge, I21), one for Beta (Beta Breach); Mission Complete for
+  // Alpha and Beta missions (I22); nothing for Gamma or Salvage yet. Every kill piece has its step and times.
+  expect(KILL_PIECES.map((p) => [p.id, p.for])).toEqual([
+    ["alphaDown", ["Alpha"]],
+    ["alphaPurge", ["Alpha"]],
+    ["betaBreach", ["Beta"]],
+  ]);
+  expect(WIN_PIECES.map((p) => [p.id, p.for])).toEqual([["missionComplete", ["Alpha", "Beta"]]]);
+  for (const p of KILL_PIECES) {
+    expect(KILL_STEPS[p.id]).toBeTypeOf("function");
+    expect(KILL_TIMES[p.id]).toBeDefined();
+  }
+  const alphas = new Set<string>();
+  for (let seed = 1; seed < 40; seed++) alphas.add(pickPiece(KILL_PIECES, "Alpha", seed, "C1_M1", "kill")!.id);
+  expect([...alphas].sort()).toEqual(["alphaDown", "alphaPurge"]);
+  expect(pickPiece(KILL_PIECES, "Beta", 7, "C1_M3", "kill")?.id).toBe("betaBreach");
+  expect(pickPiece(WIN_PIECES, "Beta", 7, "C1_M3", "win")?.id).toBe("missionComplete");
+  expect(pickPiece(KILL_PIECES, "Gamma", 7, "C1_M7", "kill")).toBeUndefined();
+  expect(pickPiece(WIN_PIECES, "Gamma", 7, "C1_M7", "win")).toBeUndefined();
+  // System options: a button for each kill, the win and each kill with the win, for Alpha and Beta.
+  expect(CELEBRATION_PREVIEWS.map((w) => `${w.omega} ${w.kind} ${w.piece ?? ""}`.trim())).toEqual([
+    "Alpha kill alphaDown",
+    "Alpha kill alphaPurge",
+    "Alpha win",
+    "Alpha both alphaDown",
+    "Alpha both alphaPurge",
+    "Beta kill betaBreach",
+    "Beta win",
+    "Beta both betaBreach",
+  ]);
 });
 
 test("the engine reports the win (8.2) as a display event, also for the Developer tool", () => {
@@ -88,7 +119,9 @@ test("the kill: the destroyed event that reaches the objective's number (Wrecks 
   expect(countedSoFar(b.start, "O_01")).toBe(5);
   const ev = newEvents(b.start.events, b.kill.events);
   expect(decidingKill(data(), b.start, ev)).toBe(ev.findIndex((e) => e.kind === "destroyed"));
-  expect(killOf(data(), b.start, ev, PREVIEW_SEED)).toEqual(expect.objectContaining({ name: "Alpha", count: 6, piece: expect.objectContaining({ id: "alphaDown" }) }));
+  expect(killOf(data(), b.start, ev, PREVIEW_SEED)).toEqual(expect.objectContaining({ name: "Alpha", count: 6 }));
+  expect(killOf(data(), b.start, ev, PREVIEW_SEED, "alphaPurge")?.piece.id).toBe("alphaPurge");
+  expect(killOf(data(), b.start, ev, PREVIEW_SEED, "betaBreach")?.piece.id).not.toBe("betaBreach");
   // Once counted (its Wreck on the Field), a later Alpha destroyed is not the deciding one.
   expect(countedSoFar(b.kill, "O_01")).toBe(6);
   const again = [{ ...ev.find((e) => e.kind === "destroyed")!, seq: 99999 }] as GameEvent[];
@@ -116,9 +149,31 @@ test("the win: from the sector the deciding Alpha left; both in one answer are j
   expect(w.flights).toBe(true);
   expect(w.joined).toBe(false);
   expect(w.dev).toBe(false);
-  const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED)!;
+  const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED, "alphaPurge")!;
   expect(j.joined).toBe(true);
   expect(j.from).toBe("0,1");
+  // Joined: the kill played with it (its pull-out is when the Trophy flies).
+  expect(j.kill).toBe("alphaPurge");
+  expect(w.kill).toBeUndefined();
+});
+
+test("Beta (Mission 3, Eliminate 3 Betas): the third Beta destroyed is the deciding kill (Beta Breach); Mission Complete follows (I22)", () => {
+  const b = previewBoards(data(), "V1", "Beta")!;
+  expect(b).toBeDefined();
+  expect(objectiveOf(data(), b.start)).toEqual({ type: "eliminate", target: "O_02", count: 3 });
+  expect(omegaName(data(), "O_02")).toBe("Beta");
+  expect(countedSoFar(b.start, "O_02")).toBe(2);
+  // A Beta has no Destroyed effect: no Wreck; it goes straight to the Trophy pile.
+  const ev = newEvents(b.start.events, b.wonJoined.events);
+  const d = ev.findIndex((e) => e.kind === "destroyed");
+  expect(ev[d]).toEqual(expect.objectContaining({ unitId: "O_02", wreck: false }));
+  expect(killOf(data(), b.start, ev, PREVIEW_SEED)).toEqual(expect.objectContaining({ index: d, name: "Beta", count: 3, piece: expect.objectContaining({ id: "betaBreach" }) }));
+  const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED)!;
+  expect(j.piece.id).toBe("missionComplete");
+  expect([j.name, j.target, j.count, j.have, j.from, j.joined, j.kill, j.fresh]).toEqual(["Beta", "O_02", 3, 3, "0,1", true, "betaBreach", 1]);
+  // The win alone (after the kill): from the same sector, nothing left to fly in.
+  const w = winShowOf(data(), b.kill, b.won, PREVIEW_SEED)!;
+  expect([w.from, w.joined, w.flights]).toEqual(["0,1", false, false]);
 });
 
 test("the celebrations' timing (the plan agreed 2026-11-20)", () => {
@@ -139,8 +194,52 @@ test("the celebrations' timing (the plan agreed 2026-11-20)", () => {
   expect(WIN.badgesAt + 5 * WIN.badgeStep + WIN.badgeFall).toBeLessThanOrEqual(3.8);
   expect(WIN.out[1]).toBe(WIN.total);
   expect(STILL).toBe(1.5);
+  // Alpha Purge (I21): as long as Alpha Down, in four acts; the cage locks, crushes, then the pillar of light.
+  expect(PURGE.total).toBe(KILL.total);
+  expect(PURGE.lock).toBeLessThan(PURGE.squeeze[0]);
+  expect(PURGE.crush[1]).toBe(PURGE.purge);
+  expect(PURGE.wreckIn[0]).toBeGreaterThan(PURGE.purge);
+  expect(PURGE.count).toBeLessThan(PURGE.back[0]);
+  expect(PURGE.back[1]).toBe(PURGE.total);
+  // Beta Breach: longer than either Alpha kill, three surges and three blasts before the breach, then the count.
+  expect(BREACH.total).toBeGreaterThan(KILL.total + 1);
+  expect(BREACH.surges).toHaveLength(3);
+  expect(BREACH.blasts).toHaveLength(3);
+  expect(BREACH.lock).toBeLessThan(BREACH.surges[0]);
+  expect(Math.max(...BREACH.surges, ...BREACH.blasts)).toBeLessThan(BREACH.implode[0]);
+  expect(BREACH.implode[1]).toBe(BREACH.detonate);
+  expect(BREACH.count).toBeGreaterThan(BREACH.detonate);
+  expect(BREACH.count).toBeLessThan(BREACH.back[0]);
+  expect(BREACH.back[1]).toBe(BREACH.total);
+  for (const [id, t] of Object.entries(KILL_TIMES)) expect(t.back[1], id).toBe(t.total);
   // Silent sound hooks, ready for audio files.
-  for (const f of [sound.playTargetLock, sound.playOmegaBreak, sound.playKillConfirmed, sound.playTrophyLand, sound.playWinShockwave, sound.playMissionComplete]) expect(typeof f).toBe("function");
+  for (const f of [sound.playTargetLock, sound.playOmegaBreak, sound.playKillConfirmed, sound.playPurgeBeam, sound.playBetaSurge, sound.playBetaDetonation, sound.playTrophyLand, sound.playWinSweep, sound.playMissionComplete]) expect(typeof f).toBe("function");
+});
+
+test("the win's shine (I23): it sweeps right across the Field, starting and ending beyond its edges, never standing still on it", () => {
+  for (const [w, h, from] of [
+    [1100, 700, [300, 420]],
+    [390, 600, [195, 200]],
+    [800, 800, undefined],
+  ] as const) {
+    const tile = Math.min(w, h) / 6;
+    const p = shinePath(w, h, tile, from);
+    expect(Math.hypot(p.ux, p.uy)).toBeCloseTo(1, 6);
+    const corners = [0, p.ux * w, p.uy * h, p.ux * w + p.uy * h];
+    // At its start the whole band is before the Field; at its end the whole band is past it.
+    expect(shineAt(p, WIN.wave[0]) + p.band).toBeLessThanOrEqual(Math.min(...corners) + 1e-6);
+    expect(shineAt(p, WIN.wave[1]) - p.band).toBeGreaterThanOrEqual(Math.max(...corners) - 1e-6);
+    // Always moving: its speed is never below a third of the average, at the ends too.
+    const avg = (p.s1 - p.s0) / (WIN.wave[1] - WIN.wave[0]);
+    for (let i = 0; i < 20; i++) {
+      const t = WIN.wave[0] + ((WIN.wave[1] - WIN.wave[0]) * i) / 20;
+      expect((shineAt(p, t + 0.01) - shineAt(p, t)) / 0.01).toBeGreaterThan(avg / 3);
+    }
+    // Away from the sector the unit left: that sector is lit before the far side of the Field.
+    if (from) expect(arrival(p, from[0], from[1])).toBeLessThan(arrival(p, w - from[0], h - from[1]));
+  }
+  expect(sweep(0)).toBe(0);
+  expect(sweep(1)).toBeCloseTo(1, 9);
 });
 
 test("the Field's player: one tap finishes animations up to a celebration, which only two taps (skip) end", () => {

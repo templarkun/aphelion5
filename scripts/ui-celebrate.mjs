@@ -1,7 +1,8 @@
 // Browser check of the mission celebrations (designer 2026-11-20), called by ui-smoke.mjs; can also run
-// alone: node scripts/ui-celebrate.mjs [url] [outDir]. The previews in System options (the kill, the win,
-// both in one answer) at 1400 and 390 px, one tap vs two taps, reduced motion, and a real game won with
-// the Developer tool: the win plays first and the Upgrade sheet waits for it.
+// alone: node scripts/ui-celebrate.mjs [url] [outDir]. The previews in System options (Alpha Down, Alpha
+// Purge, Beta Breach, the win, a kill and the win in one answer) at 1400 and 390 px, one tap vs two taps,
+// reduced motion, and a real game won with the Developer tool: the win plays first and the Upgrade sheet
+// waits for it.
 import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -41,14 +42,20 @@ export async function celebrateCheck(browser, url, out) {
     await pg.addInitScript(() => { try { localStorage.setItem("aphelion5.intro", "off"); } catch {} });
     return pg;
   };
-  const preview = async (pg, kind) => {
+  const preview = async (pg, kind, omega = "Alpha", piece = kind === "win" ? "" : "alphaDown") => {
     await pg.goto(url);
     await pg.waitForSelector('.brief[data-step=campaign][data-busy="0"]', { timeout: 15000 });
     await pg.getByRole("button", { name: "System options" }).click();
     const listed = await pg.locator("[data-action=celebration-preview]").count();
     await watch(pg);
-    await pg.locator(`[data-action=celebration-preview][data-kind=${kind}]`).click();
+    await pg.locator(`[data-action=celebration-preview][data-kind=${kind}][data-omega=${omega}][data-piece="${piece}"]`).click();
     return listed;
+  };
+  /** How long the kill's catcher stayed (ms), from the page's own log. */
+  const killMs = (l) => {
+    const on = l.find(([, s]) => s.startsWith("catch"));
+    const off = l.find(([t, s]) => on && t > on[0] && s.startsWith("-"));
+    return on && off ? off[0] - on[0] : 0;
   };
 
   // 1. The kill (1400 px): one tap does not skip it; it plays about 4.5 s, with its label; then the preview closes.
@@ -66,11 +73,45 @@ export async function celebrateCheck(browser, url, out) {
     const ended = await pg.waitForSelector("[data-celebration]", { state: "detached", timeout: 12000 }).then(() => true, () => false);
     const closed = await pg.waitForSelector("[data-celebration-preview]", { state: "detached", timeout: 5000 }).then(() => true, () => false);
     const l = await log(pg);
-    const on = l.find(([, s]) => s.startsWith("catch"));
-    const off = l.find(([t, s]) => on && t > on[0] && s.startsWith("-"));
-    const ms = on && off ? off[0] - on[0] : 0;
+    const ms = killMs(l);
     await pg.close();
-    if (!(listed === 3 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
+    if (!(listed === 8 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
+  }
+
+  // 1b. Alpha Purge (1100 px), the second Alpha kill (I21): about 4.5 s, then the preview closes.
+  {
+    const pg = await open(1100, 760);
+    await preview(pg, "kill", "Alpha", "alphaPurge");
+    const shown = await pg.waitForSelector("[data-celebration]", { timeout: 10000 }).then(() => true, () => false);
+    await pg.waitForTimeout(1500);
+    await pg.screenshot({ path: `${out}/ui-celebrate-purge.png` });
+    const closed = await pg.waitForSelector("[data-celebration-preview]", { state: "detached", timeout: 14000 }).then(() => true, () => false);
+    const ms = killMs(await log(pg));
+    await pg.close();
+    if (!(shown && closed && ms > 3500 && ms < 9000)) fails.push(`Alpha Purge: shown ${shown}, closed ${closed}, ${ms} ms`);
+  }
+
+  // 1c. Beta Breach, then Mission Complete (1400 px): the longer kill (about 6.2 s), then the win for Beta (I22): "BETA ELIMINATED · 3 / 3", three badges.
+  {
+    const pg = await open(1400, 900);
+    await preview(pg, "both", "Beta", "betaBreach");
+    await pg.waitForSelector("[data-celebration]", { timeout: 10000 }).catch(() => {});
+    await pg.waitForTimeout(2900);
+    await pg.screenshot({ path: `${out}/ui-celebrate-beta.png` });
+    const played = await pg.waitForSelector("[data-win][data-phase=play]", { timeout: 20000 }).then(() => true, () => false);
+    await pg.waitForSelector("[data-win][data-act='3']", { timeout: 8000 }).catch(() => {});
+    await pg.waitForTimeout(900);
+    const sub = ((await pg.locator(".cb-sub").innerText().catch(() => "")) ?? "").toLowerCase();
+    const badges = await pg.locator(".cb-badges img").count();
+    await pg.screenshot({ path: `${out}/ui-celebrate-beta-win.png` });
+    const closed = await pg.waitForSelector("[data-celebration-preview]", { state: "detached", timeout: 14000 }).then(() => true, () => false);
+    const l = await log(pg);
+    const first = l.find(([, s]) => s.startsWith("catch"));
+    const play = l.find(([, s]) => / play/.test(s));
+    const gap = first && play ? play[0] - first[0] : 0;
+    const acts = l.map(([, s]) => s.split(" ")[2]).filter(Boolean).pop() ?? "";
+    await pg.close();
+    if (!(played && gap > 5000 && /beta eliminated · 3 \/ 3/.test(sub) && badges === 3 && acts === "1234" && closed)) fails.push(`Beta: played ${played}, kill then win ${gap} ms, sub "${sub}", badges ${badges}, acts "${acts}", closed ${closed}`);
   }
 
   // 2. The win (1400 px): the Trophy flies in, four acts in order, the banner and six badges, the Mission bar gold; then it closes.

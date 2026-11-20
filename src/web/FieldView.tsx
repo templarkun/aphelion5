@@ -39,7 +39,7 @@ import { isStill, onMotion, speedFactor } from "./motion.js";
 import { PlasmaWave } from "./plasmaFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 import { killOf } from "./celebrate/detect.js";
-import { alphaDownStep } from "./celebrate/killFx.js";
+import { killStepFor } from "./celebrate/kills.js";
 
 export interface FieldProps {
   data: GameData;
@@ -67,11 +67,13 @@ export interface FieldProps {
   onMiss?: (() => void) | undefined;
   /** The game's seed: which kill celebration plays this mission (I19); none: no kill celebration. */
   seed?: number | undefined;
+  /** That kill piece, whatever the seed picks (the previews in System options). */
+  killPiece?: string | undefined;
   /** Changed (counted up): finish every animation now, celebrations too (two taps, designer 2026-11-20). */
   skipAll?: number | undefined;
   /** A kill celebration starts or ends (the screen shows "Tap twice to skip"). */
   onCelebrate?: ((on: boolean) => void) | undefined;
-  /** The win celebration's shock wave makes the units shiver (offset in pixels for a sector now). */
+  /** The win celebration's shine makes the units shiver (offset in pixels for a sector now). */
   shake?: ((key: string, now: number) => { dx: number; dy: number } | undefined) | undefined;
 }
 
@@ -647,7 +649,7 @@ export function FieldView(p: FieldProps) {
     const standIns = new Map<TileId, Container>();
     // The kill celebration (designer 2026-11-20): the destroyed event that reaches the Eliminate objective's number.
     const P0 = props.current;
-    const kill = P0.seed !== undefined ? killOf(P0.data, before, events, P0.seed) : undefined;
+    const kill = P0.seed !== undefined ? killOf(P0.data, before, events, P0.seed, P0.killPiece) : undefined;
     const killEvent = kill ? events[kill.index] : undefined;
     events.forEach((e, idx) => {
       // A Wreck that also left the Field in these events (both pieces in one answer) gets a stand-in too.
@@ -672,7 +674,8 @@ export function FieldView(p: FieldProps) {
       const onBoard = isTop(e.sector, e.tile);
       const ghost = onBoard ? undefined : (standIns.get(e.tile) ?? ghost0(e.type, e.unitId));
       standIns.delete(e.tile);
-      return alphaDownStep(
+      return killStepFor(
+        kill!.piece.id,
         {
           layer: L.celebrate,
           zoom: zoomBoard,

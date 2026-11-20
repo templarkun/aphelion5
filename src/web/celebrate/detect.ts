@@ -61,14 +61,14 @@ export interface KillInfo {
   count: number;
 }
 
-/** The kill piece of these events, if they hold the deciding kill and a piece exists for its Omega type. */
-export function killOf(data: GameData, before: GameState | undefined, events: readonly GameEvent[], seed: number): KillInfo | undefined {
+/** The kill piece of these events, if they hold the deciding kill and a piece exists for its Omega type (`force`: that piece, the previews). */
+export function killOf(data: GameData, before: GameState | undefined, events: readonly GameEvent[], seed: number, force?: string): KillInfo | undefined {
   const index = decidingKill(data, before, events);
   if (index < 0 || !before) return undefined;
   const o = objectiveOf(data, before);
   if (!o || o.type !== "eliminate") return undefined;
   const name = omegaName(data, o.target);
-  const piece = pickPiece(KILL_PIECES, name, seed, before.mission, "kill");
+  const piece = pickPiece(KILL_PIECES, name, seed, before.mission, "kill", force);
   return piece ? { index, piece, name, count: o.count } : undefined;
 }
 
@@ -90,6 +90,8 @@ export interface WinShow {
   dev: boolean;
   /** The same answer also made the deciding kill: the kill plays first, then this. */
   joined: boolean;
+  /** That kill's piece (its pull-out is when the Trophy flies). */
+  kill?: string | undefined;
   /** The objective's Trophies that came in with this answer (they fly in before the piece). */
   fresh: number;
   /** Any Trophies at all came in with this answer (Power Nodes too). */
@@ -113,8 +115,8 @@ export function wonStateOf(data: GameData, prev: Game, answers: readonly Answer[
   return undefined;
 }
 
-/** The win piece for a board won from `before` (the Developer tool, or the objective). */
-export function winShowOf(data: GameData, before: GameState, won: GameState, seed: number): WinShow | undefined {
+/** The win piece for a board won from `before` (the Developer tool, or the objective). `forceKill`: the kill piece played with it (the previews). */
+export function winShowOf(data: GameData, before: GameState, won: GameState, seed: number, forceKill?: string): WinShow | undefined {
   const o = objectiveOf(data, before);
   if (!o || o.type !== "eliminate") return undefined;
   const name = omegaName(data, o.target);
@@ -136,6 +138,7 @@ export function winShowOf(data: GameData, before: GameState, won: GameState, see
       }
     }
   }
+  const joined = decidingKill(data, before, ev) >= 0;
   const had = new Set(before.piles.trophy);
   const freshAll = won.piles.trophy.filter((t) => !had.has(t));
   return {
@@ -148,7 +151,8 @@ export function winShowOf(data: GameData, before: GameState, won: GameState, see
     have: Math.min(o.count, mine.length),
     from,
     dev,
-    joined: decidingKill(data, before, ev) >= 0,
+    joined,
+    kill: joined ? killOf(data, before, ev, seed, forceKill)?.piece.id : undefined,
     fresh: freshAll.filter((t) => won.tiles[t]?.unitId === o.target).length,
     flights: freshAll.length > 0,
   };
