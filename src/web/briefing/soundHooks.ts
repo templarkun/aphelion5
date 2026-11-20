@@ -94,6 +94,21 @@ export function playBetaSurge(index: number): void {
 }
 /** Beta Breach, Act 3: the core breaches, white-out and fireball. */
 export function playBetaDetonation(): void {}
+/** Event Horizon (Gamma), Act 2: the Gamma collapses into a black sphere and starts to pull. */
+export function playGammaCollapse(): void {}
+/** Event Horizon, Act 3: the singularity snaps to a point, then a jet of light fires up and a shock wave flips the sectors. */
+export function playGammaJet(): void {}
+/** Event Horizon, Act 4: one lifted sector drops back onto the board (index of count). */
+export function playSectorLand(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Field Array (Gamma), Act 1: the sectors of the Field light up, ring by ring towards the Gamma. */
+export function playArrayArm(): void {}
+/** Field Array, Act 2: the lattice of beams closes on the Gamma and its shield breaks. */
+export function playLatticeLock(): void {}
+/** Field Array, Act 3: the beams cut the Gamma's column into slices. */
+export function playGammaCut(): void {}
 /** The win, Mission Complete: the mission is won (8.2). */
 /** Win: a Trophy that came in with the winning answer lands in the Mission bar. */
 export function playTrophyLand(): void {}

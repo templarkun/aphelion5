@@ -2,8 +2,9 @@
  * The made-up boards of the celebration previews (System options, designer 2026-11-20): Mission 1 dealt
  * as in a game, then units placed for the picture. Alpha (Mission 1, Eliminate 6 Alphas): five Alphas
  * already in the Trophy pile, the sixth on the Field. Beta (the same Field, called Mission 3, Eliminate
- * 3 Betas): two Betas in the Trophy pile, the third on the Field. A picture only: no game is played or
- * touched. Also used by the tests.
+ * 3 Betas): two Betas in the Trophy pile, the third on the Field. Gamma (the same Field, called Mission 7,
+ * Eliminate 2 Gammas): one Gamma in the Trophy pile, the second on the Field. A picture only: no game is
+ * played or touched. Also used by the tests.
  */
 
 import type { GameData } from "../../data/index.js";
@@ -17,7 +18,7 @@ import { applyLoadout } from "../briefing/launch.js";
 export const PREVIEW_SEED = 20261120;
 
 export type PreviewKind = "kill" | "win" | "both";
-export type PreviewOmega = "Alpha" | "Beta";
+export type PreviewOmega = "Alpha" | "Beta" | "Gamma";
 /** One preview button: what plays (the kill piece for "kill" and "both"). */
 export interface PreviewWhat {
   kind: PreviewKind;
@@ -35,9 +36,18 @@ export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
   { kind: "kill", omega: "Beta", piece: "betaBreach", label: "Beta Breach" },
   { kind: "win", omega: "Beta", label: "Mission Complete" },
   { kind: "both", omega: "Beta", piece: "betaBreach", label: "Beta Breach, then Mission Complete" },
+  { kind: "kill", omega: "Gamma", piece: "gammaHorizon", label: "Event Horizon" },
+  { kind: "kill", omega: "Gamma", piece: "gammaArray", label: "Field Array" },
+  { kind: "win", omega: "Gamma", label: "Mission Complete" },
+  { kind: "both", omega: "Gamma", piece: "gammaHorizon", label: "Event Horizon, then Mission Complete" },
+  { kind: "both", omega: "Gamma", piece: "gammaArray", label: "Field Array, then Mission Complete" },
 ];
 /** The mission the preview's board stands for. */
-export const PREVIEW_MISSION: Record<PreviewOmega, { id: string; name: string }> = { Alpha: { id: "C1_M1", name: "Mission 1" }, Beta: { id: "C1_M3", name: "Mission 3" } };
+export const PREVIEW_MISSION: Record<PreviewOmega, { id: string; name: string }> = {
+  Alpha: { id: "C1_M1", name: "Mission 1" },
+  Beta: { id: "C1_M3", name: "Mission 3" },
+  Gamma: { id: "C1_M7", name: "Mission 7" },
+};
 
 /** A first legal answer, to reach the Command phase of Mission 1 (only for the preview's board). */
 function firstAnswer(q: Question): Answer {
@@ -109,11 +119,12 @@ export function previewBoards(data: GameData, company: string, omega: PreviewOme
     s.field[k]!.push(t);
     return t;
   };
-  // Alpha: five Alphas already destroyed this mission. Beta: two Betas.
-  const beta = omega === "Beta";
-  const target = beta ? "O_02" : "O_01";
-  if (beta) s.mission = PREVIEW_MISSION.Beta.id;
-  for (let i = 0; i < (beta ? 2 : 5); i++) {
+  // Alpha: five Alphas already destroyed this mission. Beta: two Betas. Gamma: one Gamma.
+  // Betas and Gammas have no Destroyed effect: no Wreck (4.8).
+  const beta = omega !== "Alpha";
+  const target = omega === "Gamma" ? "O_03" : omega === "Beta" ? "O_02" : "O_01";
+  s.mission = PREVIEW_MISSION[omega].id;
+  for (let i = 0; i < (omega === "Gamma" ? 1 : beta ? 2 : 5); i++) {
     const t = take(target);
     if (t === undefined) return undefined;
     s.tiles[t] = { ...s.tiles[t]!, faceUp: true, tokens: noTokens() };
@@ -133,8 +144,8 @@ export function previewBoards(data: GameData, company: string, omega: PreviewOme
   }
   if (alpha === undefined || mecha === undefined || sentinel === undefined) return undefined;
   if (s.tiles[sentinel]) s.tiles[sentinel]!.tokens.shield = 1;
-  // Already damaged, so the Mecha's 2 damage destroys it (Alpha Level 3, Beta Level 13).
-  s.tiles[alpha]!.tokens.damage = beta ? 11 : 1;
+  // Already damaged, so the Mecha's 2 damage destroys it (Alpha Level 3, Beta Level 13, Gamma Level 25).
+  s.tiles[alpha]!.tokens.damage = omega === "Gamma" ? 23 : beta ? 11 : 1;
   s.seen = [];
   const at = key({ q: 0, r: 1 });
   const nextSeq = (st: GameState) => (st.events?.at(-1)?.seq ?? 0) + 1;
@@ -146,7 +157,7 @@ export function previewBoards(data: GameData, company: string, omega: PreviewOme
   const hit: GameEventBody = { kind: "hit", tile: alpha, unitId: target, type: "Omega", sector: at, amount: 2, damage: 2, shields: 0, rule: "M_07" };
   const destroyed: GameEventBody = { kind: "destroyed", tile: alpha, unitId: target, type: "Omega", sector: at, wreck: !beta };
   if (beta) {
-    // A Beta has no Destroyed effect: straight to the Trophy pile, no Wreck; the mission is won in the same answer.
+    // A Beta or Gamma has no Destroyed effect: straight to the Trophy pile, no Wreck; the mission is won in the same answer.
     const gone = (base: GameState, bodies: GameEventBody[], won: boolean): GameState => {
       const w = withEvents(structuredClone(base), bodies);
       w.field[at] = w.field[at]!.filter((t) => t !== alpha);

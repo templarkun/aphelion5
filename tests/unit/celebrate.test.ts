@@ -1,7 +1,8 @@
 // The mission celebrations (designer 2026-11-20; screen only): which piece plays (I19), when the kill
 // plays (the destroyed event that reaches the Eliminate objective's number, 8.2), when the win plays
 // (the engine's display event "won") and the board it shows, the animation player's two-tap steps; the
-// second Alpha kill (I21), the Beta kill and Mission Complete for Beta (I22), the win's energy sweep (I23, I24); the same for every Company (I25).
+// second Alpha kill (I21), the Beta kill and Mission Complete for Beta (I22), the win's energy sweep (I23, I24); the same for every Company (I25);
+// the two Gamma kills on a tilted board (I26) and Mission Complete for Gamma (I27).
 import { expect, test } from "vitest";
 import { newEvents, type GameEvent } from "../../src/engine/events.js";
 import { newRng } from "../../src/engine/rng.js";
@@ -14,7 +15,10 @@ import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
 import { betaFlows, crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
 import { arrival, shineAt, shinePath, sweep } from "../../src/web/celebrate/shine.js";
-import { BREACH, KILL, KILL_TIMES, PURGE, STILL, WIN } from "../../src/web/celebrate/timeline.js";
+import { ARRAY, BREACH, HORIZON, KILL, KILL_TIMES, PURGE, STILL, WIN } from "../../src/web/celebrate/timeline.js";
+import { hexDist, project, tiltBoard } from "../../src/web/celebrate/tilt.js";
+import type { Frame } from "../../src/web/celebrate/closeup.js";
+import type { NodeLook } from "../../src/web/anim.js";
 import * as sound from "../../src/web/briefing/soundHooks.js";
 import { randomAnswer } from "./campaignFuzz.js";
 import { data } from "./helpers.js";
@@ -51,14 +55,17 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   // A preview may ask for one piece; only if it fits.
   expect(pickPiece(two, "Alpha", 1, "C1_M1", "kill", "b")?.id).toBe("b");
   expect(pickPiece(two, "Alpha", 1, "C1_M1", "kill", "c")?.id).not.toBe("c");
-  // Today: two kills for Alpha (Alpha Down, Alpha Purge, I21), one for Beta (Beta Breach); Mission Complete for
-  // Alpha and Beta missions (I22); nothing for Gamma or Salvage yet. Every kill piece has its step and times.
+  // Today: two kills for Alpha (Alpha Down, Alpha Purge, I21), one for Beta (Beta Breach), two for Gamma (Event
+  // Horizon, Field Array, I26); Mission Complete for Alpha, Beta (I22) and Gamma missions (I27); nothing for
+  // Salvage yet. Every kill piece has its step and times.
   expect(KILL_PIECES.map((p) => [p.id, p.for])).toEqual([
     ["alphaDown", ["Alpha"]],
     ["alphaPurge", ["Alpha"]],
     ["betaBreach", ["Beta"]],
+    ["gammaHorizon", ["Gamma"]],
+    ["gammaArray", ["Gamma"]],
   ]);
-  expect(WIN_PIECES.map((p) => [p.id, p.for])).toEqual([["missionComplete", ["Alpha", "Beta"]]]);
+  expect(WIN_PIECES.map((p) => [p.id, p.for])).toEqual([["missionComplete", ["Alpha", "Beta", "Gamma"]]]);
   for (const p of KILL_PIECES) {
     expect(KILL_STEPS[p.id]).toBeTypeOf("function");
     expect(KILL_TIMES[p.id]).toBeDefined();
@@ -68,9 +75,12 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   expect([...alphas].sort()).toEqual(["alphaDown", "alphaPurge"]);
   expect(pickPiece(KILL_PIECES, "Beta", 7, "C1_M3", "kill")?.id).toBe("betaBreach");
   expect(pickPiece(WIN_PIECES, "Beta", 7, "C1_M3", "win")?.id).toBe("missionComplete");
-  expect(pickPiece(KILL_PIECES, "Gamma", 7, "C1_M7", "kill")).toBeUndefined();
-  expect(pickPiece(WIN_PIECES, "Gamma", 7, "C1_M7", "win")).toBeUndefined();
-  // System options: a button for each kill, the win and each kill with the win, for Alpha and Beta.
+  const gammas = new Set<string>();
+  for (let seed = 1; seed < 40; seed++) gammas.add(pickPiece(KILL_PIECES, "Gamma", seed, "C1_M7", "kill")!.id);
+  expect([...gammas].sort()).toEqual(["gammaArray", "gammaHorizon"]);
+  expect(pickPiece(WIN_PIECES, "Gamma", 7, "C1_M7", "win")?.id).toBe("missionComplete");
+  expect(pickPiece(KILL_PIECES, "Salvage", 7, "C1_M2", "kill")).toBeUndefined();
+  // System options: a button for each kill, the win and each kill with the win, for Alpha, Beta and Gamma.
   expect(CELEBRATION_PREVIEWS.map((w) => `${w.omega} ${w.kind} ${w.piece ?? ""}`.trim())).toEqual([
     "Alpha kill alphaDown",
     "Alpha kill alphaPurge",
@@ -80,6 +90,11 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Beta kill betaBreach",
     "Beta win",
     "Beta both betaBreach",
+    "Gamma kill gammaHorizon",
+    "Gamma kill gammaArray",
+    "Gamma win",
+    "Gamma both gammaHorizon",
+    "Gamma both gammaArray",
   ]);
 });
 
@@ -177,6 +192,63 @@ test("Beta (Mission 3, Eliminate 3 Betas): the third Beta destroyed is the decid
   expect([w.from, w.joined, w.flights]).toEqual(["0,1", false, false]);
 });
 
+test("Gamma (Mission 7, Eliminate 2 Gammas): the second Gamma destroyed is the deciding kill; Mission Complete follows (I27)", () => {
+  const b = previewBoards(data(), "V2", "Gamma")!;
+  expect(b).toBeDefined();
+  expect(objectiveOf(data(), b.start)).toEqual({ type: "eliminate", target: "O_03", count: 2 });
+  expect(omegaName(data(), "O_03")).toBe("Gamma");
+  expect(countedSoFar(b.start, "O_03")).toBe(1);
+  // A Gamma has no Destroyed effect: no Wreck; it goes straight to the Trophy pile.
+  const ev = newEvents(b.start.events, b.wonJoined.events);
+  const d = ev.findIndex((e) => e.kind === "destroyed");
+  expect(ev[d]).toEqual(expect.objectContaining({ unitId: "O_03", wreck: false }));
+  const k = killOf(data(), b.start, ev, PREVIEW_SEED)!;
+  expect([k.index, k.name, k.count]).toEqual([d, "Gamma", 2]);
+  expect(["gammaHorizon", "gammaArray"]).toContain(k.piece.id);
+  expect(killOf(data(), b.start, ev, PREVIEW_SEED, "gammaArray")?.piece.id).toBe("gammaArray");
+  const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED, "gammaHorizon")!;
+  expect(j.piece.id).toBe("missionComplete");
+  expect([j.name, j.target, j.count, j.have, j.from, j.joined, j.kill]).toEqual(["Gamma", "O_03", 2, 2, "0,1", true, "gammaHorizon"]);
+});
+
+test("the Gamma kills' tilted board (I26): the camera turns, near sectors in front, the unit stays put", () => {
+  // Seen from above (0) nothing moves; tilted, a point lifted off the board rises on the screen and comes nearer.
+  expect(project(30, 40, 0, 0, 1000)).toEqual({ x: 30, y: 40, p: 1, near: 0 });
+  const up = project(0, 0, 50, Math.PI / 3, 1000);
+  expect(up.y).toBeLessThan(0);
+  expect(up.p).toBeGreaterThan(1);
+  // A board of three sectors in a column: the unit in the middle, one far (above), one near (below).
+  const looks = new Map<string, NodeLook>();
+  const look = (k: string) => {
+    let v = looks.get(k);
+    if (!v) looks.set(k, (v = { dx: 0, dy: 0, scale: 1, scaleX: 1, alpha: 1, rot: 0 }));
+    return v;
+  };
+  const f = { t: 0, still: false, fade: 1, Sx: 500, Sy: 400, Rs: 60, R: 30, z: 2, Z: 2, q: 1, w: 1000, h: 800, wide: true, broke: false, look, cx: 100, cy: 100 } as Frame;
+  const centres = [
+    ["0,0", 100, 100],
+    ["1,0", 100, 55],
+    ["-1,0", 100, 145],
+  ] as const;
+  const placed = tiltBoard(f, centres, Math.PI / 3, 600);
+  const at = (k: string) => placed.find((p) => p.key === k)!;
+  expect([at("0,0").sx, at("0,0").sy]).toEqual([500, 400]);
+  expect(looks.get("0,0")!.dx).toBe(0);
+  // Squashed by the tilt, the far one smaller and behind, the near one bigger and in front.
+  expect(at("1,0").sq).toBeCloseTo(0.5);
+  expect(at("1,0").p).toBeLessThan(1);
+  expect(at("-1,0").p).toBeGreaterThan(1);
+  expect(looks.get("-1,0")!.z!).toBeGreaterThan(looks.get("1,0")!.z!);
+  expect(at("1,0").sy).toBeGreaterThan(400 - 90);
+  // Lifted and pulled in: higher on the screen, flagged as off the board.
+  looks.clear();
+  const lifted = tiltBoard(f, centres, Math.PI / 3, 600, (k) => (k === "1,0" ? { H: 40, inward: 0.2 } : undefined));
+  expect(lifted.find((p) => p.key === "1,0")!.sy).toBeLessThan(at("1,0").sy);
+  expect(lifted.find((p) => p.key === "1,0")!.lifted).toBe(true);
+  expect(hexDist("0,1", "-1,0")).toBe(2);
+  expect(hexDist("0,1", "1,1")).toBe(1);
+});
+
 test("the celebrations' timing (the plan agreed 2026-11-20)", () => {
   // The kill: four acts in about 4.5 s; the burst in act 2, the count in act 3.
   expect(KILL.total).toBe(4.5);
@@ -212,9 +284,29 @@ test("the celebrations' timing (the plan agreed 2026-11-20)", () => {
   expect(BREACH.count).toBeGreaterThan(BREACH.detonate);
   expect(BREACH.count).toBeLessThan(BREACH.back[0]);
   expect(BREACH.back[1]).toBe(BREACH.total);
+  // The Gamma kills (I26): longer than Beta's; Event Horizon tilts, pulls, snaps, then the jet and the wave, the
+  // landings, the count; Field Array arms, closes the lattice, breaks the shield, turns to the side, cuts, falls.
+  for (const G of [HORIZON, ARRAY]) {
+    expect(G.total).toBeGreaterThan(BREACH.total + 1);
+    expect(G.count).toBeLessThan(G.back[0]);
+  }
+  expect(HORIZON.lock).toBeLessThan(HORIZON.collapse[0]);
+  expect(HORIZON.lift1[0]).toBeLessThan(HORIZON.lift2[0]);
+  expect(HORIZON.swallow[1]).toBe(HORIZON.snap);
+  expect(HORIZON.jet[0]).toBeGreaterThan(HORIZON.snap);
+  expect(HORIZON.wave[0]).toBeGreaterThanOrEqual(HORIZON.jet[0]);
+  expect(HORIZON.land[0]).toBeGreaterThan(HORIZON.wave[0]);
+  expect(HORIZON.count).toBeGreaterThan(HORIZON.land[0]);
+  expect(ARRAY.arm[1]).toBeLessThanOrEqual(ARRAY.beams[0] + 0.1);
+  expect(ARRAY.crack[1]).toBeLessThan(ARRAY.lock);
+  expect(ARRAY.lock).toBeLessThan(ARRAY.side[0]);
+  expect(ARRAY.rise[1]).toBeLessThan(ARRAY.cut);
+  expect(ARRAY.cut).toBeLessThan(ARRAY.slide[0]);
+  expect(ARRAY.fall[1]).toBeLessThanOrEqual(ARRAY.flat[1]);
+  expect(ARRAY.count).toBeGreaterThan(ARRAY.fall[1]);
   for (const [id, t] of Object.entries(KILL_TIMES)) expect(t.back[1], id).toBe(t.total);
   // Silent sound hooks, ready for audio files.
-  for (const f of [sound.playTargetLock, sound.playOmegaBreak, sound.playKillConfirmed, sound.playPurgeBeam, sound.playBetaSurge, sound.playBetaDetonation, sound.playTrophyLand, sound.playWinSweep, sound.playMissionComplete]) expect(typeof f).toBe("function");
+  for (const f of [sound.playTargetLock, sound.playOmegaBreak, sound.playKillConfirmed, sound.playPurgeBeam, sound.playBetaSurge, sound.playBetaDetonation, sound.playGammaCollapse, sound.playGammaJet, sound.playSectorLand, sound.playArrayArm, sound.playLatticeLock, sound.playGammaCut, sound.playTrophyLand, sound.playWinSweep, sound.playMissionComplete]) expect(typeof f).toBe("function");
 });
 
 test("the win's energy sweep (I23, I24): it sweeps right across the Field, starting and ending beyond its edges, never standing still on it", () => {

@@ -14,8 +14,9 @@ Mission bar as the kill's camera pulls out). Two taps skip either, as the intro 
 Several pieces are planned for each kind of mission: Eliminate (an Alpha; a Beta more spectacular; a
 Gamma more still) and Salvage. Which one plays (I19): one at random each mission, the same one again
 if the save is reloaded (`pickPiece`: the game's seed and the mission, never the game's own random
-numbers). Built so far: two kills for Alpha (I21), one for Beta; Mission Complete for Alpha missions
-and, until a win of their own, Beta missions (I22). Gamma and Salvage missions: nothing yet.
+numbers). Built so far: two kills for Alpha (I21), one for Beta, two for Gamma (I26); Mission Complete
+for Alpha missions and, until wins of their own, Beta (I22) and Gamma missions (I27: the designer will
+come back to it). Salvage missions: nothing yet.
 
 Every piece looks the same whatever the Company's vessel, and the pick is the same for every Company
 (I25): no Company colours here. Anything made of energy (walls, sweeps, sparks) is drawn with particle
@@ -32,7 +33,9 @@ objective in the Campaign file (`objectiveOf` in `detect.ts`): a mission needing
 | `alphaDown` | kill | Alpha | Alpha Down, about 4.5 s: the Field zooms in on the unit and the rest darkens, brackets lock on; violet light through tapered, branching fractures with motes leaking out (`cracksFx.ts` `fractureLight`), the glyph flares and collapses into a core, then bursts (shards, shock ring, sparks, a small shake); the Wreck smokes with a label "ALPHA DOWN · 5 / 6" turning to "6 / 6"; the zoom eases back. |
 | `alphaPurge` | kill | Alpha | Alpha Purge (I21), about 4.5 s: six energy walls of a containment cage, each a swarm of particles streaming in from outside (I24), gather and lock round the unit with a flash of particles, close in with arcs of cold light and crush it to a point, their particles flung up the light; a pillar of light fires up out of the Field, a flat flare streaks sideways, motes rise; the Wreck forms again under a scan line; "ALPHA PURGED · 5 / 6" to "6 / 6"; the zoom eases back. |
 | `betaBreach` | kill | Beta | Beta Breach, about 6.2 s (bigger than Alpha's): a wider zoom (the sectors round it in view), a turning reticle locks; three surges with arcs lashing at the sectors round it and harder shakes, molten streams of particles oozing out of a churning pool, creeping and swaying as they grow, spitting embers (`cracksFx.ts` `moltenFlow`), three small blasts, the core sucks the light in; white-out, fireball, two shock fronts off the screen, shards (some at the camera), the units round it knocked back, a heavy shake, embers; the sector left scorched; a bigger label "BETA DOWN · 2 / 3" to "3 / 3"; the zoom eases back. |
-| `missionComplete` | win | Alpha, Beta | Mission Complete, about 5 s: the Field dims, the Mission bar's cells flare one after another and the last bursts (the bar turns gold); an energy sweep (I23, I24: a crackling front made of particles, filaments, an ionised wake with ripples, a spray of particles) crosses the whole Field from beyond one edge to beyond the other, away from the sector the unit left; energy traces each sector's edge, throwing off sparks; the units shiver; "MISSION COMPLETE" slams in with "ALPHA ELIMINATED · 6 / 6" (I20, to try; "BETA ELIMINATED · 3 / 3") and a badge per unit dropping in; sparks drift, it fades. |
+| `gammaHorizon` | kill | Gamma | Event Horizon (I26), about 8 s: the camera tilts the whole Field into 3D (`tilt.ts`), hexagonal brackets lock on; the Gamma collapses into a black sphere with a whirling disc of particles (its far side bent over the top), the board's space sags into a well; the two rings of sectors round it lift off, turn to the camera and are pulled in, light torn off them spiralling into the disc; it snaps to a point, a frozen moment, a jet of light fires up and a flat ring of light races over the board, flipping every sector like a card; the lifted sectors drop back one by one with dust; a fading crater over what lay beneath; "GAMMA DOWN · 1 / 2" to "2 / 2"; the board turns flat as the zoom eases back. |
+| `gammaArray` | kill | Gamma | Field Array (I26), about 8.2 s: the whole Field is the weapon: every sector's edge lights from the Field's edge inwards, ring by ring, then beams of particles leap ring to ring and tighten on the Gamma; its dome of shield cells (particles) cracks and breaks; the camera turns to a side view (`tilt.ts`), the beams lift the Gamma out as a column with its tile on top, four blades cut it into slices that slide apart; back to the view from above as they fall into the sector, which caves in to stars, then shows what lay beneath; the lattice crumbles into sparks. |
+| `missionComplete` | win | Alpha, Beta, Gamma | Mission Complete, about 5 s: the Field dims, the Mission bar's cells flare one after another and the last bursts (the bar turns gold); an energy sweep (I23, I24: a crackling front made of particles, filaments, an ionised wake with ripples, a spray of particles) crosses the whole Field from beyond one edge to beyond the other, away from the sector the unit left; energy traces each sector's edge, throwing off sparks; the units shiver; "MISSION COMPLETE" slams in with "ALPHA ELIMINATED · 6 / 6" (I20, to try; "BETA ELIMINATED · 3 / 3") and a badge per unit dropping in; sparks drift, it fades. |
 
 ## How to add one
 
@@ -42,7 +45,9 @@ objective in the Campaign file (`objectiveOf` in `detect.ts`): a mission needing
    `closeupStep` (`closeup.ts`): the close-up gives the zoom, the darkness round the unit, the tile
    until it breaks and its Wreck after, the label and the still picture; the piece gives its times,
    the tile's look before it breaks, its shake and what it draws (see `killFx.ts`, `purgeFx.ts`,
-   `breachFx.ts`). List it in `kills.ts` (`KILL_STEPS`) and its times in `timeline.ts` (`KILL_TIMES`:
+   `breachFx.ts`). To see the board in 3D (tilted, sectors lifted, flipped), use `tiltBoard` from
+   `tilt.ts` each frame (see `horizonFx.ts`, `arrayFx.ts`): it moves the board's own tiles through
+   their looks and draws the empty slots in perspective (the flat ones are hidden meanwhile). List it in `kills.ts` (`KILL_STEPS`) and its times in `timeline.ts` (`KILL_TIMES`:
    the win waits for its pull-out when both come in one answer).
 3. A win is a React component taking `MissionWinProps` (`MissionWin.tsx`); pick it by id where the
    game screen (`App.tsx`) and the preview mount `MissionWin`.
@@ -65,6 +70,9 @@ kills.ts               the kill steps by id
 killFx.ts              Alpha Down (PixiJS)
 purgeFx.ts             Alpha Purge (PixiJS)
 breachFx.ts            Beta Breach (PixiJS)
+tilt.ts                the board seen in 3D: tilt, perspective, lifted sectors (the Gamma kills)
+horizonFx.ts           Event Horizon (PixiJS)
+arrayFx.ts             Field Array (PixiJS)
 MissionWin.tsx         Mission Complete: canvas over the page, the banner and badges (React)
 shine.ts               Mission Complete's energy sweep: where its front lies at each moment
 CelebrationSkip.tsx    "Tap twice to skip", catches every tap while a piece plays

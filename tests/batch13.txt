@@ -20,7 +20,9 @@
 # the energy sweep, Alpha Purge's particle walls, the same for every Company (CHANGED notes on
 # T13_CEL_04, 06, 07, 09, 11). Round 4 the same day: new cracks for Alpha Down and Beta Breach,
 # no Company name on the preview buttons (CHANGED notes on T13_CEL_01, 08, 10). Round 5 the same
-# day: Beta Breach's cracks are molten streams of particles (CHANGED note on T13_CEL_10).
+# day: Beta Breach's cracks are molten streams of particles (CHANGED note on T13_CEL_10). Round 6
+# the same day (I26, I27): the two Gamma kills and Mission Complete for Gamma (T13_CEL_12-14,
+# CHANGED notes on T13_CEL_06, 07, 08, 11).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1714,6 +1716,9 @@ note: CHANGED 2026-11-20: Alpha Purge's still: the Wreck with a cold glowing edg
       a few embers and smoke, "BETA DOWN · 3 / 3".
 note: CHANGED 2026-11-20 (I24): Alpha Purge's still also has a few particles rising over the Wreck
       (no lines).
+note: CHANGED 2026-11-20 round 6 (I26): the Gamma kills' stills: Event Horizon, the board tilted,
+      the crater with its violet rim and a few sparks, "GAMMA DOWN · 2 / 2"; Field Array, the
+      sector seen from above with what lies beneath, "GAMMA DOWN · 2 / 2".
 
 id: T13_CEL_07
 title: Which piece plays (several of a kind)
@@ -1727,6 +1732,8 @@ note: CHANGED 2026-11-20 (I21): Alpha now has two kills, Alpha Down and Alpha Pu
 note: CHANGED 2026-11-20 (designer, I25): every kill and win looks the same whatever the Company's
       vessel, and the pick is the same for every Company: Alpha Down or Alpha Purge can come up for
       V1 and for V2.
+note: CHANGED 2026-11-20 round 6 (I26): Gamma has two kills, Event Horizon and Field Array; each
+      Gamma mission plays one of them, picked this way.
 
 id: T13_CEL_08
 title: The Developer tool and the preview
@@ -1752,6 +1759,10 @@ note: CHANGED 2026-11-20: the Developer tool's win now has the shine (T13_CEL_04
 note: CHANGED 2026-11-20 (designer, I25): the buttons no longer name the Company ("Play Alpha
       Purge", with no Company name after it): the celebrations are the same for every
       Company. The line under them says so.
+note: CHANGED 2026-11-20 round 6 (I26, I27): also "Mission celebrations · Eliminate Gamma": Play
+      Event Horizon / Field Array / Mission Complete / Event Horizon, then Mission Complete / Field
+      Array, then Mission Complete, on the same made-up Field called Mission 7: one Gamma in the
+      Trophy pile, the second on the Field (already carrying 23 Damage tokens).
 
 id: T13_CEL_09
 title: Alpha Purge, the second kill for Alpha
@@ -1834,3 +1845,68 @@ then: Beta Breach plays; as its camera pulls out the Trophy flies into the Missi
 note: CHANGED 2026-11-20 (I24): the energy sweep (T13_CEL_04) in place of the shine.
       Then the Upgrade sheet.
 then: Gamma missions (Mission 7) and Salvage missions show neither piece yet.
+note: CHANGED 2026-11-20 round 6 (I26, I27): Gamma missions now have both pieces (T13_CEL_12-14);
+      Salvage missions still show neither.
+
+id: T13_CEL_12
+title: Event Horizon, the first kill for Gamma (the board tilts into 3D)
+source: designer 2026-11-20 (I26: "spectacular and epic ... change perspective or use sectors in
+        some unusual way"; both plans chosen)
+map: M1
+given: Mission 7 (Eliminate 2 Gamma units): one O_03 in the Trophy pile, an O_03 on the Field, and
+       the mission picked Event Horizon (T13_CEL_07)
+when: an action destroys that O_03 (it has no Destroyed effect: no Wreck, straight to the Trophy
+      pile, 4.8)
+then: about 8 s (Normal speed), centred on the unit:
+      1 (0-1.3 s) the Field zooms in and the camera swings down: the whole board tilts back and is
+      seen in 3D from a low angle, the near sectors bigger; hexagonal brackets slam onto the Gamma
+      and lock with a flash.
+      2 (1.3-3.85 s) the Gamma collapses into a black sphere with a disc of particles whirling round
+      it (its far side bent up over the top); faint lines of the board's space sag into a well
+      round it; the six sectors round it, then the twelve beyond them, lift off the board, turn
+      towards the camera, wobble and are pulled in, streams of light torn off them spiralling into
+      the disc; the Gamma itself falls into the sphere, spinning.
+      3 (3.85-5.3 s) the sphere shrinks to a point; a frozen, darkened moment; a flash, a jet of
+      light fires straight up, and a flat ring of light races out over the board past its edge:
+      every sector it passes flips over like a card (its back shows for a moment) and lands face up.
+      4 (4.7-6.0 s) the lifted sectors drop back into place one by one, with dust; the Gamma's sector
+      is a dark crater with a violet rim over what lay beneath, fading; the label "GAMMA DOWN · 1 / 2"
+      turns to "2 / 2" (Mission 7).
+      5 (6.6-8.0 s) the board turns flat again as the zoom eases back.
+then: one tap does not skip it, two taps do (T13_CEL_03); the speed and reduced motion as T13_CEL_06.
+      Nothing on the board changes: the sectors only look lifted and flipped.
+note: Silent hooks: playTargetLock, playGammaCollapse, playGammaJet, playSectorLand (each landing),
+      playKillConfirmed.
+
+id: T13_CEL_13
+title: Field Array, the second kill for Gamma (the whole Field is the weapon)
+source: designer 2026-11-20 (I26)
+map: M1
+given: as T13_CEL_12, and the mission picked Field Array (T13_CEL_07)
+then: about 8.2 s (Normal speed):
+      1 (0-1.5 s) the Field dims a little; from its edge inwards, ring by ring, every sector's edge
+      is traced by energy from a corner and lights up, with particles running round it and an
+      emitter waking in its middle. The zoom closes in slowly until act 3.
+      2 (1.4-3.45 s) beams of particles leap from each sector to its neighbour one ring nearer the
+      Gamma, a lattice tightening on it; the Gamma raises a dome of hexagonal shield cells made of
+      shimmering particles; the beams strike it, the cells crack one by one and burst into sparks;
+      the shield breaks with a ring of light.
+      3 (3.55-5.5 s) the camera turns to a side view: the Field seen nearly edge-on; the beams lift
+      the Gamma out of its sector as a tall column (the tile on top); four blades of light sweep
+      across it and cut it into slices, the cut faces white-hot, cooling to orange; the slices slide
+      apart.
+      4 (5.4-6.85 s) the camera returns to the view from above as the slices fall into the sector,
+      which caves in to a hole full of stars, then shows what lay beneath; the lattice crumbles into
+      falling sparks; the label "GAMMA DOWN · 1 / 2" turns to "2 / 2".
+      5 (7.2-8.2 s) the zoom eases back.
+then: one tap does not skip it, two taps do; the speed and reduced motion as T13_CEL_06.
+note: Silent hooks: playArrayArm, playTargetLock, playLatticeLock, playGammaCut, playKillConfirmed.
+
+id: T13_CEL_14
+title: Mission Complete for Gamma missions
+source: designer 2026-11-20 (I27: yes, until a Gamma win of its own is built; to be looked at again)
+map: M1
+given: Mission 7; the 2nd O_03 destroyed (the mission is usually won in the same answer)
+then: the Gamma kill plays; as its camera pulls out the Trophy flies into the Mission bar; then
+      Mission Complete (T13_CEL_04) with "GAMMA ELIMINATED · 2 / 2" and two Gamma badges, the energy
+      sweep starting from the Gamma's sector. Then the Upgrade sheet.

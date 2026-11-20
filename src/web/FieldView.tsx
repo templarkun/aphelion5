@@ -170,7 +170,10 @@ export function FieldView(p: FieldProps) {
   const props = useRef(p);
   props.current = p;
   const player = useRef(new Player());
-  const layers = useRef<{ root: Container; aura: Graphics; edge: Graphics; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined; celebrate: Container } | undefined>(undefined);
+  /** The empty slots under the sectors are hidden while a Gamma kill tilts the board (it draws its own). */
+  const hideSlots = useRef(false);
+  const slotsRef = useRef<Graphics | undefined>(undefined);
+  const layers = useRef<{ under: Container; root: Container; aura: Graphics; edge: Graphics; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined; celebrate: Container } | undefined>(undefined);
   /** Each sector's container and centre, from the last draw. */
   const nodes = useRef(new Map<string, { node: Container; cx: number; cy: number; arrows?: Container }>());
   const geo = useRef({ size: 40 });
@@ -204,6 +207,10 @@ export function FieldView(p: FieldProps) {
       if (gone) return a.destroy(true);
       host.current!.appendChild(a.canvas);
       const root = new Container();
+      root.sortableChildren = true;
+      // Under the board, in screen pixels: a Gamma kill draws its tilted board's slots here (designer 2026-11-20).
+      const under = new Container();
+      under.eventMode = "none";
       const aura = new Graphics();
       aura.eventMode = "none";
       const edge = new Graphics();
@@ -223,8 +230,8 @@ export function FieldView(p: FieldProps) {
       // The mission celebrations draw on top of everything, in screen pixels (designer 2026-11-20).
       const celebrate = new Container();
       celebrate.eventMode = "none";
-      a.stage.addChild(root, aura, plasma.view, edge, glow, fx, dl, celebrate);
-      layers.current = { root, aura, edge, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined, celebrate };
+      a.stage.addChild(under, root, aura, plasma.view, edge, glow, fx, dl, celebrate);
+      layers.current = { under, root, aura, edge, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined, celebrate };
       ready.current = true;
       draw();
       a.ticker.add(frame);
@@ -678,7 +685,14 @@ export function FieldView(p: FieldProps) {
         kill!.piece.id,
         {
           layer: L.celebrate,
+          under: L.under,
           zoom: zoomBoard,
+          slots: (on) => {
+            hideSlots.current = !on;
+            const sl = slotsRef.current;
+            if (sl && !sl.destroyed) sl.visible = on;
+          },
+          centres: () => [...nodes.current].map(([k, n]) => [k, n.cx, n.cy] as const),
           node: () => nodes.current.get(e.sector),
           size: () => geo.current.size,
           field: () => ({ w: host.current?.clientWidth ?? 0, h: host.current?.clientHeight ?? 0 }),
@@ -1428,6 +1442,8 @@ export function FieldView(p: FieldProps) {
       n.node.position.set(n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0));
       n.node.scale.set((v?.scale ?? 1) * (v?.scaleX ?? 1), v?.scale ?? 1);
       n.node.alpha = v?.alpha ?? 1;
+      n.node.rotation = v?.turn ?? 0;
+      n.node.zIndex = v?.z ?? 0;
       if (n.arrows) n.arrows.rotation = v?.rot ?? 0;
     }
     host.current?.setAttribute("data-anim", player.current.busy ? "1" : "0");
@@ -1635,6 +1651,9 @@ export function FieldView(p: FieldProps) {
     const back = 0x4a6280;
     const slots = new Graphics();
     slots.eventMode = "none";
+    slots.zIndex = -1;
+    slots.visible = !hideSlots.current;
+    slotsRef.current = slots;
     L.root.addChild(slots);
 
     // Where the clickable sectors are, in CSS pixels of the Field (for the browser check and pop-ups).

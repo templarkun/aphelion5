@@ -80,11 +80,77 @@ export const BREACH = {
   back: [5.3, 6.2] as const,
 };
 
+/**
+ * Event Horizon, the first kill for Gamma (designer 2026-11-20, I26: both plans built): about 8 s. The
+ * camera tilts the Field into 3D; the Gamma collapses into a singularity that pulls the sectors round it
+ * off the board; it snaps, a jet of light fires up and a shock wave flips the sectors; they fall back.
+ */
+export const HORIZON = {
+  total: 8.0,
+  /** Act 1, tilt: the zoom, and the board tilts back to a low angle; hexagonal brackets slam on (playTargetLock). */
+  zoomIn: [0, 1.2] as const,
+  tilt: [0.1, 1.3] as const,
+  bracketsIn: [0.55, 1.15] as const,
+  lock: 1.15,
+  /** Act 2, gravity: a black sphere and its disc of particles (playGammaCollapse); the two rings of sectors round it lift off and are pulled in. */
+  collapse: [1.3, 2.1] as const,
+  lift1: [1.65, 2.6] as const,
+  lift2: [2.05, 3.0] as const,
+  /** The Gamma itself falls into the sphere. */
+  swallow: [2.9, 3.85] as const,
+  /** Act 3, snap: a point, a frozen moment, then the jet (playGammaJet) and the flat shock wave flipping the sectors. */
+  snap: 3.85,
+  jet: [4.1, 5.3] as const,
+  wave: [4.15, 5.2] as const,
+  /** Act 4, settle: the lifted sectors drop back one by one (playSectorLand); what lay beneath shows in a fading crater. */
+  land: [4.7, 6.0] as const,
+  wreckIn: [4.4, 5.0] as const,
+  label: [5.3, 5.6] as const,
+  /** "1 / 2" becomes "2 / 2" (playKillConfirmed). */
+  count: 5.9,
+  /** Act 5, back: the board turns flat again as the zoom eases back. */
+  back: [6.6, 8.0] as const,
+};
+
+/**
+ * Field Array, the second kill for Gamma (designer 2026-11-20, I26): about 8.2 s. The whole Field becomes
+ * the weapon: every sector lights up, ring by ring, a lattice of beams closes on the Gamma and breaks its
+ * shield; the camera turns to the side, the beams lift the Gamma out as a column and cut it into slices.
+ */
+export const ARRAY = {
+  total: 8.2,
+  /** Act 1, arming: the sectors' edges light from the Field's edge inwards (playArrayArm); the zoom closes in slowly through act 2. */
+  zoomIn: [0.2, 3.5] as const,
+  arm: [0.1, 1.5] as const,
+  /** Act 2, lattice: beams of particles leap from ring to ring towards the Gamma; its shield's cells crack one by one; it breaks (playLatticeLock). */
+  beams: [1.4, 2.7] as const,
+  shield: [1.5, 3.45] as const,
+  crack: [2.6, 3.4] as const,
+  lock: 3.45,
+  /** Act 3, cut: the camera turns to a side view; the Gamma rises out as a column; the beams cut it (playGammaCut); the slices slide apart. */
+  side: [3.55, 4.3] as const,
+  rise: [3.95, 4.6] as const,
+  cut: 4.75,
+  slide: [4.8, 5.5] as const,
+  /** Act 4, fall: back to the view from above as the slices fall into the sector; it caves in to stars, then what lay beneath shows. */
+  flat: [5.4, 6.2] as const,
+  fall: [5.4, 6.1] as const,
+  hole: [5.9, 6.7] as const,
+  wreckIn: [6.3, 6.8] as const,
+  label: [6.3, 6.6] as const,
+  /** "1 / 2" becomes "2 / 2" (playKillConfirmed). */
+  count: 6.85,
+  /** Act 5, back. */
+  back: [7.2, 8.2] as const,
+};
+
 /** Each kill's length and pull-out (the win waits for the pull-out when both come in one answer). */
 export const KILL_TIMES: Record<string, { total: number; back: readonly [number, number] }> = {
   alphaDown: KILL,
   alphaPurge: PURGE,
   betaBreach: BREACH,
+  gammaHorizon: HORIZON,
+  gammaArray: ARRAY,
 };
 
 /** Mission Complete, the win: about 5 s (after the Trophies that came in with the answer have flown to the Mission bar). */

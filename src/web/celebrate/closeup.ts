@@ -19,6 +19,12 @@ import { STILL, span } from "./timeline.js";
 export interface KillEnv {
   /** A layer on top of the Field, in screen pixels (not zoomed): everything the kill draws goes here. */
   layer: Container;
+  /** A layer under the board, in screen pixels (the Gamma kills draw their tilted board's slots here). */
+  under?: Container | undefined;
+  /** Show or hide the board's flat empty slots (hidden while the board is tilted). */
+  slots?: ((on: boolean) => void) | undefined;
+  /** Every sector's centre on the board at zoom 1: key, x, y. */
+  centres?: (() => (readonly [string, number, number])[]) | undefined;
   /** Zoom the board: scale z, then moved by (x, y) (zoom(1, 0, 0) puts it back). */
   zoom: (z: number, x: number, y: number) => void;
   /** The unit's sector as drawn now (the board can be redrawn while this plays). */
@@ -84,6 +90,9 @@ export interface Frame {
   wide: boolean;
   broke: boolean;
   look: (key: string) => NodeLook;
+  /** The unit's centre on the board at zoom 1 (the board's own pixels). */
+  cx: number;
+  cy: number;
 }
 
 export interface CloseupPiece<P> {
@@ -99,8 +108,8 @@ export interface CloseupPiece<P> {
   ink: number;
   inkLine: number;
   labelScale?: number;
-  /** The piece's own things, behind the Wreck's stamp (`back`) and in front of it (`front`). */
-  build: (back: Container, front: Container) => P;
+  /** The piece's own things, behind the Wreck's stamp (`back`) and in front of it (`front`); `under` is under the board (screen pixels). */
+  build: (back: Container, front: Container, under: Container) => P;
   /** The screen's shake at time t (pixels). */
   shake?: (t: number, Rs: number) => readonly [number, number];
   /** How dark round the unit at time t (0-1; normally 1). */
@@ -293,7 +302,7 @@ function wreckLabel(c: Container): Text | undefined {
 /** A kill as a Field step (and its still picture for reduced motion and Instant). */
 export function closeupStep<P>(env: KillEnv, k: KillTarget, piece: CloseupPiece<P>): Step {
   const T = piece.times;
-  let built: { root: Container; vig: Sprite; back: Container; front: Container; stamp: Text; plate: Graphics; pop: Graphics; title: Text; num: Text; own: P } | undefined;
+  let built: { root: Container; low: Container; vig: Sprite; back: Container; front: Container; stamp: Text; plate: Graphics; pop: Graphics; title: Text; num: Text; own: P } | undefined;
   let playing = false;
   let lastT = -1;
   const dpr = typeof window === "undefined" ? 1 : Math.min(3, window.devicePixelRatio || 1);
@@ -317,14 +326,18 @@ export function closeupStep<P>(env: KillEnv, k: KillTarget, piece: CloseupPiece<
     num.anchor.set(0.5);
     root.addChild(vig, back, stamp, front, plate, pop, title, num);
     env.layer.addChild(root);
-    const own = piece.build(back, front);
-    built = { root, vig, back, front, stamp, plate, pop, title, num, own };
+    const low = new Container();
+    (env.under ?? back).addChild(low);
+    const own = piece.build(back, front, low);
+    built = { root, low, vig, back, front, stamp, plate, pop, title, num, own };
     return built;
   }
 
   function cleanup() {
     env.zoom(1, 0, 0);
+    env.slots?.(true);
     if (built) {
+      if (!built.low.destroyed) built.low.destroy({ children: true });
       built.root.destroy({ children: true });
       built = undefined;
     }
@@ -407,7 +420,7 @@ export function closeupStep<P>(env: KillEnv, k: KillTarget, piece: CloseupPiece<
       b.stamp.alpha = wi * fade;
     }
 
-    piece.draw({ t, still, fade, Sx, Sy, Rs, R, z, Z, q, w, h, wide, broke, look }, b.own);
+    piece.draw({ t, still, fade, Sx, Sy, Rs, R, z, Z, q, w, h, wide, broke, look, cx: n.cx, cy: n.cy }, b.own);
     drawLabel(b, t, still, fade, { Sx, Sy, Rs, R, Z, w, h, wide });
   }
 

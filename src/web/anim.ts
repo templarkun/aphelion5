@@ -17,6 +17,10 @@ export interface NodeLook {
   alpha: number;
   /** Turn of the unit's arrows, in radians (clockwise positive). */
   rot: number;
+  /** Turn of the whole tile, in radians (the Gamma kills' tilted board); 0 when not given. */
+  turn?: number;
+  /** Drawing order: higher in front (the Gamma kills' tilted board); 0 when not given. */
+  z?: number;
 }
 
 export interface Step {

@@ -13,8 +13,9 @@
  * mission, the same one again if the save is reloaded (from the game's seed and the mission, never
  * the game's own random numbers). Screen only: nothing here is a rule.
  *
- * Built so far: two kills for Alpha (I21), one for Beta; Mission Complete for Alpha and, until a win of
- * their own is built, Beta missions (I22). Gamma and Salvage missions: nothing yet.
+ * Built so far: two kills for Alpha (I21), one for Beta, two for Gamma (I26); Mission Complete for Alpha
+ * and, until wins of their own are built, Beta (I22) and Gamma missions (I27: to come back to later).
+ * Salvage missions: nothing yet.
  */
 
 export interface Piece {
@@ -29,10 +30,12 @@ export const KILL_PIECES: Piece[] = [
   { id: "alphaDown", name: "Alpha Down", for: ["Alpha"] },
   { id: "alphaPurge", name: "Alpha Purge", for: ["Alpha"] },
   { id: "betaBreach", name: "Beta Breach", for: ["Beta"] },
+  { id: "gammaHorizon", name: "Event Horizon", for: ["Gamma"] },
+  { id: "gammaArray", name: "Field Array", for: ["Gamma"] },
 ];
 
 /** Wins: the mission won. */
-export const WIN_PIECES: Piece[] = [{ id: "missionComplete", name: "Mission Complete", for: ["Alpha", "Beta"] }];
+export const WIN_PIECES: Piece[] = [{ id: "missionComplete", name: "Mission Complete", for: ["Alpha", "Beta", "Gamma"] }];
 
 /** A small fixed hash (FNV-1a) of a text. */
 function hash(text: string): number {

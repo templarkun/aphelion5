@@ -1,6 +1,6 @@
 // Browser check of the mission celebrations (designer 2026-11-20), called by ui-smoke.mjs; can also run
 // alone: node scripts/ui-celebrate.mjs [url] [outDir]. The previews in System options (Alpha Down, Alpha
-// Purge, Beta Breach, the win, a kill and the win in one answer) at 1400 and 390 px, one tap vs two taps,
+// Purge, Beta Breach, the two Gamma kills, the win, a kill and the win in one answer) at 1400 and 390 px, one tap vs two taps,
 // reduced motion, and a real game won with the Developer tool: the win plays first and the Upgrade sheet
 // waits for it.
 import { createRequire } from "node:module";
@@ -75,7 +75,7 @@ export async function celebrateCheck(browser, url, out) {
     const l = await log(pg);
     const ms = killMs(l);
     await pg.close();
-    if (!(listed === 8 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
+    if (!(listed === 13 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
   }
 
   // 1b. Alpha Purge (1100 px), the second Alpha kill (I21): about 4.5 s, then the preview closes.
@@ -112,6 +112,31 @@ export async function celebrateCheck(browser, url, out) {
     const acts = l.map(([, s]) => s.split(" ")[2]).filter(Boolean).pop() ?? "";
     await pg.close();
     if (!(played && gap > 5000 && /beta eliminated · 3 \/ 3/.test(sub) && badges === 3 && acts === "1234" && closed)) fails.push(`Beta: played ${played}, kill then win ${gap} ms, sub "${sub}", badges ${badges}, acts "${acts}", closed ${closed}`);
+  }
+
+  // 1d. The Gamma kills (I26), each then Mission Complete for Gamma (I27): Event Horizon at 1400 px, Field Array at 390 px;
+  // about 8 s each, "GAMMA ELIMINATED · 2 / 2", two badges.
+  for (const [piece, w, h] of [
+    ["gammaHorizon", 1400, 900],
+    ["gammaArray", 390, 844],
+  ]) {
+    const pg = await open(w, h);
+    await preview(pg, "both", "Gamma", piece);
+    await pg.waitForSelector("[data-celebration]", { timeout: 10000 }).catch(() => {});
+    await pg.waitForTimeout(piece === "gammaHorizon" ? 2600 : 4300);
+    await pg.screenshot({ path: `${out}/ui-celebrate-${piece}.png` });
+    const played = await pg.waitForSelector("[data-win][data-phase=play]", { timeout: 25000 }).then(() => true, () => false);
+    await pg.waitForSelector("[data-win][data-act='3']", { timeout: 8000 }).catch(() => {});
+    await pg.waitForTimeout(900);
+    const sub = ((await pg.locator(".cb-sub").innerText().catch(() => "")) ?? "").toLowerCase();
+    const badges = await pg.locator(".cb-badges img").count();
+    const closed = await pg.waitForSelector("[data-celebration-preview]", { state: "detached", timeout: 14000 }).then(() => true, () => false);
+    const l = await log(pg);
+    const first = l.find(([, s]) => s.startsWith("catch"));
+    const play = l.find(([, s]) => / play/.test(s));
+    const gap = first && play ? play[0] - first[0] : 0;
+    await pg.close();
+    if (!(played && gap > 6500 && /gamma eliminated · 2 \/ 2/.test(sub) && badges === 2 && closed)) fails.push(`${piece}: played ${played}, kill then win ${gap} ms, sub "${sub}", badges ${badges}, closed ${closed}`);
   }
 
   // 2. The win (1400 px): the Trophy flies in, four acts in order, the banner and six badges, the Mission bar gold; then it closes.

@@ -313,7 +313,7 @@ export function Briefing(p: BriefingProps) {
               )}
               {p.onPreviewCelebration && (
                 <>
-                  {(["Alpha", "Beta"] as const).map((omega) => (
+                  {(["Alpha", "Beta", "Gamma"] as const).map((omega) => (
                     <Fragment key={omega}>
                       <div className="bf-label mt-2">Mission celebrations · Eliminate {omega}</div>
                       {CELEBRATION_PREVIEWS.filter((w) => w.omega === omega).map((w) => (
@@ -323,7 +323,7 @@ export function Briefing(p: BriefingProps) {
                       ))}
                     </Fragment>
                   ))}
-                  <p className="text-[14px] text-sky-100">On a made-up Field (Mission 1 for Alpha, Mission 3 for Beta). In a game the kill plays when the last required Omega unit is destroyed, the win when the mission is won (8.2); with several of a kind, one is picked at random each mission. They look the same for every Company.</p>
+                  <p className="text-[14px] text-sky-100">On a made-up Field (Mission 1 for Alpha, Mission 3 for Beta, Mission 7 for Gamma). In a game the kill plays when the last required Omega unit is destroyed, the win when the mission is won (8.2); with several of a kind, one is picked at random each mission. They look the same for every Company.</p>
                 </>
               )}
             </div>

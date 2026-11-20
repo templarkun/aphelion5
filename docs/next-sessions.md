@@ -130,3 +130,7 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    `Campaign1.txt` format). 2026-11-18 first version BUILT (System options > Developer mode >
    Campaign editor). Next: "Play this mission" (the game loads an edited Campaign) and programming
    the new mission events and the effects made from blocks; open C6-C8.
+12. **Mission celebrations: come back to the Gamma win** (designer 2026-11-20, I27). Gamma missions
+   (Mission 7) play Mission Complete after the Gamma kill for now, as Beta missions do (I22). The
+   designer asked to be reminded to come back to it: a win of its own for Gamma (and Beta), and
+   Salvage missions, which have no celebration yet.
