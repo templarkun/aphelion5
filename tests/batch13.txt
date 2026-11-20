@@ -19,7 +19,8 @@
 # (T13_CEL_09-11, CHANGED notes on T13_CEL_01, 04, 06, 07, 08). Round 3 the same day (I24, I25):
 # the energy sweep, Alpha Purge's particle walls, the same for every Company (CHANGED notes on
 # T13_CEL_04, 06, 07, 09, 11). Round 4 the same day: new cracks for Alpha Down and Beta Breach,
-# no Company name on the preview buttons (CHANGED notes on T13_CEL_01, 08, 10).
+# no Company name on the preview buttons (CHANGED notes on T13_CEL_01, 08, 10). Round 5 the same
+# day: Beta Breach's cracks are molten streams of particles (CHANGED note on T13_CEL_10).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1812,6 +1813,14 @@ note: CHANGED 2026-11-20 (designer: the cracks looked like plain SVG lines; a st
       the edge, deep red to orange to white-hot inside (whiter as the core heats), glowing knots
       where they fork, pulsing, brighter at each surge; embers spit out of them again and again,
       arcing and falling.
+note: CHANGED 2026-11-20 round 5 (designer: the molten fissures felt too static and fixed, "more
+      fluid particles, less stiff"): act 2 has no drawn cracks at all. A churning pool of molten
+      droplets fills in its middle; molten streams made of particles ooze out of it along curving
+      ways that keep creeping and swaying while they grow (never a fixed shape); the particles
+      stream outwards along them, dull red at the edge, orange to white-hot inside (hotter at each
+      surge and as the core heats); each stream's front is a swelling bulb of white-hot droplets
+      with drops running ahead; streams split as they go; a soft charred trail under them; a fully
+      grown stream pools glowing at its end; embers spit out of them, arcing, swaying and falling.
 
 id: T13_CEL_11
 title: Mission Complete for Beta missions

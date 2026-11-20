@@ -11,7 +11,7 @@ import { Player, type Step } from "../../src/web/anim.js";
 import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winShowOf, wonStateOf } from "../../src/web/celebrate/detect.js";
 import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
-import { crackTree } from "../../src/web/celebrate/cracksFx.js";
+import { betaFlows, crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
 import { arrival, shineAt, shinePath, sweep } from "../../src/web/celebrate/shine.js";
 import { BREACH, KILL, KILL_TIMES, PURGE, STILL, WIN } from "../../src/web/celebrate/timeline.js";
@@ -276,6 +276,24 @@ test("the cracks (designer 2026-11-20): tapered, branching, inside the tile, the
     expect(c.at).toBeGreaterThanOrEqual(0);
     expect(c.at).toBeLessThan(1);
   }
+});
+
+test("Beta's molten streams (designer 2026-11-20 round 5): they flow out, split, creep as time goes on, stay inside the tile", () => {
+  expect(betaFlows(0, 1.3)).toEqual([]);
+  const half = betaFlows(0.5, 1.8);
+  expect(betaFlows(0.5, 1.8)).toEqual(half);
+  const full = betaFlows(1, 2.4);
+  expect(full.filter((f) => f.depth === 0).length).toBe(7);
+  expect(full.filter((f) => f.depth === 1).length).toBeGreaterThan(half.filter((f) => f.depth === 1).length);
+  for (const f of full) {
+    expect(f.len).toBeGreaterThan(0.99);
+    for (const [x, y] of f.pts) expect(Math.hypot(x, y)).toBeLessThanOrEqual(0.9 + 1e-9);
+    expect(f.w[0]!).toBeGreaterThan(f.w[f.w.length - 1]!);
+  }
+  // Not fixed: the same streams, fully grown, have crept to other ways a moment later.
+  const later = betaFlows(1, 2.9);
+  const moved = Math.max(...full.map((f, i) => Math.max(...f.pts.map(([x, y], k) => Math.hypot(x - later[i]!.pts[k]![0], y - later[i]!.pts[k]![1])))));
+  expect(moved).toBeGreaterThan(0.02);
 });
 
 test("the Field's player: one tap finishes animations up to a celebration, which only two taps (skip) end", () => {
