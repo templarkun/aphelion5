@@ -18,7 +18,8 @@
 # Later the same day (I21-I23): the win's shine, Alpha Purge, Beta Breach, Mission Complete for Beta
 # (T13_CEL_09-11, CHANGED notes on T13_CEL_01, 04, 06, 07, 08). Round 3 the same day (I24, I25):
 # the energy sweep, Alpha Purge's particle walls, the same for every Company (CHANGED notes on
-# T13_CEL_04, 06, 07, 09, 11).
+# T13_CEL_04, 06, 07, 09, 11). Round 4 the same day: new cracks for Alpha Down and Beta Breach,
+# no Company name on the preview buttons (CHANGED notes on T13_CEL_01, 08, 10).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1627,6 +1628,11 @@ note: The number counted is the objective's own (8.2): units of its type in the 
       those on the Field as Wrecks. Silent hooks: playTargetLock, playOmegaBreak, playKillConfirmed.
 note: CHANGED 2026-11-20 (designer, I21): this is Alpha Down, one of two kills for Alpha; the other
       is Alpha Purge (T13_CEL_09). Which one plays in a mission: T13_CEL_07.
+note: CHANGED 2026-11-20 (designer: the cracks looked like plain SVG lines): act 2's cracks are
+      fractures of violet light: each a tapered wedge (wide where it starts, sharp at its tip)
+      with finer branches and twigs, a dark split edge either side, a pale core, a soft bloom
+      along the main ones, a bright point running at each growing tip, motes of light leaking out
+      and drifting up.
 
 id: T13_CEL_02
 title: Several Alphas destroyed by one blow
@@ -1742,6 +1748,9 @@ note: CHANGED 2026-11-20: the Developer tool's win now has the shine (T13_CEL_04
       Mission Complete; each with (<Company>). The Beta ones use the same made-up Field, called
       Mission 3: two Betas in the Trophy pile, the third on the Field. On both Fields the unit
       destroyed already carries Damage tokens, so the Mecha's 2 damage is enough.
+note: CHANGED 2026-11-20 (designer, I25): the buttons no longer name the Company ("Play Alpha
+      Purge", with no Company name after it): the celebrations are the same for every
+      Company. The line under them says so.
 
 id: T13_CEL_09
 title: Alpha Purge, the second kill for Alpha
@@ -1798,6 +1807,11 @@ then: about 6.2 s (Normal speed), centred on the unit, the sectors round it kept
       5 (5.3-6.2 s) the zoom eases back.
 then: one tap does not skip it, two taps do (T13_CEL_03); the speed and reduced motion as T13_CEL_06.
 note: Silent hooks: playTargetLock, playBetaSurge (each surge), playBetaDetonation, playKillConfirmed.
+note: CHANGED 2026-11-20 (designer: the cracks looked like plain SVG lines; a style of their own,
+      not Alpha's): act 2's cracks are molten fissures: wider and rougher than Alpha's, charred at
+      the edge, deep red to orange to white-hot inside (whiter as the core heats), glowing knots
+      where they fork, pulsing, brighter at each surge; embers spit out of them again and again,
+      arcing and falling.
 
 id: T13_CEL_11
 title: Mission Complete for Beta missions

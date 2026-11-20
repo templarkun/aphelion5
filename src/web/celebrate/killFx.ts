@@ -17,7 +17,8 @@ import { Graphics, Sprite } from "pixi.js";
 import type { Step } from "../anim.js";
 import { easeOut } from "../anim.js";
 import { playOmegaBreak, playTargetLock } from "../briefing/soundHooks.js";
-import { type KillEnv, type KillTarget, closeupStep, drawCracks, flat, glowSprite, hexCorners, makeCracks, puff, seq } from "./closeup.js";
+import { type KillEnv, type KillTarget, closeupStep, flat, glowSprite, hexCorners, motes, puff, seq } from "./closeup.js";
+import { fractureLight } from "./cracksFx.js";
 import { KILL, span } from "./timeline.js";
 
 export type { KillEnv, KillTarget } from "./closeup.js";
@@ -27,8 +28,6 @@ const LILAC = 0xc9a6ff;
 const PALE = 0xf3e8ff;
 const HOT = 0xff5a36;
 const PUFFS = 12;
-
-const CRACKS = makeCracks(9137);
 
 /** Shards: each sixth of the hex cut in two (tile radii; a point inside each, the direction it flies). */
 const SHARDS = (() => {
@@ -81,6 +80,7 @@ export function alphaDownStep(env: KillEnv, k: KillTarget): Step {
       const light = new Graphics();
       light.blendMode = "add";
       back.addChild(under, light);
+      const pm = motes(back, 300);
       // Soft glows: the core and the bloom of the burst (violet), the flash (white).
       const bloom = glowSprite(back, LILAC);
       const flash = glowSprite(back, 0xffffff);
@@ -92,7 +92,7 @@ export function alphaDownStep(env: KillEnv, k: KillTarget): Step {
       if (glow) back.addChild(glow);
       const over = new Graphics();
       front.addChild(over);
-      return { smoke, under, light, bloom, flash, glyph, glow, over };
+      return { smoke, under, light, pm, bloom, flash, glyph, glow, over };
     },
     shake: (t, Rs) => {
       const us = span(t, [KILL.burst, KILL.burst + 0.38]);
@@ -152,15 +152,17 @@ export function alphaDownStep(env: KillEnv, k: KillTarget): Step {
         if (flash > 0) light.circle(Sx, Sy, Rs * (1.2 + 0.3 * (1 - flash))).stroke({ width: 2 + 3 * flash, color: 0xffb08a, alpha: 0.8 * flash });
       }
 
-      // Act 2: light through cracks.
+      // Act 2: violet light through fractures (cracksFx.ts), motes leaking out of them.
+      b.pm.begin();
       if (!still && !broke) {
         const glowIn = span(t, [0.9, 1.45]);
-        if (glowIn > 0) light.poly(flat(hexCorners(Sx, Sy, Rs * cs))).fill({ color: VIOLET, alpha: 0.32 * glowIn });
-        drawCracks(light, CRACKS, span(t, KILL.cracks), Sx, Sy, Rs * cs, LILAC, PALE);
+        if (glowIn > 0) light.poly(flat(hexCorners(Sx, Sy, Rs * cs))).fill({ color: VIOLET, alpha: 0.22 * glowIn });
+        fractureLight({ under, light, motes: b.pm, grow: span(t, KILL.cracks), t, x: Sx, y: Sy, r: Rs * cs, boost: span(t, KILL.flare) });
         // The core it collapses into.
         const core = span(t, [KILL.flare[0] + 0.1, KILL.burst]);
         if (core > 0) light.circle(Sx, Sy, Rs * (0.03 + 0.16 * core * core)).fill({ color: 0xffffff, alpha: 0.6 + 0.4 * core });
       }
+      b.pm.end();
       // Soft light: the core's glow growing as the tile collapses, the burst's bloom and flash.
       {
         const core = !still && !broke ? span(t, [KILL.flare[0] + 0.1, KILL.burst]) : 0;

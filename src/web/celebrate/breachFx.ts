@@ -21,7 +21,8 @@ import { Graphics, Sprite } from "pixi.js";
 import type { Step } from "../anim.js";
 import { easeOut } from "../anim.js";
 import { playBetaDetonation, playBetaSurge, playTargetLock } from "../briefing/soundHooks.js";
-import { type KillEnv, type KillTarget, around, bolt, closeupStep, drawCracks, flat, glowSprite, hexCorners, makeCracks, puff, seq, strokePath } from "./closeup.js";
+import { type KillEnv, type KillTarget, around, bolt, closeupStep, flat, glowSprite, hexCorners, motes, puff, seq, strokePath } from "./closeup.js";
+import { moltenFissures } from "./cracksFx.js";
 import { BREACH, span } from "./timeline.js";
 
 const RED = 0xff4a2a;
@@ -32,7 +33,6 @@ const VIOLET = 0x9b6bd6;
 const LILAC = 0xc9a6ff;
 const D = BREACH.detonate;
 
-const CRACKS = makeCracks(5521, 9);
 /** Where the three small blasts break out on its edge (angle, tile radii). */
 const BLASTS = [
   [0.6, 0.72],
@@ -105,6 +105,7 @@ export function betaBreachStep(env: KillEnv, k: KillTarget): Step {
       const light = new Graphics();
       light.blendMode = "add";
       back.addChild(under, light);
+      const pm = motes(back, 320);
       const surge = glowSprite(back, VIOLET);
       const tex = env.badge(k.unitId);
       const glyph = tex ? new Sprite({ texture: tex, anchor: 0.5 }) : undefined;
@@ -124,7 +125,7 @@ export function betaBreachStep(env: KillEnv, k: KillTarget): Step {
       const white = new Graphics();
       white.blendMode = "add";
       front.addChild(shards, top, white);
-      return { smoke, under, light, surge, glyph, rim, body, core, blasts, shards, top, white };
+      return { smoke, under, light, pm, surge, glyph, rim, body, core, blasts, shards, top, white };
     },
     shake: (t, Rs) => {
       let x = 0;
@@ -232,11 +233,13 @@ export function betaBreachStep(env: KillEnv, k: KillTarget): Step {
           L.dy += A * 0.6 * Math.sin(s.u * 53 + n.dy * 3);
         }
       }
-      // Hot cracks spread over it; its hex glows; three small blasts break out on its edge.
+      // Molten fissures spread over it (cracksFx.ts), spitting embers; its hex glows; three small blasts break out on its edge.
+      b.pm.begin();
       if (!still && !broke) {
         const heat = span(t, [BREACH.cracks[0], D]);
-        if (heat > 0) light.poly(flat(hexCorners(Sx, Sy, Rs * ts))).fill({ color: heat > 0.7 ? GOLD : ORANGE, alpha: 0.12 + 0.35 * heat * heat });
-        drawCracks(light, CRACKS, span(t, BREACH.cracks), Sx, Sy, Rs * ts, ORANGE, CREAM, 0.4);
+        if (heat > 0) light.poly(flat(hexCorners(Sx, Sy, Rs * ts))).fill({ color: heat > 0.7 ? GOLD : ORANGE, alpha: 0.08 + 0.3 * heat * heat });
+        const sg = surgeAt(t);
+        moltenFissures({ under, light, motes: b.pm, grow: span(t, BREACH.cracks), t, x: Sx, y: Sy, r: Rs * ts, heat, boost: sg ? 1 - sg.u : 0 });
         if (b.glyph) {
           const on = span(t, [BREACH.implode[0] - 0.2, BREACH.implode[1]]);
           b.glyph.visible = on > 0;
@@ -247,6 +250,7 @@ export function betaBreachStep(env: KillEnv, k: KillTarget): Step {
           b.glyph.alpha = on;
         }
       } else if (b.glyph) b.glyph.visible = false;
+      b.pm.end();
       BREACH.blasts.forEach((at, i) => {
         const u = still ? 1 : span(t, [at, at + 0.3]);
         const sp = b.blasts[i]!;

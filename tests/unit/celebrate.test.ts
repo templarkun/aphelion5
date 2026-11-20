@@ -11,6 +11,7 @@ import { Player, type Step } from "../../src/web/anim.js";
 import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winShowOf, wonStateOf } from "../../src/web/celebrate/detect.js";
 import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
+import { crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
 import { arrival, shineAt, shinePath, sweep } from "../../src/web/celebrate/shine.js";
 import { BREACH, KILL, KILL_TIMES, PURGE, STILL, WIN } from "../../src/web/celebrate/timeline.js";
@@ -260,6 +261,21 @@ test("I25: the celebrations are the same for every Company: the same pieces, pic
   }
   // Either Alpha kill comes up for either Company.
   expect([...kills].sort()).toEqual(["alphaDown", "alphaPurge"]);
+});
+
+test("the cracks (designer 2026-11-20): tapered, branching, inside the tile, the same every time", () => {
+  const shape = { n: 6, origin: [0.1, -0.06], reach: [0.75, 0.9], step: [0.06, 0.11], wander: 0.75, width: 0.05, fork: 0.22 } as const;
+  const a = crackTree(9137, shape);
+  expect(crackTree(9137, shape)).toEqual(a);
+  expect(a.filter((c) => c.depth === 0).length).toBe(6);
+  expect(a.some((c) => c.depth > 0)).toBe(true);
+  for (const c of a) {
+    for (const [x, y] of c.pts) expect(Math.hypot(x, y)).toBeLessThanOrEqual(0.93 + 1e-9);
+    // Wide where it starts, sharp at its tip; branches start once their main crack has grown that far.
+    expect(c.w[0]!).toBeGreaterThan(c.w[c.w.length - 1]!);
+    expect(c.at).toBeGreaterThanOrEqual(0);
+    expect(c.at).toBeLessThan(1);
+  }
 });
 
 test("the Field's player: one tap finishes animations up to a celebration, which only two taps (skip) end", () => {

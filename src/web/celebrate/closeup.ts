@@ -237,59 +237,6 @@ export function glowSprite(parent: Container, tint: number, add = true): Sprite 
   return s;
 }
 
-/** Cracks from a point a little off the middle to the tile's edge, in tile radii. */
-export function makeCracks(seed: number, n = 7): { pts: [number, number][]; at: number }[] {
-  const rnd = seq(seed);
-  const hx = 0.12;
-  const hy = -0.08;
-  const out: { pts: [number, number][]; at: number }[] = [];
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + rnd() * 0.5;
-    const pts: [number, number][] = [[hx, hy]];
-    let r = 0;
-    let ang = a;
-    const reach = 0.82 + rnd() * 0.12;
-    while (r < reach) {
-      r = Math.min(reach, r + 0.16 + rnd() * 0.14);
-      ang += (rnd() - 0.5) * 0.7;
-      pts.push([hx + Math.cos(ang) * r, hy + Math.sin(ang) * r]);
-    }
-    out.push({ pts, at: i * 0.04 });
-    // A short branch from the middle of the main crack.
-    const mid = pts[Math.floor(pts.length / 2)]!;
-    const b = ang + (rnd() > 0.5 ? 0.9 : -0.9);
-    const len = 0.18 + rnd() * 0.16;
-    out.push({ pts: [mid, [mid[0] + Math.cos(b) * len, mid[1] + Math.sin(b) * len]], at: 0.18 + i * 0.04 });
-  }
-  return out;
-}
-
-/** The cracks grown to `grow` (0-1) on a tile of radius r at (x, y): a soft glow line and a bright core line. */
-export function drawCracks(g: Graphics, cracks: { pts: [number, number][]; at: number }[], grow: number, x0: number, y0: number, r: number, glow: number, core: number, glowAlpha = 0.3): void {
-  for (const c of cracks) {
-    const f = Math.max(0, Math.min(1, (grow - c.at) / (1 - c.at)));
-    if (f <= 0) continue;
-    const pts = c.pts.map(([x, y]) => [x0 + x * r, y0 + y * r] as [number, number]);
-    const lens = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i]![0], p[1] - pts[i]![1]));
-    let left = easeOut(f) * lens.reduce((a, x) => a + x, 0);
-    const path: [number, number][] = [pts[0]!];
-    for (let i = 0; i < lens.length && left > 0; i++) {
-      const take = Math.min(1, left / lens[i]!);
-      const a = pts[i]!;
-      const b = pts[i + 1]!;
-      path.push([a[0] + (b[0] - a[0]) * take, a[1] + (b[1] - a[1]) * take]);
-      left -= lens[i]!;
-    }
-    const line = (width: number, color: number, alpha: number) => {
-      g.moveTo(path[0]![0], path[0]![1]);
-      for (const p of path.slice(1)) g.lineTo(p[0], p[1]);
-      g.stroke({ width, color, alpha });
-    };
-    line(Math.max(4, r * 0.09), glow, glowAlpha);
-    line(Math.max(1.3, r * 0.025), core, 0.95);
-  }
-}
-
 /** A jagged bolt from (x1, y1) to (x2, y2): its points, the same for the same `seed`. */
 export function bolt(x1: number, y1: number, x2: number, y2: number, seed: number, jag = 0.18, steps = 7): [number, number][] {
   const rnd = seq(seed);
