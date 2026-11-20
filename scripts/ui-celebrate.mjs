@@ -78,13 +78,14 @@ export async function celebrateCheck(browser, url, out) {
     const pg = await open(1400, 900);
     await preview(pg, "win");
     const shown = await pg.waitForSelector("[data-win]", { timeout: 10000 }).then(() => true, () => false);
+    // Read while it plays (a slow machine may be past it by the end of the pictures below).
+    const from = await pg.locator("[data-win]").getAttribute("data-from", { timeout: 2000 }).catch(() => "");
     await pg.waitForSelector("[data-win][data-act='3']", { timeout: 12000 }).catch(() => {});
     await pg.waitForTimeout(900);
     const title = ((await pg.locator(".cb-title").innerText().catch(() => "")) ?? "").toLowerCase();
     const sub = ((await pg.locator(".cb-sub").innerText().catch(() => "")) ?? "").toLowerCase();
     const badges = await pg.locator(".cb-badges img").count();
     await pg.screenshot({ path: `${out}/ui-celebrate-win.png` });
-    const from = await pg.locator("[data-win]").getAttribute("data-from").catch(() => "");
     const closed = await pg.waitForSelector("[data-celebration-preview]", { state: "detached", timeout: 12000 }).then(() => true, () => false);
     const l = (await log(pg)).map(([, s]) => s);
     const flew = l.some((s) => / fly0 /.test(s));
@@ -151,7 +152,7 @@ export async function celebrateCheck(browser, url, out) {
       await pg.getByRole("button", { name: "Menu" }).click();
       await pg.getByRole("button", { name: /Developer: win this mission/ }).click();
       const shown = await pg.waitForSelector("[data-win]", { timeout: 8000 }).then(() => true, () => false);
-      const from = await pg.locator("[data-win]").getAttribute("data-from").catch(() => "x");
+      const from = await pg.locator("[data-win]").getAttribute("data-from", { timeout: 2000 }).catch(() => "x");
       await pg.waitForTimeout(800);
       const sheetEarly = await pg.locator(".upsheet").count();
       if (w >= 600) {
