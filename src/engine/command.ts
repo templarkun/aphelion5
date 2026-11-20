@@ -232,11 +232,13 @@ export function concede(c: Ctx): void {
   log(c, "you concede: the game ends as a loss", "10.3");
 }
 
-/** Mission won (8.2): leftover Alert tokens are simply cleared; Mission End follows (stage 7). */
-export function missionWon(c: Ctx): void {
+/** Mission won (8.2): leftover Alert tokens are simply cleared; Mission End follows (stage 7). `dev`: the Developer tool. */
+export function missionWon(c: Ctx, dev = false): void {
   for (const u of alertedUnits(c)) tile(c.state, u).tokens.alert = false;
   c.state.phase = "missionEnd";
   log(c, "the mission objective is met: Mission End", "8.2");
+  // For the screen's mission celebration (designer 2026-11-20); changes nothing.
+  emit(c, dev ? { kind: "won", dev: true } : { kind: "won" });
 }
 
 /** Units with an "At Overload:" trigger (4.2, 9.1). */
@@ -414,7 +416,7 @@ export function* commandStep(c: RunCtx): Effect {
     // Developer tool (not a rule): try the Upgrade sheet at once (designer 2026-11-09, step 4).
     c.state.sheet.upgradePoints += DEV_POINTS;
     log(c, `Developer: the mission is won with ${DEV_POINTS} Upgrade points`, "dev");
-    missionWon(c);
+    missionWon(c, true);
     return;
   }
   const id = a.value as string;

@@ -102,6 +102,9 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   // The outro (designer 2026-11-16): the last mission of a Developer-mode game is won and its Upgrade sheet is open;
   // "Done" and "Finish" end the game as a won Campaign.
   won: (q, g) => q.upgrade === true && q.kind === "option" && g.view.state.phase === "missionEnd" && isFinalMission(g),
+  // The win celebration (designer 2026-11-20): a Developer-mode game at an action menu of Mission 1 (Eliminate Alpha),
+  // where the Developer tool "win this mission" is offered.
+  devwin: (q, g) => g.view.state.mission === "C1_M1" && g.view.state.phase === "command" && q.kind === "option" && q.options.some((o) => o.id === "devWin"),
   // A question that chooses one unit, answered on bubbles on the units (designer 2026-11-09).
   pickunit: (q) => q.kind === "units" && q.min === 1 && q.max === 1 && q.options.length >= 2 && !/Attacks/.test(q.prompt),
   // A unit effect that deals damage to one chosen unit (designer 2026-11-16: "1 damage" bubbles crashed).
@@ -181,7 +184,7 @@ if (!wanted) throw new Error(`unknown question kind ${what}`);
 for (let seed = 1; seed < 400; seed++) {
   const r = newRng(seed * 7 + 1);
   // The Upgrade sheet: a Developer-mode game, won at once with the Developer shortcut.
-  const dev = what.startsWith("upgrade") || what === "won";
+  const dev = what.startsWith("upgrade") || what === "won" || what === "devwin";
   let g = startGame(data, { seed, date: "2026-11-07", profile: emptyProfile(), developerMode: dev, autoAnswer: true });
   for (let n = 0; n < 400 && g.view.status === "question"; n++) {
     const q = g.view.question;

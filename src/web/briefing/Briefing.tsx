@@ -39,6 +39,8 @@ export interface BriefingProps {
   onReplayIntro: () => void;
   /** Look at an outro (OUTROS id) with the Company chosen in the briefing and made-up numbers. */
   onPreviewOutro?: ((campaign: string, company: string, outro: string) => void) | undefined;
+  /** The mission celebrations (designer 2026-11-20): "kill", "win" or "both", on a made-up Mission 1 Field. */
+  onPreviewCelebration?: ((company: string, kind: "kill" | "win" | "both") => void) | undefined;
   /** Open the statistics and achievements page. */
   onStats?: (() => void) | undefined;
   /** Open the Campaign editor (Developer tools). */
@@ -306,6 +308,23 @@ export function Briefing(p: BriefingProps) {
                     </button>
                   ))}
                   <p className="text-[14px] text-sky-100">A preview with sample numbers. It uses the Company chosen on the Vessel step. A won Campaign plays {OUTROS.find((o) => o.id === DEFAULT_OUTRO)?.name}.</p>
+                </>
+              )}
+              {p.onPreviewCelebration && (
+                <>
+                  <div className="bf-label mt-2">Mission celebrations · Eliminate Alpha</div>
+                  {(
+                    [
+                      ["kill", "Play the kill: Alpha Down"],
+                      ["win", "Play the win: Mission Complete"],
+                      ["both", "Play both together"],
+                    ] as const
+                  ).map(([kind, label]) => (
+                    <button key={kind} type="button" className="bf-btn" data-action="celebration-preview" data-kind={kind} onClick={() => (setDrawer(false), p.onPreviewCelebration?.(company, kind))}>
+                      {label} ({co.name})
+                    </button>
+                  ))}
+                  <p className="text-[14px] text-sky-100">On a made-up Mission 1 Field. In a game the kill plays when the last required Alpha is destroyed, the win when the mission is won (8.2); with several of a kind, one is picked at random each mission.</p>
                 </>
               )}
             </div>

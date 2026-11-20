@@ -13,6 +13,8 @@
 # Surface Terraform, the third outro (T13_OUT_12-16, CHANGED note on T13_OUT_07) 2026-11-19.
 # The same day: I17 answered (far beams, T13_OUT_17, CHANGED notes on T13_OUT_13 and T13_OUT_15),
 # and Orbital Claim, the fourth outro (T13_OUT_18-23, CHANGED notes on T13_OUT_07 and T13_OUT_12).
+# The mission celebrations (section THE MISSION CELEBRATIONS, T13_CEL_01-08, CHANGED note on
+# T13_UPG_05) 2026-11-20; checked by tests/unit/celebrate.test.ts and scripts/ui-celebrate.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -379,6 +381,9 @@ then: Done with points left: a box says they will be lost: "Keep spending" goes 
       the sheet stays with "Continue", so the last effects finish, then Mission End goes on.
       Developer mode only: Menu -> "Developer: win this mission (+12 points)" goes straight to
       Mission End with 12 Upgrade points, to try the sheet (a tool, not a rule).
+note: CHANGED 2026-11-20 (designer, the mission celebrations): in a mission whose objective has a
+      win celebration (Eliminate Alpha: Mission 1), winning the mission, with the Developer tool
+      too, first plays it (T13_CEL_04, about 5 s, two taps skip it); the sheet opens after it.
 
 ################################################################################
 === SECTION: THE REMAINING EVENT LOOKS AND THE ANIMATION SETTINGS (build step 5) ===
@@ -1586,3 +1591,113 @@ then: EXPORT shows the Campaign file (the Campaign1.txt format, mission ids C2_M
       (keeps the blocks) with Copy and Download.
 note: Campaign 1 exported by the editor is read back by the game's own reader unchanged
       (tests/unit/editor.test.ts). Not built yet: playing an edited Campaign in the game.
+
+################################################################################
+=== SECTION: THE MISSION CELEBRATIONS (designer 2026-11-20) ===
+# Written 2026-11-20. Screen only; no rule changes. Two pieces, built separately: the kill (the last
+# required Omega unit destroyed) and the win (the mission won, Core Rules 8.2). The engine reports
+# the win as a display event ("won", events.ts). Several pieces are planned for each kind of mission
+# (Eliminate Alpha, Beta more spectacular, Gamma more still; Salvage); built so far: the kill "Alpha
+# Down" and the win "Mission Complete", for Eliminate Alpha missions (Campaign 1: Mission 1). Other
+# missions show nothing new yet. Words "MISSION COMPLETE" and "ALPHA ELIMINATED · 6 / 6" to try (I20).
+
+id: T13_CEL_01
+title: The kill plays when the last required Alpha is destroyed
+source: designer 2026-11-20 (I18: "the moment when the last required Alpha is destroyed (or when
+        it becomes a Wreck). The last required means, in Mission 1 that is the 6th of 8")
+map: M1
+given: Mission 1 (Eliminate 6 Alpha units). 5 O_01 in the Trophy pile (or on the Field as
+       Wrecks, 4.8). An O_01 on the Field.
+when: an action destroys that O_01 (it becomes a Wreck: its Destroyed effect waits on an Alert)
+then: after the shot and the hit, the kill plays, about 4.5 s (Normal speed), centred on the unit:
+      1 (0-0.8 s) the Field zooms in on it and the rest darkens (the screen outside the Field too);
+      the hit's sparks hang almost still; red targeting brackets close in and lock.
+      2 (0.8-2.2 s) violet light through cracks in the tile, the glyph flares and collapses into a
+      bright core, then bursts: shards, a violet shock ring, sparks, a small shake.
+      3 (2.2-3.6 s) the Wreck stays where it was, smoking; a label beside it (below it on a phone)
+      "ALPHA DOWN · 5 / 6" turns to "6 / 6".
+      4 (3.6-4.5 s) the zoom eases back to the whole Field; the game goes on (the Wreck's Alert
+      still has to be resolved). The questions on the Field wait until it is over.
+then: the 7th O_01 destroyed (the 6th already counted), or any other unit: no kill.
+note: The number counted is the objective's own (8.2): units of its type in the Trophy pile, plus
+      those on the Field as Wrecks. Silent hooks: playTargetLock, playOmegaBreak, playKillConfirmed.
+
+id: T13_CEL_02
+title: Several Alphas destroyed by one blow
+source: designer 2026-11-20 (the plan agreed that day)
+map: M1
+given: 4 O_01 counted. Several O_01 on the Field with 1 Strength left.
+when: Order "Deal 1 damage to all units"
+then: the shots and hits land together, the other units burst together as before; then the kill
+      plays on the one that makes 6 (the game destroys them one after another, in its order).
+
+id: T13_CEL_03
+title: One tap, two taps
+source: designer 2026-11-20 ("skippable by double-tap (like intros/outros)")
+given: the kill or the win playing
+then: "Tap twice to skip" at the foot. One tap: "Tap again to skip" with a bar that runs out in 1 s;
+      the piece goes on. A second tap within 1 s (or Escape, Enter or Space twice) skips it: the
+      Field is shown as it now is. Taps while it plays never press anything in the game.
+then: one tap during the shot and hit before the kill finishes them (as any animation); the kill
+      then plays from its start.
+
+id: T13_CEL_04
+title: The win plays when the mission is won
+source: designer 2026-11-20 (I18: "the moment when the mission is actually won (according to the
+        rules)"); Core Rules 8.2
+map: M1
+given: the 6th O_01's Wreck resolves (its Destroyed effect), so it goes to the Trophy pile; the
+       objective is met and checked before the next Command phase action (an Overload under way
+       finishes first)
+then: the Field's animations of that answer play, the Trophy flies from the sector it left into
+      the Mission bar (its cell fills as it lands), then the win, about 5 s:
+      1 (0-1.0 s) the Field dims a little; the Mission bar's cells flare one after another and the
+      last one bursts; the bar turns gold.
+      2 (1.0-2.2 s) a ring in the Company's colour sweeps across the Field from that sector,
+      lighting each sector's edge as it passes; the units still there only shiver.
+      3 (2.2-3.8 s) "MISSION COMPLETE" slams in across the middle of the Field, "ALPHA ELIMINATED ·
+      6 / 6" under it, and six Alpha badges drop into a row, 0.1 s apart, each with sparks.
+      4 (3.8-5.0 s) sparks drift up; everything fades.
+      Then the Upgrade sheet opens (or, with no points to spend, the next mission's preparation;
+      after the last mission, the outro). Until then the Field shows the board as it was won.
+note: Silent hooks: playTrophyLand, playWinShockwave, playMissionComplete.
+
+id: T13_CEL_05
+title: Both in one answer
+source: designer 2026-11-20 ("In case two coincide, one animation can continue with the other")
+given: one answer both destroys the 6th Alpha and wins the mission (its Wreck resolves in the
+       same answer, e.g. the last Alert of an Overload)
+then: the kill plays (acts 1-3); as its camera pulls out, the Wreck resolves and its Trophy flies
+      to the Mission bar; then the win goes on from its act 1. "Tap twice to skip" stays at the
+      foot all the way; two taps skip the rest of both.
+
+id: T13_CEL_06
+title: Speed and reduced motion
+source: designer 2026-11-20 (the plan)
+given: Menu > settings: speed Slow / Fast
+then: both pieces take twice as long / half as long (the Trophy's flight keeps its own speed).
+given: reduced motion on (or speed Instant)
+then: the kill: a still close-up of the Wreck with "ALPHA DOWN · 6 / 6" for about 1.5 s; the win:
+      the banner and badges still over the dimmed Field for about 1.5 s. Two taps skip them too.
+
+id: T13_CEL_07
+title: Which piece plays (several of a kind)
+source: designer 2026-11-20 (I19: "one at random each mission, same one again if the save is
+        reloaded")
+then: with several pieces for one kind (none yet), one is picked for each mission from the game's
+      seed and the mission: the same game and mission always give the same one, a reload too. The
+      game's own random numbers are never used.
+
+id: T13_CEL_08
+title: The Developer tool and the preview
+source: designer 2026-11-20 (the plan)
+given: Developer mode, Mission 1, Menu -> "Developer: win this mission (+12 points)"
+then: the win plays (no kill), its wave from the middle of the Field; the line under the banner
+      gives the true count ("ALPHA ELIMINATED · 2 / 6"), a badge for each Alpha destroyed and an
+      empty place for each one not; then the Upgrade sheet.
+given: the briefing, System options
+then: "Mission celebrations · Eliminate Alpha": "Play the kill: Alpha Down (<Company>)", "Play the
+      win: Mission Complete (<Company>)", "Play both together (<Company>)", each on a made-up
+      Mission 1 Field (five Alphas in the Trophy pile, the sixth destroyed by a Mecha's shell, its
+      Wreck boosting the Sentinel beside it), with a Close button; back to System options at the
+      end. No game is started or changed.

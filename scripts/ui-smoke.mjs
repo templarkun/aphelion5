@@ -2,6 +2,7 @@
 // take a few actions, screenshot. Usage: node scripts/ui-smoke.mjs [url] [outDir]
 import { createRequire } from "node:module";
 import { pagesCheck as runPagesCheck } from "./ui-pages.mjs";
+import { celebrateCheck as runCelebrateCheck } from "./ui-celebrate.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const url = process.argv[2] ?? "http://localhost:4173";
@@ -1465,7 +1466,9 @@ if (existsSync(`${out}/won-save.json`)) {
 }
 // The statistics page and the Campaign editor (designer 2026-11-18): scripts/ui-pages.mjs.
 const pagesCheck = await runPagesCheck(browser, url, out);
-console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, pagesCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
+// The mission celebrations (designer 2026-11-20): scripts/ui-celebrate.mjs.
+const celebrateCheck = await runCelebrateCheck(browser, url, out);
+console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck, styleCheck, outroCheck, pagesCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);

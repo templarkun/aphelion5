@@ -62,7 +62,12 @@ export type GameEventBody =
   /** A face-up tile is uncovered (3.4): the tile above left, no Reveal. */
   | { kind: "uncovered"; tile: TileId; unitId: string; type: string; sector: SectorKey }
   /** One energy went onto a Module (4.6, 5.3). `auto`: it went there by itself (only one Module could take it). */
-  | { kind: "energy"; colour: EnergyColour; module: number; from?: TileId | undefined; auto: boolean };
+  | { kind: "energy"; colour: EnergyColour; module: number; from?: TileId | undefined; auto: boolean }
+  /**
+   * The mission objective is met and the mission is won (8.2), just before Mission End (designer 2026-11-20:
+   * the mission celebration plays then; screen only). `dev`: by the Developer tool "win this mission".
+   */
+  | { kind: "won"; dev?: true };
 
 export type TokenChange = "shield" | "bioShield" | "repair" | "barrier" | "barrierGone" | "tick" | "mortar" | "feedback" | "fuseGone" | "alertGone";
 

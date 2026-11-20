@@ -48,6 +48,12 @@ import { AskBubble, PointBubbles, askText } from "./FieldAsk.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, OverhaulButton, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 import { MotionSettings } from "./MotionSettings.js";
+import { type WinShow, winOf } from "./celebrate/detect.js";
+import { MissionWin, type Shake } from "./celebrate/MissionWin.js";
+import { CelebrationSkip } from "./celebrate/CelebrationSkip.js";
+import { CelebrationPreview, type PreviewKind } from "./celebrate/CelebrationPreview.js";
+import { companyTheme } from "./outro/themes.js";
+import type { SessionView } from "../engine/session.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const PHASE: Record<GameState["phase"], string> = {
@@ -100,6 +106,8 @@ export function App() {
   // A page over the briefing: statistics and achievements, or the Campaign editor (Developer tools).
   const [page, setPage] = useState<"stats" | "editor" | undefined>();
   const [outroPreview, setOutroPreview] = useState<{ campaign: string; company: string; outro: string } | undefined>();
+  // A mission celebration looked at from System options (a made-up Mission 1 Field; no game is touched).
+  const [celebPreview, setCelebPreview] = useState<{ company: string; kind: PreviewKind } | undefined>();
 
   useEffect(() => {
     void loadSave().then((f) => {
@@ -150,6 +158,7 @@ export function App() {
       {page === "stats" && <StatsPage data={data} profile={profile} onBack={() => setPage(undefined)} />}
       {page === "editor" && <CampaignEditor data={data} onBack={() => setPage(undefined)} />}
       {outroPreview && <OutroPreview data={data} campaign={outroPreview.campaign} company={outroPreview.company} outro={outroPreview.outro} onClose={() => setOutroPreview(undefined)} />}
+      {celebPreview && <CelebrationPreview key={`${celebPreview.kind}:${celebPreview.company}`} data={data} company={celebPreview.company} kind={celebPreview.kind} onClose={() => setCelebPreview(undefined)} />}
       <GateHost />
     </>
   );
@@ -167,6 +176,7 @@ export function App() {
         error={error}
         onReplayIntro={() => setIntro("full")}
         onPreviewOutro={(campaign, company, outro) => setOutroPreview({ campaign, company, outro })}
+        onPreviewCelebration={(company, kind) => setCelebPreview({ company, kind })}
         onStats={() => setPage("stats")}
         onEditor={() => setPage("editor")}
         onLaunch={(l) => {
@@ -391,6 +401,25 @@ function GameScreen(p: GameProps) {
   const { data, game } = p;
   const real = game.view;
   const realQ = real.status === "question" ? real.question : undefined;
+  // The mission celebrations (designer 2026-11-20, src/web/celebrate/). The kill plays on the Field by
+  // itself (FieldView); the win is found here, in the answer that won the mission (8.2): until it has
+  // played, the board stays as it was when the mission was won and the next screen (the Upgrade sheet,
+  // the next mission's preparation, the outro) waits.
+  const [winSeen, setWinSeen] = useState(game);
+  const [win, setWin] = useState<WinShow | undefined>();
+  // The objective's Trophies the Mission bar holds back while they fly in (the win's first moment).
+  const [hold, setHold] = useState(0);
+  if (winSeen !== game) {
+    setWinSeen(game);
+    const w = winOf(data, winSeen, game);
+    setWin(w);
+    setHold(w ? w.fresh : 0);
+  }
+  const [killOn, setKillOn] = useState(false);
+  const [skipAll, setSkipAll] = useState(0);
+  const shakeRef = useRef<Shake | undefined>(undefined);
+  const shake = useMemo<Shake>(() => (k, now) => shakeRef.current?.(k, now), []);
+  const winView = useMemo<SessionView | undefined>(() => (win ? { status: "stopped", state: win.state, phase: "missionEnd", session: real.session } : undefined), [win]); // eslint-disable-line react-hooks/exhaustive-deps
   // A facing question (3.7) has no list: rotate buttons sit on the unit. The screen already shows
   // what comes next with the facing shown; the next click keeps that facing and then counts.
   // If keeping it would show new hidden information, a Done button keeps it instead.
@@ -405,7 +434,7 @@ function GameScreen(p: GameProps) {
     ahead.game.view.status === "question" &&
     !ahead.game.view.question.facing &&
     ahead.game.view.state.hiddenInfo === real.state.hiddenInfo;
-  const v = aheadOk ? ahead.game.view : real;
+  const v = winView ?? (aheadOk ? ahead.game.view : real);
   const send = (a: Answer) => p.onAnswer(aheadOk && faceAnswer ? [faceAnswer, a] : [a]);
   // A Module run from its selection (designer 2026-11-08): its X, Overclock and extra payment
   // were set on pop-ups before the run, so those questions are answered by the plan, never shown.
@@ -420,9 +449,11 @@ function GameScreen(p: GameProps) {
   // the last point it stays (with Continue) so its effects can finish.
   const [upOpen, setUpOpen] = useState(false);
   useEffect(() => {
+    // Not while the win celebration plays: the sheet opens after it.
+    if (win) return;
     if (realQ?.upgrade) setUpOpen(true);
     else if (real.state.phase === "command" || real.state.phase === "overload") setUpOpen(false);
-  }, [realQ, real.state.phase]);
+  }, [realQ, real.state.phase, win]);
   const [barH, setBarH] = useState(48);
   // The Heat bar (designer 2026-11-08): long when the top bar has room, else a short bubble.
   const barRef = useRef<HTMLElement>(null);
@@ -450,8 +481,9 @@ function GameScreen(p: GameProps) {
     const before = lastState.current;
     lastState.current = real.state;
     if (before === real.state) return;
-    energyFlights(before, real.state);
-    trophyFlights(before, real.state);
+    // An answer that won the mission: the board as it was then; its Trophies fly in when the win starts (MissionWin).
+    energyFlights(before, win ? win.state : real.state);
+    if (!win) trophyFlights(before, real.state);
     if (!planRef.current) paidShown(undefined);
     const seen = newEvents(before.events, real.state.events).filter((e) => e.kind === "looked");
     setLook(seen.length ? seen.flatMap((e) => (e.kind === "looked" ? e.tiles.map((t) => ({ ...t, rule: e.rule })) : [])) : undefined);
@@ -974,7 +1006,7 @@ function GameScreen(p: GameProps) {
 
   return (
     <div
-      className={`game layout-${layout} ${inOverload ? "is-overload" : ""} ${upOpen || prepQ ? "upgrading" : ""}`}
+      className={`game layout-${layout} ${inOverload ? "is-overload" : ""} ${upOpen || prepQ ? "upgrading" : ""} ${win || killOn ? "celebrating" : ""}`}
       style={{ "--bar-h": `${barH}px` } as React.CSSProperties}
       data-prompt={q ? q.prompt : ""}
       onPointerDownCapture={(e) => {
@@ -1067,7 +1099,7 @@ function GameScreen(p: GameProps) {
         {s.mission && hasField && (
           <div className="top-strip">
             <AnomalyStrip data={data} cards={s.player.anomalies} q={q} onAnswer={answer} />
-            <MissionBar c={c} phase={PHASE[s.phase]} />
+            <MissionBar c={c} phase={PHASE[s.phase]} hold={hold} />
           </div>
         )}
         <div className="field-area">
@@ -1095,6 +1127,10 @@ function GameScreen(p: GameProps) {
               setMechaSel(undefined);
               setModSel(undefined);
             }}
+            seed={game.start.seed}
+            skipAll={skipAll}
+            onCelebrate={setKillOn}
+            shake={shake}
           />
         ) : (
           <div className="empty-field">{PHASE[s.phase]}</div>
@@ -1126,7 +1162,7 @@ function GameScreen(p: GameProps) {
         {hasField && <Fps />}
         {pickQ && <UnitPicks items={pickItems} foot={pickFoot} onPress={pickPress} multi={pickQ.kind !== "option" && pickQ.kind !== "order" && !((pickQ.kind === "units" || pickQ.kind === "sectors") && pickQ.max === 1)} />}
         {rowQ && hasField && !planQ && <RowBubbles rows={rowQ.rows!} selected={rowSel} onSelect={setRowSel} onConfirm={(i) => send({ kind: "option", value: rowQ.options[i]!.id })} />}
-        {planQ || prepQ ? null : rotate ? (
+        {win ? null : planQ || prepQ ? null : rotate ? (
           // Facing (3.7): the turn buttons are on the unit; no card (designer 2026-11-09). "Done" only when needed.
           rotate.done ? (
             <button className="primary facing-done" onClick={rotate.done}>
@@ -1200,7 +1236,29 @@ function GameScreen(p: GameProps) {
 
       {missionIntro === s.mission && !prepQ && <MissionIntro data={data} state={s} onDone={() => setMissionIntro(undefined)} />}
       {/* The outro (designer 2026-11-16): the last mission is won and scored, the Upgrade sheet closed. */}
-      {!realQ && hasOutro(real.state) && !upOpen && <VictoryOutro data={data} state={real.state} onLeave={p.onLeave} />}
+      {!realQ && hasOutro(real.state) && !upOpen && !win && <VictoryOutro data={data} state={real.state} onLeave={p.onLeave} />}
+      {win && (
+        <MissionWin
+          key={win.state.events?.at(-1)?.seq ?? 0}
+          show={win}
+          theme={companyTheme(win.state.player.company)}
+          onHold={setHold}
+          onShake={(f) => (shakeRef.current = f)}
+          onDone={() => setWin(undefined)}
+          killOn={killOn}
+        />
+      )}
+      {(win || killOn) && (
+        <CelebrationSkip
+          dimAround={killOn}
+          onSkip={() => {
+            setSkipAll((n) => n + 1);
+            setKillOn(false);
+            setHold(0);
+            setWin(undefined);
+          }}
+        />
+      )}
       {prepQ && <MissionPrep data={data} state={s} q={prepQ} onAnswer={(kind, value) => send(kind === "several" ? { kind, value: value as string[] } : { kind, value: value as string })} />}
       {upOpen && (
         <UpgradeSheet

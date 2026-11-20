@@ -1,0 +1,36 @@
+/* The mission celebrations (designer 2026-11-20, src/web/celebrate/). Prefix cb-. */
+
+/* Catches every tap while a celebration plays; "Tap twice to skip" at the foot (outro.css .ou-skip). */
+.cb-catch { position: fixed; inset: 0; z-index: 46; background: transparent; touch-action: none; user-select: none; -webkit-user-select: none; }
+/* Around the kill: the rest of the screen darkens a little (the Field itself is darkened round the unit on its own canvas). */
+.cb-spot { position: fixed; z-index: 43; pointer-events: none; box-shadow: 0 0 0 200vmax rgb(2 3 10 / 0.5); border-radius: 4px; animation: cb-spot-in 0.6s ease-out both; }
+@keyframes cb-spot-in { from { box-shadow: 0 0 0 200vmax rgb(2 3 10 / 0); } }
+
+/* The win: a canvas over the whole page (the Field's dim, the wave, the Mission bar's flares, sparks) and the banner over the Field. */
+.cb-win { position: fixed; inset: 0; z-index: 44; pointer-events: none; }
+.cb-win-cv { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cb-over { position: fixed; display: grid; place-items: center; overflow: hidden; }
+.cb-band { position: relative; width: 100%; padding: 14px 12px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; color: #fff;
+  background: linear-gradient(90deg, transparent, rgb(6 8 18 / 0.82) 14%, rgb(6 8 18 / 0.82) 86%, transparent);
+  border-top: 1px solid rgb(var(--cb-acc) / 0.55); border-bottom: 1px solid rgb(var(--cb-acc) / 0.55); }
+.cb-flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55) 30%, rgb(255 255 255 / 0.55) 70%, transparent); }
+.cb-title { font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.05; white-space: nowrap; transform-origin: 50% 55%;
+  text-shadow: 0 0 18px rgb(255 214 120 / 0.85), 0 0 34px rgb(var(--cb-acc) / 0.6), 0 2px 4px rgb(0 0 0 / 0.8); }
+.cb-sub { font-weight: 800; letter-spacing: 0.32em; text-transform: uppercase; white-space: nowrap; color: rgb(var(--cb-acc)); text-shadow: 0 0 10px rgb(var(--cb-acc) / 0.7), 0 1px 3px rgb(0 0 0 / 0.9); }
+.cb-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 4px; }
+.cb-badges img { display: block; filter: drop-shadow(0 0 6px rgb(201 166 255 / 0.85)); }
+.cb-badge-dot { display: block; border-radius: 50%; background: #9b6bd6; box-shadow: 0 0 8px #c9a6ff; }
+.cb-badge-empty { display: block; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: rgb(255 255 255 / 0.16); }
+
+/* The Mission bar once the win has gone through it: a gold glow (MissionWin sets data-cb-won on <html>). */
+html[data-cb-won] .mission-bar { border-color: #ffd27a; box-shadow: 0 0 0 2px rgb(255 210 122 / 0.55), 0 0 18px 4px rgb(255 200 90 / 0.45); }
+html[data-cb-won] .mission-bar .m-cell.on { background: #ffe9a8; box-shadow: 0 0 8px #ffcf6a; }
+
+/* The preview from System options: the Field and the Mission bar on their own, as in a game. */
+.cb-preview { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; background: #050608; color: #e6e6e6; }
+.cb-preview .top-strip { justify-content: space-between; align-items: center; }
+.cb-pv-label { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgb(224 242 254 / 0.75); padding: 0 6px; }
+.cb-pv-field { position: relative; flex: 1; min-height: 0; }
+.cb-pv-field .field { position: absolute; inset: 0; }
+.cb-pv-right { display: inline-flex; align-items: center; gap: 8px; }
+.cb-pv-right .bf-btn { padding: 6px 14px; }

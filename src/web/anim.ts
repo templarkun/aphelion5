@@ -29,6 +29,15 @@ export interface Step {
   frame: (p: number, look: (key: string) => NodeLook) => void;
   /** Always called once, also when skipped: remove what the step drew. */
   end: () => void;
+  /**
+   * A celebration (designer 2026-11-20): one tap does not finish it (a tap finishes only the steps
+   * before it), two taps do, as the intro and the outros (`skip`).
+   */
+  twoTap?: boolean;
+  /** Its length does not follow the speed setting (a still picture shown for a set time). */
+  fixed?: boolean;
+  /** With reduced motion or the speed Instant, this plays instead of the step (normally steps end at once then). */
+  still?: Step;
 }
 
 export class Player {
@@ -44,25 +53,54 @@ export class Player {
   }
 
   add(steps: Step[]): void {
+    // Celebrations keep a still picture of their own (designer 2026-11-20).
+    const stills = steps.flatMap((s) => (s.still ? [s.still] : []));
     if (this.speed === 0) {
       for (const s of steps) s.end();
+      this.queue.push(...stills);
       return;
     }
     if (this.reduced) {
       for (const s of steps) s.end();
       const hides = [...new Set(steps.flatMap((s) => s.hides ?? []))];
       if (hides.length) this.queue.push(fadeIn(hides));
+      this.queue.push(...stills);
       return;
     }
     this.queue.push(...steps);
   }
 
-  /** Finish everything now (a tap, a new drag, Undo). */
+  /** Finish everything now (two taps on a celebration, a new drag, Undo). */
   skip(): void {
     if (this.cur) this.cur.step.end();
     this.cur = undefined;
     for (const s of this.queue) s.end();
     this.queue = [];
+  }
+
+  /**
+   * One tap (spec "Timing": a tap anywhere finishes the animations): finishes the steps up to the next
+   * celebration, which then plays from its start; a celebration already playing goes on (two taps skip it).
+   * True when something was finished.
+   */
+  tap(): boolean {
+    if (this.cur?.step.twoTap) return false;
+    let any = false;
+    if (this.cur) {
+      this.cur.step.end();
+      this.cur = undefined;
+      any = true;
+    }
+    while (this.queue.length && !this.queue[0]!.twoTap) {
+      this.queue.shift()!.end();
+      any = true;
+    }
+    return any;
+  }
+
+  /** A celebration is playing now. */
+  get celebrating(): boolean {
+    return this.cur?.step.twoTap === true;
   }
 
   /** Sectors hidden by steps not started yet. */
@@ -80,7 +118,7 @@ export class Player {
         next.start?.();
         this.cur = { step: next, t0: now };
       }
-      const p = (now - this.cur.t0) / (this.cur.step.ms / this.speed);
+      const p = (now - this.cur.t0) / (this.cur.step.fixed ? this.cur.step.ms : this.cur.step.ms / this.speed);
       if (p < 1) {
         this.cur.step.frame(Math.max(0, p), look);
         return;

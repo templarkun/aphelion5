@@ -76,3 +76,20 @@ export function playSkyBeamFire(): void {}
 export function playOrbitalLock(): void {}
 /** Act 3: the hexagonal territory grid sweeps out over the region. */
 export function playGridSweep(): void {}
+/**
+ * Mission celebrations (designer 2026-11-20, src/web/celebrate/). The kill, Alpha Down: the last
+ * required Omega unit is destroyed.
+ */
+/** Kill, Act 1: the targeting brackets close in and lock on the unit. */
+export function playTargetLock(): void {}
+/** Kill, Act 2: the unit bursts into shards with a shock ring. */
+export function playOmegaBreak(): void {}
+/** Kill, Act 3: the count beside the Wreck goes up to the objective's number ("6 / 6"). Also the still picture (reduced motion, Instant). */
+export function playKillConfirmed(): void {}
+/** The win, Mission Complete: the mission is won (8.2). */
+/** Win: a Trophy that came in with the winning answer lands in the Mission bar. */
+export function playTrophyLand(): void {}
+/** Win, Act 2: the shock wave in the Company's colour sweeps across the Field. */
+export function playWinShockwave(): void {}
+/** Win, Act 3: MISSION COMPLETE slams in. Also the still picture (reduced motion, Instant). */
+export function playMissionComplete(): void {}

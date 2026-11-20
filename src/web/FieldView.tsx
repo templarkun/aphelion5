@@ -38,6 +38,8 @@ import { fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverSte
 import { isStill, onMotion, speedFactor } from "./motion.js";
 import { PlasmaWave } from "./plasmaFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
+import { killOf } from "./celebrate/detect.js";
+import { alphaDownStep } from "./celebrate/killFx.js";
 
 export interface FieldProps {
   data: GameData;
@@ -63,6 +65,14 @@ export interface FieldProps {
   affected?: string[] | undefined;
   /** A tap on nothing that can be chosen. */
   onMiss?: (() => void) | undefined;
+  /** The game's seed: which kill celebration plays this mission (I19); none: no kill celebration. */
+  seed?: number | undefined;
+  /** Changed (counted up): finish every animation now, celebrations too (two taps, designer 2026-11-20). */
+  skipAll?: number | undefined;
+  /** A kill celebration starts or ends (the screen shows "Tap twice to skip"). */
+  onCelebrate?: ((on: boolean) => void) | undefined;
+  /** The win celebration's shock wave makes the units shiver (offset in pixels for a sector now). */
+  shake?: ((key: string, now: number) => { dx: number; dy: number } | undefined) | undefined;
 }
 
 const ENERGY_HEX: Record<string, number> = { Yellow: 0xf2c230, Red: 0xe8402f, Blue: 0x2f74e8 };
@@ -158,7 +168,7 @@ export function FieldView(p: FieldProps) {
   const props = useRef(p);
   props.current = p;
   const player = useRef(new Player());
-  const layers = useRef<{ root: Container; aura: Graphics; edge: Graphics; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined } | undefined>(undefined);
+  const layers = useRef<{ root: Container; aura: Graphics; edge: Graphics; glow: Graphics; fx: Container; drag: Container; tether: Graphics; piece: Container | undefined; hitText: Text | undefined; celebrate: Container } | undefined>(undefined);
   /** Each sector's container and centre, from the last draw. */
   const nodes = useRef(new Map<string, { node: Container; cx: number; cy: number; arrows?: Container }>());
   const geo = useRef({ size: 40 });
@@ -208,17 +218,20 @@ export function FieldView(p: FieldProps) {
       // The plasma wave round the Field's edge during an Overload (plasmaFx.ts).
       const plasma = new PlasmaWave();
       corona.current = plasma;
-      a.stage.addChild(root, aura, plasma.view, edge, glow, fx, dl);
-      layers.current = { root, aura, edge, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined };
+      // The mission celebrations draw on top of everything, in screen pixels (designer 2026-11-20).
+      const celebrate = new Container();
+      celebrate.eventMode = "none";
+      a.stage.addChild(root, aura, plasma.view, edge, glow, fx, dl, celebrate);
+      layers.current = { root, aura, edge, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined, celebrate };
       ready.current = true;
       draw();
       a.ticker.add(frame);
       new ResizeObserver(() => draw()).observe(host.current!);
     });
-    // A tap anywhere finishes the animations at once (spec "Timing": Skip).
+    // A tap anywhere finishes the animations at once (spec "Timing": Skip); a celebration needs two (designer 2026-11-20).
     const skip = () => {
       if (!player.current.busy) return;
-      player.current.skip();
+      if (!player.current.tap()) return;
       // Put every tile back in place now, and render, before this same tap is matched to a tile.
       frame();
       if (ready.current) app.current?.render();
@@ -246,6 +259,16 @@ export function FieldView(p: FieldProps) {
       ready.current = false;
     };
   }, []);
+
+  // Two taps on a celebration: everything finishes now.
+  const skipped = useRef(p.skipAll);
+  useEffect(() => {
+    if (p.skipAll === skipped.current) return;
+    skipped.current = p.skipAll;
+    player.current.skip();
+    frame();
+    if (ready.current) app.current?.render();
+  }, [p.skipAll]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-draw only when what is shown changes: re-drawing in the middle of a tap lost the tap
   // (play-test 2026-11-08: the first tap on a touch screen only showed the hover text).
@@ -481,6 +504,8 @@ export function FieldView(p: FieldProps) {
     t.anchor.set(0.5);
     t.y = -size * 0.1;
     c.addChild(t);
+    // Its glyph badge, as on the tile (designer 2026-11-10).
+    addGlyphBadge(c, unitId, 0, 0, size);
     return c;
   }
   const centre = (k: string) => {
@@ -589,7 +614,27 @@ export function FieldView(p: FieldProps) {
     };
   }
 
-  function stepsFor(events: GameEvent[], s: GameState): Step[] {
+  /** The board's layers zoomed together (the kill celebration): scale z, then moved by (x, y). */
+  function zoomBoard(z: number, x: number, y: number): void {
+    const L = layers.current;
+    if (!L) return;
+    for (const c of [L.root, L.aura, L.glow, L.fx]) {
+      c.scale.set(z);
+      c.position.set(x, y);
+    }
+  }
+  function badgeTexture(unitId: string): Texture | undefined {
+    let tex = badgeTextures.get(unitId);
+    if (!tex) {
+      const c = glyphBadge(unitId);
+      if (!c) return undefined;
+      tex = Texture.from(c);
+      badgeTextures.set(unitId, tex);
+    }
+    return tex;
+  }
+
+  function stepsFor(events: GameEvent[], s: GameState, before?: GameState): Step[] {
     const fx = layers.current!.fx;
     const size = () => geo.current.size;
     const isTop = (k: string, id: TileId) => topTileId(s, k) === id && sectorState(s, k) === "occupied";
@@ -600,8 +645,13 @@ export function FieldView(p: FieldProps) {
      * Not for units that appear or move in these events (their own steps show them).
      */
     const standIns = new Map<TileId, Container>();
+    // The kill celebration (designer 2026-11-20): the destroyed event that reaches the Eliminate objective's number.
+    const P0 = props.current;
+    const kill = P0.seed !== undefined ? killOf(P0.data, before, events, P0.seed) : undefined;
+    const killEvent = kill ? events[kill.index] : undefined;
     events.forEach((e, idx) => {
-      if (e.kind !== "destroyed" || e.wreck || isTop(e.sector, e.tile) || standIns.has(e.tile)) return;
+      // A Wreck that also left the Field in these events (both pieces in one answer) gets a stand-in too.
+      if (e.kind !== "destroyed" || (e.wreck && e !== killEvent) || isTop(e.sector, e.tile) || standIns.has(e.tile)) return;
       const shown = events
         .slice(0, idx)
         .some((x) => ((x.kind === "revealed" || x.kind === "moved" || x.kind === "attack") && x.tile === e.tile) || (x.kind === "swapped" && (x.a === e.tile || x.b === e.tile)));
@@ -616,6 +666,32 @@ export function FieldView(p: FieldProps) {
       standIns.get(t)?.destroy({ children: true });
       standIns.delete(t);
     };
+    function killStep(e: GameEvent & { kind: "destroyed" }): Step {
+      const L = layers.current!;
+      // Still on the board at the end of these events (a Wreck), or drawn as a stand-in.
+      const onBoard = isTop(e.sector, e.tile);
+      const ghost = onBoard ? undefined : (standIns.get(e.tile) ?? ghost0(e.type, e.unitId));
+      standIns.delete(e.tile);
+      return alphaDownStep(
+        {
+          layer: L.celebrate,
+          zoom: zoomBoard,
+          node: () => nodes.current.get(e.sector),
+          size: () => geo.current.size,
+          field: () => ({ w: host.current?.clientWidth ?? 0, h: host.current?.clientHeight ?? 0 }),
+          badge: badgeTexture,
+          ghost,
+          onPlay: (on) => props.current.onCelebrate?.(on),
+        },
+        { sector: e.sector, unitId: e.unitId, wreck: e.wreck, onBoard, name: kill!.name, count: kill!.count },
+      );
+    }
+    function ghost0(type: string, unitId: string): Container {
+      const g = ghost(type, unitId);
+      g.visible = false;
+      fx.addChild(g);
+      return g;
+    }
 
     /** The tile flips; Flares and Omega units charge up first; then each type's own burst (not Bots). */
     function revealSteps(e: GameEvent & { kind: "revealed" }): Step[] {
@@ -1009,8 +1085,11 @@ export function FieldView(p: FieldProps) {
           const shots = hits.map((h, k) => areaShot(h, k)).filter((x): x is Step => x !== undefined);
           if (shots.length) out.push(holding(parallel(shots, 40), hits));
           out.push(parallel(hits.map((h) => hitStep(h, true))));
-          const bursts = gone.filter((d) => !(attacked.has(d.tile) && !d.wreck)).map((d) => destroyStep(d));
+          const bursts = gone.filter((d) => d !== killEvent && !(attacked.has(d.tile) && !d.wreck)).map((d) => destroyStep(d));
           if (bursts.length) out.push(parallel(bursts, 30));
+          // The deciding kill gets its celebration after the others burst together.
+          const decider = gone.find((d) => d === killEvent);
+          if (decider) out.push(killStep(decider));
           continue;
         }
         // Weapon and aura looks (build step 3): the shot comes first.
@@ -1215,7 +1294,7 @@ export function FieldView(p: FieldProps) {
       } else if (e.kind === "hit") {
         out.push(hitStep(e));
       } else if (e.kind === "destroyed") {
-        out.push(destroyStep(e));
+        out.push(e === killEvent ? killStep(e) : destroyStep(e));
       } else if (e.kind === "energy") {
         // An energy token flies in an arc to its Module (0.4 s); by itself (one Module only): half speed (I1).
         let dot: HTMLDivElement | undefined;
@@ -1322,6 +1401,16 @@ export function FieldView(p: FieldProps) {
     };
     for (const k of player.current.hidden()) look(k).alpha = 0;
     player.current.tick(now, look);
+    // The win celebration's shock wave: the units shiver as it passes (designer 2026-11-20).
+    const shake = props.current.shake;
+    if (shake)
+      for (const k of nodes.current.keys()) {
+        const o = shake(k, now);
+        if (!o) continue;
+        const v = look(k);
+        v.dx += o.dx;
+        v.dy += o.dy;
+      }
     const d = drag.current;
     const size = geo.current.size;
     if (d) {
@@ -1690,7 +1779,7 @@ export function FieldView(p: FieldProps) {
     lastState.current = state;
     if (before && before !== state) {
       const ev = newEvents(before.events, state.events);
-      if (ev.length) player.current.add(stepsFor(ev, state));
+      if (ev.length) player.current.add(stepsFor(ev, state, before));
     }
     // Apply this frame's looks at once, so a hidden tile never flashes up before its animation.
     frame();

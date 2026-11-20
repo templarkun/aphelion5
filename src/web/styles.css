@@ -962,3 +962,5 @@ html.still .sp-tile { transition: none; animation: none; }
 @keyframes sp-breathe { 0%, 100% { filter: drop-shadow(0 0 2px rgb(255 190 80 / 0.4)) drop-shadow(0 8px 10px rgb(0 0 0 / 0.5)); } 50% { filter: drop-shadow(0 0 9px rgb(255 190 80 / 0.95)) drop-shadow(0 8px 10px rgb(0 0 0 / 0.5)); } }
 .sp-dim { position: fixed; pointer-events: none; animation: sp-fade 0.35s ease-out both; }
 .sp-back { pointer-events: auto; margin-top: 4px; }
+/* A mission celebration plays (designer 2026-11-20): the Field's questions and notes wait until it is over. */
+.game.celebrating .field-area > :not(.field) { visibility: hidden; }
