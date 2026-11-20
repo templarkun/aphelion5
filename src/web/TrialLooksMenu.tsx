@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { CORNERS, DEPTHS, READIES, onTrialLooks, setTrialLooks, trialLooks, type TrialLooks } from "./trialLooks.js";
+import { CORNERS, COUNTS, DEPTHS, READIES, onTrialLooks, setTrialLooks, trialLooks, type TrialLooks } from "./trialLooks.js";
 
 export function TrialLooksMenu() {
   const [t, setT] = useState(trialLooks());
@@ -27,6 +27,7 @@ export function TrialLooksMenu() {
       {row("corners", "Tile corners", CORNERS)}
       {row("depth", "Stack depth (how many tiles are in a sector)", DEPTHS)}
       {row("ready", "Ready to tap (animation)", READIES)}
+      {row("counts", "Tile-count words (+N beneath, N tiles)", COUNTS)}
     </details>
   );
 }

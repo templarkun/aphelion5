@@ -94,9 +94,11 @@ export async function looksCheck(browser, url, out) {
       return { k, x: r.left + x, y: r.top + y };
     });
     await pg.mouse.click(pt.x, pt.y);
-    await pg.waitForTimeout(450);
+    await pg.waitForTimeout(350);
     await pg.screenshot({ path: `${out}/ui-allied-drop-fall.png` });
-    await pg.waitForTimeout(1500);
+    await pg.waitForTimeout(400);
+    await pg.screenshot({ path: `${out}/ui-allied-drop-dust.png` });
+    await pg.waitForTimeout(1400);
     const gone = (await pg.locator("[data-ally-drop]").count()) === 0;
     const prompt1 = await pg.locator(".game").getAttribute("data-prompt");
     await pg.close();
@@ -114,7 +116,7 @@ export async function looksCheck(browser, url, out) {
     const shot = async () => (await pg.locator(".field canvas").screenshot()).toString("base64");
     await pg.waitForTimeout(300);
     const before = await shot();
-    for (const id of ["corners:pebble", "depth:slab", "ready:runner"]) {
+    for (const id of ["corners:pebble", "depth:stackFine", "ready:embers", "counts:hidden"]) {
       await pg.locator(`[data-trial="${id}"]`).click();
       await pg.waitForTimeout(150);
     }
@@ -124,8 +126,8 @@ export async function looksCheck(browser, url, out) {
     const kept = await pg.evaluate(() => localStorage.getItem("aphelion5.trialLooks"));
     await pg.screenshot({ path: `${out}/ui-trial-looks.png` });
     await pg.close();
-    const okKept = /pebble/.test(kept ?? "") && /slab/.test(kept ?? "") && /runner/.test(kept ?? "");
-    if (!(offered === 18 && pressed === "corners:pebble,depth:slab,ready:runner" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
+    const okKept = /pebble/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /embers/.test(kept ?? "") && /hidden/.test(kept ?? "");
+    if (!(offered === 19 && pressed === "corners:pebble,depth:stackFine,ready:embers,counts:hidden" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
   }
 
   if (errors.length) fails.push(`page errors: ${errors.join(" | ")}`);

@@ -275,16 +275,33 @@ export function fizzleStep(e: GameEvent & { kind: "fizzled" }, env: FxEnv): Step
 export function dropStep(e: GameEvent & { kind: "dropped" }, env: FxEnv): Step {
   const g = new Graphics();
   g.eventMode = "none";
-  const dust = Array.from({ length: 46 }, (_, i) => {
-    const r = (n: number) => {
-      const x = Math.sin((i + 1) * 12.9898 + n * 78.233) * 43758.5453;
-      return x - Math.floor(x);
+  const rnd = (i: number, n: number) => {
+    const x = Math.sin((i + 1) * 12.9898 + n * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  // Real dust (designer 2026-11-21): many fine grains, not a few big flakes. Most are pushed out low
+  // and fast along the ground and slowed by the air at once, then hang and thin out; some are thrown
+  // up and fall back; a fine haze rises slowly where it landed.
+  const grains = Array.from({ length: 320 }, (_, i) => {
+    const kind = i < 200 ? "skid" : i < 260 ? "kick" : "haze";
+    return {
+      kind,
+      a: rnd(i, 1) * Math.PI * 2,
+      v: kind === "skid" ? 0.7 + rnd(i, 2) * 1.1 : kind === "kick" ? 0.3 + rnd(i, 2) * 0.6 : 0.15 + rnd(i, 2) * 0.35,
+      up: kind === "kick" ? 0.5 + rnd(i, 3) * 0.9 : kind === "haze" ? 0.15 + rnd(i, 3) * 0.35 : rnd(i, 3) * 0.12,
+      size: kind === "haze" ? 0.012 + rnd(i, 4) * 0.014 : 0.005 + rnd(i, 4) * 0.009,
+      tone: rnd(i, 5),
+      delay: rnd(i, 6) * (kind === "haze" ? 0.15 : 0.05),
+      life: kind === "skid" ? 0.65 + rnd(i, 7) * 0.35 : kind === "kick" ? 0.5 + rnd(i, 7) * 0.4 : 0.8 + rnd(i, 7) * 0.2,
+      drift: (rnd(i, 8) - 0.5) * 0.2,
     };
-    return { a: (i / 46) * Math.PI * 2 + r(1) * 0.3, v: 0.55 + r(2) * 0.75, up: 0.1 + r(3) * 0.35, size: 0.04 + r(4) * 0.07, tone: r(5), delay: r(6) * 0.08 };
   });
-  const HIT = 0.5; // the moment it touches the sector
+  // The fall takes 0.5 s (20% faster than before, designer 2026-11-21); the dust lingers 1 s after.
+  const MS = 1500;
+  const HIT = 500 / MS;
+  const tones = [0xb9ab95, 0x9c8f7c, 0xd6cab6, 0x7f7466, 0xe9e0d0];
   return {
-    ms: 1200,
+    ms: MS,
     hides: [e.sector],
     start: () => env.fx.addChild(g),
     frame: (p, look) => {
@@ -303,22 +320,28 @@ export function dropStep(e: GameEvent & { kind: "dropped" }, env: FxEnv): Step {
         return;
       }
       const q = (p - HIT) / (1 - HIT);
-      // Contact: a squash that springs back, and a small jolt of the whole Field.
-      const squash = Math.exp(-q * 9) * Math.cos(q * 22);
+      // Contact: a squash that springs back, and a small jolt of the whole Field (in its first third).
+      const qc = Math.min(1, q * 2.5);
+      const squash = Math.exp(-qc * 9) * Math.cos(qc * 22);
       L.scale *= 1 - 0.1 * squash;
       L.scaleX *= 1 + 0.18 * squash;
-      const jolt = s * 0.05 * Math.exp(-q * 10);
-      for (const k of env.keys()) look(k).dy += Math.sin(q * 60) * jolt;
-      // A ring of dust pushed out along the ground.
-      g.ellipse(c.x, c.y + s * 0.15, s * (0.6 + 0.9 * easeOut(q)), s * (0.25 + 0.35 * easeOut(q))).stroke({ width: s * 0.06 * (1 - q), color: 0xcdbfa8, alpha: 0.45 * (1 - q) });
-      for (const d of dust) {
-        const t = Math.max(0, (q - d.delay) / (1 - d.delay));
-        if (t <= 0) continue;
-        const out = s * (0.45 + d.v * easeOut(t));
-        const x = c.x + Math.cos(d.a) * out;
-        const y = c.y + s * 0.15 + Math.sin(d.a) * out * 0.42 - s * d.up * easeOut(t) - s * 0.25 * t * t;
-        const colour = d.tone < 0.5 ? 0xb9ab95 : d.tone < 0.85 ? 0x8f8475 : 0xe6dccb;
-        g.circle(x, y, s * d.size * (1 + 1.6 * t)).fill({ color: colour, alpha: 0.55 * (1 - t) ** 1.3 });
+      const jolt = s * 0.05 * Math.exp(-qc * 10);
+      for (const k of env.keys()) look(k).dy += Math.sin(qc * 60) * jolt;
+      const gy = c.y + s * 0.15; // the ground line under the tile
+      for (const d of grains) {
+        const t = (q - d.delay) / d.life;
+        if (t <= 0 || t >= 1) continue;
+        // Air drag: fast at first, slowing at once (1 - e^-kt), so the cloud stops and hangs.
+        const slow = 1 - Math.exp(-t * (d.kind === "haze" ? 2.5 : 6));
+        const out = s * (0.42 + d.v * slow);
+        let x = c.x + Math.cos(d.a) * out + s * d.drift * t;
+        let y = gy + Math.sin(d.a) * out * 0.38;
+        if (d.kind === "kick") y -= s * (d.up * 1.6 * t - 1.4 * t * t); // thrown up, falls back
+        else y -= s * d.up * t; // rises slowly
+        x += Math.sin(t * 9 + d.a * 5) * s * 0.01;
+        const fade = d.kind === "haze" ? Math.sin(Math.PI * t) * 0.45 : (1 - t) ** 1.6 * (t < 0.06 ? t / 0.06 : 1) * 0.9;
+        const grow = d.kind === "haze" ? 1 + 2.2 * t : 1 + 0.6 * t;
+        g.circle(x, y, Math.max(0.6, s * d.size * grow)).fill({ color: tones[Math.floor(d.tone * tones.length)]!, alpha: fade });
       }
     },
     end: () => g.destroy(),

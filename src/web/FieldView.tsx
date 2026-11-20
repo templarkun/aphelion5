@@ -139,41 +139,38 @@ function shade(c: number, k: number): number {
  */
 function addDepth(node: Container, cx: number, cy: number, size: number, layers: number, fill: number): void {
   const how = trialLooks().depth;
-  if (how === "original" || how === "pips" || layers <= 0) return;
+  if (how === "original" || layers <= 0) return;
   const g = new Graphics();
   g.eventMode = "none";
   const r = size * 0.9;
   const n = Math.min(layers, 12);
-  if (how === "stack" || how === "stackBold") {
-    // One tile edge under the other, deepest first.
-    const step = size * (how === "stack" ? 0.018 : 0.034);
+  if (how === "stack" || how === "stackFine") {
+    // One tile edge under the other, deepest first ("fine": closer together, softer lines).
+    const fine = how === "stackFine";
+    const step = size * (fine ? 0.011 : 0.018);
     for (let i = n; i >= 1; i--) {
       const pts = hexPoints(cx, cy + i * step, r);
-      g.poly(pts).fill({ color: shade(fill, 0.62 - 0.02 * i) }).stroke({ width: how === "stack" ? 0.8 : 1.2, color: 0x000000, alpha: 0.55 });
+      g.poly(pts).fill({ color: shade(fill, (fine ? 0.7 : 0.62) - 0.02 * i) }).stroke({ width: fine ? 0.6 : 0.8, color: 0x000000, alpha: fine ? 0.35 : 0.55 });
     }
-  } else if (how === "slab") {
-    // A solid side: the tile's lower half pushed down, a faint line per tile.
-    const h = size * 0.028 * n;
+  } else {
+    // "Hint": no solid edges, only a faint hairline under the tile's lower edges per tile.
+    const step = size * 0.013;
     const base = hexPoints(cx, cy, r);
-    const side = base.map((v, i) => (i % 2 === 1 && v > cy ? v + h : v));
-    g.poly(side).fill({ color: shade(fill, 0.5) }).stroke({ width: 1, color: 0x000000, alpha: 0.6 });
-    for (let i = 1; i < n; i++) {
-      const y = (h * i) / n;
+    for (let i = 1; i <= n; i++) {
       const line: number[] = [];
-      for (let j = 0; j < base.length; j += 2) if (base[j + 1]! > cy) line.push(base[j]!, base[j + 1]! + y);
-      if (line.length >= 4) g.poly(line, false).stroke({ width: 0.8, color: 0x000000, alpha: 0.28 });
+      for (let j = 0; j < base.length; j += 2) if (base[j + 1]! > cy + r * 0.2) line.push(base[j]!, base[j + 1]! + i * step);
+      if (line.length >= 4) g.poly(line, false).stroke({ width: 0.7, color: shade(fill, 0.55), alpha: 0.75 - 0.04 * i });
     }
-  } else if (how === "shadow") {
-    // The more tiles, the higher it floats: a longer, softer shadow.
-    const off = size * (0.03 + 0.022 * n);
-    for (let i = 3; i >= 1; i--) g.poly(hexPoints(cx + off * 0.45, cy + off, r * (1 + 0.03 * i))).fill({ color: 0x000000, alpha: 0.12 + 0.012 * n });
   }
   node.addChild(g);
 }
 
-/** Trial look "Notches": one notch per tile along the tile's two lower edges (up to 12). */
+/**
+ * Notches (designer 2026-11-21, part of the game; was a trial look): one notch per tile under the top
+ * one (a Dark sector: per tile), up to 12, along the tile's two lower edges from the bottom point out.
+ */
 function addDepthNotches(node: Container, cx: number, cy: number, size: number, layers: number, light: boolean): void {
-  if (trialLooks().depth !== "pips" || layers <= 0) return;
+  if (layers <= 0) return;
   const g = new Graphics();
   g.eventMode = "none";
   const n = Math.min(layers, 12);
@@ -192,15 +189,22 @@ function addDepthNotches(node: Container, cx: number, cy: number, size: number, 
   node.addChild(g);
 }
 
+/** A number in 0..1 that stays the same for the same (a, b, c): for sparks that differ per sector. */
+function hash3(a: number, b: number, c: number): number {
+  const x = Math.sin(a * 12.9898 + b * 78.233 + c * 37.719) * 43758.5453;
+  return x - Math.floor(x);
+}
+
 /**
  * Units and sectors ready to be tapped. "Original" is the hairline amber edge that slowly brightens and
- * fades (designer 2026-11-08); the others are trial looks to choose from in the Menu (2026-11-20).
- * Everything is worked out from the time alone, so each sector keeps in step with the others.
+ * fades (designer 2026-11-08); the others are trial looks to choose from in the Menu (2026-11-20, the
+ * second set 2026-11-21). Everything is worked out from the time alone, so each sector keeps in step.
  */
 function drawReady(g: Graphics, cx: number, cy: number, size: number, now: number): void {
   const how = trialLooks().ready;
   const r = size * 0.9;
   const edge = hexPoints(cx, cy, r);
+  const seed = Math.round(cx * 7 + cy * 13);
   if (how === "original") {
     const k = breath(now, 2600);
     g.poly(hexPoints(cx, cy, size * 0.86)).stroke({ width: 1.5, color: 0xffe2a0, alpha: (0.35 + 0.6 * k) * 0.9 });
@@ -214,57 +218,79 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
     g.poly(edge).stroke({ width: 2, color: READY, alpha: 0.4 + 0.5 * k });
     return;
   }
-  if (how === "halo") {
-    // A soft light round the outside, breathing.
-    const k = breath(now, 2600);
-    for (let i = 5; i >= 1; i--) g.poly(hexPoints(cx, cy, r * (1 + 0.035 * i * (0.6 + 0.4 * k)))).stroke({ width: size * 0.035, color: READY, alpha: (0.07 + 0.09 * k) * (1 - i / 6) });
-    g.poly(edge).stroke({ width: 1.2, color: 0xffe2a0, alpha: 0.5 + 0.3 * k });
-    return;
-  }
-  if (how === "runner" || how === "twin") {
-    // A bright spark with a fading tail running round the edge (two, opposite, chasing).
-    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.28 });
-    const heads = how === "twin" ? [0, 0.5] : [0];
-    const lap = how === "twin" ? 2600 : 2200;
-    const u0 = (now % lap) / lap;
-    for (const h of heads) {
-      const tail = 18;
-      for (let i = tail; i >= 0; i--) {
-        const pt = alongOutline(edge, u0 + h - i * 0.012);
-        const f = 1 - i / tail;
-        g.circle(pt.x, pt.y, size * (0.012 + 0.03 * f)).fill({ color: i === 0 ? 0xffffff : READY, alpha: 0.12 + 0.85 * f * f });
-      }
-      // Sparks shed outwards from the head.
-      for (let j = 0; j < 4; j++) {
-        const age = ((now / 90 + j * 2.3) % 4) / 4;
-        const pt = alongOutline(edge, u0 + h - age * 0.05);
-        const ox = (pt.x - cx) / r;
-        const oy = (pt.y - cy) / r;
-        g.circle(pt.x + ox * size * 0.12 * age, pt.y + oy * size * 0.12 * age, size * 0.012 * (1 - age)).fill({ color: 0xffe2a0, alpha: 0.8 * (1 - age) });
-      }
+  if (how === "embers") {
+    // Tiny sparks leave the edge one after another, rise a little and fade.
+    const k = breath(now, 3000);
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.3 + 0.3 * k });
+    for (let i = 0; i < 12; i++) {
+      const period = 1700 + hash3(seed, i, 1) * 900;
+      const t0 = now / period + hash3(seed, i, 2);
+      const cycle = Math.floor(t0);
+      const t = t0 - cycle;
+      const at = alongOutline(edge, hash3(seed, i, cycle));
+      const ox = (at.x - cx) / r;
+      const x = at.x + ox * size * 0.06 * t + Math.sin(t * 6 + i) * size * 0.015;
+      const y = at.y - size * 0.32 * t;
+      const a = Math.sin(Math.PI * Math.min(1, t * 1.4)) * (1 - t);
+      g.circle(x, y, size * (0.009 + 0.008 * hash3(seed, i, 3)) * (1 - 0.5 * t)).fill({ color: t < 0.3 ? 0xfff1c9 : READY, alpha: 0.9 * a });
     }
     return;
   }
-  if (how === "corners") {
-    // The six corners light one after another, clockwise, with the edges between them faint.
+  if (how === "heartbeat") {
+    // Two quick beats, then a rest.
+    const t = (now % 1800) / 1800;
+    const beat = (c: number, w: number) => Math.exp(-(((t - c) / w) ** 2));
+    const k = Math.min(1, beat(0.08, 0.05) + 0.7 * beat(0.25, 0.05));
+    g.poly(edge).fill({ color: 0xffd27a, alpha: 0.07 * k });
+    g.poly(edge).stroke({ width: 1.3 + 1.4 * k, color: READY, alpha: 0.3 + 0.65 * k });
+    g.poly(hexPoints(cx, cy, r * (1 + 0.05 * k))).stroke({ width: 1, color: 0xffe2a0, alpha: 0.35 * k });
+    return;
+  }
+  if (how === "inner") {
+    // A soft light just inside the edge, breathing in and out.
+    const k = breath(now, 2800);
+    for (let i = 0; i < 6; i++) g.poly(hexPoints(cx, cy, r * (0.985 - 0.028 * i))).stroke({ width: size * 0.03, color: 0xffd27a, alpha: (0.2 - 0.03 * i) * (0.3 + 0.7 * k) });
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.45 + 0.4 * k });
+    return;
+  }
+  if (how === "motes") {
+    // A few motes of light drift slowly round the edge, each at its own pace, twinkling.
     g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.3 });
-    const t = (now % 2400) / 2400;
-    for (let i = 0; i < 6; i++) {
-      const a = (Math.PI / 180) * (60 * i - 30);
-      const d = (t * 6 - i + 6) % 6; // how long ago the wave passed this corner, in corners
-      const k = Math.max(0, 1 - d / 2.2);
-      const x = cx + r * 0.94 * Math.cos(a);
-      const y = cy + r * 0.94 * Math.sin(a);
-      g.circle(x, y, size * (0.05 + 0.05 * k)).fill({ color: READY, alpha: 0.15 + 0.35 * k });
-      g.circle(x, y, size * (0.02 + 0.02 * k)).fill({ color: 0xffffff, alpha: 0.25 + 0.7 * k });
+    for (let i = 0; i < 5; i++) {
+      const lap = 5200 + hash3(seed, i, 4) * 3800;
+      const dir = i % 2 ? -1 : 1;
+      const u = hash3(seed, i, 5) + (dir * now) / lap;
+      const tw = 0.55 + 0.45 * Math.sin(now / (260 + 90 * i) + i * 2);
+      for (let j = 4; j >= 0; j--) {
+        const pt = alongOutline(edge, u - dir * j * 0.008);
+        const wob = 1 + 0.03 * Math.sin(now / 700 + i * 3);
+        const x = cx + (pt.x - cx) * wob;
+        const y = cy + (pt.y - cy) * wob;
+        const f = 1 - j / 5;
+        g.circle(x, y, size * (0.008 + 0.018 * f)).fill({ color: j === 0 ? 0xfff6dd : READY, alpha: tw * (0.15 + 0.8 * f * f) });
+      }
     }
     return;
   }
-  // Ripple: rings leave the edge and drift outwards, fading.
-  g.poly(edge).stroke({ width: 1.5, color: READY, alpha: 0.6 });
+  if (how === "sparkle") {
+    // The edge made of points of light, each twinkling on its own beat.
+    const k = breath(now, 3200);
+    g.poly(edge).stroke({ width: 0.8, color: READY, alpha: 0.18 + 0.15 * k });
+    const n = 42;
+    for (let i = 0; i < n; i++) {
+      const pt = alongOutline(edge, i / n);
+      const w = Math.sin(now / (380 + 300 * hash3(seed, i, 6)) + hash3(seed, i, 7) * 6.28);
+      const tw = Math.max(0, w) ** 3;
+      g.circle(pt.x, pt.y, size * (0.007 + 0.014 * tw)).fill({ color: tw > 0.6 ? 0xfff6dd : READY, alpha: 0.25 + 0.7 * tw });
+    }
+    return;
+  }
+  // Draw in: faint rings close in from the edge towards the middle, fading as they go.
+  const k = breath(now, 2700);
+  g.poly(edge).stroke({ width: 1.4, color: READY, alpha: 0.4 + 0.4 * k });
   for (let i = 0; i < 3; i++) {
-    const t = ((now / 2100 + i / 3) % 1 + 1) % 1;
-    g.poly(hexPoints(cx, cy, r * (1 + 0.28 * t))).stroke({ width: 2 * (1 - t) + 0.5, color: READY, alpha: 0.55 * (1 - t) ** 1.5 });
+    const t = ((now / 2700 + i / 3) % 1 + 1) % 1;
+    g.poly(hexPoints(cx, cy, r * (1 - 0.55 * t))).stroke({ width: 1.2, color: 0xffd27a, alpha: 0.5 * Math.sin(Math.PI * t) * (1 - t) });
   }
 }
 
@@ -1842,7 +1868,7 @@ export function FieldView(p: FieldProps) {
       else if (st === "dark") {
         const known = showHidden || state.seen.includes(top!);
         label(known ? `? ${tile(state, top!).unitId ?? "?"}` : "?", -size * 0.1, size * 0.3, 0xffffff, true);
-        label(`${height} tile${height === 1 ? "" : "s"}`, size * 0.3, size * 0.18, 0xdfe7f1);
+        if (trialLooks().counts === "shown") label(`${height} tile${height === 1 ? "" : "s"}`, size * 0.3, size * 0.18, 0xdfe7f1);
       } else {
         const t = tile(state, unit!);
         const str = strength(c, unit!);
@@ -1865,7 +1891,7 @@ export function FieldView(p: FieldProps) {
         if (b.length) label(b.join(" "), t.tokens.wreck ? size * 0.02 : marked ? size * 0.47 : size * 0.27, size * 0.16, 0x9b1c1c, true);
         addFuseTokens(node, t.tokens, cx, cy, size);
         // Above the Alert token's place at the bottom corner (designer 2026-11-09).
-        label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.13);
+        if (trialLooks().counts === "shown") label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.13);
         // Trial rule (I2): the energy waiting on a Flare, as tokens on its tile (build step 3).
         const waiting = t.energy ? (["Yellow", "Red", "Blue"] as const).flatMap((col) => Array.from({ length: t.energy![col] ?? 0 }, () => col)) : [];
         if (waiting.length) {

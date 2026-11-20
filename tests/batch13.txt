@@ -24,7 +24,9 @@
 # the same day (I26, I27): the two Gamma kills and Mission Complete for Gamma (T13_CEL_12-14,
 # CHANGED notes on T13_CEL_06, 07, 08, 11).
 # Round 20, 2026-11-20 (section BIG SCREENS, ALLIED DROP, TRIAL LOOKS, T13_R20_01-07, CHANGED note
-# on T13_R18_05); checked by tests/unit/looks.test.ts and scripts/ui-looks.mjs.
+# on T13_R18_05); checked by tests/unit/looks.test.ts and scripts/ui-looks.mjs. Round 21,
+# 2026-11-21: notches always drawn, new stack and ready-to-tap choices, tile-count words switch,
+# faster drop with fine dust (T13_R21_01-03, CHANGED notes on T13_R20_05, 06, 07).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1965,6 +1967,8 @@ then: the card goes; the Mecha falls onto that sector from above (big and see-th
       facing first; it drops when its facing is kept.
 note: New display event "dropped" (engine events.ts); no rule change. A tap skips it, as the other
       Field animations.
+CHANGED (designer 2026-11-21): the fall is 20% faster (0.5 s) and the dust is many fine grains
+      (T13_R21_03).
 
 id: T13_R20_06
 title: Trial looks in the Menu (temporary)
@@ -1984,6 +1988,9 @@ when: press a choice
 then: the Field is drawn again at once with it; the choice is kept in this browser (also after a
       reload); it is not in the save.
 note: To be removed once the designer has chosen (docs/next-sessions.md item 13).
+CHANGED (designer 2026-11-21): Notches are part of the game now, not a choice (T13_R21_01); the
+      Stack depth row is Original, Stack, Stack fine, Stack hint; the Ready row is Original, Glow
+      breath and six new ones; a fourth row switches the tile-count words (T13_R21_02).
 
 id: T13_R20_07
 title: Trial looks: the stack depth tells few from many
@@ -1991,4 +1998,42 @@ source: designer 2026-11-20
 given: Stack depth "Stack"; one sector with 2 tiles, another with 7
 then: the sector with 7 shows clearly more tile edges under it than the one with 2 (the one with
       2 shows one edge under its top tile; a Dark sector of 2 shows two).
+CHANGED (designer 2026-11-21): "Stack strong" is gone; the same holds for "Stack fine" and
+      "Stack hint" (more lines under the sector with 7). The notches show it in every look.
+
+################################################################################
+=== SECTION: ROUND 21 (2026-11-21) ===
+
+id: T13_R21_01
+title: Notches show how many tiles a sector holds
+source: designer 2026-11-21 (screen only; was the trial look "Notches")
+given: a sector whose unit has 3 tiles beneath it; a Dark sector of 9 tiles; a unit alone
+then: the unit shows 3 notches along its two lower edges, starting at the bottom point and
+      spreading out to both sides; the Dark sector 9 (white); the unit alone none. Up to 12 are
+      drawn. Shown with every Trial look choice.
+
+id: T13_R21_02
+title: Trial looks (temporary), second set
+source: designer 2026-11-21
+given: a game on the Field; Menu > "Trial looks (temporary)"
+then: Stack depth: Original (flat, the notches only), Stack (as before), Stack fine (the same,
+      closer together and softer), Stack hint (only faint hairlines under the lower edges).
+      Ready to tap: Original, Glow breath (as before), and new: Embers (tiny sparks rise from the
+      edge and fade), Heartbeat (the edge beats twice, then rests), Inner glow (a soft light
+      breathes inside the edge), Fireflies (a few motes drift slowly round the edge, twinkling),
+      Glitter edge (the edge made of points of light that twinkle), Draw in (faint rings close in
+      from the edge to the middle).
+      Tile-count words: Shown (as before) / Hidden: no "+N beneath" or "alone" on units and no
+      "N tiles" on Dark sectors (the card text on hover still says "N tiles beneath").
+note: A choice saved before this round that no longer exists (Thick slab, Shadow, Notches, Halo,
+      the runners, Corner wave, Ripple) falls back to Original.
+
+id: T13_R21_03
+title: Allied Drop: faster fall, fine dust
+source: designer 2026-11-21
+given: Allied Drop (7.3), a sector chosen
+then: the Mecha falls in 0.5 s (20% faster than before); on contact many small grains of dust
+      spray out low along the ground and slow down at once, a few are thrown up and fall back, and
+      a fine haze rises and thins out; about 1 s after contact all is gone. No big flakes and no
+      ring line.
 

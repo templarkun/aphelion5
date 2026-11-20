@@ -5,17 +5,21 @@
  *
  * - corners: how round the hexagons of the units and sector plates are.
  * - depth: how the number of tiles in a sector shows by sight (a few vs many, not the exact number).
+ *   The notches along the bottom edge are no longer a trial: they are always drawn (designer 2026-11-21).
  * - ready: the animation of units and sectors ready to be tapped.
+ * - counts: the "+N beneath" / "alone" and "N tiles" words on the tiles shown or hidden.
  */
 
 export type Corner = "original" | "soft" | "round" | "pebble" | "bevel";
-export type Depth = "original" | "stack" | "stackBold" | "slab" | "shadow" | "pips";
-export type Ready = "original" | "fill" | "halo" | "runner" | "twin" | "corners" | "ripple";
+export type Depth = "original" | "stack" | "stackFine" | "stackHint";
+export type Ready = "original" | "fill" | "embers" | "heartbeat" | "inner" | "motes" | "sparkle" | "converge";
+export type Counts = "shown" | "hidden";
 
 export interface TrialLooks {
   corners: Corner;
   depth: Depth;
   ready: Ready;
+  counts: Counts;
 }
 
 export const CORNERS: { id: Corner; label: string; note: string }[] = [
@@ -27,26 +31,30 @@ export const CORNERS: { id: Corner; label: string; note: string }[] = [
 ];
 
 export const DEPTHS: { id: Depth; label: string; note: string }[] = [
-  { id: "original", label: "Original", note: "flat, the number only" },
+  { id: "original", label: "Original", note: "flat (the notches only)" },
   { id: "stack", label: "Stack", note: "thin tile edges under it, one per tile" },
-  { id: "stackBold", label: "Stack, strong", note: "the same, thicker" },
-  { id: "slab", label: "Thick slab", note: "a solid side that grows with the tiles" },
-  { id: "shadow", label: "Shadow", note: "it floats higher with more tiles" },
-  { id: "pips", label: "Notches", note: "one notch per tile along the bottom edge" },
+  { id: "stackFine", label: "Stack, fine", note: "the same, closer together and softer" },
+  { id: "stackHint", label: "Stack, hint", note: "only faint hairlines under the lower edges" },
 ];
 
 export const READIES: { id: Ready; label: string; note: string }[] = [
   { id: "original", label: "Original", note: "hairline edge breathing" },
   { id: "fill", label: "Glow breath", note: "the whole tile glows in and out" },
-  { id: "halo", label: "Halo", note: "a soft light round the outside" },
-  { id: "runner", label: "Edge runner", note: "a spark runs round the edge" },
-  { id: "twin", label: "Twin runners", note: "two sparks chase round the edge" },
-  { id: "corners", label: "Corner wave", note: "the corners light one after another" },
-  { id: "ripple", label: "Ripple", note: "rings drift outwards from the edge" },
+  { id: "embers", label: "Embers", note: "tiny sparks rise from the edge and fade" },
+  { id: "heartbeat", label: "Heartbeat", note: "the edge beats twice, then rests" },
+  { id: "inner", label: "Inner glow", note: "a soft light breathes inside the edge" },
+  { id: "motes", label: "Fireflies", note: "a few motes of light drift slowly round the edge" },
+  { id: "sparkle", label: "Glitter edge", note: "the edge made of points of light that twinkle" },
+  { id: "converge", label: "Draw in", note: "faint rings close in from the edge to the middle" },
+];
+
+export const COUNTS: { id: Counts; label: string; note: string }[] = [
+  { id: "shown", label: "Shown", note: "“+N beneath” and “N tiles” on the tiles" },
+  { id: "hidden", label: "Hidden", note: "no tile-count words on the tiles" },
 ];
 
 const KEY = "aphelion5.trialLooks";
-const DEFAULT: TrialLooks = { corners: "original", depth: "original", ready: "original" };
+const DEFAULT: TrialLooks = { corners: "original", depth: "original", ready: "original", counts: "shown" };
 const subs = new Set<() => void>();
 
 function load(): TrialLooks {
@@ -58,6 +66,7 @@ function load(): TrialLooks {
       corners: CORNERS.some((x) => x.id === v.corners) ? v.corners! : DEFAULT.corners,
       depth: DEPTHS.some((x) => x.id === v.depth) ? v.depth! : DEFAULT.depth,
       ready: READIES.some((x) => x.id === v.ready) ? v.ready! : DEFAULT.ready,
+      counts: COUNTS.some((x) => x.id === v.counts) ? v.counts! : DEFAULT.counts,
     };
   } catch {
     return DEFAULT;
