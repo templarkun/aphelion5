@@ -140,4 +140,5 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    (`src/web/trialLooks.ts`, `TrialLooksMenu.tsx`; batch 13 T13_R20_06/07). Once the designer has
    chosen, make the winners the look, remove the menu and the losers, and write CHANGED notes.
    2026-11-21: Notches made part of the game; second set of stack and ready choices and the
-   tile-count words switch (T13_R21_01/02). Still to choose: corners, stack depth, ready, words.
+   tile-count words switch (T13_R21_01/02). Round 22: ready split into units and sectors, unit names switch. Still to choose: corners,
+   stack depth, ready (units), ready (sectors), words, names.

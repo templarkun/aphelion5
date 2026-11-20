@@ -26,7 +26,9 @@
 # Round 20, 2026-11-20 (section BIG SCREENS, ALLIED DROP, TRIAL LOOKS, T13_R20_01-07, CHANGED note
 # on T13_R18_05); checked by tests/unit/looks.test.ts and scripts/ui-looks.mjs. Round 21,
 # 2026-11-21: notches always drawn, new stack and ready-to-tap choices, tile-count words switch,
-# faster drop with fine dust (T13_R21_01-03, CHANGED notes on T13_R20_05, 06, 07).
+# faster drop with fine dust (T13_R21_01-03, CHANGED notes on T13_R20_05, 06, 07). Round 22 the
+# same day: ready-to-tap split into units and sectors, unit names switch, dust from the unit's edges,
+# no message when a Mecha is put back where it was (T13_R22_01-03, CHANGED notes on T13_R21_02, 03).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -2027,6 +2029,8 @@ then: Stack depth: Original (flat, the notches only), Stack (as before), Stack f
       "N tiles" on Dark sectors (the card text on hover still says "N tiles beneath").
 note: A choice saved before this round that no longer exists (Thick slab, Shadow, Notches, Halo,
       the runners, Corner wave, Ripple) falls back to Original.
+CHANGED (designer 2026-11-21, round 22): the Ready row is split into units and sectors, and a row
+      for unit names is added (T13_R22_01).
 
 id: T13_R21_03
 title: Allied Drop: faster fall, fine dust
@@ -2036,4 +2040,45 @@ then: the Mecha falls in 0.5 s (20% faster than before); on contact many small g
       spray out low along the ground and slow down at once, a few are thrown up and fall back, and
       a fine haze rises and thins out; about 1 s after contact all is gone. No big flakes and no
       ring line.
+CHANGED (designer 2026-11-21, round 22): the dust comes only from the unit's edges, finer and
+      shorter (T13_R22_02).
+
+################################################################################
+=== SECTION: ROUND 22 (2026-11-21) ===
+
+id: T13_R22_01
+title: Trial looks: ready to tap for units and for sectors, unit names
+source: designer 2026-11-21
+given: a game on the Field; Menu > "Trial looks (temporary)"
+then: two Ready rows:
+      Units: Original, Embers, Heartbeat, Fireflies, Glitter edge, and new: Gather (specks of light
+      are drawn in to the edge, which flares), Aura (a slow swirl of fine particles just outside
+      the edge), Current (fine particles flow round the edge), Arcs (now and then a small spark of
+      electricity jumps along part of the edge).
+      Dark and Cleared sectors: Glow breath (the first choice, used until another is chosen),
+      Embers, Inner glow, Glitter edge, Draw in, and new: Dust in light (lit specks drift slowly
+      over the plate), Tide (a wave of light rolls slowly round the edge), Core (a soft light
+      breathes in the middle), Haze (fine particles seep out a little way from the edge).
+      A unit ready to be tapped uses the Units choice; a Dark or Cleared sector the sectors choice.
+      New row "Unit names on the tiles": Shown / Hidden (no B_03, S_12 ... on the tiles; the glyph,
+      Level and marks stay).
+note: a Ready choice made before this round is not kept: units start on Original, sectors on
+      Glow breath.
+
+id: T13_R22_02
+title: Allied Drop: dust from under the unit's edges
+source: designer 2026-11-21
+given: Allied Drop (7.3), a sector chosen
+then: as the Mecha lands, very fine dust puffs out from all six edges of the tile, a short way,
+      low, as if the Dark sector were a little dusty and the unit heavy; none lands on the tile;
+      gone about 1 s later. The Field's jolt is a little smaller.
+
+id: T13_R22_03
+title: A Mecha put back where it was taken from: no message
+source: designer 2026-11-21 (screen only)
+given: the Command phase; a Mecha that can move
+when: drag it off its sector and let go over its own sector again (or, after M_03 / M_06's
+      Passive, tap its own sector)
+then: it floats back to its place; no red "cannot go there" message. Let go anywhere else that is
+      not lit: the message shows as before.
 

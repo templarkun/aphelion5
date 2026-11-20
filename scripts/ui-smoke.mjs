@@ -331,6 +331,14 @@ if (existsSync(`${out}/drag-save.json`)) {
   const before = await prompt();
   const from = await sectorPoint(pg, plan.from);
   const box = await pg.locator(".field").boundingBox();
+  // Lifted and put back where it was taken from: it goes home with no message (designer 2026-11-21).
+  await dragMouse(pg, from, { x: from.x + 70, y: from.y + 20 });
+  for (let i = 1; i <= 8; i++) await pg.mouse.move(from.x + 70 - i * 8.75, from.y + 20 - i * 2.5);
+  await pg.mouse.up();
+  await pg.waitForTimeout(700);
+  const homeNote = (await pg.locator(".field-toast").textContent().catch(() => "")) ?? "";
+  const homeQuiet = !/cannot go there/.test(homeNote) && (await prompt()) === before;
+  await pg.waitForTimeout(400);
   // Dropped on a place that is not lit: it goes back, nothing happens, the strip says why.
   await dragMouse(pg, from, { x: box.x + 12, y: box.y + 12 });
   await pg.screenshot({ path: `${out}/ui-drag-lifted.png` });
@@ -351,7 +359,7 @@ if (existsSync(`${out}/drag-save.json`)) {
   await pg.waitForTimeout(900);
   const log = await logText(pg);
   const moved = log.includes(`${plan.unitId} moves from (${plan.from}) to (${target.sector})`) || log.includes(`from (${plan.from})`);
-  dragCheck = /cannot go there/.test(note) && stayed && moved ? "ok" : `failed (note "${note}", stayed ${stayed}, moved ${moved}, anim ${anim})`;
+  dragCheck = /cannot go there/.test(note) && stayed && moved && homeQuiet ? "ok" : `failed (note "${note}", stayed ${stayed}, moved ${moved}, anim ${anim}, home drop quiet ${homeQuiet} "${homeNote}")`;
   await pg.close();
 }
 let drag2Check = "skipped (no M_03/M_06 save)";

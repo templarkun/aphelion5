@@ -116,7 +116,7 @@ export async function looksCheck(browser, url, out) {
     const shot = async () => (await pg.locator(".field canvas").screenshot()).toString("base64");
     await pg.waitForTimeout(300);
     const before = await shot();
-    for (const id of ["corners:pebble", "depth:stackFine", "ready:embers", "counts:hidden"]) {
+    for (const id of ["corners:pebble", "depth:stackFine", "readyUnit:arcs", "readySector:tide", "counts:hidden", "names:hidden"]) {
       await pg.locator(`[data-trial="${id}"]`).click();
       await pg.waitForTimeout(150);
     }
@@ -126,8 +126,8 @@ export async function looksCheck(browser, url, out) {
     const kept = await pg.evaluate(() => localStorage.getItem("aphelion5.trialLooks"));
     await pg.screenshot({ path: `${out}/ui-trial-looks.png` });
     await pg.close();
-    const okKept = /pebble/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /embers/.test(kept ?? "") && /hidden/.test(kept ?? "");
-    if (!(offered === 19 && pressed === "corners:pebble,depth:stackFine,ready:embers,counts:hidden" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
+    const okKept = /pebble/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /arcs/.test(kept ?? "") && /tide/.test(kept ?? "") && /"names":"hidden"/.test(kept ?? "");
+    if (!(offered === 31 && pressed === "corners:pebble,depth:stackFine,readyUnit:arcs,readySector:tide,counts:hidden,names:hidden" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
   }
 
   if (errors.length) fails.push(`page errors: ${errors.join(" | ")}`);

@@ -6,20 +6,26 @@
  * - corners: how round the hexagons of the units and sector plates are.
  * - depth: how the number of tiles in a sector shows by sight (a few vs many, not the exact number).
  *   The notches along the bottom edge are no longer a trial: they are always drawn (designer 2026-11-21).
- * - ready: the animation of units and sectors ready to be tapped.
+ * - readyUnit / readySector: the animation of units, and of Dark / Cleared sectors, ready to be tapped
+ *   (one row each since 2026-11-21).
  * - counts: the "+N beneath" / "alone" and "N tiles" words on the tiles shown or hidden.
+ * - names: the unit's name (B_03, S_12 ...) on its tile shown or hidden.
  */
 
 export type Corner = "original" | "soft" | "round" | "pebble" | "bevel";
 export type Depth = "original" | "stack" | "stackFine" | "stackHint";
-export type Ready = "original" | "fill" | "embers" | "heartbeat" | "inner" | "motes" | "sparkle" | "converge";
+export type ReadyUnit = "original" | "embers" | "heartbeat" | "motes" | "sparkle" | "gather" | "aura" | "current" | "arcs";
+export type ReadySector = "fill" | "embers" | "inner" | "sparkle" | "converge" | "drift" | "tide" | "core" | "haze";
+export type Ready = ReadyUnit | ReadySector;
 export type Counts = "shown" | "hidden";
 
 export interface TrialLooks {
   corners: Corner;
   depth: Depth;
-  ready: Ready;
+  readyUnit: ReadyUnit;
+  readySector: ReadySector;
   counts: Counts;
+  names: Counts;
 }
 
 export const CORNERS: { id: Corner; label: string; note: string }[] = [
@@ -37,15 +43,28 @@ export const DEPTHS: { id: Depth; label: string; note: string }[] = [
   { id: "stackHint", label: "Stack, hint", note: "only faint hairlines under the lower edges" },
 ];
 
-export const READIES: { id: Ready; label: string; note: string }[] = [
+export const READY_UNITS: { id: ReadyUnit; label: string; note: string }[] = [
   { id: "original", label: "Original", note: "hairline edge breathing" },
-  { id: "fill", label: "Glow breath", note: "the whole tile glows in and out" },
   { id: "embers", label: "Embers", note: "tiny sparks rise from the edge and fade" },
   { id: "heartbeat", label: "Heartbeat", note: "the edge beats twice, then rests" },
-  { id: "inner", label: "Inner glow", note: "a soft light breathes inside the edge" },
   { id: "motes", label: "Fireflies", note: "a few motes of light drift slowly round the edge" },
   { id: "sparkle", label: "Glitter edge", note: "the edge made of points of light that twinkle" },
+  { id: "gather", label: "Gather", note: "specks of light are drawn in to the edge, which flares" },
+  { id: "aura", label: "Aura", note: "a slow swirl of fine particles just outside the edge" },
+  { id: "current", label: "Current", note: "fine particles flow round the edge like a current" },
+  { id: "arcs", label: "Arcs", note: "small sparks of electricity jump along the edge now and then" },
+];
+
+export const READY_SECTORS: { id: ReadySector; label: string; note: string }[] = [
+  { id: "fill", label: "Glow breath", note: "the whole plate glows in and out" },
+  { id: "embers", label: "Embers", note: "tiny sparks rise from the edge and fade" },
+  { id: "inner", label: "Inner glow", note: "a soft light breathes inside the edge" },
+  { id: "sparkle", label: "Glitter edge", note: "the edge made of points of light that twinkle" },
   { id: "converge", label: "Draw in", note: "faint rings close in from the edge to the middle" },
+  { id: "drift", label: "Dust in light", note: "lit specks drift slowly over the plate" },
+  { id: "tide", label: "Tide", note: "a wave of light rolls slowly round the edge" },
+  { id: "core", label: "Core", note: "a soft light breathes in the middle of the plate" },
+  { id: "haze", label: "Haze", note: "fine particles seep out a little way from the edge" },
 ];
 
 export const COUNTS: { id: Counts; label: string; note: string }[] = [
@@ -53,8 +72,13 @@ export const COUNTS: { id: Counts; label: string; note: string }[] = [
   { id: "hidden", label: "Hidden", note: "no tile-count words on the tiles" },
 ];
 
+export const NAMES: { id: Counts; label: string; note: string }[] = [
+  { id: "shown", label: "Shown", note: "the unit's name (B_03 ...) on its tile" },
+  { id: "hidden", label: "Hidden", note: "no unit names on the tiles" },
+];
+
 const KEY = "aphelion5.trialLooks";
-const DEFAULT: TrialLooks = { corners: "original", depth: "original", ready: "original", counts: "shown" };
+const DEFAULT: TrialLooks = { corners: "original", depth: "original", readyUnit: "original", readySector: "fill", counts: "shown", names: "shown" };
 const subs = new Set<() => void>();
 
 function load(): TrialLooks {
@@ -65,8 +89,10 @@ function load(): TrialLooks {
     return {
       corners: CORNERS.some((x) => x.id === v.corners) ? v.corners! : DEFAULT.corners,
       depth: DEPTHS.some((x) => x.id === v.depth) ? v.depth! : DEFAULT.depth,
-      ready: READIES.some((x) => x.id === v.ready) ? v.ready! : DEFAULT.ready,
+      readyUnit: READY_UNITS.some((x) => x.id === v.readyUnit) ? v.readyUnit! : DEFAULT.readyUnit,
+      readySector: READY_SECTORS.some((x) => x.id === v.readySector) ? v.readySector! : DEFAULT.readySector,
       counts: COUNTS.some((x) => x.id === v.counts) ? v.counts! : DEFAULT.counts,
+      names: NAMES.some((x) => x.id === v.names) ? v.names! : DEFAULT.names,
     };
   } catch {
     return DEFAULT;

@@ -9,6 +9,7 @@ import { Graphics, Text } from "pixi.js";
 import type { GameEvent } from "../engine/events.js";
 import { type Step, easeOut, easeOutBack } from "./anim.js";
 import { type FxEnv, drawOverloadRing } from "./revealFx.js";
+import { alongOutline, hexOutline } from "./trialLooks.js";
 
 type TokensEv = GameEvent & { kind: "tokens" };
 
@@ -279,27 +280,28 @@ export function dropStep(e: GameEvent & { kind: "dropped" }, env: FxEnv): Step {
     const x = Math.sin((i + 1) * 12.9898 + n * 78.233) * 43758.5453;
     return x - Math.floor(x);
   };
-  // Real dust (designer 2026-11-21): many fine grains, not a few big flakes. Most are pushed out low
-  // and fast along the ground and slowed by the air at once, then hang and thin out; some are thrown
-  // up and fall back; a fine haze rises slowly where it landed.
-  const grains = Array.from({ length: 320 }, (_, i) => {
-    const kind = i < 200 ? "skid" : i < 260 ? "kick" : "haze";
+  // Dust (designer 2026-11-21, second go): the Dark sector was a little dusty; the weight of the unit
+  // puffs very fine dust out from under its edges, a short way only, low to the ground. Nothing lands
+  // on top of the unit. Each grain starts on the tile's outline and moves outwards from it.
+  const grains = Array.from({ length: 380 }, (_, i) => {
+    const haze = i >= 280;
     return {
-      kind,
-      a: rnd(i, 1) * Math.PI * 2,
-      v: kind === "skid" ? 0.7 + rnd(i, 2) * 1.1 : kind === "kick" ? 0.3 + rnd(i, 2) * 0.6 : 0.15 + rnd(i, 2) * 0.35,
-      up: kind === "kick" ? 0.5 + rnd(i, 3) * 0.9 : kind === "haze" ? 0.15 + rnd(i, 3) * 0.35 : rnd(i, 3) * 0.12,
-      size: kind === "haze" ? 0.012 + rnd(i, 4) * 0.014 : 0.005 + rnd(i, 4) * 0.009,
+      haze,
+      u: rnd(i, 1),
+      // How far out it goes, in tile sizes; most stay close.
+      v: haze ? 0.04 + rnd(i, 2) * 0.1 : 0.05 + rnd(i, 2) ** 2 * 0.3,
+      up: rnd(i, 3) * (haze ? 0.06 : 0.04),
+      size: haze ? 0.004 + rnd(i, 4) * 0.004 : 0.0018 + rnd(i, 4) * 0.0028,
       tone: rnd(i, 5),
-      delay: rnd(i, 6) * (kind === "haze" ? 0.15 : 0.05),
-      life: kind === "skid" ? 0.65 + rnd(i, 7) * 0.35 : kind === "kick" ? 0.5 + rnd(i, 7) * 0.4 : 0.8 + rnd(i, 7) * 0.2,
-      drift: (rnd(i, 8) - 0.5) * 0.2,
+      delay: rnd(i, 6) * 0.06,
+      life: haze ? 0.75 + rnd(i, 7) * 0.25 : 0.35 + rnd(i, 7) * 0.45,
+      side: (rnd(i, 8) - 0.5) * 0.25,
     };
   });
   // The fall takes 0.5 s (20% faster than before, designer 2026-11-21); the dust lingers 1 s after.
   const MS = 1500;
   const HIT = 500 / MS;
-  const tones = [0xb9ab95, 0x9c8f7c, 0xd6cab6, 0x7f7466, 0xe9e0d0];
+  const tones = [0xc9bda9, 0xa89c89, 0xddd3c2, 0x8f8576, 0xeee6d8];
   return {
     ms: MS,
     hides: [e.sector],
@@ -325,23 +327,23 @@ export function dropStep(e: GameEvent & { kind: "dropped" }, env: FxEnv): Step {
       const squash = Math.exp(-qc * 9) * Math.cos(qc * 22);
       L.scale *= 1 - 0.1 * squash;
       L.scaleX *= 1 + 0.18 * squash;
-      const jolt = s * 0.05 * Math.exp(-qc * 10);
+      const jolt = s * 0.03 * Math.exp(-qc * 10);
       for (const k of env.keys()) look(k).dy += Math.sin(qc * 60) * jolt;
-      const gy = c.y + s * 0.15; // the ground line under the tile
+      const rim = hexOutline(c.x, c.y, s * 0.9);
       for (const d of grains) {
         const t = (q - d.delay) / d.life;
         if (t <= 0 || t >= 1) continue;
-        // Air drag: fast at first, slowing at once (1 - e^-kt), so the cloud stops and hangs.
-        const slow = 1 - Math.exp(-t * (d.kind === "haze" ? 2.5 : 6));
-        const out = s * (0.42 + d.v * slow);
-        let x = c.x + Math.cos(d.a) * out + s * d.drift * t;
-        let y = gy + Math.sin(d.a) * out * 0.38;
-        if (d.kind === "kick") y -= s * (d.up * 1.6 * t - 1.4 * t * t); // thrown up, falls back
-        else y -= s * d.up * t; // rises slowly
-        x += Math.sin(t * 9 + d.a * 5) * s * 0.01;
-        const fade = d.kind === "haze" ? Math.sin(Math.PI * t) * 0.45 : (1 - t) ** 1.6 * (t < 0.06 ? t / 0.06 : 1) * 0.9;
-        const grow = d.kind === "haze" ? 1 + 2.2 * t : 1 + 0.6 * t;
-        g.circle(x, y, Math.max(0.6, s * d.size * grow)).fill({ color: tones[Math.floor(d.tone * tones.length)]!, alpha: fade });
+        const at = alongOutline(rim, d.u);
+        const nx = (at.x - c.x) / (s * 0.9);
+        const ny = (at.y - c.y) / (s * 0.9);
+        // Air drag: pushed out fast, stopped at once, then it hangs and settles.
+        const slow = 1 - Math.exp(-t * (d.haze ? 3 : 7));
+        const out = s * d.v * slow;
+        const x = at.x + nx * out - ny * s * d.side * out * 0.02;
+        const y = at.y + ny * out * 0.8 - s * d.up * slow;
+        const fade = d.haze ? Math.sin(Math.PI * t) * 0.28 : (1 - t) ** 1.4 * (t < 0.05 ? t / 0.05 : 1) * 0.7;
+        const grow = d.haze ? 1 + 1.5 * t : 1;
+        g.circle(x, y, Math.max(0.45, s * d.size * grow)).fill({ color: tones[Math.floor(d.tone * tones.length)]!, alpha: fade });
       }
     },
     end: () => g.destroy(),
