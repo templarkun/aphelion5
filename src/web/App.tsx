@@ -4,6 +4,8 @@
  * question, and turns clicks and taps into answers.
  */
 
+import { AllyDrop, allyDropUnit } from "./AllyDrop.js";
+import { isWide } from "./wide.js";
 import { CrashGuard } from "./Crash.js";
 import { lookAskOf, StackPicker, stackAskOf } from "./StackPicker.js";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -48,6 +50,7 @@ import { AskBubble, PointBubbles, askText } from "./FieldAsk.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, OverhaulButton, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 import { MotionSettings } from "./MotionSettings.js";
+import { TrialLooksMenu } from "./TrialLooksMenu.js";
 import { type WinShow, winOf } from "./celebrate/detect.js";
 import { MissionWin, type Shake } from "./celebrate/MissionWin.js";
 import { CelebrationSkip } from "./celebrate/CelebrationSkip.js";
@@ -1000,7 +1003,7 @@ function GameScreen(p: GameProps) {
     <>
       {layout !== "C" && overhaulButton}
       {/* Upgrade points are in the Mission card (designer 2026-11-16). */}
-      {s.sheet.ally ? <p className="small sheet-line"><span>Ally {s.sheet.ally}</span></p> : null}
+      {/* No "Ally" line here (designer 2026-11-20). */}
     </>
   );
 
@@ -1065,6 +1068,7 @@ function GameScreen(p: GameProps) {
               </p>
               <button onClick={() => setShowLog((x) => !x)}>{showLog ? "Hide the log" : "Log"}</button>
               <MotionSettings />
+              <TrialLooksMenu />
               {s.settings.developerMode && q?.shortcuts?.some((o) => o.id === "devWin") && (
                 <button onClick={() => answer("devWin")} title="Developer tool: go straight to Mission End with 12 Upgrade points, to try the Upgrade sheet">
                   Developer: win this mission (+12 points)
@@ -1135,6 +1139,7 @@ function GameScreen(p: GameProps) {
         ) : (
           <div className="empty-field">{PHASE[s.phase]}</div>
         )}
+        {hasField && allyDropUnit(realQ?.prompt) && <AllyDrop data={data} unitId={allyDropUnit(realQ?.prompt)!} />}
         {hover && !popup && hasField && <InfoBubble data={data} state={s} sector={hover} />}
         {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
         {look && !stackQ && hasField && lookAsk ? (
@@ -1638,7 +1643,8 @@ function InfoBubble({ data, state, sector }: { data: GameData; state: GameState;
   const w = field?.clientWidth ?? 400;
   if (!at) return null;
   const above = at[1] - tileH / 2 > 90;
-  const style = { left: Math.max(8, Math.min(at[0] - 140, w - 288)), top: above ? at[1] - tileH / 2 - 6 : at[1] + tileH / 2 + 6 };
+  const bw = isWide() ? 406 : 280; // 1.45 times as wide on the big PC screen (styles.css)
+  const style = { left: Math.max(8, Math.min(at[0] - bw / 2, w - bw - 8)), top: above ? at[1] - tileH / 2 - 6 : at[1] + tileH / 2 + 6 };
   return (
     <div className={`info-bubble ${above ? "above" : "below"}`} style={style}>
       <HoverInfo data={data} state={state} sector={sector} />

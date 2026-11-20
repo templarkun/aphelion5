@@ -87,6 +87,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
     return /^Choose an action/.test(q.prompt) && tops.some((t) => t.shield > 0) && tops.some((t) => t.damage > 0);
   },
   // Questions asked inside the Field (designer 2026-11-10): Crippled, Overhaul's Module, a yes/no, a sector, energy colours.
+  // Allied Drop (7.3): the Ally's Mecha shown in the Field, then dropped (designer 2026-11-20).
+  allieddrop: (q) => q.kind === "sectors" && /^Allied Drop: place/.test(q.prompt),
   crippled: (q) => /^Your Flagship is Crippled/.test(q.prompt),
   overhaulmod: (q) => /^Overhaul: put one of your Modules/.test(q.prompt),
   yesno: (q, g) => q.kind === "yesno" && (g.view.state.phase === "command" || g.view.state.phase === "overload"),

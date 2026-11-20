@@ -134,3 +134,8 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    (Mission 7) play Mission Complete after the Gamma kill for now, as Beta missions do (I22). The
    designer asked to be reminded to come back to it: a win of its own for Gamma (and Beta), and
    Salvage missions, which have no celebration yet.
+
+13. **Trial looks: the designer's choice** (designer 2026-11-20). Menu > "Trial looks (temporary)"
+   offers tile corners, stack depth and the ready-to-tap animation in several versions each
+   (`src/web/trialLooks.ts`, `TrialLooksMenu.tsx`; batch 13 T13_R20_06/07). Once the designer has
+   chosen, make the winners the look, remove the menu and the losers, and write CHANGED notes.

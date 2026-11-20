@@ -16,6 +16,7 @@ import { playOpenInfo, playSelect } from "./soundHooks.js";
 import { UnitCard } from "./UnitCard.js";
 import { campaignUnits, levelOf, unitFacts } from "./unitFacts.js";
 import { typeHex, UnitTile } from "./UnitTile.js";
+import { BRIEF_ZOOM, useWide } from "../wide.js";
 
 const ORDER: UnitType[] = ["Sentinel", "Flare", "Sleeper", "Gyro"];
 const PLURAL: Record<string, string> = { Sentinel: "Sentinels", Flare: "Flares", Sleeper: "Sleepers", Gyro: "Gyros" };
@@ -40,6 +41,10 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
   const omega = all.filter((u) => u.type === "Omega");
   const rest = all.filter((u) => ORDER.includes(u.type) && !u.energyGyro && u.id !== "F_01").sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type));
   const [filter, setFilter] = useState<UnitType | "all">("all");
+  // Big PC screen (designer 2026-11-20): "All" and Omega tiles 150% of their size before (the screen's
+  // 1.35 zoom times ~1.11), one type's tiles as big as the Vessel step's Mecha (96).
+  const wide = useWide();
+  const k = wide ? 1.5 / BRIEF_ZOOM : 1;
   const [open, setOpen] = useState<{ id: string; list: string[] } | undefined>();
   const shown = filter === "all" ? rest : rest.filter((u) => u.type === filter);
   const allBox = useRef<HTMLDivElement>(null);
@@ -73,7 +78,7 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
             return (
               <div key={u.id} className="flex min-w-0 items-center gap-2 rounded-lg bg-indigo-950/30 px-1.5 py-1">
                 <button type="button" className="bf-unit shrink-0 !p-0.5" data-unit={u.id} onClick={(e) => show(u, omega, e.currentTarget)} aria-label={`${o?.role ?? "Omega"} ${u.id}: open its card`}>
-                  <UnitTile unit={u} level={levelOf(u, campaign)} size={52} />
+                  <UnitTile unit={u} level={levelOf(u, campaign)} size={Math.round(52 * k)} />
                 </button>
                 <div className="min-w-0">
                   <div className="text-[15px] font-extrabold uppercase tracking-wide text-amber-100">
@@ -110,7 +115,7 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
             const row = shown.filter((u) => u.type === t);
             if (!row.length) return null;
             const phone = allWidth < 640;
-            const cell = Math.max(28, Math.min(phone ? 42 : 62, Math.floor((allWidth - 8) / row.length) - 4));
+            const cell = Math.max(28, Math.min(phone ? 42 : Math.round(62 * k), Math.floor((allWidth - 8) / row.length) - 4));
             return (
               <div key={t} className="bf-scroll flex flex-nowrap gap-1" data-type-row={t} aria-label={PLURAL[t]}>
                 {row.map((u, i) => (
@@ -118,7 +123,7 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
                     {phone ? (
                       <img className="block object-contain" style={{ width: cell * 0.9, height: cell }} src={glyphBadgeUrl(u.id) ?? ""} alt="" draggable={false} />
                     ) : (
-                      <UnitTile unit={u} level={levelOf(u, campaign)} size={Math.min(52, cell - 10)} />
+                      <UnitTile unit={u} level={levelOf(u, campaign)} size={Math.min(Math.round(52 * k), cell - 10)} />
                     )}
                   </button>
                 ))}
@@ -132,7 +137,7 @@ export function UnitRoster({ data, campaign }: { data: GameData; campaign: Campa
           {shown.map((u, i) => (
             <button key={u.id} type="button" className="bf-rise flex min-w-0 items-start gap-2.5 rounded-xl bg-white/10 p-2 text-left transition-colors hover:bg-white/20" style={{ "--i": Math.min(i, 24) } as React.CSSProperties} data-unit={u.id} onClick={(e) => show(u, shown, e.currentTarget)} aria-label={`${u.type}: open its card`}>
               <span className="shrink-0">
-                <UnitTile unit={u} level={levelOf(u, campaign)} size={60} />
+                <UnitTile unit={u} level={levelOf(u, campaign)} size={wide ? 96 : 60} />
               </span>
               <EffectLines data={data} id={u.id} campaign={campaign} small />
             </button>

@@ -315,3 +315,10 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
 .brief[data-page] ul { list-style: none; margin: 0; padding: 0; }
 .brief[data-page] section, .brief[data-page] .grid > * { min-width: 0; }
 .brief[data-page] select { max-width: 100%; }
+
+/* Big PC screen (designer 2026-11-20, 1600 px and wider; `wide.ts`): every setup screen drawn 1.35 times
+   bigger, words and controls alike. Only the panels are zoomed, not the space behind them or the sparks
+   (they work in the window's own pixels). Keep 1.35 in step with BRIEF_ZOOM. */
+@media (min-width: 1600px) {
+  .brief .z-10, .brief aside[role="dialog"], .bf-veil > .bf-card { zoom: 1.35; }
+}

@@ -964,3 +964,39 @@ html.still .sp-tile { transition: none; animation: none; }
 .sp-back { pointer-events: auto; margin-top: 4px; }
 /* A mission celebration plays (designer 2026-11-20): the Field's questions and notes wait until it is over. */
 .game.celebrating .field-area > :not(.field) { visibility: hidden; }
+
+/* Big PC screen (designer 2026-11-20, 1600 px and wider; `wide.ts`): words and panels about 1.25 times
+   bigger. The top bar and the Flagship and Modules panels are zoomed; the side columns widen to match.
+   Pop-ups that sit fixed on the window but are drawn inside a zoomed panel undo the zoom on their own box
+   (so their place stays in the window's pixels) and zoom their insides again. Not changed: the Field, the
+   height of the Anomaly bubbles and the Mission bar (only what is inside them grows), and the units'
+   action pop-ups (`.popup.bubbles`). Hover cards and the card text bubble: about 1.45 times. */
+@media (min-width: 1600px) {
+  .bar, .game > .left.panel, .game > .right.panel { zoom: 1.25; }
+  .game.layout-A { grid-template-columns: 412px 1fr 375px; }
+  .game > .panel :is(.thing-pop, .thing-ghost, .mod-pops, .energy-pop, .flare-chip) { zoom: 0.8; }
+  .game > .panel :is(.thing-pop, .thing-ghost, .mod-pops, .energy-pop) > * { zoom: 1.25; }
+  .anomaly, .mission-bar, .anomaly-strip .decline { font-size: 18px; }
+  .ug { width: 32px; height: 36px; font-size: 17px; }
+  .trophy-glyph { width: 32px; height: 32px; }
+  .m-cell { width: 26px; height: 30px; }
+  .ask-bubble { zoom: 1.2; }
+  .info-bubble { width: 406px; font-size: 17.5px; padding: 12px 15px; border-radius: 16px; }
+  .pop-card { width: min(435px, calc(100vw - 16px)); font-size: 19px; padding: 14px 17px; }
+  .pop-card h4 { font-size: 19px; }
+  .textbox { zoom: 1.2; }
+}
+
+/* Allied Drop (designer 2026-11-20): the Ally's Mecha hangs in an empty corner of the Field while
+   "Put here" is asked; a soft beam under it, a slow hover. */
+.ally-drop { position: absolute; z-index: 7; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 14px 10px; border-radius: 16px; pointer-events: none; background: radial-gradient(ellipse at 50% 60%, rgb(255 190 90 / 0.22), rgb(10 14 24 / 0.55) 70%); border: 1px solid rgb(255 200 120 / 0.45); box-shadow: 0 0 24px rgb(255 170 60 / 0.25); color: #fff; animation: bubble-in 0.5s ease-out both; }
+.ally-drop-label { font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #ffd28a; }
+.ally-drop-sub { font-size: 11px; font-weight: 600; color: rgb(255 255 255 / 0.8); }
+.ally-drop-unit { animation: ally-hover 2.4s ease-in-out infinite; filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.5)); }
+@keyframes ally-hover { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(3px); } }
+html.still .ally-drop-unit { animation: none; }
+@media (min-width: 1600px) { .ally-drop-label { font-size: 15px; } .ally-drop-sub { font-size: 14px; } }
+/* TEMPORARY trial looks in the Menu (designer 2026-11-20, TrialLooksMenu.tsx). */
+.trial-looks { border: 1px dashed var(--line); border-radius: 8px; padding: 4px 8px 8px; }
+.trial-looks summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 4px 0; }
+.menu.panel { max-height: calc(100vh - var(--bar-h, 52px) - 16px); overflow-y: auto; }

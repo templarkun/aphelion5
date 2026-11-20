@@ -61,6 +61,8 @@ export type GameEventBody =
   | { kind: "overhaul" }
   /** A face-up tile is uncovered (3.4): the tile above left, no Reveal. */
   | { kind: "uncovered"; tile: TileId; unitId: string; type: string; sector: SectorKey }
+  /** Allied Drop (7.3): the Ally's Mecha is put on its Dark sector (display only, designer 2026-11-20). */
+  | { kind: "dropped"; tile: TileId; unitId: string; sector: SectorKey }
   /** One energy went onto a Module (4.6, 5.3). `auto`: it went there by itself (only one Module could take it). */
   | { kind: "energy"; colour: EnergyColour; module: number; from?: TileId | undefined; auto: boolean }
   /**

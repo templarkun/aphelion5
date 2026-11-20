@@ -20,7 +20,7 @@
 // PixiJS without eval(): the published page (and app wrappers) may forbid it.
 import "pixi.js/unsafe-eval";
 import { Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GameData } from "../data/index.js";
 import { type GameEvent, newEvents } from "../engine/events.js";
 import { type Ctx, level, sectorKeys, sectorOf, sectorState, stack, strength, tile, topTileId, unitDef } from "../engine/field.js";
@@ -34,8 +34,9 @@ import { addLevel, addUnitMarks } from "./unitMarks.js";
 import { BADGE_ASPECT, CLEARED_COLOUR, energyGlyphImage, glyphBadge, TYPE_COLOUR } from "./glyphs.js";
 import { drawAlert, drawEnergyBorder, flareEnergySpots } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
-import { fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
+import { dropStep, fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
 import { isStill, onMotion, speedFactor } from "./motion.js";
+import { alongOutline, hexOutline, onTrialLooks, trialLooks } from "./trialLooks.js";
 import { PlasmaWave } from "./plasmaFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 import { killOf } from "./celebrate/detect.js";
@@ -121,13 +122,150 @@ function energyTexture(col: "Yellow" | "Red" | "Blue"): Texture | undefined {
   return tex;
 }
 
+/** A tile's hexagon; its corners follow the trial look chosen in the Menu (trialLooks.ts). */
 function hexPoints(cx: number, cy: number, size: number): number[] {
-  const pts: number[] = [];
-  for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 180) * (60 * i - 30);
-    pts.push(cx + size * Math.cos(a), cy + size * Math.sin(a));
+  return hexOutline(cx, cy, size);
+}
+
+/** A colour made darker (k < 1) or lighter (k > 1). */
+function shade(c: number, k: number): number {
+  const f = (v: number) => Math.max(0, Math.min(255, Math.round(k <= 1 ? v * k : v + (255 - v) * (k - 1))));
+  return (f((c >> 16) & 255) << 16) | (f((c >> 8) & 255) << 8) | f(c & 255);
+}
+
+/**
+ * Trial look (designer 2026-11-20): how deep a sector's stack is, seen at a glance. `layers` = the
+ * tiles under the top one (a Dark sector: all its tiles). Drawn under the tile, so it moves with it.
+ */
+function addDepth(node: Container, cx: number, cy: number, size: number, layers: number, fill: number): void {
+  const how = trialLooks().depth;
+  if (how === "original" || how === "pips" || layers <= 0) return;
+  const g = new Graphics();
+  g.eventMode = "none";
+  const r = size * 0.9;
+  const n = Math.min(layers, 12);
+  if (how === "stack" || how === "stackBold") {
+    // One tile edge under the other, deepest first.
+    const step = size * (how === "stack" ? 0.018 : 0.034);
+    for (let i = n; i >= 1; i--) {
+      const pts = hexPoints(cx, cy + i * step, r);
+      g.poly(pts).fill({ color: shade(fill, 0.62 - 0.02 * i) }).stroke({ width: how === "stack" ? 0.8 : 1.2, color: 0x000000, alpha: 0.55 });
+    }
+  } else if (how === "slab") {
+    // A solid side: the tile's lower half pushed down, a faint line per tile.
+    const h = size * 0.028 * n;
+    const base = hexPoints(cx, cy, r);
+    const side = base.map((v, i) => (i % 2 === 1 && v > cy ? v + h : v));
+    g.poly(side).fill({ color: shade(fill, 0.5) }).stroke({ width: 1, color: 0x000000, alpha: 0.6 });
+    for (let i = 1; i < n; i++) {
+      const y = (h * i) / n;
+      const line: number[] = [];
+      for (let j = 0; j < base.length; j += 2) if (base[j + 1]! > cy) line.push(base[j]!, base[j + 1]! + y);
+      if (line.length >= 4) g.poly(line, false).stroke({ width: 0.8, color: 0x000000, alpha: 0.28 });
+    }
+  } else if (how === "shadow") {
+    // The more tiles, the higher it floats: a longer, softer shadow.
+    const off = size * (0.03 + 0.022 * n);
+    for (let i = 3; i >= 1; i--) g.poly(hexPoints(cx + off * 0.45, cy + off, r * (1 + 0.03 * i))).fill({ color: 0x000000, alpha: 0.12 + 0.012 * n });
   }
-  return pts;
+  node.addChild(g);
+}
+
+/** Trial look "Notches": one notch per tile along the tile's two lower edges (up to 12). */
+function addDepthNotches(node: Container, cx: number, cy: number, size: number, layers: number, light: boolean): void {
+  if (trialLooks().depth !== "pips" || layers <= 0) return;
+  const g = new Graphics();
+  g.eventMode = "none";
+  const n = Math.min(layers, 12);
+  const r = size * 0.86;
+  // Lower left corner -> bottom point -> lower right corner, notches spread along it from the bottom out.
+  const L = { x: cx - r * Math.cos(Math.PI / 6), y: cy + r / 2 };
+  const B = { x: cx, y: cy + r };
+  const R = { x: cx + r * Math.cos(Math.PI / 6), y: cy + r / 2 };
+  for (let i = 0; i < n; i++) {
+    const side = i % 2 === 0 ? L : R;
+    const t = 0.1 + 0.135 * Math.floor(i / 2);
+    const x = B.x + (side.x - B.x) * t;
+    const y = B.y + (side.y - B.y) * t;
+    g.circle(x, y, size * 0.035).fill({ color: light ? 0xffffff : 0x1d1d1f, alpha: 0.85 });
+  }
+  node.addChild(g);
+}
+
+/**
+ * Units and sectors ready to be tapped. "Original" is the hairline amber edge that slowly brightens and
+ * fades (designer 2026-11-08); the others are trial looks to choose from in the Menu (2026-11-20).
+ * Everything is worked out from the time alone, so each sector keeps in step with the others.
+ */
+function drawReady(g: Graphics, cx: number, cy: number, size: number, now: number): void {
+  const how = trialLooks().ready;
+  const r = size * 0.9;
+  const edge = hexPoints(cx, cy, r);
+  if (how === "original") {
+    const k = breath(now, 2600);
+    g.poly(hexPoints(cx, cy, size * 0.86)).stroke({ width: 1.5, color: 0xffe2a0, alpha: (0.35 + 0.6 * k) * 0.9 });
+    g.poly(edge).stroke({ width: 1.5, color: READY, alpha: 0.35 + 0.6 * k });
+    return;
+  }
+  if (how === "fill") {
+    // The whole tile breathes a warm light, its edge with it.
+    const k = breath(now, 2800);
+    g.poly(edge).fill({ color: 0xffd27a, alpha: 0.05 + 0.2 * k });
+    g.poly(edge).stroke({ width: 2, color: READY, alpha: 0.4 + 0.5 * k });
+    return;
+  }
+  if (how === "halo") {
+    // A soft light round the outside, breathing.
+    const k = breath(now, 2600);
+    for (let i = 5; i >= 1; i--) g.poly(hexPoints(cx, cy, r * (1 + 0.035 * i * (0.6 + 0.4 * k)))).stroke({ width: size * 0.035, color: READY, alpha: (0.07 + 0.09 * k) * (1 - i / 6) });
+    g.poly(edge).stroke({ width: 1.2, color: 0xffe2a0, alpha: 0.5 + 0.3 * k });
+    return;
+  }
+  if (how === "runner" || how === "twin") {
+    // A bright spark with a fading tail running round the edge (two, opposite, chasing).
+    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.28 });
+    const heads = how === "twin" ? [0, 0.5] : [0];
+    const lap = how === "twin" ? 2600 : 2200;
+    const u0 = (now % lap) / lap;
+    for (const h of heads) {
+      const tail = 18;
+      for (let i = tail; i >= 0; i--) {
+        const pt = alongOutline(edge, u0 + h - i * 0.012);
+        const f = 1 - i / tail;
+        g.circle(pt.x, pt.y, size * (0.012 + 0.03 * f)).fill({ color: i === 0 ? 0xffffff : READY, alpha: 0.12 + 0.85 * f * f });
+      }
+      // Sparks shed outwards from the head.
+      for (let j = 0; j < 4; j++) {
+        const age = ((now / 90 + j * 2.3) % 4) / 4;
+        const pt = alongOutline(edge, u0 + h - age * 0.05);
+        const ox = (pt.x - cx) / r;
+        const oy = (pt.y - cy) / r;
+        g.circle(pt.x + ox * size * 0.12 * age, pt.y + oy * size * 0.12 * age, size * 0.012 * (1 - age)).fill({ color: 0xffe2a0, alpha: 0.8 * (1 - age) });
+      }
+    }
+    return;
+  }
+  if (how === "corners") {
+    // The six corners light one after another, clockwise, with the edges between them faint.
+    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.3 });
+    const t = (now % 2400) / 2400;
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 180) * (60 * i - 30);
+      const d = (t * 6 - i + 6) % 6; // how long ago the wave passed this corner, in corners
+      const k = Math.max(0, 1 - d / 2.2);
+      const x = cx + r * 0.94 * Math.cos(a);
+      const y = cy + r * 0.94 * Math.sin(a);
+      g.circle(x, y, size * (0.05 + 0.05 * k)).fill({ color: READY, alpha: 0.15 + 0.35 * k });
+      g.circle(x, y, size * (0.02 + 0.02 * k)).fill({ color: 0xffffff, alpha: 0.25 + 0.7 * k });
+    }
+    return;
+  }
+  // Ripple: rings leave the edge and drift outwards, fading.
+  g.poly(edge).stroke({ width: 1.5, color: READY, alpha: 0.6 });
+  for (let i = 0; i < 3; i++) {
+    const t = ((now / 2100 + i / 3) % 1 + 1) % 1;
+    g.poly(hexPoints(cx, cy, r * (1 + 0.28 * t))).stroke({ width: 2 * (1 - t) + 0.5, color: READY, alpha: 0.55 * (1 - t) ** 1.5 });
+  }
 }
 
 function badgeText(t: GameState["tiles"][string]["tokens"]): string[] {
@@ -169,6 +307,9 @@ export function FieldView(p: FieldProps) {
   const ready = useRef(false);
   const props = useRef(p);
   props.current = p;
+  // Trial looks chosen in the Menu (designer 2026-11-20): the board is drawn again at once.
+  const [, bumpTrial] = useState(0);
+  useEffect(() => onTrialLooks(() => bumpTrial((x) => x + 1)), []);
   const player = useRef(new Player());
   /** The empty slots under the sectors are hidden while a Gamma kill tilts the board (it draws its own). */
   const hideSlots = useRef(false);
@@ -283,7 +424,7 @@ export function FieldView(p: FieldProps) {
   // (play-test 2026-11-08: the first tap on a touch screen only showed the hover text).
   useEffect(() => {
     const P = props.current;
-    const sig = JSON.stringify([P.choosable, P.selected, P.tones, P.rotate && [P.rotate.tile, P.rotate.facing], P.dark, P.showHidden]);
+    const sig = JSON.stringify([P.choosable, P.selected, P.tones, P.rotate && [P.rotate.tile, P.rotate.facing], P.dark, P.showHidden, trialLooks()]);
     if (P.state === drawn.current.state && sig === drawn.current.sig) return;
     drawn.current = { state: P.state, sig };
     draw();
@@ -1150,6 +1291,10 @@ export function FieldView(p: FieldProps) {
         out.push(uncoverStep(e, env));
         continue;
       }
+      if (e.kind === "dropped") {
+        out.push(dropStep(e, env));
+        continue;
+      }
       if (e.kind === "overload") {
         const step = overloadStep(e.how, env);
         if (e.how === "start") {
@@ -1364,9 +1509,7 @@ export function FieldView(p: FieldProps) {
   function drawGlow(g: Graphics, cx: number, cy: number, kind: DragKind | "ready", now: number, strong: boolean): void {
     const size = geo.current.size;
     if (kind === "ready") {
-      const k = breath(now, 2600);
-      g.poly(hexPoints(cx, cy, size * 0.86)).stroke({ width: 1.5, color: 0xffe2a0, alpha: (0.35 + 0.6 * k) * 0.9 });
-      g.poly(hexPoints(cx, cy, size * 0.9)).stroke({ width: 1.5, color: READY, alpha: 0.35 + 0.6 * k });
+      drawReady(g, cx, cy, size, now);
       return;
     }
     if (kind === "move") {
@@ -1678,10 +1821,13 @@ export function FieldView(p: FieldProps) {
       if (isChoice) hits.push({ k: p.k, id: choosable.sectors.includes(p.k) ? p.k : unit!, x: Math.round(cx), y: Math.round(cy) });
       const isSel = selected.includes(p.k) || (unit !== undefined && selected.includes(unit));
       node.label = isChoice && !isSel ? `choice:${p.k}` : `sector:${p.k}`;
+      const depthLayers = st === "dark" ? stack(state, p.k).length : st === "occupied" ? stack(state, p.k).length - 1 : 0;
+      addDepth(node, cx, cy, size, depthLayers, fill);
       // Selected: a steady thin green rim.
       g.poly(hexPoints(cx, cy, size * 0.9)).fill({ color: fill }).stroke({ width: isSel ? 2.5 : 1.5, color: isSel ? 0x00d39e : 0x000000 });
       g.eventMode = "none";
       node.addChild(g);
+      addDepthNotches(node, cx, cy, size, depthLayers, st === "dark");
 
       const label = (text: string, y: number, sz: number, color = 0x1d1d1f, bold = false, dx = 0) => {
         const t = new Text({ text, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(9, sz), fill: color, fontWeight: bold ? "700" : "400", align: "center" } });

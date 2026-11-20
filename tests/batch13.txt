@@ -23,6 +23,8 @@
 # day: Beta Breach's cracks are molten streams of particles (CHANGED note on T13_CEL_10). Round 6
 # the same day (I26, I27): the two Gamma kills and Mission Complete for Gamma (T13_CEL_12-14,
 # CHANGED notes on T13_CEL_06, 07, 08, 11).
+# Round 20, 2026-11-20 (section BIG SCREENS, ALLIED DROP, TRIAL LOOKS, T13_R20_01-07, CHANGED note
+# on T13_R18_05); checked by tests/unit/looks.test.ts and scripts/ui-looks.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -914,6 +916,7 @@ source: designer 2026-11-16
 then: the Flagship panel no longer shows the Upgrade points bubble (the Ally line stays). Press
       the Mission bar: under the objective, "Upgrade points" with the bubble and "N points,
       spent at Mission End (10.2)".
+CHANGED (designer 2026-11-20): the Ally line is gone from the Flagship panel too (T13_R20_04).
 
 id: T13_R18_06
 title: V1 Bay 3: the tiles leave the sector and are put back one by one
@@ -1910,3 +1913,82 @@ given: Mission 7; the 2nd O_03 destroyed (the mission is usually won in the same
 then: the Gamma kill plays; as its camera pulls out the Trophy flies into the Mission bar; then
       Mission Complete (T13_CEL_04) with "GAMMA ELIMINATED · 2 / 2" and two Gamma badges, the energy
       sweep starting from the Gamma's sector. Then the Upgrade sheet.
+
+=== SECTION: BIG SCREENS, ALLIED DROP, TRIAL LOOKS (designer 2026-11-20, screen only, no rule change) ===
+
+id: T13_R20_01
+title: Setup screens bigger on a big PC screen
+source: designer 2026-11-20
+given: the window 1600 px wide or wider (a PC screen in a full window); then an iPad (up to about
+       1370 px) and a phone
+then: on the big screen every setup screen (Campaign, Vessel, Modules, the Threat, Module and Ally
+      screens of each Mission Preparation, System options, unit cards, the statistics page and the
+      Campaign editor) is 1.35 times bigger: words, buttons, panels, tiles. The space behind them and
+      the sparks are not. On the iPad and the phone nothing changes.
+
+id: T13_R20_02
+title: Campaign roster tiles on a big PC screen
+source: designer 2026-11-20
+given: a window 1600 px wide or wider; Campaign step, Unit roster
+then: the "All" tiles and the Omega tiles are 1.5 times the size they were before this round
+      (the 1.35 of T13_R20_01 included); a type tab (Sentinels, Flares ...) shows its tiles as big
+      as the Vessel step's Mecha tiles. Phones and iPads unchanged.
+
+id: T13_R20_03
+title: The game bigger on a big PC screen
+source: designer 2026-11-20
+given: a window 1600 px wide or wider; a game on the Field
+then: the top bar, the Flagship panel (Bays, Orders, Overhaul) and the Modules panel are 1.25 times
+      bigger, their columns wider; the Menu and the big question bubble in the Field 1.2 times; the
+      card text bubble on hover and the cards of the Anomalies, Mission bar and Heat bar about 1.45
+      times. The Anomaly bubbles and the Mission bar keep their height (60 px); only the words and
+      glyphs inside grow. Not changed: the Field itself and the units' action pop-ups.
+      Below 1600 px nothing changes.
+
+id: T13_R20_04
+title: No Ally line in the Flagship panel
+source: designer 2026-11-20
+then: the Flagship panel no longer shows "Ally V1" / "Ally V2" (T13_R18_05 CHANGED).
+
+id: T13_R20_05
+title: Allied Drop: the Mecha shown, then dropped
+source: designer 2026-11-20
+map: M1
+given: Mission Preparation, Allied Drop (7.3): "Allied Drop: place M_01 on which Dark sector?"
+then: the "Put here" bubbles are on the Dark sectors as before, and the Mecha's tile (its glyph and
+      Level, no name) hovers in the corner of the Field furthest from the sectors, under "Allied
+      Drop" and above "Choose where it lands".
+when: press "Put here" on a sector
+then: the card goes; the Mecha falls onto that sector from above (big and see-through, getting
+      smaller and solid, its shadow growing), squashes and settles; the Field gives a small jolt and
+      dust rolls out from under the tile and drifts up (about 1.2 s). A Mecha with arrows asks its
+      facing first; it drops when its facing is kept.
+note: New display event "dropped" (engine events.ts); no rule change. A tap skips it, as the other
+      Field animations.
+
+id: T13_R20_06
+title: Trial looks in the Menu (temporary)
+source: designer 2026-11-20
+given: a game on the Field; Menu > "Trial looks (temporary)"
+then: three rows of choices, the one in use pressed, "Original" being the look before:
+      Tile corners: Original (sharp), Soft, Rounded, Pebble, Bevelled (cut flat). Every hexagon of
+      the Field follows: units, Dark sectors, Cleared plates, glows and outlines.
+      Stack depth: Original (the number only), Stack (thin tile edges under the tile, one per tile
+      under it, up to 12), Stack strong (thicker), Thick slab (a solid side that grows with the
+      tiles, a faint line per tile), Shadow (it floats higher with more tiles), Notches (one notch
+      per tile along its two lower edges). The numbers ("+7 beneath", "10 tiles") stay.
+      Ready to tap: Original (hairline edge breathing), Glow breath (the whole tile), Halo (soft
+      light round the outside), Edge runner (a spark with a tail runs round the edge), Twin runners
+      (two, chasing), Corner wave (the corners light one after another), Ripple (rings drift out).
+when: press a choice
+then: the Field is drawn again at once with it; the choice is kept in this browser (also after a
+      reload); it is not in the save.
+note: To be removed once the designer has chosen (docs/next-sessions.md item 13).
+
+id: T13_R20_07
+title: Trial looks: the stack depth tells few from many
+source: designer 2026-11-20
+given: Stack depth "Stack"; one sector with 2 tiles, another with 7
+then: the sector with 7 shows clearly more tile edges under it than the one with 2 (the one with
+      2 shows one edge under its top tile; a Dark sector of 2 shows two).
+

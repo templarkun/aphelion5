@@ -266,3 +266,61 @@ export function fizzleStep(e: GameEvent & { kind: "fizzled" }, env: FxEnv): Step
     },
   };
 }
+
+/**
+ * Allied Drop (7.3, designer 2026-11-20): the Ally's Mecha falls onto its sector from above, big and
+ * slightly see-through as it comes down, a shadow growing under it; on contact it squashes and settles,
+ * the Field gives a small jolt and dust rolls out from under the tile and drifts up (1.2 s).
+ */
+export function dropStep(e: GameEvent & { kind: "dropped" }, env: FxEnv): Step {
+  const g = new Graphics();
+  g.eventMode = "none";
+  const dust = Array.from({ length: 46 }, (_, i) => {
+    const r = (n: number) => {
+      const x = Math.sin((i + 1) * 12.9898 + n * 78.233) * 43758.5453;
+      return x - Math.floor(x);
+    };
+    return { a: (i / 46) * Math.PI * 2 + r(1) * 0.3, v: 0.55 + r(2) * 0.75, up: 0.1 + r(3) * 0.35, size: 0.04 + r(4) * 0.07, tone: r(5), delay: r(6) * 0.08 };
+  });
+  const HIT = 0.5; // the moment it touches the sector
+  return {
+    ms: 1200,
+    hides: [e.sector],
+    start: () => env.fx.addChild(g),
+    frame: (p, look) => {
+      const c = env.centre(e.sector);
+      const s = env.size();
+      g.clear();
+      const L = look(e.sector);
+      L.z = 50; // in front of the sectors it falls past
+      if (p < HIT) {
+        // Falling: big and high, then down fast (gravity).
+        const f = (p / HIT) ** 2;
+        L.dy -= s * 2.4 * (1 - f);
+        L.scale *= 1 + 0.9 * (1 - f);
+        L.alpha *= 0.35 + 0.65 * f;
+        g.ellipse(c.x, c.y + s * 0.1, s * (0.3 + 0.55 * f), s * (0.12 + 0.22 * f)).fill({ color: 0x000000, alpha: 0.15 + 0.35 * f });
+        return;
+      }
+      const q = (p - HIT) / (1 - HIT);
+      // Contact: a squash that springs back, and a small jolt of the whole Field.
+      const squash = Math.exp(-q * 9) * Math.cos(q * 22);
+      L.scale *= 1 - 0.1 * squash;
+      L.scaleX *= 1 + 0.18 * squash;
+      const jolt = s * 0.05 * Math.exp(-q * 10);
+      for (const k of env.keys()) look(k).dy += Math.sin(q * 60) * jolt;
+      // A ring of dust pushed out along the ground.
+      g.ellipse(c.x, c.y + s * 0.15, s * (0.6 + 0.9 * easeOut(q)), s * (0.25 + 0.35 * easeOut(q))).stroke({ width: s * 0.06 * (1 - q), color: 0xcdbfa8, alpha: 0.45 * (1 - q) });
+      for (const d of dust) {
+        const t = Math.max(0, (q - d.delay) / (1 - d.delay));
+        if (t <= 0) continue;
+        const out = s * (0.45 + d.v * easeOut(t));
+        const x = c.x + Math.cos(d.a) * out;
+        const y = c.y + s * 0.15 + Math.sin(d.a) * out * 0.42 - s * d.up * easeOut(t) - s * 0.25 * t * t;
+        const colour = d.tone < 0.5 ? 0xb9ab95 : d.tone < 0.85 ? 0x8f8475 : 0xe6dccb;
+        g.circle(x, y, s * d.size * (1 + 1.6 * t)).fill({ color: colour, alpha: 0.55 * (1 - t) ** 1.3 });
+      }
+    },
+    end: () => g.destroy(),
+  };
+}
