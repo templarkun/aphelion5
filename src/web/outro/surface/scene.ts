@@ -1,35 +1,37 @@
 /**
- * Surface Terraform: the film (designer 2026-11-19). It goes on from Terraformer 2.0: the pylons
- * have come down; now the camera stands on the planet's surface at the near end of a rugged,
- * barren valley, looking across it to the horizon.
+ * Surface Terraform: the film (designer 2026-11-19; new look 2026-11-21: hard, gritty science
+ * fiction after Dune, Mass Effect and Homeworld; geological, not botanical). It goes on from
+ * Terraformer 2.0: the pylons have come down; the camera stands on the planet's surface at the near
+ * end of a rugged basalt valley, looking across it to the horizon.
  *
- *   Act 1  the wasteland under a thick toxic amber-grey sky, ash blowing, red lightning. Three
- *          terraformer spires (the pylons of 2.0, drawn by the same rig.ts) stand anchored in the
- *          rock, on the horizon and in the middle distance; one by one their radiator wings flare
- *          open and they fire cyan-emerald beams straight up into the storm.
- *   Act 2  where the beams pierce the clouds a clear-sky vortex turns and opens (sky.ts), pushing
- *          the storm back to the horizon: a deep cerulean sky, the alien sun, two moons. Rain and
- *          bright mist fall through the valley; golden sunlight breaks onto the ridges.
- *   Act 3  from the spires' feet water fills the dry canyon beds and pools, and green, teal and
- *          glowing life spreads over the rock like a tide (layers.ts); flocks of sky creatures
- *          glide in.
- *   Act 4  a slow panoramic drift over the living valley, the spires humming on the horizon; the
+ *   Act 1  an oppressive ochre and rust dust storm, low visibility, dust howling sideways. Three
+ *          brutalist terraformer spires (dark gunmetal megastructures: stepped tiers, segmented
+ *          radiator fins, amber hazard strobes, heat shimmer) power up one by one, open their fins
+ *          and fire wide, diffused ion plumes into the storm; four more stand far off (one for every
+ *          other mission won, I17).
+ *   Act 2  the plumes carve a turbulent eye in the storm (sky.ts); cold, hard sunlight breaks
+ *          through in crepuscular rays over the ridges; condensation rain; the dust thins.
+ *   Act 3  water fills the canyon beds and pools, dark, catching sharp glints of the sky; the basalt
+ *          turns wet and mineral-rich from the spires' feet (layers.ts); mist hugs the valley floor.
+ *   Act 4  a slow, heavy pan over the cold, clear frontier, the spires venting steady vapour; the
  *          Debrief card slides in beside it (the picture turns so the valley stays in the open part).
  *
- * Drawn on one 2D canvas in layers, far to near, each moved by the camera's slow sideways drift
- * as much as its distance asks (parallax). Every moving thing is worked out from the time alone,
- * so any moment can be drawn by itself. Looks only.
+ * Drawn on one 2D canvas in layers, far to near, each moved by the camera's slow sideways drift as
+ * much as its distance asks (parallax), each dissolved into the air as much as its distance and
+ * the storm ask. Over it: an anamorphic flare where the sun breaks through, faint colour fringes
+ * and a vignette at the edges, and film grain. Every texture is baked once from seeded noise; every
+ * moving thing is worked out from the time alone, so any moment can be drawn by itself. No trees,
+ * plants, flowers, sparkles or creatures are drawn. Looks only.
  */
 
-import { clamp, ease, easeOut, lerp, rng, seg, smooth, TAU, unit, type V3 } from "../../briefing/styles/intro2/math3.js";
-import { flameSprite, mixRgb, softSprite } from "../terraformer/pylon.js";
+import { clamp, ease, easeOut, lerp, rng, seg, smooth, TAU } from "../../briefing/styles/intro2/math3.js";
+import { softSprite } from "../terraformer/pylon.js";
 import { track } from "../terraformer/view.js";
 import type { CompanyTheme } from "../types.js";
-import { drawRig, RIG_RADIUS, type RigSprites, type RigState } from "../terraformer2/rig.js";
-import { createValley, drawMix, layerState, volcanoTop, VOLCANO_U, type Layer, type Valley } from "./layers.js";
+import { createValley, drawMix, fbm, layerState, volcanoTop, VOLCANO_U, type Layer, type Valley } from "./layers.js";
 import { createSky } from "./sky.js";
-import { CLIMB, FLARE, FLARE_AT, FLOCKS_AT, farCount, farTimes, fireTimes, RAIN, SPIRES, SUN_AT } from "./timeline.js";
-import { bloomAt, BURY, CEIL, FAR_PLACES, HC, poolAt, POOL_DEFS, project, SPIRE_PLACES, streamPaths, waterReach, type View } from "./world.js";
+import { CLIMB, FLARE, FLARE_AT, farCount, farTimes, fireTimes, RAIN, SPIRES, SUN_AT } from "./timeline.js";
+import { BURY, CEIL, FAR_PLACES, HC, nf, poolAt, POOL_DEFS, project, SPIRE_PLACES, streamPaths, waterReach, type View } from "./world.js";
 
 /** The part of the picture the Debrief card leaves open, CSS px: the valley is kept inside it. */
 export interface FreeArea {
@@ -41,15 +43,22 @@ export interface FreeArea {
 export interface SurfaceScene {
   /** Draw film time t (seconds at Normal speed; past the film's end the slow drift goes on). `quality` 0.45..1: softer on a slow machine. */
   draw(g: CanvasRenderingContext2D, w: number, h: number, t: number, free?: FreeArea, quality?: number): void;
-  /** Make the living pictures a little at a time (once a frame, before draw); `budget` ms. */
+  /** Make the wet pictures a little at a time (once a frame, before draw); `budget` ms. */
   prepare(budget: number): void;
+  /** Where the horizon was in the last picture drawn, CSS px from the top (for the recon overlay's scale). */
+  horizon(): number;
 }
 export interface SceneSetup {
   theme: CompanyTheme;
   vesselId: string;
-  /** How many pylons 2.0 dropped (one per mission won): those beyond the three spires show as far beams. None if left out. */
+  /** How many pylons 2.0 dropped (one per mission won): those beyond the three spires stand far off. None if left out. */
   pylons?: number;
 }
+
+type C3 = readonly [number, number, number];
+const mix = (a: C3, b: C3, k: number): C3 => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
+const rgba = (c: C3, a = 1) => `rgb(${c[0] | 0} ${c[1] | 0} ${c[2] | 0} / ${clamp(a).toFixed(3)})`;
+const add = (a: C3, b: C3, k: number): C3 => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
 
 /** The horizon's height in the picture (a share of its height), wide and tall pictures: [time, share]. */
 const HY_WIDE = [
@@ -68,37 +77,65 @@ const HY_TALL = [
   [7.8, 0.47],
   [10, 0.48],
 ] as const;
-/** The largest sideways drift of the camera (km) and turn of the picture (focal lengths): the layers are made this much wider. */
-const DRIFT_MAX = 0.16;
-const PAN_MAX = 0.3;
+/** The largest turn of the picture (focal lengths): the layers are made this much wider. */
+const PAN_MAX = 0.34;
 
-/** The camera's slow sideways drift, km: a little across the valley in the film, then gently to and fro. */
+/** The camera's slow sideways drift, km: a little across the valley in the film, then a slow, heavy sweep to and fro. */
 function camXAt(t: number): number {
-  return -0.07 + 0.11 * ease(seg(t, 0, 10.5)) + 0.08 * Math.sin(Math.max(0, t - 10.5) * 0.12);
+  return -0.07 + 0.11 * ease(seg(t, 0, 10.5)) + 0.1 * Math.sin(Math.max(0, t - 10.5) * 0.11);
 }
 
-/** A fixed pseudo-random number 0..1 for a few integers (looks only). */
+/** A fixed pseudo-random number 0..1 for a few numbers (looks only). */
 function hash(a: number, b: number, c: number): number {
   const x = Math.sin(a * 12.9898 + b * 78.233 + c * 37.719) * 43758.5453;
   return x - Math.floor(x);
 }
 
-const SPOT_RGB = ["120 255 230", "190 140 255", "210 255 120", "255 170 230"] as const;
-
-interface Dot {
-  /** World place (floor dots) or board place (u, v on the board `layer`). */
-  X: number;
-  Y: number;
-  Z: number;
-  u: number;
-  v: number;
-  layer: Layer["id"] | undefined;
-  at: number;
-  k: number;
-  s: number;
-  ph: number;
-  sp: number;
+// ---- The air: the storm's ochre dust, then a cold clear haze.
+const STORM_FOG: C3 = [140, 88, 58];
+const COLD_FOG: C3 = [80, 96, 110];
+interface Fog {
+  rgb: C3;
+  /** How far one sees, km. */
+  vis: number;
+  /** How thick the dust storm still is, 0..1. */
+  storm: number;
 }
+function fogAt(t: number): Fog {
+  return { rgb: mix(STORM_FOG, COLD_FOG, smooth(3.6, 7.4, t)), vis: 11 * Math.pow(90 / 11, smooth(3.4, 7.6, t)), storm: 1 - smooth(3.0, 6.6, t) };
+}
+/** How much of something Z km away is lost in the air. */
+const fogA = (Z: number, f: Fog) => Math.min(0.93, 1 - Math.exp(-Z / f.vis));
+
+// ---- The spires: brutalist megastructures, in shares of the height of their top above the ground.
+/** Tiers, bottom to top: [from, to, half-width at the foot, half-width at the top]. */
+const TIERS: [number, number, number, number][] = [
+  [0, 0.03, 0.31, 0.29],
+  [0.03, 0.062, 0.25, 0.236],
+  [0.062, 0.3, 0.152, 0.126],
+  [0.3, 0.33, 0.142, 0.142],
+  [0.33, 0.64, 0.1, 0.092],
+  [0.64, 0.69, 0.126, 0.126],
+  [0.69, 0.85, 0.084, 0.074],
+  [0.85, 0.915, 0.13, 0.13],
+  [0.915, 0.965, 0.074, 0.06],
+  [0.965, 1.0, 0.044, 0.034],
+];
+/** The radiator fin banks on the mid shaft: from, to, how many fins a side, how far a fin stands out when wide open. */
+const FINS = { from: 0.355, to: 0.62, n: 9, out: 0.15 };
+/** The hazard strobes: [x, height] (x across, in the same shares), each mirrored. */
+const STROBES: [number, number][] = [
+  [0.3, 0.03],
+  [0.15, 0.3],
+  [0.126, 0.69],
+  [0.13, 0.915],
+  [0, 1.0],
+];
+/** The far spires are as tall as this (km) and drawn plainer. */
+const FAR_H = 3.6;
+const GUN: { lit: C3; mid: C3; dark: C3 } = { lit: [60, 64, 68], mid: [33, 36, 39], dark: [13, 14, 16] };
+const AMBER: C3 = [255, 168, 64];
+const ION: C3 = [168, 190, 212];
 
 export function createSurfaceScene(o: SceneSetup): SurfaceScene {
   const { theme } = o;
@@ -107,60 +144,123 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
   const hyTall = track(HY_TALL);
   const sky = createSky();
   const fire = fireTimes();
-  const farFire = farTimes(Math.min(FAR_PLACES.length, farCount(o.pylons ?? SPIRES)));
+  const farN = Math.min(FAR_PLACES.length, farCount(o.pylons ?? SPIRES));
+  const farFire = farTimes(farN);
   let valley: Valley | undefined;
   let built = { U: 0, vmax: 0, R: 0 };
   let prepared = false;
   let tmp: HTMLCanvasElement | undefined;
-  let sprites: RigSprites | undefined;
-  let glows: HTMLCanvasElement[] = [];
-  let foam: HTMLCanvasElement | undefined;
-  let beamHalo: HTMLCanvasElement | undefined;
-  let flare: HTMLCanvasElement | undefined;
-  let boardDots: Dot[] = [];
+  let lastHy = 0;
   const P: [number, number] = [0, 0];
 
-  // ---- Things that only depend on the valley, made once.
-  const floorDots: Dot[] = Array.from({ length: 170 }, () => {
-    const v = 0.008 + 0.4 * Math.pow(R(), 0.8);
-    const Z = HC / v;
-    const X = (R() * 2 - 1) * 1.1 * Z;
-    return { X, Y: 0.003, Z, u: 0, v: 0, layer: undefined, at: bloomAt(X, Z) + 0.12, k: Math.floor(R() * 4), s: 0.004 + 0.008 * R(), ph: R() * TAU, sp: 0.8 + R() * 1.6 };
-  });
-  const rain = Array.from({ length: 180 }, () => ({ x: R(), ph: R(), sp: 1.25 + R() * 0.7, len: 0.025 + R() * 0.03, z: 0.35 + R() * 0.65, gold: R() < 0.22 }));
-  const dust = Array.from({ length: 80 }, () => ({ x: R(), y: 0.3 + R() * 0.66, sp: 0.16 + R() * 0.3, len: 8 + R() * 34, z: 0.3 + R() * 0.7 }));
-  const motes = SPIRE_PLACES.map(() => Array.from({ length: 12 }, () => ({ ph: R(), sp: 0.35 + R() * 0.4, side: R() * TAU })));
-  const mistBands = Array.from({ length: 6 }, (_, i) => ({ Z: 1.6 + i * 2.1 + R(), Y: 0.04 + R() * 0.12, u: R() * 3 - 1.5, sp: (0.004 + R() * 0.006) * (R() < 0.5 ? -1 : 1), wide: 0.45 + R() * 0.4 }));
-  const FLOCKS = [
-    { C: [-1.2, 1.25, 6.5], A: [2.3, 0.22, 1.8], w: 0.12, ph: 0.4, n: 9, from: -1 },
-    { C: [2.1, 0.9, 5.2], A: [1.5, 0.18, 1.2], w: -0.15, ph: 2.2, n: 7, from: 1 },
-    { C: [-3.2, 2.0, 11.5], A: [3.0, 0.3, 2.4], w: 0.085, ph: 4.1, n: 11, from: -1 },
-  ];
-  const flock = FLOCKS.map((f) => Array.from({ length: f.n }, (_, m) => {
-    const row = Math.ceil(m / 2);
-    const side = m === 0 ? 0 : m % 2 ? 1 : -1;
-    return { dx: side * row * 0.07 + (R() - 0.5) * 0.03, dy: (R() - 0.5) * 0.05, dz: row * 0.06 + (R() - 0.5) * 0.04, ph: R() * TAU, beat: 4.5 + R() * 2.5, span: 0.075 + R() * 0.04 };
-  }));
-
-  /** The board dots: glowing flowers on the ridges and the near rocks, placed once the boards are made. */
-  function placeBoardDots(v: Valley): void {
-    const Rb = rng(733);
-    boardDots = [];
-    for (const l of v.layers) {
-      if (l.kind !== "board" || !l.top) continue;
-      const n = l.id === "near" ? 60 : 90;
-      for (let i = 0; i < n; i++) {
-        const u = l.u0 + Rb() * (l.u1 - l.u0);
-        const top = l.top(u);
-        const base = HC / l.Z;
-        if (top >= base - 0.002) continue;
-        const vv = top + (base - top) * (0.15 + 0.85 * Math.pow(Rb(), 0.6));
-        const Y = Math.max(0, HC - vv * l.Z);
-        const at = bloomAt(u * l.Z, l.Z) + Y * (l.id === "near" ? 3.2 : 1.7) + 0.2;
-        boardDots.push({ X: 0, Y: 0, Z: l.Z, u, v: vv, layer: l.id, at, k: Math.floor(Rb() * 4), s: (l.id === "near" ? 0.0022 : 0.0016) * (0.6 + Rb()), ph: Rb() * TAU, sp: 0.8 + Rb() * 1.5 });
+  // ---- Textures, baked once from seeded noise on the first picture (so every frame only draws them).
+  let tex:
+    | {
+        grain: HTMLCanvasElement[];
+        dust: HTMLCanvasElement;
+        mist: HTMLCanvasElement;
+        puffIon: HTMLCanvasElement[];
+        puffHot: HTMLCanvasElement;
+        puffVapour: HTMLCanvasElement[];
+        puffSmoke: HTMLCanvasElement;
+        strobe: HTMLCanvasElement;
+        ion: HTMLCanvasElement;
+        cold: HTMLCanvasElement;
+        ghostA: HTMLCanvasElement;
+        ghostB: HTMLCanvasElement;
       }
-    }
+    | undefined;
+  let shim: HTMLCanvasElement | undefined;
+  let ca: HTMLCanvasElement | undefined;
+
+  function bake(): NonNullable<typeof tex> {
+    /** Film grain: grey noise about 128, a few frames of it. */
+    const grainTile = (seed: number) => {
+      const S = 256;
+      const c = document.createElement("canvas");
+      c.width = c.height = S;
+      const g = c.getContext("2d")!;
+      const im = g.createImageData(S, S);
+      const Rg = rng(seed);
+      for (let i = 0; i < S * S; i++) {
+        // Two dice: a soft, film-like spread rather than flat speckle.
+        const v = 128 + (Rg() + Rg() - 1) * 90;
+        im.data[i * 4] = im.data[i * 4 + 1] = im.data[i * 4 + 2] = v;
+        im.data[i * 4 + 3] = 255;
+      }
+      g.putImageData(im, 0, 0);
+      return c;
+    };
+    /** A band of wind-torn streaks (dust or mist), soft at top and foot, repeating across. */
+    const band = (rgb: C3, seed: number, stretch: number, gain: number) => {
+      const W = 512;
+      const H = 128;
+      const c = document.createElement("canvas");
+      c.width = W;
+      c.height = H;
+      const g = c.getContext("2d")!;
+      const im = g.createImageData(W, H);
+      for (let y = 0; y < H; y++) {
+        // Soft to nothing at its top and foot.
+        const fall = Math.sin((Math.PI * (y + 0.5)) / H) ** 3;
+        for (let x = 0; x < W; x++) {
+          // Across: 0.5 texel per px (the field repeats every 256, so the band repeats every 512).
+          const n = fbm(x * 0.5, y * stretch + seed, 5);
+          const a = clamp((n - 0.36) * gain) * fall;
+          const o = (y * W + x) * 4;
+          im.data[o] = rgb[0];
+          im.data[o + 1] = rgb[1];
+          im.data[o + 2] = rgb[2];
+          im.data[o + 3] = a * 255;
+        }
+      }
+      g.putImageData(im, 0, 0);
+      return c;
+    };
+    /** A puff of gas with a torn, noisy edge (the plumes are built of many). */
+    const puff = (rgb: C3, seed: number) => {
+      const S = 96;
+      const c = document.createElement("canvas");
+      c.width = c.height = S;
+      const g = c.getContext("2d")!;
+      const im = g.createImageData(S, S);
+      for (let y = 0; y < S; y++) {
+        for (let x = 0; x < S; x++) {
+          const d = Math.hypot(x - S / 2, y - S / 2) / (S / 2);
+          if (d >= 1) continue;
+          const body = (1 - d * d) ** 2;
+          const n = fbm(x * 0.9 + seed * 37, y * 0.9 + seed * 11, 4);
+          const a = clamp(body * (0.25 + 1.5 * (n - 0.32)));
+          const o = (y * S + x) * 4;
+          im.data[o] = rgb[0];
+          im.data[o + 1] = rgb[1];
+          im.data[o + 2] = rgb[2];
+          im.data[o + 3] = a * 255;
+        }
+      }
+      g.putImageData(im, 0, 0);
+      return c;
+    };
+    return {
+      grain: [grainTile(9001), grainTile(9002), grainTile(9003), grainTile(9004)],
+      dust: band([152, 106, 70], 17, 1.6, 2.4),
+      mist: band([176, 188, 196], 61, 1.1, 2.0),
+      puffIon: [puff(ION, 1), puff(ION, 2), puff(ION, 3)],
+      puffHot: puff([255, 150, 82], 4),
+      puffVapour: [puff([196, 202, 208], 5), puff([170, 178, 186], 6)],
+      puffSmoke: puff([46, 38, 34], 7),
+      strobe: softSprite("255 168 64", 1, 48),
+      ion: softSprite("190 208 228", 1, 64),
+      cold: softSprite("214 228 242", 0.9, 96),
+      ghostA: softSprite("150 190 235", 0, 48),
+      ghostB: softSprite("230 196 156", 0, 48),
+    };
   }
+
+  // ---- Things that only depend on the valley, made once.
+  const rain = Array.from({ length: 170 }, () => ({ x: R(), ph: R(), sp: 1.35 + R() * 0.7, len: 0.025 + R() * 0.035, z: 0.35 + R() * 0.65 }));
+  const streaks = Array.from({ length: 120 }, () => ({ x: R(), y: 0.25 + R() * 0.72, sp: 0.45 + R() * 0.7, len: 18 + R() * 70, z: 0.3 + R() * 0.7 }));
+  const mistBands = Array.from({ length: 6 }, (_, i) => ({ Z: 1.6 + i * 2.1 + R(), Y: 0.02 + R() * 0.06, u: R() * 3 - 1.5, sp: (0.003 + R() * 0.004) * (R() < 0.5 ? -1 : 1), wide: 0.5 + R() * 0.45 }));
 
   function viewAt(t: number, w: number, h: number, free: FreeArea | undefined, nudge: number): View {
     const tall = h > w * 1.15;
@@ -174,8 +274,8 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
       hy = lerp(hy, free.y + free.h * (foot ? 0.7 : 0.6), k4);
       pan = lerp(0, (w / 2 - fx) / f, k4);
     }
-    // The sweeping drift of the living world.
-    pan += 0.035 * Math.sin(Math.max(0, t - 10.5) * 0.07) * smooth(10, 13, t);
+    // The slow, heavy pan over the frontier.
+    pan += 0.05 * Math.sin(Math.max(0, t - 10.5) * 0.085) * smooth(10, 13, t);
     return { w, h, f, cx: w / 2 + nudge * 2.5 * Math.sin(t * 41), hy: hy + nudge * 2 * Math.cos(t * 33), camX: camXAt(t), pan };
   }
 
@@ -183,10 +283,10 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
   function ensureValley(w: number, h: number, scale: number, t: number): void {
     const tall = h > w * 1.15;
     const f = 1.1 * Math.min(h, w * 1.2);
-    const track = tall ? HY_TALL : HY_WIDE;
+    const trk = tall ? HY_TALL : HY_WIDE;
     // Where the horizon may go when the Debrief comes (outro.css: the card stands at the side from 700 px wide and 5:4, else along the foot).
     const side = w >= 700 && w >= h * 1.25;
-    const hyMin = Math.min(...track.map((k) => k[1]), side ? 0.5 : 0.27) * h;
+    const hyMin = Math.min(...trk.map((k) => k[1]), side ? 0.5 : 0.27) * h;
     const U = w / (2 * f) + PAN_MAX + 0.03;
     const vmax = (h - hyMin) / f + 0.03;
     const Rn = f * scale;
@@ -194,7 +294,6 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
     built = { U: Math.max(U, valley ? built.U : 0), vmax: Math.max(vmax, valley ? built.vmax : 0), R: Rn };
     valley = createValley(built.U, built.vmax, Rn);
     prepared = false;
-    placeBoardDots(valley);
     let tw = 1;
     let th = 1;
     for (const l of valley.layers) {
@@ -207,8 +306,8 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
     if (t > 6.2) prepared = valley.prepare(Infinity);
   }
 
-  // ---- A layer, moved by the drift as much as its distance asks.
-  function drawLayer(g: CanvasRenderingContext2D, l: Layer, v: View, t: number, crestK: number): void {
+  // ---- A layer, moved by the drift as much as its distance asks, then dissolved into the air.
+  function drawLayer(g: CanvasRenderingContext2D, l: Layer, v: View, t: number, crestK: number, fog: Fog, fogZ: number): void {
     const k = v.f / l.R;
     g.save();
     if (l.kind === "floor") g.transform(k, 0, (-v.f * v.camX) / (HC * l.R), k, v.cx + v.f * (l.u0 - v.pan) - (v.f * v.camX * l.v0) / HC, v.hy + v.f * l.v0);
@@ -216,14 +315,14 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
     if (l.id === "far") {
       g.drawImage(l.barren, 0, 0);
       const a = smooth(8.4, 10.4, t);
-      if (l.lush && a > 0) {
+      if (l.wet && a > 0) {
         g.globalAlpha = a;
-        g.drawImage(l.lush, 0, 0);
+        g.drawImage(l.wet, 0, 0);
         g.globalAlpha = 1;
       }
     } else {
       const st = layerState(l, t);
-      if (st === "lush") g.drawImage(l.lush!, 0, 0);
+      if (st === "wet") g.drawImage(l.wet!, 0, 0);
       else if (st === "mix" && tmp) drawMix(g, l, t, tmp);
       else g.drawImage(l.barren, 0, 0);
     }
@@ -231,41 +330,48 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
       g.globalCompositeOperation = "lighter";
       g.globalAlpha = crestK;
       g.drawImage(l.crest, 0, 0);
+      g.globalCompositeOperation = "source-over";
+      g.globalAlpha = 1;
+    }
+    // The air in front of it: its own outline filled with the colour of the air.
+    const a = fogZ > 0 ? fogA(fogZ, fog) : 0;
+    if (a > 0.015 && tmp && l.kind === "board") {
+      const tg = tmp.getContext("2d")!;
+      tg.globalCompositeOperation = "copy";
+      tg.drawImage(l.barren, 0, 0);
+      tg.globalCompositeOperation = "source-in";
+      tg.fillStyle = rgba(fog.rgb);
+      tg.fillRect(0, 0, l.lw, l.lh);
+      tg.globalCompositeOperation = "source-over";
+      g.globalAlpha = a;
+      g.drawImage(tmp, 0, 0, l.lw, l.lh, 0, 0, l.lw, l.lh);
     }
     g.restore();
   }
 
-  // ---- Glowing flowers: they light as the tide reaches them, then breathe.
-  function drawDots(g: CanvasRenderingContext2D, v: View, t: number, dots: Dot[], layer: Layer["id"] | undefined): void {
-    g.save();
-    g.globalCompositeOperation = "lighter";
-    for (const d of dots) {
-      if (d.layer !== layer || t <= d.at) continue;
-      const k = easeOut(seg(t, d.at, d.at + 0.6));
-      let x: number;
-      let y: number;
-      if (layer) {
-        x = v.cx + v.f * (d.u - v.camX / d.Z - v.pan);
-        y = v.hy + v.f * d.v;
-      } else {
-        project(v, d.X, d.Y, d.Z, P);
-        x = P[0];
-        y = P[1];
-      }
-      if (x < -20 || x > v.w + 20 || y < -20 || y > v.h + 20) continue;
-      const pop = Math.exp(-(t - d.at) * 4);
-      const r = clamp((v.f * d.s) / d.Z, 1, 9) * (1 + 1.6 * pop) * (0.7 + 0.3 * k);
-      g.globalAlpha = k * (0.5 + 0.35 * Math.sin(t * d.sp + d.ph)) + pop * 0.5;
-      g.drawImage(glows[d.k]!, x - r * 2, y - r * 2, r * 4, r * 4);
+  /** The air over the valley floor: thick far off, thin near the camera. */
+  function floorFog(g: CanvasRenderingContext2D, v: View, fog: Fog): void {
+    const top = v.hy - 2;
+    const bottom = v.h;
+    if (bottom <= top) return;
+    const grd = g.createLinearGradient(0, top, 0, bottom);
+    for (const vv of [0.002, 0.006, 0.015, 0.035, 0.08, 0.18, 0.45]) {
+      const y = v.hy + v.f * vv;
+      const s = (y - top) / (bottom - top);
+      if (s < 0 || s > 1) continue;
+      grd.addColorStop(s, rgba(fog.rgb, fogA(HC / vv, fog)));
     }
-    g.restore();
+    grd.addColorStop(0, rgba(fog.rgb, fogA(HC / 0.002, fog)));
+    g.fillStyle = grd;
+    g.fillRect(0, top, v.w, bottom - top);
   }
 
-  // ---- The water: canyon beds filling from the spires' feet, then pools and the lake.
-  function drawWater(g: CanvasRenderingContext2D, v: View, t: number): void {
+  // ---- The water: dark, filling the canyon beds from the spires' feet, then the pools; it holds the cold sky and glints.
+  function drawWater(g: CanvasRenderingContext2D, v: View, t: number, sx: number, sunK: number): void {
     const paths = streamPaths();
     const L: [number, number][] = [];
     const Rt: [number, number][] = [];
+    const glintK = 0.25 + 0.75 * sunK;
     for (let k = 0; k < paths.length; k++) {
       const p = paths[k]!;
       const reach = waterReach(k, t);
@@ -289,20 +395,19 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
         if (z < 0.12) break;
         const taper = Math.sqrt(clamp((reach - s) / 0.14 + 0.15));
         const wd = lerp(p.def.w0, p.def.w1, s / p.length) * taper * 0.5;
-        const l = project(v, x + p.nx[j]! * wd, 0, z + p.nz[j]! * wd, [0, 0]);
-        const r = project(v, x - p.nx[j]! * wd, 0, z - p.nz[j]! * wd, [0, 0]);
-        L.push(l);
-        Rt.push(r);
-        tip = [(l[0] + r[0]) / 2, (l[1] + r[1]) / 2];
+        L.push(project(v, x + p.nx[j]! * wd, 0, z + p.nz[j]! * wd, [0, 0]));
+        Rt.push(project(v, x - p.nx[j]! * wd, 0, z - p.nz[j]! * wd, [0, 0]));
+        tip = [(L[L.length - 1]![0] + Rt[Rt.length - 1]![0]) / 2, (L[L.length - 1]![1] + Rt[Rt.length - 1]![1]) / 2];
         tipW = (v.f * wd * 2) / z;
         if (last) break;
       }
       if (L.length < 2) continue;
+      // Far off it holds the pale horizon (grazing light); near, it is dark as obsidian.
       const grd = g.createLinearGradient(0, v.hy, 0, v.h);
-      grd.addColorStop(0, "rgb(206 236 248)");
-      grd.addColorStop(0.12, "rgb(120 196 236)");
-      grd.addColorStop(0.5, "rgb(40 126 196)");
-      grd.addColorStop(1, "rgb(22 86 150)");
+      grd.addColorStop(0, "rgb(96 112 124)");
+      grd.addColorStop(0.06, "rgb(48 60 68)");
+      grd.addColorStop(0.3, "rgb(20 27 31)");
+      grd.addColorStop(1, "rgb(12 16 19)");
       g.fillStyle = grd;
       g.beginPath();
       g.moveTo(L[0]![0], L[0]![1]);
@@ -310,53 +415,53 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
       for (let i = Rt.length - 1; i >= 0; i--) g.lineTo(Rt[i]![0], Rt[i]![1]);
       g.closePath();
       g.fill();
-      g.strokeStyle = "rgb(12 60 72 / 0.55)";
+      g.strokeStyle = "rgb(4 6 7 / 0.7)";
       g.lineWidth = 1;
       g.stroke();
-      // Ripples of light across it, flickering as the water runs: short streaks scattered over its width.
+      // Its far bank holds a thin line of the sky.
+      g.strokeStyle = "rgb(140 156 168 / 0.22)";
+      g.beginPath();
+      for (let i = 0; i < L.length; i++) {
+        const q = L[i]![1] < Rt[i]![1] ? L[i]! : Rt[i]!;
+        if (i) g.lineTo(q[0], q[1] + 0.6);
+        else g.moveTo(q[0], q[1] + 0.6);
+      }
+      g.stroke();
       g.save();
       g.globalCompositeOperation = "lighter";
-      g.strokeStyle = "rgb(226 246 255)";
-      g.lineCap = "round";
+      g.lineCap = "butt";
+      // Sharp, shimmering glints of the breaking sky, brightest on the line under the sun.
       for (let i = 1; i < L.length - 1; i++) {
         const wide = Math.hypot(L[i]![0] - Rt[i]![0], L[i]![1] - Rt[i]![1]);
-        const n = Math.min(7, 1 + Math.floor(wide / 7));
+        const n = Math.min(6, 1 + Math.floor(wide / 8));
+        const mx = (L[i]![0] + Rt[i]![0]) / 2;
+        const under = Math.exp(-(((mx - sx) / (v.f * 0.12)) ** 2));
         for (let q = 0; q < n; q++) {
           const h1 = hash(i, q, k);
           const h2 = hash(i + 0.5, q + 3, k);
-          const fl = 0.5 + 0.5 * Math.sin(t * (2.4 + 2 * h2) - i * 0.9 + h1 * 9);
-          const al = 0.34 * fl * fl * fl * fl;
+          const fl = 0.5 + 0.5 * Math.sin(t * (3 + 3 * h2) - i * 0.9 + h1 * 9);
+          const al = (0.1 + 0.55 * under) * glintK * Math.pow(fl, 8);
           if (al < 0.02) continue;
           const o = 0.12 + 0.76 * h1;
           const at = 0.1 + 0.6 * h2;
-          const ln = 0.18 + 0.2 * hash(i, q + 7, k);
+          const ln = 0.1 + 0.16 * hash(i, q + 7, k);
           const ax = lerp(L[i]![0], Rt[i]![0], o);
           const ay = lerp(L[i]![1], Rt[i]![1], o);
           const bx = lerp(L[i + 1]![0], Rt[i + 1]![0], o);
           const by = lerp(L[i + 1]![1], Rt[i + 1]![1], o);
-          g.globalAlpha = al;
-          g.lineWidth = Math.max(0.5, wide * 0.03);
+          g.strokeStyle = `rgb(236 242 248 / ${al.toFixed(3)})`;
+          g.lineWidth = Math.max(0.6, Math.min(2, wide * 0.04));
           g.beginPath();
           g.moveTo(lerp(ax, bx, at), lerp(ay, by, at));
           g.lineTo(lerp(ax, bx, at + ln), lerp(ay, by, at + ln));
           g.stroke();
         }
       }
-      g.globalAlpha = 1;
-      // Glints.
-      for (let i = 3; i < L.length; i += 6) {
-        const gl = Math.pow(0.5 + 0.5 * Math.sin(t * 7 + i * 1.7 + k), 14);
-        if (gl < 0.05) continue;
-        g.globalAlpha = gl;
-        const x = (L[i]![0] + Rt[i]![0]) / 2;
-        const y = (L[i]![1] + Rt[i]![1]) / 2;
-        g.drawImage(foam!, x - 3, y - 3, 6, 6);
-      }
-      // The bright front while it runs.
+      // The running front: a thin bright meniscus.
       if (tip && reach < p.length - 0.01) {
-        const r = Math.max(3, tipW * 2.2);
-        g.globalAlpha = 0.9;
-        g.drawImage(foam!, tip[0] - r, tip[1] - r * 0.6, r * 2, r * 1.2);
+        const r = Math.max(2, tipW * 1.6);
+        g.globalAlpha = 0.55;
+        g.drawImage(tex!.cold, tip[0] - r, tip[1] - r * 0.3, r * 2, r * 0.6);
       }
       g.restore();
     }
@@ -370,282 +475,453 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
       g.save();
       g.translate(P[0], P[1]);
       g.scale(1, ry / rx);
-      const grd = g.createRadialGradient(0, -rx * 0.25, 0, 0, 0, rx);
-      grd.addColorStop(0, "rgb(206 236 250)");
-      grd.addColorStop(0.5, "rgb(96 172 224)");
-      grd.addColorStop(0.86, "rgb(34 108 170)");
-      grd.addColorStop(1, "rgb(34 108 170 / 0)");
+      // Dark water with a soft shore; its far side holds a thin line of the cold sky.
+      const grd = g.createRadialGradient(0, rx * 0.12, 0, 0, 0, rx);
+      grd.addColorStop(0, "rgb(16 21 25)");
+      grd.addColorStop(0.7, "rgb(13 18 21)");
+      grd.addColorStop(0.9, "rgb(10 13 15 / 0.85)");
+      grd.addColorStop(1, "rgb(10 13 15 / 0)");
       g.globalAlpha = Math.min(1, fill * 1.6);
       g.fillStyle = grd;
       g.beginPath();
       g.arc(0, 0, rx, 0, TAU);
       g.fill();
-      // The far shore catches the light of the sky.
-      g.strokeStyle = "rgb(230 248 255 / 0.35)";
-      g.lineWidth = 1.5 * (rx / ry);
+      g.strokeStyle = "rgb(150 166 178 / 0.28)";
+      g.lineWidth = (rx / ry) * 1.2;
       g.beginPath();
-      g.arc(0, 0, rx * 0.9, Math.PI * 1.15, Math.PI * 1.85);
+      g.arc(0, 0, rx * 0.84, Math.PI * 1.12, Math.PI * 1.88);
       g.stroke();
-      // Ripples.
+      // The sun's glitter path across it, and a faint ripple.
       g.globalCompositeOperation = "lighter";
-      for (let q = 0; q < 2; q++) {
-        const ph = (t * 0.35 + q * 0.5 + i * 0.3) % 1;
-        g.strokeStyle = `rgb(220 246 255 / ${(0.12 * (1 - ph) * fill).toFixed(3)})`;
-        g.beginPath();
-        g.arc(rx * 0.1, 0, rx * 0.85 * ph, 0, TAU);
-        g.stroke();
+      const gx = clamp(sx - P[0], -rx * 0.8, rx * 0.8);
+      for (let q = 0; q < 9; q++) {
+        const fl = Math.pow(0.5 + 0.5 * Math.sin(t * (4 + q * 0.7) + q * 2.1 + i), 10);
+        if (fl < 0.05) continue;
+        const yy = -rx * 0.5 + rx * (q / 8);
+        g.fillStyle = `rgb(236 244 250 / ${(fl * 0.6 * glintK * fill).toFixed(3)})`;
+        g.fillRect(gx - rx * 0.12 * (1 - q / 12) + Math.sin(q * 3.3) * rx * 0.05, yy, rx * 0.24 * (1 - q / 12), (rx / ry) * 0.9);
       }
+      const ph = (t * 0.3 + i * 0.3) % 1;
+      g.strokeStyle = `rgb(200 214 224 / ${(0.07 * (1 - ph) * fill).toFixed(3)})`;
+      g.lineWidth = rx / ry;
+      g.beginPath();
+      g.arc(rx * 0.1, 0, rx * 0.85 * ph, 0, TAU);
+      g.stroke();
       g.restore();
     }
   }
 
-  // ---- A spire: the 2.0 pylon standing anchored in the rock.
-  function spireState(i: number, t: number, sunK: number): RigState {
-    const a = FLARE_AT[i]!;
-    return {
-      spin: SPIRE_PLACES[i]!.spin,
-      open: lerp(0.32, 1, easeOut(seg(t, a, a + FLARE))),
-      thrust: 0,
-      power: 0.35 + 0.65 * smooth(a - 0.3, a + 0.2, t),
-      keyK: lerp(0.5, 0.95, sunK),
-      keyRgb: mixRgb("206 178 160", "255 230 200", sunK),
-      sheath: 0,
-      emit: smooth(fire[i]! - 0.3, fire[i]! + 0.05, t) * (0.85 + 0.15 * Math.sin(t * 5 + i)),
-      t,
-    };
-  }
-  const STORM_KEY: V3 = unit([0.8, 0.35, -0.5]);
-  const SUN_KEY: V3 = unit([0.27, -0.2, 1]);
-  function drawSpire(g: CanvasRenderingContext2D, v: View, i: number, t: number, sunK: number): void {
-    const s = SPIRE_PLACES[i]!;
-    const L = s.L;
-    const ground = v.hy + (v.f * HC) / s.Z;
-    const px = (v.f * L) / s.Z;
-    const at = (hh: number, x: number, y: number): [number, number] => project(v, s.X + x * L, (hh - BURY) * L, s.Z + y * L, [0, 0]);
-    const vw = unit([HC - (0.5 - BURY) * L, v.camX - s.X, -s.Z]);
-    const key = unit([lerp(STORM_KEY[0], SUN_KEY[0], sunK), lerp(STORM_KEY[1], SUN_KEY[1], sunK), lerp(STORM_KEY[2], SUN_KEY[2], sunK)]);
-    const st = spireState(i, t, sunK);
-    g.save();
-    g.beginPath();
-    g.rect(-1e4, -1e4, 3e4, ground + 1e4);
-    g.clip();
-    drawRig(g, { at, view: vw, key, px }, st, theme, sprites!);
-    g.restore();
-    // Anchored deep in the rock: a broken mound round its foot, glowing seams where it holds.
-    project(v, s.X, 0, s.Z, P);
-    const bx = P[0];
-    const rr = RIG_RADIUS * px * 1.55;
-    const green = smooth(bloomAt(s.X, s.Z), bloomAt(s.X, s.Z) + 0.6, t);
-    const R2 = rng(i * 31 + 7);
-    g.fillStyle = `rgb(${lerp(34, 22, green) | 0} ${lerp(24, 70, green) | 0} ${lerp(22, 50, green) | 0})`;
-    g.beginPath();
-    g.moveTo(bx - rr * 1.6, ground + 1);
-    for (let k = 0; k <= 10; k++) {
-      const a = k / 10;
-      const hgt = Math.sin(a * Math.PI) * rr * (0.22 + 0.16 * R2());
-      g.lineTo(bx - rr * 1.6 + a * rr * 3.2, ground - hgt);
+  // ---- Heat shimmer: a piece of the picture redrawn in thin wavering strips.
+  function shimmer(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, amp: number, t: number, seed: number): void {
+    const cv = g.canvas as HTMLCanvasElement;
+    const m = g.getTransform();
+    const sxk = m.a;
+    const syk = m.d;
+    const dx0 = Math.max(0, Math.floor(x * sxk));
+    const dy0 = Math.max(0, Math.floor(y * syk));
+    const dx1 = Math.min(cv.width, Math.ceil((x + w) * sxk));
+    const dy1 = Math.min(cv.height, Math.ceil((y + h) * syk));
+    const dw = dx1 - dx0;
+    const dh = dy1 - dy0;
+    if (dw < 4 || dh < 4) return;
+    if (!shim || shim.width < dw || shim.height < dh) {
+      shim = document.createElement("canvas");
+      shim.width = Math.max(dw, shim?.width ?? 0);
+      shim.height = Math.max(dh, shim?.height ?? 0);
     }
-    g.lineTo(bx + rr * 1.6, ground + 1);
-    g.closePath();
-    g.fill();
+    const sg = shim.getContext("2d")!;
+    sg.globalCompositeOperation = "copy";
+    sg.drawImage(cv, dx0, dy0, dw, dh, 0, 0, dw, dh);
     g.save();
-    g.globalCompositeOperation = "lighter";
-    const pw = st.power * (0.75 + 0.25 * Math.sin(t * 3.1 + i));
-    g.strokeStyle = `rgb(${theme.primary} / ${(0.55 * pw).toFixed(3)})`;
-    g.lineWidth = Math.max(0.8, px * 0.006);
-    g.beginPath();
-    g.ellipse(bx, ground - rr * 0.12, rr * 0.75, Math.max(0.8, rr * 0.14), 0, 0, TAU);
-    g.stroke();
-    // Seams of light out into the ground.
-    g.strokeStyle = `rgb(100 255 214 / ${(0.4 * pw).toFixed(3)})`;
-    g.beginPath();
-    for (let k = 0; k < 6; k++) {
-      const a = (k / 6) * TAU + i;
-      const len = rr * (1.4 + R2() * 1.6);
-      g.moveTo(bx + Math.cos(a) * rr * 0.7, ground + Math.sin(a) * rr * 0.1);
-      g.lineTo(bx + Math.cos(a) * len, ground + Math.sin(a) * len * 0.1 + rr * 0.03);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    const step = Math.max(2, Math.round(2 * syk));
+    for (let yy = 0; yy < dh; yy += step) {
+      const k = Math.sin((Math.PI * yy) / dh);
+      const off = amp * sxk * k * Math.sin(yy / syk / 2.6 + t * 13 + seed) * (0.6 + 0.4 * Math.sin(yy / syk / 9 - t * 5 + seed));
+      g.drawImage(shim, 0, yy, dw, step, dx0 + off, dy0 + yy, dw, step);
     }
-    g.stroke();
     g.restore();
   }
 
-  // ---- The far pylons (I17): thin beams rising from beyond the horizon, behind the far mountains.
-  function drawFarBeams(g: CanvasRenderingContext2D, v: View, t: number, day: number): void {
-    if (!farFire.length) return;
-    const unitW = clamp(v.f * 0.0017, 0.7, 1.8);
+  // ---- A spire: a brutalist megastructure standing in the rock.
+  interface SpireLook {
+    power: number;
+    open: number;
+    heat: number;
+    emit: number;
+  }
+  function spireLook(i: number, t: number, vapour: number): SpireLook {
+    const a = FLARE_AT[i]!;
+    return {
+      power: smooth(a - 0.5, a + 0.1, t),
+      open: lerp(0.28, 1, easeOut(seg(t, a, a + FLARE))),
+      heat: smooth(fire[i]! - 0.2, fire[i]! + 1.2, t) * (1 - 0.45 * vapour),
+      emit: smooth(fire[i]! - 0.25, fire[i]! + 0.05, t),
+    };
+  }
+
+  /** The strobes of a spire: stark short flashes, faster while it powers up. */
+  function strobes(g: CanvasRenderingContext2D, bx: number, gy: number, H: number, t: number, power: number, seed: number, dim: number, only?: number): void {
+    if (power <= 0.01) return;
+    const base = Math.max(2.2, H * 0.03);
     g.save();
     g.globalCompositeOperation = "lighter";
-    g.lineCap = "round";
-    for (let k = 0; k < farFire.length; k++) {
+    for (let j = 0; j < STROBES.length; j++) {
+      if (only !== undefined && j !== only) continue;
+      const [sxr, hh] = STROBES[j]!;
+      for (const side of sxr ? [-1, 1] : [0]) {
+        const ph = hash(seed, j, side + 2);
+        const period = power < 0.95 ? 0.45 : 1.25 + 0.3 * hash(seed, j, 7);
+        const x = (((t + ph * period) / period) % 1 + 1) % 1;
+        // A double flash: the second a little after the first.
+        const fl = Math.exp(-((x / 0.018) ** 2)) + 0.6 * Math.exp(-(((x - 0.09) / 0.016) ** 2));
+        const px = bx + side * sxr * H;
+        const py = gy - hh * H;
+        const a = power * (0.22 + 0.9 * fl) * dim;
+        if (a < 0.02) continue;
+        const r = base * (0.6 + 0.9 * fl);
+        g.globalAlpha = clamp(a);
+        g.drawImage(tex!.strobe, px - r * 2, py - r * 2, r * 4, r * 4);
+        if (fl > 0.1) {
+          g.fillStyle = `rgb(255 214 150 / ${clamp(fl * 0.5 * dim).toFixed(3)})`;
+          g.fillRect(px - r * 5, py - 0.5, r * 10, 1);
+        }
+      }
+    }
+    g.restore();
+  }
+
+  function drawSpire(g: CanvasRenderingContext2D, v: View, i: number, t: number, sunK: number, fog: Fog, vapour: number, quality: number): void {
+    const s = SPIRE_PLACES[i]!;
+    const top = (1 - BURY) * s.L;
+    project(v, s.X, 0, s.Z, P);
+    const bx = P[0];
+    const gy = P[1];
+    const H = (v.f * top) / s.Z;
+    if (bx < -H || bx > v.w + H) return;
+    const look = spireLook(i, t, vapour);
+    const a = fogA(s.Z, fog) * 0.92;
+    const fogC = fog.rgb;
+    const tint = (c: C3) => mix(c, fogC, a);
+    // The light: the storm's dim ochre from all round, then the hard cold sun from the left.
+    const lit = add(mix(GUN.lit, [74, 58, 46], 0.5 * fog.storm), [70, 76, 82], sunK);
+    const mid = add(GUN.mid, [10, 12, 14], sunK);
+    const X = (hw: number) => hw * H;
+    // Its shadow and the broken rock round its foot.
+    g.fillStyle = rgba(tint([8, 8, 9]), 0.6);
+    g.beginPath();
+    g.ellipse(bx + H * 0.08, gy + 1, H * 0.42, Math.max(1, H * 0.02), 0, 0, TAU);
+    g.fill();
+    // The tiers.
+    for (const [k, [h0, h1, w0, w1]] of TIERS.entries()) {
+      const y0 = gy - h0 * H;
+      const y1 = gy - h1 * H;
+      const xl0 = bx - X(w0);
+      const xr0 = bx + X(w0);
+      const xl1 = bx - X(w1);
+      const xr1 = bx + X(w1);
+      const grd = g.createLinearGradient(Math.min(xl0, xl1), 0, Math.max(xr0, xr1), 0);
+      grd.addColorStop(0, rgba(tint(lit)));
+      grd.addColorStop(0.18, rgba(tint(mix(lit, mid, 0.6))));
+      grd.addColorStop(0.55, rgba(tint(mid)));
+      grd.addColorStop(1, rgba(tint(GUN.dark)));
+      g.fillStyle = grd;
+      g.beginPath();
+      g.moveTo(xl0, y0 + 0.5);
+      g.lineTo(xl1, y1);
+      g.lineTo(xr1, y1);
+      g.lineTo(xr0, y0 + 0.5);
+      g.closePath();
+      g.fill();
+      // The underside of an overhanging tier is in deep shade.
+      const next = TIERS[k + 1];
+      if (next && next[2] < w1) {
+        g.fillStyle = rgba(tint([6, 7, 8]), 0.75);
+        g.fillRect(xl1, y1, xr1 - xl1, Math.max(0.6, H * 0.004));
+      }
+      const tierH = y0 - y1;
+      if (H > 40) {
+        // Panel seams: courses across, pilasters up.
+        g.strokeStyle = rgba(tint([4, 5, 6]), 0.4);
+        g.lineWidth = 0.7;
+        g.beginPath();
+        const courses = Math.floor(tierH / Math.max(3, H * 0.028));
+        for (let c = 1; c < courses; c++) {
+          const yy = y0 - (tierH * c) / courses;
+          const ww = X(lerp(w0, w1, c / courses));
+          g.moveTo(bx - ww, yy);
+          g.lineTo(bx + ww, yy);
+        }
+        for (const q of [-0.8, -0.42, 0.42, 0.8]) {
+          g.moveTo(bx + q * X(w0), y0);
+          g.lineTo(bx + q * X(w1), y1);
+        }
+        g.stroke();
+      }
+      // A cold rim of sunlight on the lit edge; a hard top edge.
+      if (sunK > 0.02) {
+        g.strokeStyle = rgba(tint([214, 226, 236]), 0.45 * sunK);
+        g.lineWidth = Math.max(0.7, H * 0.003);
+        g.beginPath();
+        g.moveTo(xl0 + 0.4, y0);
+        g.lineTo(xl1 + 0.4, y1);
+        g.lineTo(bx, y1);
+        g.stroke();
+      }
+    }
+    // Buttresses at the foot of the base block.
+    for (const side of [-1, 1]) {
+      g.fillStyle = rgba(tint(side < 0 ? mix(lit, mid, 0.4) : GUN.dark));
+      g.beginPath();
+      g.moveTo(bx + side * X(0.152), gy - 0.062 * H);
+      g.lineTo(bx + side * X(0.22), gy - 0.062 * H);
+      g.lineTo(bx + side * X(0.136), gy - 0.25 * H);
+      g.closePath();
+      g.fill();
+    }
+    // Conduits up the shaft; masts on the crown.
+    if (H > 24) {
+      g.strokeStyle = rgba(tint(mix(GUN.dark, mid, 0.45)));
+      g.lineWidth = Math.max(0.7, H * 0.009);
+      g.beginPath();
+      for (const q of [-0.068, 0.068]) {
+        g.moveTo(bx + X(q * 1.7), gy - 0.062 * H);
+        g.lineTo(bx + X(q * 1.05), gy - 0.64 * H);
+      }
+      g.stroke();
+      g.lineWidth = Math.max(0.6, H * 0.004);
+      g.beginPath();
+      for (const [q, hh] of [
+        [-0.1, 1.07],
+        [0.105, 1.12],
+        [0.02, 1.04],
+      ] as const) {
+        g.moveTo(bx + X(q), gy - 0.915 * H);
+        g.lineTo(bx + X(q), gy - hh * H);
+      }
+      g.stroke();
+    }
+    // The Company's band round the collar.
+    g.fillStyle = `rgb(${theme.primary} / ${(0.32 * (1 - a)).toFixed(3)})`;
+    g.fillRect(bx - X(0.126), gy - 0.672 * H, X(0.252), Math.max(0.7, H * 0.01));
+    // The radiator fins: two banks of slabs that slide out, glowing dull hot between them.
+    const finOut = FINS.out * look.open;
+    const fy0 = gy - FINS.to * H;
+    const fy1 = gy - FINS.from * H;
+    g.save();
+    g.globalCompositeOperation = "lighter";
+    for (const side of [-1, 1]) {
+      const e = bx + side * X(0.096);
+      const grd = g.createLinearGradient(e, 0, e + side * X(finOut + 0.01), 0);
+      const hk = look.heat * (1 - a * 0.75);
+      grd.addColorStop(0, `rgb(255 110 44 / ${(0.4 * hk).toFixed(3)})`);
+      grd.addColorStop(1, `rgb(200 60 24 / ${(0.06 * hk).toFixed(3)})`);
+      g.fillStyle = grd;
+      g.fillRect(Math.min(e, e + side * X(finOut)), fy0, Math.abs(X(finOut)), fy1 - fy0);
+    }
+    g.restore();
+    const finT = Math.max(0.7, H * 0.011);
+    for (let n = 0; n < FINS.n; n++) {
+      const yy = lerp(fy1, fy0, n / (FINS.n - 1));
+      for (const side of [-1, 1]) {
+        const e = bx + side * X(0.094);
+        const tipX = e + side * X(finOut);
+        g.fillStyle = rgba(tint(side < 0 ? mix(lit, mid, 0.5) : mix(GUN.dark, mid, 0.3)));
+        g.beginPath();
+        g.moveTo(e, yy - finT * 0.5);
+        g.lineTo(tipX, yy - finT * 0.2 + H * 0.008 * look.open);
+        g.lineTo(tipX, yy + finT * 0.6 + H * 0.008 * look.open);
+        g.lineTo(e, yy + finT * 0.5);
+        g.closePath();
+        g.fill();
+        if (sunK > 0.05) {
+          g.strokeStyle = rgba(tint([200, 212, 222]), 0.3 * sunK);
+          g.lineWidth = 0.6;
+          g.beginPath();
+          g.moveTo(e, yy - finT * 0.5);
+          g.lineTo(tipX, yy - finT * 0.2 + H * 0.008 * look.open);
+          g.stroke();
+        }
+      }
+    }
+    // Vents and slit windows in the base, lit amber from inside.
+    const slitW = X(0.012);
+    if (slitW > 0.5) {
+      g.fillStyle = `rgb(255 158 70 / ${(0.55 * look.power * (1 - a * 0.8)).toFixed(3)})`;
+      for (const hh of [0.11, 0.17, 0.23]) {
+        const ww = lerp(0.14, 0.13, hh / 0.3);
+        for (let q = -ww + 0.02; q < ww - 0.02; q += 0.032) g.fillRect(bx + X(q), gy - hh * H, slitW, Math.max(0.5, H * 0.005));
+      }
+    }
+    // Amber glow under the plinth, the rock round its foot lit by it.
+    g.save();
+    g.globalCompositeOperation = "lighter";
+    const ug = g.createRadialGradient(bx, gy, 0, bx, gy, H * 0.45);
+    ug.addColorStop(0, `rgb(255 150 70 / ${(0.22 * look.power * (1 - a * 0.6)).toFixed(3)})`);
+    ug.addColorStop(1, "rgb(255 150 70 / 0)");
+    g.fillStyle = ug;
+    g.fillRect(bx - H * 0.45, gy - H * 0.45, H * 0.9, H * 0.5);
+    // The emitter's mouth, white hot while it fires.
+    if (look.emit > 0.01) {
+      const r = Math.max(2, X(0.055)) * (1 + 0.2 * Math.sin(t * 9 + i));
+      g.globalAlpha = look.emit * (1 - a * 0.5);
+      g.drawImage(tex!.ion, bx - r * 2, gy - H - r * 2, r * 4, r * 4);
+    }
+    g.restore();
+    strobes(g, bx, gy, H, t, look.power, i * 13 + 5, 1 - a * 0.55);
+    // Heat shimmer over the emitter and the hot fins.
+    if (quality >= 0.6 && H > 30 && look.power > 0.05) {
+      shimmer(g, bx - X(0.16), gy - H * 1.34, X(0.32), H * 0.34, 1.3 * look.power, t, i * 3);
+      if (look.heat > 0.05) for (const side of [-1, 1]) shimmer(g, bx + (side < 0 ? -X(0.1 + finOut + 0.03) : X(0.1)), fy0 - H * 0.03, X(finOut + 0.03), fy1 - fy0 + H * 0.06, 0.8 * look.heat, t, i * 7 + side);
+    }
+  }
+
+  /** The far spires (I17): plain hazy silhouettes far off on the plain, strobes on their crowns. */
+  function drawFarSpires(g: CanvasRenderingContext2D, v: View, t: number, fog: Fog, sunK: number): void {
+    for (let k = 0; k < farN; k++) {
+      const p = FAR_PLACES[k]!;
+      project(v, p.u * p.Z, 0, p.Z, P);
+      const bx = P[0];
+      const gy = P[1];
+      const H = (v.f * FAR_H) / p.Z;
+      if (bx < -H || bx > v.w + H) continue;
+      const a = Math.min(0.9, fogA(p.Z, fog));
+      const c = mix(add(GUN.mid, [16, 18, 20], sunK), fog.rgb, a);
+      g.fillStyle = rgba(c);
+      g.beginPath();
+      for (const [h0, h1, w0, w1] of TIERS) {
+        g.rect(bx - w0 * H, gy - h1 * H, w0 * H * 2, (h1 - h0) * H + 0.5);
+        if (w1 < w0) g.rect(bx - w1 * H, gy - h1 * H, w1 * H * 2, 0.5);
+      }
+      g.fill();
+      const since = t - farFire[k]!;
+      strobes(g, bx, gy, H, t, since > -0.6 ? smooth(-0.6, 0, since) : 0, 100 + k, 0.7, 4);
+    }
+  }
+
+  // ---- An ion plume: a wide, diffused column of glowing gas from the emitter up into the storm.
+  function plume(g: CanvasRenderingContext2D, x: number, yA: number, yDeck: number, yTop: number, w0: number, since: number, power: number, vapour: number, t: number, seed: number, dim: number): void {
+    if (since <= 0) return;
+    const T = tex!;
+    const grow = easeOut(clamp(since / CLIMB));
+    const yHead = grow < 1 ? lerp(yA, yDeck, grow) : Math.min(yDeck, yTop);
+    const span = yA - yHead;
+    if (span < 2) return;
+    const ion = power * (1 - 0.6 * vapour) * dim;
+    // Many soft, overlapping puffs, so the column reads as one body of gas.
+    const N = Math.max(10, Math.min(64, Math.round(span / Math.max(2, w0 * 0.45))));
+    // Steady vapour, drifting off on the wind (Acts 3 and 4).
+    if (vapour > 0.01) {
+      g.save();
+      for (let k = 0; k < N; k++) {
+        const s = k / (N - 1);
+        const y = lerp(yA, yA - Math.min(span * 0.9, w0 * 34), s);
+        const r = w0 * (1.1 + 3.2 * s);
+        const dx = s * s * w0 * 26 + (nf(s * 6 - t * 0.5 + seed * 5, seed * 3 + t * 0.15) - 0.5) * w0 * 3;
+        g.globalAlpha = clamp(0.42 * vapour * (1 - 0.7 * s) * dim);
+        g.drawImage(T.puffVapour[k % 2]!, x + dx - r, y - r, r * 2, r * 2);
+      }
+      g.restore();
+    }
+    g.save();
+    g.globalCompositeOperation = "screen";
+    // The air round it lit by it: a long soft glow.
+    g.globalAlpha = clamp(0.22 * ion);
+    g.drawImage(T.cold, x - w0 * 6, yHead - w0 * 2, w0 * 12, span + w0 * 4);
+    for (let k = 0; k < N; k++) {
+      const s = k / (N - 1);
+      const y = lerp(yA, yHead, s);
+      const r = w0 * (1.3 + 3.6 * s) * (0.85 + 0.3 * nf(k * 3.1 + seed, t * 0.6 + seed));
+      // Above the storm's deck it thins out into the clear sky.
+      const thin = y < yDeck ? 1 - 0.75 * clamp((yDeck - y) / Math.max(1, yDeck - yHead)) : 1;
+      const dx = (nf(s * 5 - t * 0.8 + seed * 7, seed * 3 + t * 0.25) - 0.5) * w0 * 4.5 * s + vapour * s * s * w0 * 8;
+      const hot = k < 3 && vapour < 0.9;
+      g.globalAlpha = clamp((hot ? 0.24 : 0.12) * ion * (1 - 0.45 * s) * thin);
+      g.drawImage(hot ? T.puffHot : T.puffIon[k % 3]!, x + dx - r, y - r, r * 2, r * 2);
+    }
+    // The hard core: a thin bright column, wavering.
+    const core = ion * (1 - 0.5 * vapour);
+    if (core > 0.02) {
+      g.lineCap = "round";
+      for (const [wide, al] of [
+        [1.3, 0.16],
+        [0.34, 0.5],
+      ] as const) {
+        const grd = g.createLinearGradient(0, yA, 0, yHead);
+        grd.addColorStop(0, `rgb(240 244 250 / ${clamp(al * core).toFixed(3)})`);
+        grd.addColorStop(0.7, `rgb(206 220 236 / ${clamp(al * core * 0.6).toFixed(3)})`);
+        grd.addColorStop(1, "rgb(206 220 236 / 0)");
+        g.strokeStyle = grd;
+        g.lineWidth = Math.max(0.8, w0 * wide);
+        g.beginPath();
+        g.moveTo(x, yA);
+        const steps = 8;
+        for (let q = 1; q <= steps; q++) {
+          const s = q / steps;
+          g.lineTo(x + (nf(s * 4 - t * 1.2 + seed, seed + 40) - 0.5) * w0 * 1.6 * s, lerp(yA, yHead, s));
+        }
+        g.stroke();
+      }
+    }
+    // Where it punches into the storm: a broad glow under the deck, and a shock ring as it first hits.
+    if (grow >= 1) {
+      const hit = since - CLIMB;
+      const rx = w0 * 16 * (0.55 + 0.45 * ease(seg(hit, 0, 1.6)));
+      const ry = rx * 0.17;
+      const gl = g.createRadialGradient(x, yDeck, 0, x, yDeck, rx);
+      gl.addColorStop(0, `rgb(200 214 230 / ${clamp(0.32 * ion).toFixed(3)})`);
+      gl.addColorStop(1, "rgb(200 214 230 / 0)");
+      g.save();
+      g.translate(x, yDeck);
+      g.scale(1, ry / rx);
+      g.translate(-x, -yDeck);
+      g.fillStyle = gl;
+      g.fillRect(x - rx, yDeck - rx, rx * 2, rx * 2);
+      if (hit < 1.2) {
+        const k = hit / 1.2;
+        g.strokeStyle = `rgb(220 230 242 / ${(0.35 * (1 - k) * dim).toFixed(3)})`;
+        g.lineWidth = Math.max(1, w0 * 0.5) * (ry / rx) ** -0.5;
+        g.beginPath();
+        g.arc(x, yDeck, rx * (0.3 + 1.2 * easeOut(k)), 0, TAU);
+        g.stroke();
+      }
+      g.restore();
+    }
+    g.restore();
+  }
+
+  function drawPlumes(g: CanvasRenderingContext2D, v: View, t: number, fog: Fog, vapour: number): void {
+    for (let i = 0; i < 3; i++) {
+      const s = SPIRE_PLACES[i]!;
+      const since = t - fire[i]!;
+      if (since <= 0) continue;
+      const y0w = (1 - BURY) * s.L;
+      const above = since > CLIMB ? (1 - sky.coverOver(i, t)) * 10 : 0;
+      const x = project(v, s.X, y0w, s.Z, P)[0];
+      const yA = P[1];
+      const yDeck = project(v, s.X, CEIL, s.Z, P)[1];
+      const yTop = project(v, s.X, CEIL + above, s.Z, P)[1];
+      const w0 = clamp((v.f * 0.13) / s.Z, 3, 36);
+      const power = (1 + 0.8 * Math.exp(-since * 2)) * (0.92 + 0.08 * Math.sin(t * 6 + i * 2));
+      plume(g, x, yA, yDeck, yTop, w0, since, power, vapour, t, i * 11 + 3, 1 - fogA(s.Z, fog) * 0.45);
+    }
+    for (let k = 0; k < farN; k++) {
       const since = t - farFire[k]!;
       if (since <= 0) continue;
       const p = FAR_PLACES[k]!;
       const X = p.u * p.Z;
-      const x = project(v, X, 0, p.Z, P)[0];
-      if (x < -40 || x > v.w + 40) continue;
+      const x = project(v, X, FAR_H, p.Z, P)[0];
+      if (x < -60 || x > v.w + 60) continue;
       const yA = P[1];
       const yDeck = project(v, X, CEIL, p.Z, P)[1];
-      const grow = easeOut(clamp(since / 0.7));
-      const yTop = lerp(yA, Math.min(-10, yDeck - v.f), grow);
-      const power = (1 + 1.6 * Math.exp(-since * 3)) * (0.9 + 0.1 * Math.sin(t * 6 + k * 1.9)) * (1 - 0.35 * day);
-      for (const [wide, rgb, al] of [
-        [6, "30 190 150", 0.06],
-        [2.6, "60 230 190", 0.14],
-        [1.1, "150 255 230", 0.42],
-        [0.45, "240 255 250", 0.8],
-      ] as const) {
-        g.lineWidth = wide * unitW;
-        const grd = g.createLinearGradient(0, yA, 0, yTop);
-        grd.addColorStop(0, `rgb(${rgb} / ${clamp(al * power).toFixed(3)})`);
-        grd.addColorStop(0.35, `rgb(${rgb} / ${clamp(al * power * 0.7).toFixed(3)})`);
-        grd.addColorStop(1, `rgb(${rgb} / 0)`);
-        g.strokeStyle = grd;
-        g.beginPath();
-        g.moveTo(x, yA);
-        g.lineTo(x, yTop);
-        g.stroke();
-      }
-      // Where it lights the far edge of the cloud deck.
-      if (yTop < yDeck) {
-        const rx = v.f * 0.05;
-        const ry = Math.max(2, v.f * 0.01);
-        g.save();
-        g.translate(x, yDeck);
-        g.scale(1, ry / rx);
-        const gl = g.createRadialGradient(0, 0, 0, 0, 0, rx);
-        gl.addColorStop(0, `rgb(120 255 214 / ${clamp(0.3 * power * (1 - 0.6 * day)).toFixed(3)})`);
-        gl.addColorStop(1, "rgb(120 255 214 / 0)");
-        g.fillStyle = gl;
-        g.fillRect(-rx, -rx, rx * 2, rx * 2);
-        g.restore();
-      }
+      // Up through the storm, and on into the sky as it clears.
+      const yTop = yDeck - v.f * 0.6 * smooth(5, 9, t);
+      plume(g, x, yA, Math.min(yDeck, yA - 30), yTop, clamp((v.f * 0.14) / p.Z, 1.2, 6), since, 0.85, vapour, t, 50 + k * 7, 0.75);
     }
-    g.restore();
   }
 
-  // ---- A beam: from the emitter straight up through the deck, and on into the clear sky.
-  function drawBeam(g: CanvasRenderingContext2D, v: View, i: number, t: number): void {
-    const s = SPIRE_PLACES[i]!;
-    const since = t - fire[i]!;
-    if (since <= 0) return;
-    const y0w = (1 - BURY) * s.L;
-    const grow = easeOut(clamp(since / CLIMB));
-    const deck = y0w + (CEIL - y0w) * grow;
-    const above = grow >= 1 ? (1 - sky.coverOver(i, t)) * 10 : 0;
-    const x = project(v, s.X, y0w, s.Z, P)[0];
-    const yA = P[1];
-    const yB = project(v, s.X, deck, s.Z, P)[1];
-    const yC = project(v, s.X, CEIL + above, s.Z, P)[1];
-    const unitW = clamp((v.f * 0.03) / s.Z, 1.2, 9);
-    const power = (1 + 1.3 * Math.exp(-since * 2.2)) * (0.9 + 0.1 * Math.sin(t * 7 + i * 2));
-    g.save();
-    g.globalCompositeOperation = "lighter";
-    g.lineCap = "round";
-    const layers = [
-      [7, "30 190 150", 0.08],
-      [3.2, "60 230 190", 0.18],
-      [1.4, "130 250 225", 0.45],
-      [0.5, "235 255 250", 0.95],
-    ] as const;
-    for (const [wide, rgb, al] of layers) {
-      g.lineWidth = wide * unitW;
-      const grd = g.createLinearGradient(0, yA, 0, yB);
-      grd.addColorStop(0, `rgb(${rgb} / ${clamp(al * power).toFixed(3)})`);
-      grd.addColorStop(1, `rgb(${rgb} / ${clamp(al * power * 0.75).toFixed(3)})`);
-      g.strokeStyle = grd;
-      g.beginPath();
-      g.moveTo(x, yA);
-      g.lineTo(x, yB);
-      g.stroke();
-      if (above > 0.05) {
-        const g2 = g.createLinearGradient(0, yB, 0, yC);
-        g2.addColorStop(0, `rgb(${rgb} / ${clamp(al * power * 0.75).toFixed(3)})`);
-        g2.addColorStop(1, `rgb(${rgb} / 0)`);
-        g.strokeStyle = g2;
-        g.beginPath();
-        g.moveTo(x, yB);
-        g.lineTo(x, yC);
-        g.stroke();
-      }
-    }
-    // Sparks of light running up it.
-    for (const m of motes[i]!) {
-      const k = (((t * m.sp + m.ph) % 1) + 1) % 1;
-      const y = lerp(yA, Math.min(yB, yA - 1), k);
-      const off = unitW * 1.2 * Math.sin(m.side + t * 3);
-      const r = unitW * 1.4 * (1 - k * 0.6);
-      g.globalAlpha = (1 - k) * 0.85;
-      g.drawImage(beamHalo!, x + off - r * 2, y - r * 2, r * 4, r * 4);
-    }
-    // The flash where it leaves the emitter, and where it meets the deck.
-    const burst = Math.exp(-since * 3.5);
-    if (burst > 0.02) {
-      const r = unitW * 18 * (0.6 + burst);
-      g.globalAlpha = burst;
-      g.drawImage(flare!, x - r, yA - r, r * 2, r * 2);
-    }
-    const hit = t - fire[i]! - CLIMB;
-    if (hit > 0 && hit < 1.6) {
-      const k = Math.exp(-hit * 2.2) * (1 - smooth(0.6, 1.6, hit) * 0.3);
-      const r = unitW * 12;
-      g.globalAlpha = k * 0.8;
-      g.drawImage(flare!, x - r * 1.2, yB - r * 0.35, r * 2.4, r * 0.7);
-    }
-    g.restore();
-  }
-
-  // ---- The flocks of sky creatures, gliding round the spires.
-  function drawFlocks(g: CanvasRenderingContext2D, v: View, t: number, sunK: number): void {
-    const show = smooth(FLOCKS_AT, FLOCKS_AT + 1.4, t);
-    if (show <= 0.01) return;
-    g.save();
-    g.lineCap = "round";
-    g.lineJoin = "round";
-    for (const [q, fl] of FLOCKS.entries()) {
-      const into = (1 - ease(seg(t, FLOCKS_AT + q * 0.3, FLOCKS_AT + 3.2 + q * 0.3))) * 3.2 * fl.from;
-      const a = fl.w * t + fl.ph;
-      const cX = fl.C[0]! + fl.A[0]! * Math.sin(a) + into;
-      const cY = fl.C[1]! + fl.A[1]! * Math.sin(2 * a);
-      const cZ = fl.C[2]! + fl.A[2]! * Math.cos(a);
-      // Which way it flies on the picture.
-      const dir = Math.sign(fl.w * fl.A[0]! * Math.cos(a) + (into ? -fl.from : 0)) || 1;
-      for (const [m, c] of flock[q]!.entries()) {
-        const X = cX - dir * c.dz * 2 + c.dx * 0.4;
-        const Y = cY + c.dy + 0.012 * Math.sin(t * 1.1 + m);
-        const Z = cZ + c.dx * 2;
-        project(v, X, Y, Z, P);
-        const span = (v.f * c.span) / Z;
-        if (span < 1.5 || P[0] < -30 || P[0] > v.w + 30) continue;
-        const flap = (0.3 + 0.7 * Math.pow(0.5 + 0.5 * Math.sin(t * 0.6 + m * 1.3 + q), 4)) * Math.sin(t * c.beat + c.ph);
-        const lift = span * 0.32 * flap;
-        const x = P[0];
-        const y = P[1];
-        g.globalAlpha = show;
-        g.strokeStyle = `rgb(${lerp(20, 40, sunK) | 0} ${lerp(26, 44, sunK) | 0} ${lerp(34, 56, sunK) | 0})`;
-        g.lineWidth = Math.max(0.8, span * 0.09);
-        g.beginPath();
-        g.moveTo(x - span / 2, y - lift);
-        g.quadraticCurveTo(x - span * 0.22, y - span * 0.14 - lift * 0.3, x, y);
-        g.quadraticCurveTo(x + span * 0.22, y - span * 0.14 - lift * 0.3, x + span / 2, y - lift);
-        g.stroke();
-        // A long tail with a glowing tip.
-        g.lineWidth = Math.max(0.6, span * 0.04);
-        g.beginPath();
-        g.moveTo(x, y);
-        g.quadraticCurveTo(x - dir * span * 0.3, y + span * 0.05, x - dir * span * 0.55, y + span * 0.02 * Math.sin(t * 3 + m));
-        g.stroke();
-        g.globalCompositeOperation = "lighter";
-        g.globalAlpha = show * (0.6 + 0.4 * Math.sin(t * 2 + m));
-        const r = Math.max(1.2, span * 0.12);
-        g.drawImage(glows[0]!, x - dir * span * 0.55 - r * 2, y - r * 2, r * 4, r * 4);
-        g.globalCompositeOperation = "source-over";
-      }
-    }
-    g.restore();
-  }
-
-  // ---- The far volcano's smoke: it thins and dies away as the world heals.
-  function drawPlume(g: CanvasRenderingContext2D, v: View, t: number, Z: number): void {
+  // ---- The far volcano's smoke: dark, it thins and dies away as the air clears.
+  function drawSmoke(g: CanvasRenderingContext2D, v: View, t: number, Z: number): void {
     const k = 1 - smooth(5.2, 8.6, t);
     if (k <= 0.01) return;
     const x0 = v.cx + v.f * (VOLCANO_U - v.camX / Z - v.pan);
@@ -654,84 +930,203 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
     g.save();
     for (let j = 0; j < 16; j++) {
       const ph = (((t * 0.22 + j / 16) % 1) + 1) % 1;
-      const x = x0 + s * (ph * 9 + 1.2 * Math.sin(j * 2.1 + t * 0.3) * ph);
-      const y = y0 - s * (ph * 7.5 + 0.3);
-      const r = s * (0.7 + ph * 3.2);
-      const a = k * 0.5 * Math.sin(Math.PI * Math.min(1, ph * 1.15)) * (1 - ph * 0.4);
-      const grd = g.createRadialGradient(x, y, 0, x, y, r);
-      grd.addColorStop(0, `rgb(50 34 32 / ${a.toFixed(3)})`);
-      grd.addColorStop(1, "rgb(50 34 32 / 0)");
-      g.fillStyle = grd;
-      g.fillRect(x - r, y - r, r * 2, r * 2);
+      const x = x0 + s * (ph * 11 + 1.2 * Math.sin(j * 2.1 + t * 0.3) * ph);
+      const y = y0 - s * (ph * 7 + 0.3);
+      const r = s * (0.7 + ph * 3.4);
+      g.globalAlpha = clamp(k * 0.5 * Math.sin(Math.PI * Math.min(1, ph * 1.15)) * (1 - ph * 0.4));
+      g.drawImage(tex!.puffSmoke, x - r, y - r, r * 2, r * 2);
     }
     g.restore();
   }
 
-  // ---- The air: ash blowing (the storm), rain and bright mist (the cleansing), sunlight.
-  function drawAir(g: CanvasRenderingContext2D, v: View, t: number, sunK: number, day: number): void {
-    const { w, h } = v;
-    const ash = 1 - smooth(3.2, 4.8, t);
-    if (ash > 0.01) {
+  /** A band of streaks across the picture (repeating), moved sideways by `off` px. */
+  function band(g: CanvasRenderingContext2D, img: HTMLCanvasElement, w: number, y: number, hgt: number, tw: number, off: number, alpha: number): void {
+    if (alpha < 0.01 || hgt < 2) return;
+    const x0 = ((off % tw) + tw) % tw - tw;
+    g.globalAlpha = clamp(alpha);
+    for (let x = x0; x < w; x += tw) g.drawImage(img, x, y, tw + 0.5, hgt);
+    g.globalAlpha = 1;
+  }
+
+  // ---- The air: the howling dust storm, then condensation rain and the mist on the valley floor.
+  function drawAir(g: CanvasRenderingContext2D, v: View, t: number, fog: Fog): void {
+    const { w, h, f, hy } = v;
+    const T = tex!;
+    const st = fog.storm;
+    if (st > 0.01) {
       g.save();
-      g.strokeStyle = "rgb(196 136 96)";
+      // A veil of dust over everything; bands of it torn sideways at three depths.
+      g.fillStyle = rgba(STORM_FOG, 0.16 * st);
+      g.fillRect(0, 0, w, h);
+      band(g, T.dust, w, hy - f * 0.2, f * 0.32, w * 0.9, t * w * 0.12, 0.6 * st);
+      band(g, T.dust, w, hy - f * 0.1, f * 0.4, w * 1.4, t * w * 0.3 + w * 0.3, 0.5 * st);
+      band(g, T.dust, w, hy - f * 0.02, f * 0.7, w * 2.2, t * w * 0.62 + w * 0.7, 0.38 * st);
+      g.strokeStyle = "rgb(190 140 98)";
       g.lineCap = "round";
-      for (const d of dust) {
-        const x = ((((d.x + t * d.sp) % 1.2) + 1.2) % 1.2) * w * 1.1 - w * 0.1;
-        const y = d.y * h + Math.sin(t * 0.8 + d.x * 9) * 6;
-        g.globalAlpha = 0.22 * d.z * ash;
-        g.lineWidth = 0.6 + d.z;
+      for (const d of streaks) {
+        const x = ((((d.x + t * d.sp) % 1.3) + 1.3) % 1.3) * w * 1.1 - w * 0.15;
+        const y = d.y * h + Math.sin(t * 0.9 + d.x * 9) * 5;
+        g.globalAlpha = 0.2 * d.z * st;
+        g.lineWidth = 0.5 + d.z * 0.9;
         g.beginPath();
         g.moveTo(x, y);
-        g.lineTo(x - d.len * d.z, y + d.len * 0.08);
+        g.lineTo(x - d.len * d.z, y + d.len * 0.05);
         g.stroke();
       }
       g.restore();
     }
-    // Mist over the valley floor: amber dust haze, then bright cool mist, then a morning veil.
-    const mist = 0.12 + 0.2 * smooth(3.8, 5.2, t) * (1 - smooth(7.6, 10, t)) - 0.04 * day;
-    const mc = mixRgb(mixRgb("160 120 96", "226 242 255", smooth(3.6, 5.4, t)), "255 226 180", 0.3 * sunK);
-    g.save();
-    for (const b of mistBands) {
-      const u = ((((b.u + t * b.sp) % 3) + 4.5) % 3) - 1.5;
-      const x = v.cx + v.f * (u - v.camX / b.Z - v.pan);
-      const y = v.hy + (v.f * (HC - b.Y)) / b.Z;
-      const rx = v.f * b.wide;
-      const ry = Math.max(4, (v.f * 0.12) / b.Z);
+    // Condensation mist hugging the valley floor and the canyon.
+    const mist = smooth(5.4, 8.2, t) * (1 - 0.4 * smooth(10.5, 14, t));
+    if (mist > 0.01) {
       g.save();
-      g.translate(x, y);
-      g.scale(1, ry / rx);
-      const grd = g.createRadialGradient(0, 0, 0, 0, 0, rx);
-      grd.addColorStop(0, `rgb(${mc} / ${clamp(mist).toFixed(3)})`);
-      grd.addColorStop(1, `rgb(${mc} / 0)`);
-      g.fillStyle = grd;
-      g.fillRect(-rx, -rx, rx * 2, rx * 2);
+      band(g, T.mist, w, hy - f * 0.02, f * 0.07, w * 1.2, (t - 5) * w * 0.012, 0.75 * mist);
+      band(g, T.mist, w, hy + f * 0.01, f * 0.13, w * 1.7, -(t - 5) * w * 0.018 + w * 0.4, 0.55 * mist);
+      band(g, T.mist, w, hy + f * 0.07, f * 0.22, w * 2.4, (t - 5) * w * 0.025 + w * 0.9, 0.3 * mist);
+      for (const b of mistBands) {
+        const u = ((((b.u + t * b.sp) % 3) + 4.5) % 3) - 1.5;
+        const x = v.cx + v.f * (u - v.camX / b.Z - v.pan);
+        const y = v.hy + (v.f * (HC - b.Y)) / b.Z;
+        const rx = v.f * b.wide;
+        const ry = Math.max(3, (v.f * 0.06) / b.Z);
+        g.globalAlpha = clamp(0.35 * mist);
+        g.drawImage(T.puffVapour[0]!, x - rx, y - ry, rx * 2, ry * 2);
+      }
       g.restore();
     }
-    g.restore();
     // Rain.
     const rainK = smooth(RAIN[0], RAIN[1], t) * (1 - smooth(RAIN[1] + 1.7, RAIN[2], t));
     if (rainK > 0.01) {
       g.save();
-      g.lineCap = "round";
-      for (const gold of [false, true]) {
-        g.strokeStyle = gold ? `rgb(255 226 170 / ${(0.45 * rainK * sunK).toFixed(3)})` : `rgb(206 226 255 / ${(0.3 * rainK).toFixed(3)})`;
-        g.lineWidth = gold ? 1.1 : 0.9;
-        g.beginPath();
-        for (const d of rain) {
-          if (d.gold !== gold) continue;
-          const y = ((((d.ph + t * d.sp) % 1) + 1) % 1) * h * 1.15 - h * 0.075;
-          const x = d.x * (w + h * 0.3) - h * 0.15 + y * 0.14;
-          const len = d.len * h * d.z;
-          g.moveTo(x, y);
-          g.lineTo(x - len * 0.14, y - len);
-        }
-        g.stroke();
+      g.lineCap = "butt";
+      g.strokeStyle = `rgb(186 200 212 / ${(0.22 * rainK).toFixed(3)})`;
+      g.lineWidth = 0.8;
+      g.beginPath();
+      for (const d of rain) {
+        const y = ((((d.ph + t * d.sp) % 1) + 1) % 1) * h * 1.15 - h * 0.075;
+        const x = d.x * (w + h * 0.3) - h * 0.15 + y * 0.18;
+        const len = d.len * h * d.z;
+        g.moveTo(x, y);
+        g.lineTo(x - len * 0.18, y - len);
       }
+      g.stroke();
       g.restore();
     }
   }
 
+  // ---- Light: crepuscular rays through the eye; the sun's glare and an anamorphic flare.
+  function drawLight(g: CanvasRenderingContext2D, v: View, t: number, sunK: number, fog: Fog): void {
+    const [sx, sy] = sky.sunAt(v);
+    const { w, h } = v;
+    if (sunK <= 0.01) return;
+    g.save();
+    g.globalCompositeOperation = "screen";
+    // Shafts of hard cold light fanning down over the ridges; strongest while there is dust to show them.
+    const dusty = 0.35 + 0.65 * (1 - smooth(5.5, 10, t));
+    const rays = 0.11 * sunK * dusty * (1 - 0.4 * smooth(11, 14, t));
+    for (let k = 0; k < 15; k++) {
+      const a = Math.PI / 2 + (k / 14 - 0.45) * 1.5 + 0.025 * Math.sin(t * 0.3 + k * 1.7);
+      const wd = 0.008 + 0.03 * hash(k, 3, 1);
+      const len = h * (1.0 + 0.7 * hash(k, 5, 2));
+      const flick = 0.45 + 0.55 * nf(k * 13 + 5, t * 0.6 + k);
+      const grd = g.createRadialGradient(sx, sy, 0, sx, sy, len);
+      grd.addColorStop(0, `rgb(226 234 242 / ${(rays * flick).toFixed(3)})`);
+      grd.addColorStop(0.45, `rgb(200 214 226 / ${(rays * flick * 0.5).toFixed(3)})`);
+      grd.addColorStop(1, "rgb(200 214 226 / 0)");
+      g.fillStyle = grd;
+      g.beginPath();
+      g.moveTo(sx, sy);
+      g.lineTo(sx + Math.cos(a - wd) * len, sy + Math.sin(a - wd) * len);
+      g.lineTo(sx + Math.cos(a + wd) * len, sy + Math.sin(a + wd) * len);
+      g.closePath();
+      g.fill();
+    }
+    // The sun's glare.
+    const shows = clamp(sky.sunShows(t));
+    const fl = sunK * shows * (1 - 0.3 * fog.storm);
+    const r = v.f * 0.2;
+    g.globalAlpha = 0.5 * fl;
+    g.drawImage(tex!.cold, sx - r, sy - r, r * 2, r * 2);
+    g.globalAlpha = 1;
+    // The anamorphic streak: long, thin, faintly blue.
+    for (const [hh, al, ww] of [
+      [30, 0.035, 1.5],
+      [7, 0.1, 1.2],
+      [1.3, 0.55, 0.95],
+    ] as const) {
+      const sw = w * ww;
+      const grd = g.createLinearGradient(sx - sw / 2, 0, sx + sw / 2, 0);
+      grd.addColorStop(0, "rgb(150 190 240 / 0)");
+      grd.addColorStop(0.5, `rgb(200 222 250 / ${(al * fl).toFixed(3)})`);
+      grd.addColorStop(1, "rgb(150 190 240 / 0)");
+      g.fillStyle = grd;
+      g.fillRect(sx - sw / 2, sy - hh / 2, sw, hh);
+    }
+    // Ghosts along the line through the middle of the lens.
+    const cx = w / 2;
+    const cy = h / 2;
+    for (const [k, rr, a] of [
+      [0.55, 0.025, 0.08],
+      [0.92, 0.055, 0.05],
+      [1.35, 0.03, 0.07],
+      [1.75, 0.09, 0.035],
+    ] as const) {
+      const gx = sx + (cx - sx) * k;
+      const gy = sy + (cy - sy) * k;
+      const rad = v.f * rr;
+      g.globalAlpha = a * fl;
+      g.drawImage(k > 1 ? tex!.ghostB : tex!.ghostA, gx - rad, gy - rad, rad * 2, rad * 2);
+    }
+    g.restore();
+  }
+
+  // ---- The lens: vignette, faint colour fringes at the edges, film grain.
+  function drawLens(g: CanvasRenderingContext2D, w: number, h: number, t: number, quality: number): void {
+    const vg = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.38, w / 2, h / 2, Math.hypot(w, h) * 0.6);
+    vg.addColorStop(0, "rgb(3 4 6 / 0)");
+    vg.addColorStop(0.7, "rgb(3 4 6 / 0.32)");
+    vg.addColorStop(1, "rgb(3 4 6 / 0.7)");
+    g.fillStyle = vg;
+    g.fillRect(0, 0, w, h);
+    const cv = g.canvas as HTMLCanvasElement;
+    const W = cv.width;
+    const H = cv.height;
+    g.save();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    // Colour fringes: the red of the picture laid back a little larger than the rest, so the edges split.
+    if (quality >= 0.75 && W > 200) {
+      if (!ca || ca.width !== W || ca.height !== H) {
+        ca = document.createElement("canvas");
+        ca.width = W;
+        ca.height = H;
+      }
+      const cg = ca.getContext("2d")!;
+      cg.globalCompositeOperation = "copy";
+      cg.drawImage(cv, 0, 0);
+      cg.globalCompositeOperation = "multiply";
+      cg.fillStyle = "#f00";
+      cg.fillRect(0, 0, W, H);
+      g.globalCompositeOperation = "multiply";
+      g.fillStyle = "#0ff";
+      g.fillRect(0, 0, W, H);
+      g.globalCompositeOperation = "lighter";
+      const s = 0.0028;
+      g.drawImage(ca, (-W * s) / 2, (-H * s) / 2, W * (1 + s), H * (1 + s));
+    }
+    // Grain: one of four baked frames, moved to a fixed place for each 1/24 s.
+    const fr = Math.floor(t * 24);
+    const tile = tex!.grain[fr & 3]!;
+    const ox = Math.floor(hash(fr, 1, 2) * 256);
+    const oy = Math.floor(hash(fr, 3, 4) * 256);
+    g.globalCompositeOperation = "overlay";
+    g.globalAlpha = 0.085;
+    g.fillStyle = g.createPattern(tile, "repeat")!;
+    g.translate(-ox, -oy);
+    g.fillRect(ox, oy, W, H);
+    g.restore();
+  }
+
   return {
+    horizon: () => lastHy,
     prepare(budget) {
       if (valley && !prepared) prepared = valley.prepare(budget);
     },
@@ -739,148 +1134,80 @@ export function createSurfaceScene(o: SceneSetup): SurfaceScene {
       if (!(w >= 2 && h >= 2)) return;
       const t = Math.max(0, time);
       const scale = Math.max(0.5, g.getTransform().a || 1);
+      tex ??= bake();
       ensureValley(w, h, scale, t);
       if (!prepared && t > 6.2) prepared = valley!.prepare(Infinity);
-      sprites ??= {
-        plume: flameSprite("214 240 255", "90 160 255"),
-        glow: softSprite("190 226 255", 1, 64),
-        beam: softSprite("120 255 214", 1, 96),
-        red: softSprite("255 80 64", 1, 48),
-        main: softSprite(theme.primary, 1, 48),
-        second: softSprite(theme.secondary, 1, 48),
-        sheath: softSprite("196 220 255", 0.4, 64),
-      };
-      if (!glows.length) glows = SPOT_RGB.map((c) => softSprite(c, 0.8, 32));
-      foam ??= softSprite("236 250 255", 1, 32);
-      beamHalo ??= softSprite("160 255 230", 1, 32);
-      flare ??= softSprite("170 255 230", 1, 128);
 
-      // Each beam fires with a soft jolt: the picture barely moves.
+      // Each plume fires with a heavy jolt: the picture barely moves.
       let nudge = 0;
       for (const at of fire) {
         const age = t - at;
         if (age > 0 && age < 0.8) nudge += 0.5 * Math.exp(-age * 6);
       }
       const v = viewAt(t, w, h, free, Math.min(1, nudge));
+      lastHy = v.hy;
       const sunShows = sky.sunShows(t);
       const sunK = clamp(sunShows * smooth(SUN_AT - 0.9, SUN_AT + 0.4, t));
       const day = smooth(6.5, 10.5, t);
+      const fog = fogAt(t);
+      const vapour = smooth(7.5, 10.5, t);
 
+      g.fillStyle = "#050607";
+      g.fillRect(0, 0, w, h);
       sky.draw(g, v, t, clamp(w / 300, 3, 5) / Math.sqrt(clamp(quality, 0.3, 1)));
-      drawFarBeams(g, v, t, day);
-      const crestK = sunK * (0.85 - 0.55 * day);
+      const crestK = sunK * (0.75 - 0.45 * day);
       const L = valley!.layers;
       const layer = (id: Layer["id"]) => L.find((l) => l.id === id);
       const far = layer("far");
       if (far) {
-        drawLayer(g, far, v, t, crestK * 0.5);
-        drawPlume(g, v, t, far.Z);
+        drawLayer(g, far, v, t, crestK * 0.4, fog, 30);
+        drawSmoke(g, v, t, far.Z);
       }
-      // Haze where the sky meets the land: toxic amber, then clean pale blue.
-      const hz = g.createLinearGradient(0, v.hy - v.f * 0.07, 0, v.hy + v.f * 0.02);
-      const hc = mixRgb("170 120 84", "214 236 246", smooth(5.5, 9.5, t));
-      hz.addColorStop(0, `rgb(${hc} / 0)`);
-      hz.addColorStop(0.75, `rgb(${hc} / 0.42)`);
-      hz.addColorStop(1, `rgb(${hc} / 0)`);
+      // Haze where the sky meets the land.
+      const hz = g.createLinearGradient(0, v.hy - v.f * 0.1, 0, v.hy + v.f * 0.02);
+      const hc = mix(fog.rgb, [140, 152, 160], 0.35 * day);
+      hz.addColorStop(0, rgba(hc, 0));
+      hz.addColorStop(0.75, rgba(hc, 0.5 + 0.3 * fog.storm));
+      hz.addColorStop(1, rgba(hc, 0));
       g.fillStyle = hz;
-      g.fillRect(0, v.hy - v.f * 0.07, w, v.f * 0.09);
+      g.fillRect(0, v.hy - v.f * 0.1, w, v.f * 0.12);
+      drawFarSpires(g, v, t, fog, sunK);
       const floor = layer("floor");
-      if (floor) drawLayer(g, floor, v, t, 0);
-      drawWater(g, v, t);
-      drawDots(g, v, t, floorDots, undefined);
+      if (floor) drawLayer(g, floor, v, t, 0, fog, 0);
+      const [sx] = sky.sunAt(v);
+      drawWater(g, v, t, sx, sunK);
+      floorFog(g, v, fog);
       // By distance: the far spire, the great one, the right ridge, the near spire, the left ridge, the rocks in front.
-      drawSpire(g, v, 2, t, sunK);
-      drawSpire(g, v, 0, t, sunK);
+      drawSpire(g, v, 2, t, sunK, fog, vapour, quality);
+      drawSpire(g, v, 0, t, sunK, fog, vapour, quality);
       for (const [id, spire] of [
         ["ridgeR", 1],
         ["ridgeL", -1],
         ["near", -1],
       ] as const) {
         const l = layer(id);
-        if (l) {
-          drawLayer(g, l, v, t, crestK);
-          drawDots(g, v, t, boardDots, id);
-        }
-        if (spire >= 0) drawSpire(g, v, spire, t, sunK);
+        if (l) drawLayer(g, l, v, t, crestK, fog, l.Z);
+        if (spire >= 0) drawSpire(g, v, spire, t, sunK, fog, vapour, quality);
       }
-
-      // The storm's gloom over the land, lifting as the sky clears.
-      // (Only over the land: the sky that opens is already clean and bright.)
-      const gloom = 1 - smooth(4.4, 7.4, t);
-      if (gloom > 0.01) {
+      drawLight(g, v, t, sunK, fog);
+      drawPlumes(g, v, t, fog, vapour);
+      drawAir(g, v, t, fog);
+      // A cold, hard grade over the clear world: the shadows sink a little.
+      if (day > 0.01) {
         g.save();
         g.globalCompositeOperation = "multiply";
-        const c = `rgb(${lerp(255, 150, gloom) | 0} ${lerp(255, 126, gloom) | 0} ${lerp(255, 118, gloom) | 0})`;
-        const top = Math.max(0, v.hy - v.f * 0.3);
-        const gm = g.createLinearGradient(0, top, 0, v.hy - v.f * 0.04);
-        gm.addColorStop(0, "rgb(255 255 255)");
-        gm.addColorStop(1, c);
-        g.fillStyle = gm;
-        g.fillRect(0, top, w, h - top);
-        g.restore();
-      }
-      // Golden sunlight over the valley from where the sun breaks through.
-      const [sx, sy] = sky.sunAt(v);
-      if (sunK > 0.01) {
-        g.save();
-        g.globalCompositeOperation = "screen";
-        const gl = g.createRadialGradient(sx, v.hy, 0, sx, v.hy, v.f * 1.1);
-        gl.addColorStop(0, `rgb(255 200 126 / ${(0.16 * sunK * (1 - 0.45 * day)).toFixed(3)})`);
-        gl.addColorStop(1, "rgb(255 200 126 / 0)");
-        g.fillStyle = gl;
+        g.fillStyle = `rgb(${lerp(255, 236, day) | 0} ${lerp(255, 242, day) | 0} ${lerp(255, 248, day) | 0})`;
         g.fillRect(0, 0, w, h);
         g.restore();
       }
-      for (let i = 0; i < 3; i++) drawBeam(g, v, i, t);
-      drawFlocks(g, v, t, sunK);
-      drawAir(g, v, t, sunK, day);
-
-      // God rays and the sun's own glare.
-      if (sunK > 0.01) {
-        g.save();
-        g.globalCompositeOperation = "lighter";
-        const rays = 0.065 * sunK * (1 - 0.5 * smooth(10.5, 13.5, t));
-        for (let k = 0; k < 11; k++) {
-          const a = 0.12 * Math.PI + (k / 10) * 0.76 * Math.PI + 0.025 * Math.sin(t * 0.35 + k * 1.7);
-          const wd = 0.01 + (0.022 * ((k * 7) % 5)) / 5;
-          const len = h * (1.1 + 0.6 * (((k * 3) % 4) / 4));
-          const grd = g.createRadialGradient(sx, sy, 0, sx, sy, len);
-          grd.addColorStop(0, `rgb(255 216 150 / ${(rays * (0.6 + 0.4 * Math.sin(t * 0.5 + k))).toFixed(3)})`);
-          grd.addColorStop(1, "rgb(255 216 150 / 0)");
-          g.fillStyle = grd;
-          g.beginPath();
-          g.moveTo(sx, sy);
-          g.lineTo(sx + Math.cos(a - wd) * len, sy + Math.sin(a - wd) * len);
-          g.lineTo(sx + Math.cos(a + wd) * len, sy + Math.sin(a + wd) * len);
-          g.closePath();
-          g.fill();
-        }
-        const r = v.f * 0.26;
-        g.globalAlpha = 0.55 * sunK;
-        g.drawImage(sprites.glow, sx - r, sy - r, r * 2, r * 2);
-        const streak = g.createLinearGradient(sx - v.f * 0.22, 0, sx + v.f * 0.22, 0);
-        streak.addColorStop(0, "rgb(255 236 200 / 0)");
-        streak.addColorStop(0.5, `rgb(255 236 200 / ${(0.22 * sunK).toFixed(3)})`);
-        streak.addColorStop(1, "rgb(255 236 200 / 0)");
-        g.globalAlpha = 1;
-        g.fillStyle = streak;
-        g.fillRect(sx - v.f * 0.22, sy - 0.75, v.f * 0.44, 1.5);
-        g.restore();
-      }
-
-      // The edges a little darker; a soft green light as each beam fires; it opens from black.
-      const vg = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.hypot(w, h) * 0.62);
-      vg.addColorStop(0, "rgb(0 0 0 / 0)");
-      vg.addColorStop(1, `rgb(0 0 0 / ${(0.5 - 0.2 * day).toFixed(3)})`);
-      g.fillStyle = vg;
-      g.fillRect(0, 0, w, h);
+      drawLens(g, w, h, t, quality);
       if (nudge > 0.01) {
-        g.fillStyle = `rgb(120 255 220 / ${Math.min(0.07, nudge * 0.1).toFixed(3)})`;
+        g.fillStyle = `rgb(214 226 240 / ${Math.min(0.06, nudge * 0.08).toFixed(3)})`;
         g.fillRect(0, 0, w, h);
       }
       const open = 1 - seg(t, 0, 0.8);
       if (open > 0) {
-        g.fillStyle = `rgb(2 4 10 / ${open.toFixed(3)})`;
+        g.fillStyle = `rgb(2 3 4 / ${open.toFixed(3)})`;
         g.fillRect(0, 0, w, h);
       }
     },

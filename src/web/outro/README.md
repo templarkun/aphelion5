@@ -10,7 +10,7 @@ choice: `OUTRO_OF_COMPANY` in `index.ts` (empty for now, so every Company gets `
 | Outro | What it is |
 | --- | --- |
 | `terraformer2` | Terraformer 2.0 (designer 2026-11-17), plays after a won Campaign. Industrial terraforming: the bay doors open, the pylons (atmospheric processors: reactor core, four folding wings, anchor spike, braking thrusters on top, firing down) are lowered out, drift free for 1.2 s while they turn upright, then come down slowly on their thrusters; one by one they anchor and fire blue-green beams up through the toxic storm, which clears in emerald and cyan rings over ocean and green land; the sun rises. About 15 seconds. |
-| `surface` | Surface Terraform (designer 2026-11-19), System options only for now. Goes on from 2.0 on the planet's surface: a barren volcanic valley under a toxic amber-grey sky; three spires (2.0's pylons, drawn by the same `rig.ts`) open their radiator wings and fire cyan-emerald beams; a clear-sky vortex spirals open over the great spire, rain and bright mist fall, sunlight breaks onto the ridges; water fills the dry canyon beds and pools, green and glowing life spreads from the spires like a tide, flocks glide in; a slow panoramic drift while the Debrief slides in. About 12.5 seconds. |
+| `surface` | Surface Terraform (designer 2026-11-19; new look 2026-11-21: hard, gritty science fiction after Dune, Mass Effect and Homeworld, geological, not botanical), System options only for now. Goes on from 2.0 on the planet's surface: an ochre dust storm over a dark basalt valley; three brutalist spires (gunmetal tiers, radiator fins, amber strobes, heat shimmer) fire wide ion plumes, four more far off; the plumes carve a turbulent eye in the storm, cold sunlight breaks through in shafts; water fills the dark canyon beds and pools, the basalt turns wet and mineral-rich, mist on the valley floor; a slow, heavy pan, the spires venting vapour, while the Debrief slides in. Seen as a recon feed (thin visor lines, live telemetry); film grain, vignette, colour fringes. No plants or creatures. About 12.5 seconds. |
 | `orbital` | Orbital Claim (designer 2026-11-19), System options only for now. No terraforming: a corporate-military claim. From low orbit over the night side of the intro's planet a beacon beam in the Company's colour climbs from the liberated sector into space; the camera rises along it as the Company's Flagship (a lit solid in the Company's outline from the Vessel screen) glides in and locks its belly clamps on the beam with a flash; twelve relay satellites snap into a lattice and a hexagonal territory grid sweeps over the curve of the ground, "ASSET SECURED"; a slow orbital drift while the Debrief slides in. About 11.5 seconds. |
 | `terraformer` | Terraformer 1.0, kept as it was to compare (System options only). Bay doors, one pylon per mission won falls through the air, each hit sends a shock wave over the ground and turns it into a lit sector in the Company's colours; the sun rises. About 11.5 seconds. |
 
@@ -49,10 +49,11 @@ terraformer2/rig.ts          2.0: one pylon, an atmospheric processor drawn as a
 terraformer2/world.ts        2.0: the storm and the ground, cleared and changed point by point over time
 terraformer2/globe.ts        2.0: space, the globe's edge, its air, the sun (1.0's globe without its ground)
 surface/timeline.ts          Surface: when things happen (seconds)
-surface/world.ts             Surface: the valley in km (spires, streams, pools, sun, moons), when water and the green tide reach each place, the projection
-surface/layers.ts            Surface: the painted parallax layers (far mountains, valley floor, ridges, near rocks), barren and living, and the tide passing over them
-surface/sky.ts               Surface: the sky, sun and moons, the storm deck and its clear-sky vortex
-surface/scene.ts             Surface: the film: camera drift, layers far to near, spires, beams, water, glowing flowers, flocks, rain, mist, sunlight
+surface/world.ts             Surface: the valley in km (spires, streams, pools, sun, moons), when water and the wet front reach each place, the projection
+surface/layers.ts            Surface: the painted parallax layers (far ranges, valley floor, ridges, near rocks), barren and wet, the wet front passing over them; baked rock textures (fBm relief, strata)
+surface/sky.ts               Surface: the cold sky, sun and moons, the dust-storm deck and its turbulent eye
+surface/scene.ts             Surface: the film: camera pan, layers far to near dissolved in the air, brutalist spires, ion plumes, vapour, water, dust, mist, rain, light shafts, lens flare, grain
+surface/telemetry.ts         Surface: the recon feed's readouts, worked out from the time alone
 OrbitalClaimOutro.tsx        Orbital Claim: the same page with the orbital film
 orbital/timeline.ts          Orbital: when things happen (seconds)
 orbital/globe.ts             Orbital: the intro's planet for a moving camera; the sector's place on it; points of the grid on the ground
@@ -60,10 +61,13 @@ orbital/flagship.ts          Orbital: the Company's Flagship as a lit solid, in 
 orbital/scene.ts             Orbital: the film: camera, stars, sun, smoke and lightning, the beacon and its rings, the ship, the lock, satellites, lattice, the hexagonal grid, telemetry
 ```
 
-Surface Terraform is drawn on one canvas in layers, each painted once (barren and living) and moved
+Surface Terraform is drawn on one canvas in layers, each painted once (barren and wet) and moved
 by the camera's slow sideways drift as much as its distance asks; the valley floor is drawn sheared,
-so its near part moves more than its far part. Every point of a layer knows the moment the green
-tide reaches it, so any moment of the film can be drawn by itself.
+so its near part moves more than its far part. Each layer is then dissolved into the air (dust, then
+cold haze) as much as its distance asks. Every point of a layer knows the moment the wet front
+reaches it, so any moment of the film can be drawn by itself. Its textures (rock relief and strata,
+dust and mist bands, puffs of gas, film grain) are baked once from seeded noise. The recon feed is
+plain page elements over the canvas, written each frame from `surface/telemetry.ts`.
 
 ## To add an outro
 

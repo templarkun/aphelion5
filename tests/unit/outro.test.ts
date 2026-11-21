@@ -15,6 +15,7 @@ import { BLOOM_AT, BLOOM_FULL, WATER_AT, WATER_FULL } from "../../src/web/outro/
 import { bloomAt, poolAt, POOL_DEFS, SPIRE_PLACES, streamPaths, waterAt, waterReach } from "../../src/web/outro/surface/world.js";
 import { createSky, vortexRadius } from "../../src/web/outro/surface/sky.js";
 import { FAR_PLACES } from "../../src/web/outro/surface/world.js";
+import { o2At, readoutAt } from "../../src/web/outro/surface/telemetry.js";
 import * as TO from "../../src/web/outro/orbital/timeline.js";
 import { facing, groundPoint, RP } from "../../src/web/outro/orbital/globe.js";
 import * as sound from "../../src/web/briefing/soundHooks.js";
@@ -248,7 +249,7 @@ test("Terraformer 2.0: slower and heavier than 1.0, in four acts; every pylon lo
   }
 });
 
-test("Surface Terraform: 11 to 13 seconds in four acts; three spires fire in Act 1, the vortex opens in Act 2, water and life in Act 3", () => {
+test("Surface Terraform: 11 to 13 seconds in four acts; three spires fire in Act 1, the vortex opens in Act 2, water and the wet front in Act 3", () => {
   expect(TS.FILM_SECONDS).toBeGreaterThanOrEqual(11);
   expect(TS.FILM_SECONDS).toBeLessThanOrEqual(13);
   expect([...TS.ACT_AT]).toEqual([0, 3.0, 6.5, 10.0]);
@@ -271,7 +272,6 @@ test("Surface Terraform: 11 to 13 seconds in four acts; three spires fire in Act
   expect(TS.actAt(TS.RAIN[1])).toBe(2);
   expect(TS.actAt(WATER_AT)).toBe(3);
   expect(TS.actAt(BLOOM_AT)).toBe(3);
-  expect(TS.actAt(TS.FLOCKS_AT)).toBe(3);
   expect(WATER_FULL).toBeLessThan(TS.ACT_AT[3]);
   expect(BLOOM_FULL).toBeLessThanOrEqual(TS.ACT_AT[3]);
   expect(TS.actAt(TS.RESOLVE_AT)).toBe(4);
@@ -280,7 +280,7 @@ test("Surface Terraform: 11 to 13 seconds in four acts; three spires fire in Act
   expect(TS.STILL_AT).toBeGreaterThan(TS.FILM_SECONDS);
 });
 
-test("Surface Terraform: the sky opens over the great spire and the sun shows in Act 2; water and the green tide come from the spires' feet in Act 3, worked out from the time alone", () => {
+test("Surface Terraform: the sky opens over the great spire and the sun shows in Act 2; water and the wet front come from the spires' feet in Act 3, worked out from the time alone", () => {
   // The vortex only grows; the sun is hidden in the storm, then shows through the opening.
   for (let t = 0; t < 14; t += 0.25) expect(vortexRadius(t + 0.25)).toBeGreaterThanOrEqual(vortexRadius(t));
   const sky = createSky();
@@ -302,13 +302,25 @@ test("Surface Terraform: the sky opens over the great spire and the sun shows in
     for (const d of [0.2, 0.5, 0.9].map((x) => x * p.length)) expect(waterReach(k, waterAt(k, d))).toBeCloseTo(d, 6);
   }
   for (let i = 0; i < POOL_DEFS.length; i++) expect(TS.actAt(poolAt(i))).toBe(3);
-  // The green tide: first at the spires' feet, everywhere in the valley by BLOOM_FULL.
+  // The wet front: first at the spires' feet, everywhere in the valley by BLOOM_FULL.
   for (const s of SPIRE_PLACES) expect(bloomAt(s.X, s.Z)).toBeLessThan(BLOOM_AT + 1.2);
   for (const [X, Z] of [[0, 1], [-3, 2], [4, 6], [-8, 20], [10, 40], [0.3, 2.25]]) {
     const a = bloomAt(X!, Z!);
     expect(a).toBeGreaterThanOrEqual(BLOOM_AT);
     expect(a).toBeLessThanOrEqual(BLOOM_FULL + 0.06);
   }
+});
+
+test("Surface Terraform (2026-11-21): the recon feed's telemetry, worked out from the time alone", () => {
+  expect(readoutAt(0)).toEqual({ clock: "T+00:00.00", o2: "02.4%", particulate: "CRITICAL", water: "00.0%", biome: "DORMANT" });
+  expect(readoutAt(TS.FILM_SECONDS)).toEqual({ clock: "T+00:12.50", o2: "20.1%", particulate: "NOMINAL", water: "31.6%", biome: "STABILIZING" });
+  // Oxygen only rises, from the vortex to the living world; the storm reads critical through Act 1.
+  for (let t = 0; t < 14; t += 0.25) expect(o2At(t + 0.25)).toBeGreaterThanOrEqual(o2At(t));
+  expect(readoutAt(TS.VORTEX_AT - 0.01).o2).toBe("02.4%");
+  expect(readoutAt(TS.ACT_AT[1] - 0.01).particulate).toBe("CRITICAL");
+  expect(readoutAt(TS.ACT_AT[2]).biome).toBe("STABILIZING");
+  expect(readoutAt(WATER_AT - 0.01).water).toBe("00.0%");
+  expect(readoutAt(7.777)).toEqual(readoutAt(7.777));
 });
 
 test("Surface Terraform calls its own silent sound hooks", () => {

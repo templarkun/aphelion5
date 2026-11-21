@@ -4,11 +4,13 @@
  * the camera stands with them. Shown at Game End (Core Rules 10.3) when the last mission is won
  * (when the designer chooses it; 2.0 stays the one after a won game until then). Screen only, no rule.
  *
- * A film of about 12.5 seconds on one canvas (surface/scene.ts) in four acts: on a barren volcanic
- * valley under a toxic sky the three terraformer spires open their radiator wings and fire their
- * beams; a clear-sky vortex opens the storm, rain and mist fall, sunlight breaks through; water
- * fills the dry canyon beds and green, glowing life spreads from the spires while flocks glide in;
- * then a slow panoramic drift over the living valley. Built the same way as 2.0: the same props,
+ * A film of about 12.5 seconds on one canvas (surface/scene.ts) in four acts, in a hard, gritty
+ * look (designer 2026-11-21: Dune, Mass Effect, Homeworld; geological, not botanical): in an ochre
+ * dust storm over a basalt valley three brutalist spires power up and fire wide ion plumes; the
+ * plumes carve a turbulent eye in the storm and cold sunlight breaks through in shafts; water
+ * fills the dark canyon beds and the basalt turns wet and mineral-rich, mist on the valley floor;
+ * then a slow, heavy pan over the cold, clear frontier. Seen as a recon feed (thin visor lines,
+ * live telemetry from surface/telemetry.ts). Built the same way as 2.0: the same props,
  * the shared Debrief card (Debrief.tsx) and "Tap twice to skip" (SkipHint.tsx), every moving thing
  * worked out from the time alone, the speed setting, one still picture with reduced motion or the
  * Instant speed, and a softer picture on a slow machine. Silent: the sound hooks
@@ -17,8 +19,10 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { isStill, speedFactor } from "../motion.js";
+import { clamp } from "../briefing/styles/intro2/math3.js";
 import { playAtmosphereClear, playConfirm, playSpireIgnition, playVictoryResolve, playWaterFlow } from "../briefing/soundHooks.js";
 import { createSurfaceScene, type FreeArea } from "./surface/scene.js";
+import { readoutAt, type Readout } from "./surface/telemetry.js";
 import { ACT_NAMES, actAt, DEBRIEF_AT, farCount, farTimes, FILM_SECONDS, fireTimes, firedBy, RESOLVE_AT, SPIRES, STILL_AT, VORTEX_AT, WATER_AT } from "./surface/timeline.js";
 import { pylonCount } from "./terraformer2/timeline.js";
 import { SkipHint, useTwoTapSkip } from "./SkipHint.js";
@@ -61,6 +65,9 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
   const canvas = useRef<HTMLCanvasElement>(null);
   const card = useRef<HTMLElement>(null);
   const back = useRef<HTMLButtonElement>(null);
+  // The recon feed's readouts and its horizon mark, written straight to the page each frame (no re-render).
+  const tel = useRef<Partial<Record<keyof Readout, HTMLElement | null>>>({});
+  const mark = useRef<HTMLDivElement>(null);
   const clock = useRef({ start: 0, jump: 0, skipped: false });
   const left = useRef(false);
   const scene = useMemo(() => createSurfaceScene({ theme: companyTheme, vesselId, pylons }), [companyTheme, vesselId, pylons]);
@@ -86,6 +93,23 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
     const farAt = farTimes(far);
     let debrief = still;
     let lastKey = "";
+    const shown: Partial<Readout> = {};
+    let shownHy = -1;
+    /** The recon feed at film time t. */
+    const feed = (t: number, h: number): void => {
+      const r = readoutAt(t);
+      for (const k of Object.keys(r) as (keyof Readout)[]) {
+        if (shown[k] === r[k]) continue;
+        shown[k] = r[k];
+        const el = tel.current[k];
+        if (el) {
+          el.textContent = r[k];
+          el.dataset.v = r[k];
+        }
+      }
+      const hy = Math.round(clamp(scene.horizon(), h * 0.12, h * 0.88));
+      if (hy !== shownHy && mark.current) mark.current.style.transform = `translateY(${(shownHy = hy)}px)`;
+    };
     // The picture is drawn smaller (and stretched) on a machine that cannot keep up: smooth before sharp.
     let quality = 1;
     let lastNow = 0;
@@ -132,6 +156,7 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
           try {
             scene.prepare(still ? Infinity : PREPARE_BUDGET);
             scene.draw(g, w, h, t, free, quality);
+            feed(t, h);
           } catch (e) {
             // A film that cannot be drawn must never keep the player from the Debrief.
             console.error(e);
@@ -187,15 +212,15 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
   const sub =
     act === 1
       ? fired < SPIRES
-        ? `Radiator wings open · ${fired} of ${SPIRES} beams firing`
+        ? `Radiator fins open · ${fired} of ${SPIRES} ion plumes firing`
         : farOn > 0
           ? `${SPIRES} terraformer spires online · ${farOn} more beyond the horizon`
           : `${SPIRES} terraformer spires online`
       : act === 2
-        ? "Clear-sky vortex · the storm pulls back"
+        ? "The plumes carve an eye in the storm · sunlight breaks through"
         : act === 3
-          ? "Water returns · life spreads from the spires"
-          : `${stats.campaignName} · a living world`;
+          ? "Water returns · the basalt turns wet and mineral-rich"
+          : `${stats.campaignName} · a frontier made habitable`;
 
   return (
     <div
@@ -213,6 +238,38 @@ export function SurfaceTerraformOutro({ companyTheme, vesselId, campaignStats, o
     >
       <canvas ref={canvas} className="ou-canvas" aria-hidden="true" />
       <div className="ou-shade" aria-hidden="true" />
+      <div className="ou-recon" aria-hidden="true">
+        <i className="ou-rc tl" />
+        <i className="ou-rc tr" />
+        <i className="ou-rc bl" />
+        <i className="ou-rc br" />
+        <div className="ou-elev" />
+        <div className="ou-elev-mark" ref={mark}>
+          <span>HRZ · EL 0350 M</span>
+        </div>
+        <dl className="ou-tel">
+          <div className="ou-tel-head">
+            <span>Recon feed · drone 03</span>
+            <span ref={(e) => void (tel.current.clock = e)}>T+00:00.00</span>
+          </div>
+          <div>
+            <dt>Atmos O2</dt>
+            <dd ref={(e) => void (tel.current.o2 = e)}>02.4%</dd>
+          </div>
+          <div>
+            <dt>Particulate</dt>
+            <dd ref={(e) => void (tel.current.particulate = e)} data-v="CRITICAL">CRITICAL</dd>
+          </div>
+          <div>
+            <dt>Surface H2O</dt>
+            <dd ref={(e) => void (tel.current.water = e)}>00.0%</dd>
+          </div>
+          <div>
+            <dt>Sector biome</dt>
+            <dd ref={(e) => void (tel.current.biome = e)}>DORMANT</dd>
+          </div>
+        </dl>
+      </div>
       {veil > 0 && <div key={veil} className="ou-veil" style={{ animationDuration: `${SKIP_VEIL}ms` }} aria-hidden="true" />}
 
       <div className="ou-hud" aria-live="polite">

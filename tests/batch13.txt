@@ -31,6 +31,8 @@
 # no message when a Mecha is put back where it was (T13_R22_01-03, CHANGED notes on T13_R21_02, 03).
 # Later the same day: Dimensional Shatter, the third Gamma kill (T13_CEL_15-16, CHANGED notes on
 # T13_CEL_07, 08, 14).
+# 2026-11-21 (later): Surface Terraform's new look, hard and gritty (CHANGED notes on T13_OUT_13,
+# 14, 17; T13_OUT_24, the recon feed).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1316,6 +1318,25 @@ note: CHANGED 2026-11-19 (designer, I17: "Show the other four too, as thin beams
       the horizon"): three spires near the camera, and the other pylons far off beyond the
       horizon as thin beams (T13_OUT_17). The caption after the spires: "3 terraformer spires
       online · 4 more beyond the horizon".
+note: CHANGED 2026-11-21 (designer: "completely overhaul its visual direction ... hard, gritty
+      sci-fi inspired by Dune, Mass Effect, and Homeworld"; timing, acts, act names, speed, skip,
+      Debrief and sound hooks unchanged). Now: Act 1, an oppressive ochre and rust dust storm, low
+      visibility, dust howling sideways over a dark basalt valley (ridges of jagged, fractured
+      strata, no triangle peaks); the three spires power up with stark amber strobes, open their
+      radiator fins and fire wide, diffused, pale ion plumes that slowly punch into the storm.
+      Act 2, the plumes carve a turbulent eye in the storm over the great spire; a cold steel-blue
+      sky shows through, and a small hard white sun breaks through in shafts of light over the
+      ridges, with a long thin blue lens streak; condensation rain; the dust thins. Act 3, water
+      runs dark down the canyon beds and fills the pools, catching sharp, shimmering glints of the
+      sky; from the spires' feet the basalt turns wet and mineral-rich (dark slate, olive and wet
+      obsidian; mineral stains down the faces; puddles holding the sky); mist hugs the valley
+      floor; the far ranges turn from dusty ochre to cold blue haze. No plants, flowers,
+      sparkles, birds or creatures anywhere. Act 4, a slow, heavy pan over the cold, clear
+      frontier, the spires venting steady vapour plumes that bend off on the wind. Over the whole
+      film: film grain, a vignette, faint colour fringes at the edges, and the recon feed
+      (T13_OUT_24). Captions under the act names: "Radiator fins open · N of 3 ion plumes firing",
+      "The plumes carve an eye in the storm · sunlight breaks through", "Water returns · the
+      basalt turns wet and mineral-rich", "<Campaign> · a frontier made habitable".
 
 id: T13_OUT_14
 title: Surface Terraform: the spires
@@ -1326,6 +1347,13 @@ then: each spire is the pylon of Terraformer 2.0 (T13_OUT_09), drawn the same wa
       core with its glowing ring in the Company's colour, the four radiator wings (a little open
       at first, flaring wide open in Act 1), blinking beacons, the emitter on top that fires the
       beam. Glowing seams run from its foot into the ground. The thrusters stay off.
+note: CHANGED 2026-11-21 (designer: "massive, brutalist industrial megastructures"): the spires
+      are no longer 2.0's pylons. Each is a dark gunmetal tower in stepped tiers (a wide plinth,
+      a battered base block with buttresses and amber slit windows, a shaft, a collar with a thin
+      band in the Company's colour, an emitter housing, masts), with two banks of segmented
+      radiator fins that slide out in Act 1 and glow dull hot between them, amber hazard strobes
+      (stark double flashes, faster while powering up), and heat shimmer over the emitter and the
+      fins. Lit dimly by the storm, then by the cold sun from the left. No glowing seams.
 
 id: T13_OUT_15
 title: Surface Terraform: the Debrief, skipping, speed, reduced motion
@@ -1367,6 +1395,11 @@ then: as many far beams as missions won less the three spires (one pylon per mis
       at least one and at most twelve): none for three missions or fewer.
 note: Silent: no sound hook for the far beams (playSpireIgnition stays one per spire). Screen
       only, no rule. Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs.
+note: CHANGED 2026-11-21 (designer: "the 3 foreground/midground and 4 background spires"): the
+      far pylons now show as hazy spire silhouettes far off on the plain (same number as before:
+      missions won less three, 4 in Campaign 1), each with an amber strobe on its crown; their
+      feet are lost in the haze at the horizon. Each fires a thin ion plume at the same moments
+      as before, up through the storm into the sky, venting vapour in Act 4.
 
 === SECTION: ORBITAL CLAIM, THE FOURTH OUTRO (designer 2026-11-19, screen only, no rule change) ===
 
@@ -1469,6 +1502,22 @@ then: the camera stands nearer, so the Flagship fills most of the narrow picture
       tether runs down its height; the readings move to the other side of the tether when they
       would run off the picture. With the Debrief along the foot, the ship and the tether stay in
       the top part.
+
+id: T13_OUT_24
+title: Surface Terraform: the recon feed
+source: designer 2026-11-21 ("Mass Effect recon-feed HUD overlay (subtle and diegetic)")
+given: Surface Terraform, Normal speed
+then: the film is framed as a drone's visor: thin, faint corner ticks; on the left a faint
+      elevation scale with a mark that follows the horizon ("HRZ · EL 0350 M"); and a small block
+      of telemetry ("RECON FEED · DRONE 03", a clock T+00:00.00 counting the film's time):
+      ATMOS O2 02.4% until the eye opens (3.15 s), rising to 20.1% by 10 s; PARTICULATE
+      CRITICAL, then SEVERE (from about 3.75 s), CLEARING (5.9 s), NOMINAL (8.2 s); SURFACE H2O
+      00.0% until the water starts (6.6 s), rising to 31.6% by 9.4 s; SECTOR BIOME DORMANT, then
+      STABILIZING (6.5 s). CRITICAL and SEVERE in amber, NOMINAL and STABILIZING in pale blue.
+then: on a wide screen the telemetry sits at the lower left and stays beside the Debrief card; on
+      a phone it sits a little higher and goes when the card comes up along the foot.
+note: Screen flavour only: none of these numbers is a game number. The same moment always reads
+      the same. Checked by tests/unit/outro.test.ts.
 
 === SECTION: STATISTICS AND ACHIEVEMENTS (designer 2026-11-18, screen only, no rule change) ===
 

@@ -32,7 +32,37 @@
 .ou-ticks i.on { background: #fff; box-shadow: 0 0 10px rgb(var(--acc)); animation: ou-blink 0.9s steps(2) infinite; }
 @keyframes ou-blink { 50% { opacity: 0.45; } }
 
-/* "Tap twice to skip" at the foot, as in the intro (two taps anywhere within 1 s; SkipHint.tsx). */
+/* Surface Terraform's recon feed (designer 2026-11-21): a drone visor over the film, thin 1 px lines at low opacity,
+   corner ticks, a horizon elevation scale on the left, live telemetry (SurfaceTerraformOutro.tsx, surface/telemetry.ts). */
+.ou-recon { position: absolute; inset: 0; pointer-events: none; color: rgb(212 224 234 / 0.7); transition: opacity 0.6s;
+  font: 600 10.5px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; }
+.ou-rc { position: absolute; width: 22px; height: 22px; border: 0 solid rgb(212 224 234 / 0.4); }
+.ou-rc.tl { left: 8px; top: 8px; border-left-width: 1px; border-top-width: 1px; }
+.ou-rc.tr { right: 8px; top: 8px; border-right-width: 1px; border-top-width: 1px; }
+.ou-rc.bl { left: 8px; bottom: 8px; border-left-width: 1px; border-bottom-width: 1px; }
+.ou-rc.br { right: 8px; bottom: 8px; border-right-width: 1px; border-bottom-width: 1px; }
+.ou-elev { position: absolute; left: 8px; top: 18%; bottom: 18%; width: 14px; opacity: 0.5;
+  background: repeating-linear-gradient(180deg, rgb(212 224 234 / 0.55) 0 1px, transparent 1px 10px) left / 6px 100% no-repeat,
+    repeating-linear-gradient(180deg, rgb(212 224 234 / 0.7) 0 1px, transparent 1px 50px) left / 14px 100% no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(180deg, transparent, #000 18%, #000 82%, transparent); }
+.ou-elev-mark { position: absolute; left: 8px; top: 0; display: flex; align-items: center; gap: 5px; margin-top: -7px; font-size: 9.5px; color: rgb(212 224 234 / 0.6); }
+.ou-elev-mark::before { content: ""; width: 20px; height: 1px; background: rgb(240 196 120 / 0.8); }
+.ou-tel { position: absolute; left: 34px; bottom: max(14px, env(safe-area-inset-bottom)); min-width: 214px; padding: 6px 9px 7px; display: grid; gap: 1px;
+  border-left: 1px solid rgb(212 224 234 / 0.35); background: linear-gradient(90deg, rgb(4 6 8 / 0.32), transparent); }
+.ou-tel > div { display: flex; justify-content: space-between; gap: 14px; }
+.ou-tel dt { color: rgb(212 224 234 / 0.55); font-weight: 600; }
+.ou-tel dd { font-variant-numeric: tabular-nums; color: rgb(232 240 246 / 0.88); }
+.ou-tel dd[data-v="CRITICAL"], .ou-tel dd[data-v="SEVERE"] { color: rgb(240 178 96 / 0.95); }
+.ou-tel dd[data-v="NOMINAL"], .ou-tel dd[data-v="STABILIZING"] { color: rgb(178 214 236 / 0.95); }
+.ou-tel-head { margin-bottom: 2px; padding-bottom: 2px; border-bottom: 1px solid rgb(212 224 234 / 0.2); font-size: 9.5px; color: rgb(212 224 234 / 0.6); }
+/* Along the foot (a phone, or a narrow window) the card covers it: there the telemetry sits higher and goes once the card comes. */
+.ou-tel, .ou-elev-mark { transition: opacity 0.5s; }
+@media (max-width: 699px), (max-aspect-ratio: 5/4) {
+  .ou-tel { bottom: max(58px, calc(env(safe-area-inset-bottom) + 44px)); left: 26px; min-width: 190px; font-size: 9.5px; }
+  .ou-end .ou-tel, .ou-end .ou-elev-mark { opacity: 0; }
+}
+
+, as in the intro (two taps anywhere within 1 s; SkipHint.tsx). */
 .ou-skip { position: absolute; left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 5px;
   pointer-events: none; font-size: 11px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: rgb(224 242 254 / 0.72);
   text-shadow: 0 1px 6px rgb(0 0 0 / 0.8); animation: ou-rise 0.5s 0.5s ease-out both; }

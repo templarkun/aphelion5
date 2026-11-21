@@ -26,7 +26,7 @@ export const OUTROS: OutroDef[] = [
     // Designer 2026-11-19: the third, on the surface, going on from 2.0. In System options only until the designer says.
     id: "surface",
     name: "Surface Terraform",
-    note: "On the planet's surface after 2.0: three spires fire their beams into the toxic storm, a clear-sky vortex opens it, water fills the dry canyons and green, glowing life spreads over the valley; flocks glide over it.",
+    note: "On the planet's surface after 2.0, seen as a recon feed: three brutalist spires fire ion plumes into an ochre dust storm, carve an eye in it, cold sunlight breaks through; water fills the dark canyons and the basalt turns wet and mineral-rich.",
     Component: SurfaceTerraformOutro,
   },
   {

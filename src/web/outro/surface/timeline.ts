@@ -3,10 +3,11 @@
  * Kept apart from the drawing so the sound hooks, the captions and the tests read the same numbers.
  * The film goes on from Terraformer 2.0: the pylons have come down and now stand on the ground.
  *
- *   Act 1  0.0 -  3.0  the barren valley; the three spires open their radiator wings and fire their beams
- *   Act 2  3.0 -  6.5  where the beams pierce the storm a clear-sky vortex spirals open; rain, mist, sunlight
- *   Act 3  6.5 - 10.0  water fills the dry canyon beds, green and glowing life spreads from the spires; flocks
- *   Act 4 10.0 -       a slow panoramic drift over the living valley; the Debrief slides in
+ *   Act 1  0.0 -  3.0  an ochre dust storm over the basalt valley; the three spires power up, open their radiator fins, fire their ion plumes
+ *   Act 2  3.0 -  6.5  the plumes carve a turbulent eye in the storm; cold sunlight breaks through in shafts; condensation rain
+ *   Act 3  6.5 - 10.0  water fills the dry canyon beds, the basalt turns wet and mineral-rich from the spires' feet; mist on the floor
+ *   Act 4 10.0 -       a slow, heavy pan over the cold, clear frontier, the spires venting vapour; the Debrief slides in
+ * (New look 2026-11-21: geological, not botanical; the "bloom" names are the wet front.)
  * After FILM_SECONDS the picture keeps drifting slowly under the Debrief card.
  */
 
@@ -48,11 +49,9 @@ export const RAIN = [3.7, 4.9, 8.0] as const;
 /** Water starts to flow from the spires' feet (sound hook); every bed and pool is full by WATER_FULL. */
 export const WATER_AT = 6.6;
 export const WATER_FULL = 9.4;
-/** The green tide starts at the spires' feet and has covered the whole valley by BLOOM_FULL. */
+/** The wet front (the basalt turning wet and mineral-rich) starts at the spires' feet and has covered the whole valley by BLOOM_FULL. */
 export const BLOOM_AT = 6.75;
 export const BLOOM_FULL = 9.9;
-/** The flocks of sky creatures glide in. */
-export const FLOCKS_AT = 7.3;
 /** The living world: the camera settles into its drift (sound hook: the last chord), then the Debrief card. */
 export const RESOLVE_AT = 10.0;
 export const DEBRIEF_AT = 10.6;

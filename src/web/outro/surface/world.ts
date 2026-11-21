@@ -1,6 +1,7 @@
 /**
  * Surface Terraform: the valley (designer 2026-11-19). Where everything stands, and when the water
- * and the green tide reach each place. Looks only.
+ * and the wet front (the "tide": the basalt turning wet and mineral-rich; new look 2026-11-21, no
+ * plants) reach each place. Looks only.
  *
  * The world is in kilometres: X to the right, Y up (the valley floor is Y = 0), Z away from the
  * camera, which stands HC above the floor on a rise at the valley's near end, looking across it.
@@ -8,7 +9,7 @@
  * (camX: the camera's slow sideways drift, which gives the layers their parallax; pan and hy: where
  * the picture is pointed). The ground and the boards of rock are painted once (layers.ts) in the
  * same angular units u = X/Z, v = (HC − Y)/Z, so they line up with the spires, the water and the
- * flocks drawn over them each frame.
+ * plumes drawn over them each frame.
  */
 
 import { clamp } from "../../briefing/styles/intro2/math3.js";
@@ -53,8 +54,8 @@ export const BURY = 0.2;
 /** Where the sun and the two moons stand in the sky: u across, e above the horizon (in units of the focal length). */
 export const SUN_DIR = { u: -0.2, e: 0.27 };
 export const MOONS = [
-  { u: 0.43, e: 0.56, r: 0.062, rgb: "232 226 246", phase: 0.62 },
-  { u: -0.56, e: 0.64, r: 0.022, rgb: "255 232 214", phase: 0.35 },
+  { u: 0.43, e: 0.56, r: 0.05, rgb: "176 182 190", phase: 0.62 },
+  { u: -0.56, e: 0.64, r: 0.02, rgb: "190 182 172", phase: 0.35 },
 ];
 
 /** A dry canyon bed that fills with water: from a spire's foot, through these points (X, Z). */
@@ -230,18 +231,18 @@ export function poolAt(i: number): number {
   return waterAt(pd.stream, p.s[best]!);
 }
 
-/** The green tide: how fast it spreads from each spire's foot (km/s), and how much later it starts there. */
+/** The wet front ("bloom" in the names): how fast it spreads from each spire's foot (km/s), and how much later it starts there. */
 const TIDE = [
   { sp: 2.3, after: 0 },
   { sp: 2.1, after: 0.25 },
   { sp: 4.6, after: 0.4 },
 ];
-/** Along the streams life comes soon after the water (s), and spreads out from the banks this fast (km/s). */
+/** Along the streams the rock turns wet soon after the water comes (s), and the wet spreads out from the banks this fast (km/s). */
 const BANK_AFTER = 0.3;
 const BANK_SP = 1.5;
 
 /**
- * When the green tide reaches the ground at (X, Z): the soonest of the spires' own fronts and the
+ * When the wet front reaches the ground at (X, Z): the soonest of the spires' own fronts and the
  * banks of the water, made uneven by the noise, and never later than BLOOM_FULL.
  */
 export function bloomAt(X: number, Z: number): number {
@@ -261,7 +262,7 @@ export function bloomAt(X: number, Z: number): number {
       a = Math.min(a, waterAt(k, p.s[j]!) + BANK_AFTER + d / BANK_SP);
     }
   }
-  // Uneven fingers of growth.
+  // Uneven fingers of wet ground.
   const n = nf(X * 9 + 31, Z * 5 + 7);
   const m = nf(X * 30 + 3, Z * 18 + 90);
   a += (n - 0.5) * 1.3 + (m - 0.5) * 0.45;

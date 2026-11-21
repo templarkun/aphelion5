@@ -1,9 +1,10 @@
 /**
- * Surface Terraform: the sky (designer 2026-11-19). A deep cerulean sky with the alien sun low over
- * the valley and two pale moons, hidden at first behind a thick deck of toxic storm cloud (rust,
- * ash grey, sickly amber; red lightning inside it). Where the spires' beams pierce the deck it
- * glows cyan-emerald; then over the great spire a clear-sky vortex turns and opens, spiralling
- * outwards, pushing the storm back to the horizon, where what is left of it turns to white cloud.
+ * Surface Terraform: the sky (designer 2026-11-19; new look 2026-11-21: hard, gritty science
+ * fiction). A cold, crisp steel-blue sky with a small hard white sun and two faint moons, hidden at
+ * first behind an oppressive deck of ochre and rust dust storm (#8c583a, #2b1d16; dry lightning
+ * flickering inside it). Where the spires' ion plumes punch into the deck it glows a pale ion
+ * white; then over the great spire a turbulent eye turns and opens, spiralling outwards, pushing
+ * the storm back to the horizon, where what is left of it thins to slate-grey banks.
  *
  * The deck is a ceiling HREL over the camera seen in perspective: each point of the picture above
  * the horizon is a point of the ceiling, and its cloud is worked out from the time alone (noise
@@ -15,7 +16,7 @@ import { clamp, ease, easeOut, lerp, rng, seg, smooth } from "../../briefing/sty
 import { CLIMB, VORTEX_AT, VORTEX_WIDE, fireTimes } from "./timeline.js";
 import { HREL, MOONS, nf, SPIRE_PLACES, SUN_DIR, type View } from "./world.js";
 
-/** Red lightning in the storm: when, and where on the deck (X, Z km). */
+/** Dry lightning in the dust storm: when, and where on the deck (X, Z km). */
 const FLASHES = [
   { t: 0.55, X: -6, Z: 24, bolt: true },
   { t: 1.5, X: 5.5, Z: 15, bolt: false },
@@ -125,11 +126,11 @@ export function createSky(): Sky {
     sunSprite.width = sunSprite.height = 128;
     const s = sunSprite.getContext("2d")!;
     const grd = s.createRadialGradient(64, 64, 0, 64, 64, 64);
-    grd.addColorStop(0, "rgb(255 255 250 / 1)");
-    grd.addColorStop(0.32, "rgb(255 250 226 / 1)");
-    grd.addColorStop(0.42, "rgb(255 226 160 / 0.6)");
-    grd.addColorStop(0.7, "rgb(255 200 120 / 0.14)");
-    grd.addColorStop(1, "rgb(255 190 110 / 0)");
+    grd.addColorStop(0, "rgb(255 255 255 / 1)");
+    grd.addColorStop(0.2, "rgb(250 252 255 / 1)");
+    grd.addColorStop(0.26, "rgb(214 228 240 / 0.55)");
+    grd.addColorStop(0.5, "rgb(170 196 220 / 0.12)");
+    grd.addColorStop(1, "rgb(150 180 210 / 0)");
     s.fillStyle = grd;
     s.fillRect(0, 0, 128, 128);
     for (const m of MOONS) {
@@ -147,7 +148,7 @@ export function createSky(): Sky {
       // Maria.
       const RR = rng(m.r * 1000);
       for (let k = 0; k < 7; k++) {
-        q.fillStyle = "rgb(150 150 190 / 0.25)";
+        q.fillStyle = "rgb(70 76 84 / 0.3)";
         q.beginPath();
         q.arc(20 + RR() * 88, 20 + RR() * 88, 6 + RR() * 16, 0, Math.PI * 2);
         q.fill();
@@ -183,26 +184,27 @@ export function createSky(): Sky {
       // ---- The clear sky behind everything.
       const top = Math.min(0, hy - f * 1.4);
       const sky = g.createLinearGradient(0, hy, 0, top);
-      sky.addColorStop(0, "rgb(190 226 242)");
-      sky.addColorStop(Math.min(0.99, (0.06 * f) / (hy - top)), "rgb(128 192 236)");
-      sky.addColorStop(Math.min(0.995, (0.3 * f) / (hy - top)), "rgb(54 132 218)");
-      sky.addColorStop(1, "rgb(16 64 168)");
+      // Cold and crisp: pale steel haze at the horizon, #1e2d3b higher up, near black at the top.
+      sky.addColorStop(0, "rgb(122 136 146)");
+      sky.addColorStop(Math.min(0.99, (0.06 * f) / (hy - top)), "rgb(72 90 106)");
+      sky.addColorStop(Math.min(0.995, (0.3 * f) / (hy - top)), "rgb(30 45 59)");
+      sky.addColorStop(1, "rgb(8 12 17)");
       g.fillStyle = sky;
       g.fillRect(0, 0, w, Math.max(0, hy + 4));
       const [sx, sy] = sunAt(v);
       const warm = g.createRadialGradient(sx, sy, 0, sx, sy, f * 0.6);
-      warm.addColorStop(0, "rgb(255 226 176 / 0.7)");
-      warm.addColorStop(0.4, "rgb(255 214 160 / 0.22)");
-      warm.addColorStop(1, "rgb(255 214 160 / 0)");
+      warm.addColorStop(0, "rgb(226 236 244 / 0.5)");
+      warm.addColorStop(0.3, "rgb(170 192 210 / 0.16)");
+      warm.addColorStop(1, "rgb(150 176 200 / 0)");
       g.fillStyle = warm;
       g.fillRect(0, 0, w, Math.max(0, hy + 4));
       for (const [k, m] of MOONS.entries()) {
         const r = m.r * f;
-        g.globalAlpha = 0.9;
+        g.globalAlpha = 0.42;
         g.drawImage(moonSprites[k]!, v.cx + f * (m.u - v.pan) - r, hy - f * m.e - r, r * 2, r * 2);
       }
       g.globalAlpha = 1;
-      const sr = f * 0.085;
+      const sr = f * 0.07;
       g.drawImage(sunSprite!, sx - sr, sy - sr, sr * 2, sr * 2);
 
       // ---- The deck, point by point on a coarse grid.
@@ -223,10 +225,11 @@ export function createSky(): Sky {
       const fl = FLASHES.map((x) => flashK(t, x.t));
       const flashing = fl.some((k) => k > 0.01);
       const drift = t * 0.32;
-      // Toxic and clean colours of the deck: dark undersides, ash, amber; then soft white cloud.
-      const DK = [lerp(44, 150, day), lerp(30, 158, day), lerp(28, 178, day)];
-      const MD = [lerp(106, 236, day), lerp(88, 238, day), lerp(76, 246, day)];
-      const AM = [lerp(156, 255, day), lerp(104, 222, day), lerp(52, 196, day)];
+      // The storm's colours: rust-black undersides (#2b1d16), ochre dust (#8c583a), a dull glow where
+      // the hidden sun is; then what is left of it: slate-grey banks, pale where the sun lights them.
+      const DK = [lerp(36, 40, day), lerp(25, 46, day), lerp(19, 54, day)];
+      const MD = [lerp(140, 112, day), lerp(88, 120, day), lerp(58, 128, day)];
+      const AM = [lerp(184, 196, day), lerp(128, 206, day), lerp(80, 214, day)];
       const sunU = SUN_DIR.u;
       const sunE = SUN_DIR.e;
       for (let j = 0; j < ch; j++) {
@@ -273,7 +276,7 @@ export function createSky(): Sky {
           let cr = DK[0]! + (MD[0]! - DK[0]!) * lit;
           let cg = DK[1]! + (MD[1]! - DK[1]!) * lit;
           let cb = DK[2]! + (MD[2]! - DK[2]!) * lit;
-          // Sickly amber in the storm's billows, warmest near the sun.
+          // Brighter ochre in the storm's billows, palest near the sun.
           const du = u - sunU;
           const de = e - sunE;
           const nearSun = Math.exp(-(du * du + de * de) / 0.09);
@@ -281,23 +284,24 @@ export function createSky(): Sky {
           cr += (AM[0]! - cr) * amber * 0.55;
           cg += (AM[1]! - cg) * amber * 0.55;
           cb += (AM[2]! - cb) * amber * 0.55;
-          // The ragged edge of the opening catches the sun.
+          // The eye wall: dark, turbulent cloud round the opening, its ragged inner edge lit cold by the sun.
           if (rim > 0.01) {
             const k = rim * (0.35 + 0.65 * sunlit);
-            cr += (255 - cr) * k * 0.7;
-            cg += (226 - cg) * k * 0.62;
-            cb += (176 - cb) * k * 0.5;
+            const wall = rim * (1 - 0.5 * sunlit) * 0.35;
+            cr += (232 - cr) * k * 0.6 - cr * wall;
+            cg += (238 - cg) * k * 0.6 - cg * wall;
+            cb += (242 - cb) * k * 0.6 - cb * wall;
           }
-          // The beams light the deck where they pierce it.
+          // The ion plumes light the deck a pale cold white where they punch into it.
           for (let b = 0; b < 3; b++) {
             const on = beams[b]!;
             if (on < 0.01) continue;
             const s = SPIRE_PLACES[b]!;
             const db = Math.hypot(X - s.X, Zc - s.Z);
             const gl = on * (Math.exp(-(db * db) / 1.6) + 0.3 * Math.exp(-db / 3.5)) * (1 - day * 0.5) * (b === 2 ? 0.45 : 1);
-            cr += 70 * gl;
-            cg += 230 * gl;
-            cb += 190 * gl;
+            cr += 120 * gl;
+            cg += 138 * gl;
+            cb += 156 * gl;
           }
           if (flashing) {
             for (let q = 0; q < FLASHES.length; q++) {
@@ -305,9 +309,9 @@ export function createSky(): Sky {
               if (k < 0.01) continue;
               const fx = FLASHES[q]!;
               const gl = k * Math.exp(-Math.hypot(X - fx.X, Zc - fx.Z) / 5);
-              cr += 255 * gl;
-              cg += 130 * gl;
-              cb += 100 * gl;
+              cr += 210 * gl;
+              cg += 180 * gl;
+              cb += 150 * gl;
             }
           }
           const al = cover * clamp(0.62 + 0.9 * (dens - 0.3)) * (1 - 0.3 * day * (0.4 + 0.6 * (1 - far)));
@@ -324,7 +328,7 @@ export function createSky(): Sky {
       g.drawImage(buf, 0, 0, cw, ch, 0, 0, cw * cell, ch * cell);
       g.restore();
 
-      // ---- Lightning bolts down to the far mountains (they hide the foot of it).
+      // ---- Dry lightning down to the far ranges (they hide the foot of it).
       for (const [q, fx] of FLASHES.entries()) {
         const pts = bolts[q];
         const k = fl[q]!;
@@ -339,7 +343,7 @@ export function createSky(): Sky {
           [5, 0.18],
           [1.4, 0.9],
         ] as const) {
-          g.strokeStyle = `rgb(255 190 170 / ${(a * Math.min(1, k)).toFixed(3)})`;
+          g.strokeStyle = `rgb(236 228 214 / ${(a * Math.min(1, k)).toFixed(3)})`;
           g.lineWidth = wide;
           g.beginPath();
           for (const [n, p] of pts.entries()) {
