@@ -1009,3 +1009,23 @@ html.still .ally-drop-unit { animation: none; }
 .trial-looks { border: 1px dashed var(--line); border-radius: 8px; padding: 4px 8px 8px; }
 .trial-looks summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 4px 0; }
 .menu.panel { max-height: calc(100vh - var(--bar-h, 52px) - 16px); overflow-y: auto; }
+
+/* Overhaul as a small wrench mark beside the Flagship heading (designer 2026-11-21, round 25, I32). */
+.flagship-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.oh-mark-wrap { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; }
+.oh-mark-wrap .oh-slots { max-width: none; flex-wrap: nowrap; }
+.oh-mark-wrap .oh-slots i { width: 8px; height: 9px; }
+.overhaul-btn.oh-mark, .dock-bays .overhaul-btn.oh-mark { width: 30px; height: 30px; border-radius: 8px; padding: 0; display: inline-grid; place-items: center; flex: none; }
+.dock-bays .overhaul-btn.oh-mark svg, .overhaul-btn.oh-mark svg { width: 18px; height: 18px; }
+.dock-bays .oh-mark-wrap { flex-direction: column; gap: 3px; align-self: center; }
+
+/* A Reserve colour tapped (designer 2026-11-21, round 25, I33): the bubble glows, the Modules it can pay for light in its colour, a card shows its counts. */
+button.res-bubble { font: inherit; color: inherit; cursor: pointer; }
+.res-bubble.open { box-shadow: 0 0 0 2px var(--c), 0 0 12px color-mix(in srgb, var(--c) 60%, transparent); }
+.module.pay-lit { --pop: var(--c, #fff); box-shadow: 0 0 0 2px var(--pop), 0 0 16px color-mix(in srgb, var(--pop) 55%, transparent); animation: pay-lit 1.6s ease-in-out infinite; }
+.module.pay-lit.yellow { --pop: var(--yellow); } .module.pay-lit.red { --pop: var(--red); } .module.pay-lit.blue { --pop: var(--blue); }
+@keyframes pay-lit { 50% { box-shadow: 0 0 0 2px var(--pop), 0 0 26px color-mix(in srgb, var(--pop) 75%, transparent); } }
+html.still .module.pay-lit { animation: none; }
+.res-card .res-counts { margin: 6px 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.res-card .res-counts li { display: flex; justify-content: space-between; gap: 14px; }
+.res-card .glyph { vertical-align: -3px; }

@@ -14,7 +14,9 @@ import type { GameData } from "../data/index.js";
 import { alertedUnits } from "../engine/alerts.js";
 import { bayAbilities, noUnitToTarget, orders } from "../engine/command.js";
 import { describe, level, sectorKeys, sectorOf, strength, tile, unitDef } from "../engine/field.js";
-import { moduleCost, moduleDef, xWouldBeZero } from "../engine/modules.js";
+import { moduleCost, moduleDef, payable, xWouldBeZero } from "../engine/modules.js";
+import { type Anchor, PopCard, anchorOf } from "./PopCard.js";
+import { ENERGY_PER_COLOUR } from "../engine/rules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
 import { Briefing } from "./briefing/Briefing.js";
 import { StatsPage } from "./briefing/stats/StatsPage.js";
@@ -456,8 +458,11 @@ function GameScreen(p: GameProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   // The Upgrade sheet (designer 2026-11-09, step 4): open while Mission End asks for upgrades; after
   // the last point it stays (with Continue) so its effects can finish.
-  const [upOpen, setUpOpen] = useState(false);
-  useEffect(() => {
+  const [upOpenState, setUpOpen] = useState(false);
+  // Round 25 (designer 2026-11-21): the sheet opens in the same picture as the win ends; before, the
+  // Field showed the upgrade question's bubbles for a moment first.
+  const upOpen = upOpenState || (!win && !!realQ?.upgrade);
+  useLayoutEffect(() => {
     // Not while the win celebration plays: the sheet opens after it.
     if (win) return;
     if (realQ?.upgrade) setUpOpen(true);
@@ -517,6 +522,8 @@ function GameScreen(p: GameProps) {
   const c = { data, state: s };
   const dark = useDark();
   const held = useReserveHeld();
+  // The Reserve colour tapped (round 25, I33): its card, and the Modules it can pay for now lit.
+  const [resCard, setResCard] = useState<{ col: "Yellow" | "Red" | "Blue"; at: Anchor } | undefined>();
   const q = v.status === "question" ? v.question : undefined;
   // Selections, a pop-up or a split in progress belong to the question they were made for.
   const [selected, setSelected] = usePerQuestion<string[]>(q, []);
@@ -898,6 +905,23 @@ function GameScreen(p: GameProps) {
   const energyQ = !actors && q?.kind === "option" && q.energy ? q : undefined;
   const energyFor = (id: number) => energyQ?.energy?.[String(id)];
   const anomalyQ = q?.kind === "option" && q.options.some((o) => o.on?.kind === "anomaly");
+  // Modules the tapped Reserve colour can pay for now (8.6): ready, of that colour, its cost covered by
+  // the energy on it and the Reserve (in either phase: an Overload Module is lit in the Command phase too).
+  const payLitIds = resCard
+    ? s.player.modules
+        .filter((m) => {
+          const d = moduleDef(c, m.id);
+          if (!m.ready || d.colour !== resCard.col) return false;
+          let cost = 0;
+          try {
+            cost = moduleCost(c, m.id);
+          } catch {
+            cost = d.cost === "X" ? 1 : d.cost;
+          }
+          return payable(c, m.id) >= cost;
+        })
+        .map((m) => m.id)
+    : [];
   const takeQ = !actors && q?.kind === "option" && q.takeEnergy ? q : undefined;
   const baysWanted = splitOn === "bays";
   // Damage to the Flagship (5.2): bubbles by the Bays, not the Bays themselves (designer 2026-11-09).
@@ -1009,7 +1033,6 @@ function GameScreen(p: GameProps) {
   const overhaulButton = <OverhaulButton layout={layout} used={s.sheet.overhaulUsed} slots={co.overhaulSlots} can={!!overhaul} must={crippled && !!overhaul} onPress={askOverhaul} />;
   const flagshipExtras = (
     <>
-      {layout !== "C" && overhaulButton}
       {/* Upgrade points are in the Mission card (designer 2026-11-16). */}
       {/* No "Ally" line here (designer 2026-11-20). */}
     </>
@@ -1040,13 +1063,19 @@ function GameScreen(p: GameProps) {
           {/* While a Module is selected, its bar holds energy from here: one less per chip that leaves, one more per chip back (designer 2026-11-21). */}
           {(["Yellow", "Red", "Blue"] as const).map((col) => {
             const inSplit = splitOn === "reserve" && q?.kind === "split" && q.buckets.some((b) => b.id === col);
-            const Tag = inSplit ? "button" : "span";
+            // Round 25 (designer 2026-11-21, I33): a tap on a colour lights the Modules it can pay for now and shows its card.
             return (
-              <Tag key={col} data-reserve={col} className={`res-bubble ${col.toLowerCase()} ${inSplit ? "can" : ""} ${splitOn === "reserve" && !inSplit ? "dim" : ""}`} onClick={inSplit ? () => addSplit(col) : undefined} title={`${col} energy in your Reserve`}>
+              <button
+                key={col}
+                data-reserve={col}
+                className={`res-bubble ${col.toLowerCase()} ${inSplit ? "can" : ""} ${splitOn === "reserve" && !inSplit ? "dim" : ""} ${resCard?.col === col ? "open" : ""}`}
+                onClick={inSplit ? () => addSplit(col) : (e) => setResCard(resCard?.col === col ? undefined : { col, at: anchorOf(e.currentTarget) })}
+                title={`${col} energy in your Reserve${inSplit ? "" : ": tap to see what it can pay for"}`}
+              >
                 <EnergyGlyph colour={col} />
                 <b>{Math.max(0, s.player.reserve[col] - held[col])}</b>
                 {inSplit && <SplitCount n={split[col] ?? 0} onMinus={() => subSplit(col)} />}
-              </Tag>
+              </button>
             );
           })}
         </div>
@@ -1097,7 +1126,10 @@ function GameScreen(p: GameProps) {
       </header>
 
       <aside className="left panel">
-        <h3>Flagship{layout === "A" ? ` — ${co.name}` : ""}</h3>
+        <h3 className="flagship-head">
+          <span>Flagship{layout === "A" ? ` — ${co.name}` : ""}</span>
+          {layout !== "C" && overhaulButton}
+        </h3>
         {layout !== "C" ? (
           <FlagshipDock layout={layout} company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={useThing} onSelect={setThingSel} drag={dragApi}>
             {flagshipExtras}
@@ -1125,7 +1157,12 @@ function GameScreen(p: GameProps) {
             tones={tones}
             selected={[...selected, ...Object.keys(split).filter((k) => (split[k] ?? 0) > 0), ...(rowQ && rowSel !== undefined ? rowQ.rows![rowSel]! : [])]}
             onPick={pick}
-            onHover={setHover}
+            onHover={(k, held) => {
+              // Round 25 (designer 2026-11-21): the mouse shows nothing over a Dark or Cleared sector
+              // with nothing looked at in it; a long tap still shows its card.
+              const plain = k !== undefined && !held && !(s.field[k] ?? []).some((t) => s.tiles[t]!.faceUp) && seenInSector(s, k).length === 0;
+              setHover(plain ? undefined : k);
+            }}
             showHidden={s.settings.developerMode}
             dark={dark}
             dragFor={actors ? (u) => mechaDragPlan(data, game, v, u) : undefined}
@@ -1149,7 +1186,8 @@ function GameScreen(p: GameProps) {
           <div className="empty-field">{PHASE[s.phase]}</div>
         )}
         {hasField && allyDropUnit(realQ?.prompt) && <AllyDrop data={data} unitId={allyDropUnit(realQ?.prompt)!} />}
-        {hover && !popup && hasField && <InfoBubble data={data} state={s} sector={hover} />}
+        {/* Not while tiles are in the hand (Bay 3 and other looks: round 25, it covered "Put them back"). */}
+        {hover && !popup && hasField && !stackQ && !look && <InfoBubble data={data} state={s} sector={hover} />}
         {(note || p.notice) && <div className={`field-toast ${note?.warn || (!note && p.notice && /^Not/.test(p.notice)) ? "warn" : ""}`}>{note ? note.text : p.notice}</div>}
         {look && !stackQ && hasField && lookAsk ? (
           <StackPicker
@@ -1173,10 +1211,18 @@ function GameScreen(p: GameProps) {
             <PointBubbles items={[{ key: "overhaul", selector: "[data-overhaul]", label: "Overhaul", sub: `${co.overhaulSlots - s.sheet.overhaulUsed} slot${co.overhaulSlots - s.sheet.overhaulUsed === 1 ? "" : "s"} left`, tone: "alert", onPress: () => answer(overhaul.id) }]} />
           </>
         )}
+        {anomalyQ && hasField && q?.kind === "option" && !win && (
+          // Round 25 (designer 2026-11-21): a notice when met Anomaly cards can be claimed (Overload End step 3, 9.3).
+          <AskBubble
+            title={q.options.filter((o) => o.on?.kind === "anomaly").length === 1 ? "An Anomaly is ready to claim" : `${q.options.filter((o) => o.on?.kind === "anomaly").length} Anomalies are ready to claim`}
+            text="The Field meets an Anomaly card in your hand: it glows at the top of the Field. Press its Claim button to put it at the bottom of the deck and choose a reward, or Decline all to keep your cards."
+            from="Overload End · rule 9.3"
+          />
+        )}
         {hasField && <Fps />}
         {pickQ && <UnitPicks items={pickItems} foot={pickFoot} onPress={pickPress} multi={pickQ.kind !== "option" && pickQ.kind !== "order" && !((pickQ.kind === "units" || pickQ.kind === "sectors") && pickQ.max === 1)} />}
         {rowQ && hasField && !planQ && <RowBubbles rows={rowQ.rows!} selected={rowSel} onSelect={setRowSel} onConfirm={(i) => send({ kind: "option", value: rowQ.options[i]!.id })} />}
-        {win ? null : planQ || prepQ ? null : rotate ? (
+        {win || upOpen ? null : planQ || prepQ ? null : rotate ? (
           // Facing (3.7): the turn buttons are on the unit; no card (designer 2026-11-09). "Done" only when needed.
           rotate.done ? (
             <button className="primary facing-done" onClick={rotate.done}>
@@ -1226,6 +1272,7 @@ function GameScreen(p: GameProps) {
           const taking = takeQ?.options.some((o) => o.id === String(m.id));
           const dim = (modulesWanted && !st.can && !energyFor(m.id) && !taking) || (modSel !== undefined && modSel.id !== m.id);
           const sel = modSel?.id === m.id;
+          const payLit = resCard !== undefined && payLitIds.includes(m.id);
           return (
             <ModuleCard
               key={m.id}
@@ -1236,7 +1283,7 @@ function GameScreen(p: GameProps) {
               can={st.can}
               selected={sel}
               dim={dim}
-              extraClass={`${m.ready && xWouldBeZero(c, m.id, false) ? "x-zero" : ""} ${affectedNow.modules.includes(m.id) ? "affected" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""}`}
+              extraClass={`${m.ready && xWouldBeZero(c, m.id, false) ? "x-zero" : ""} ${affectedNow.modules.includes(m.id) ? "affected" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""} ${payLit ? `pay-lit ${resCard!.col.toLowerCase()}` : ""}`}
               onClick={st.onClick}
               press={actors?.modules.get(m.id) ? modulePress(`module:${m.id}`, [], [actors.modules.get(m.id)], actors.modules.get(m.id), d.effect) : undefined}
             >
@@ -1284,6 +1331,11 @@ function GameScreen(p: GameProps) {
           }}
           onContinue={() => setUpOpen(false)}
         />
+      )}
+      {resCard && (
+        <PopCard at={resCard.at} label={`${resCard.col} energy`} className="res-card" keepFor="[data-reserve]" onClose={() => setResCard(undefined)}>
+          <ReserveCard state={s} col={resCard.col} lit={payLitIds.length} />
+        </PopCard>
       )}
       {modSel && <ModulePops id={modSel.id} pops={modPops} />}
       {energyQ && <EnergyPopups q={energyQ} onPick={(id) => send({ kind: "option", value: id })} />}
@@ -1350,6 +1402,45 @@ export function sortedModules<M extends { id: number }>(c: Parameters<typeof mod
 }
 
 /** The energy one answer places: a placeholder glyph until the designer's art (spec "Art"). */
+/**
+ * The card of one Reserve colour (designer 2026-11-21, round 25, I33): how much of it is in the
+ * Reserve, on your Modules and left in the Supply (of 15), and how paying works (8.6); with the Heat
+ * module, how Overclock turns extra energy into Heat (H6).
+ */
+function ReserveCard({ state, col, lit }: { state: GameState; col: "Yellow" | "Red" | "Blue"; lit: number }) {
+  const onMods = state.player.modules.reduce((a, m) => a + m.energy[col], 0);
+  return (
+    <>
+      <b>
+        <EnergyGlyph colour={col} /> {col} energy
+      </b>
+      <ul className="res-counts">
+        <li>
+          In your Reserve <b>{state.player.reserve[col]}</b>
+        </li>
+        <li>
+          On your Modules <b>{onMods}</b>
+        </li>
+        <li>
+          Left in the Supply
+          <span>
+            <b>{state.supply.energy[col]}</b> of {ENERGY_PER_COLOUR}
+          </span>
+        </li>
+      </ul>
+      <p className="small">{lit ? `Lit: the ${lit === 1 ? "ready Module" : `${lit} ready Modules`} it can pay for now (Overload Modules, on a red background, run only in an Overload).` : `No ready ${col} Module of yours can be paid for now.`}</p>
+      <p>
+        A Module is paid in its own colour: the energy on it first, then your Reserve (8.6).
+      </p>
+      {state.settings.heatModule && (
+        <p>
+          <b>Overclock (Heat module):</b> when you run a Module, pay 2 extra energy of its colour to gain 1 Heat; then you may pay 1 extra Yellow to gain 1 more Heat (H6). Select the Module and use its Overclock pop-ups.
+        </p>
+      )}
+    </>
+  );
+}
+
 export function EnergyGlyph({ colour }: { colour: "Yellow" | "Red" | "Blue" }) {
   return (
     <span className={`glyph ${colour.toLowerCase()}`} aria-label={`${colour} energy`}>

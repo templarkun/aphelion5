@@ -135,7 +135,7 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    designer asked to be reminded to come back to it: a win of its own for Gamma (and Beta). Since
    2026-11-21 every mission won (Salvage too) plays one of three wins at random (Mission Complete,
    Perimeter Sweep, Sector Flip); none is a Gamma win of its own yet. Gamma now has three kills (Event Horizon, Field Array,
-   Dimensional Shatter 2026-11-21); I28 (should Dimensional Shatter use the Company's colour?) is open.
+   Dimensional Shatter 2026-11-21); I28 answered (round 25): no Company colour.
 
 13. **Trial looks: the designer's choice** (designer 2026-11-20). Menu > "Trial looks (temporary)"
    offers tile corners, stack depth and the ready-to-tap animation in several versions each
@@ -144,5 +144,7 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    2026-11-21: Notches made part of the game; second set of stack and ready choices and the
    tile-count words switch (T13_R21_01/02). Round 22: ready split into units and sectors, unit names switch. Round 23: the Overload's
    edge (Original / Inflow, T13_R23_06). Round 24: a sector's next tile (Original / Corner / Peek /
-   Ghost / Chip, T13_R24_02). Still to choose: corners, stack depth, ready (units), ready (sectors),
-   words, names, Overload edge, next tile.
+   Ghost / Chip, T13_R24_02). Round 25: the tile-count words left the Menu, hidden for good; Pebble
+   corners and the Corner next tile are the defaults; Original and Peek next-tile looks removed
+   (T13_R25_01). Still to choose: corners (Pebble for now), stack depth, ready (units), ready
+   (sectors), names, Overload edge, next tile (Corner / Ghost / Chip).

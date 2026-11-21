@@ -6,7 +6,7 @@
  */
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { Crosshair, Flag, GitFork, Package } from "lucide-react";
+import { Check, Crosshair, Flag, GitFork, Package } from "lucide-react";
 import type { CampaignDatabase, MissionDef, ThreatColumn } from "../../data/campaign.js";
 import type { GameData } from "../../data/index.js";
 import type { UnitDef } from "../../data/units.js";
@@ -18,7 +18,13 @@ import { UnitCard } from "./UnitCard.js";
 import { levelOf } from "./unitFacts.js";
 import { UnitTile } from "./UnitTile.js";
 
-export function MissionTimeline({ data, campaign, focus, onFocus }: { data: GameData; campaign: CampaignDatabase; focus: string | undefined; onFocus: (id: string | undefined) => void }) {
+/**
+ * Where a mission stands in the Campaign being played (the route screen, round 25): won, skipped
+ * (the other route was taken), open (can be chosen now) or later. Without it (the briefing), none.
+ */
+export type MissionStatus = "done" | "skipped" | "open" | "later";
+
+export function MissionTimeline({ data, campaign, focus, onFocus, status, hideFile }: { data: GameData; campaign: CampaignDatabase; focus: string | undefined; onFocus: (id: string | undefined) => void; status?: (id: string) => MissionStatus; hideFile?: boolean }) {
   const groups = missionGroups(campaign);
   const last = groups.length - 1;
   const m = focus ? campaign.missionById.get(focus) : undefined;
@@ -31,19 +37,19 @@ export function MissionTimeline({ data, campaign, focus, onFocus }: { data: Game
               {gi > 0 && <Link fork={g.length > 1 || groups[gi - 1]!.length > 1} />}
               <div className="flex flex-col gap-2">
                 {g.map((x) => (
-                  <Node key={x.id} m={x} on={x.id === m?.id} final={gi === last} onPick={() => (playSelect(), onFocus(x.id === m?.id ? undefined : x.id))} />
+                  <Node key={x.id} m={x} on={x.id === m?.id} final={gi === last} status={status?.(x.id)} onPick={() => (playSelect(), onFocus(x.id === m?.id ? undefined : x.id))} />
                 ))}
               </div>
             </li>
           ))}
         </ol>
       </div>
-      {m && <MissionFile key={m.id} data={data} campaign={campaign} m={m} />}
+      {m && !hideFile && <MissionFile key={m.id} data={data} campaign={campaign} m={m} />}
     </div>
   );
 }
 
-function MissionFile({ data, campaign, m }: { data: GameData; campaign: CampaignDatabase; m: MissionDef }) {
+export function MissionFile({ data, campaign, m }: { data: GameData; campaign: CampaignDatabase; m: MissionDef }) {
   return (
     <div className="bf-step-in mt-2 grid gap-x-5 gap-y-2 border-t border-white/20 pt-3 sm:grid-cols-2" data-mission-detail={m.id}>
       <div className="sm:col-span-2">
@@ -177,7 +183,9 @@ function Link({ fork }: { fork: boolean }) {
   );
 }
 
-function Node({ m, on, final, onPick }: { m: MissionDef; on: boolean; final: boolean; onPick: () => void }) {
+const STATUS_WORD: Record<MissionStatus, string> = { done: "won", skipped: "skipped", open: "choose now", later: "ahead" };
+
+function Node({ m, on, final, status, onPick }: { m: MissionDef; on: boolean; final: boolean; status?: MissionStatus | undefined; onPick: () => void }) {
   const Icon = final ? Flag : m.objective.type === "salvage" ? Package : Crosshair;
   return (
     <button
@@ -185,9 +193,15 @@ function Node({ m, on, final, onPick }: { m: MissionDef; on: boolean; final: boo
       onClick={onPick}
       aria-pressed={on}
       data-mission={m.id}
-      title={`${missionLabel(m)}: ${objectiveShort(m)}`}
-      className={`bf-panel relative flex w-[78px] flex-col items-center gap-0.5 overflow-hidden !px-1 !py-2 ${on ? "bf-sel" : ""}`}
+      data-status={status}
+      title={`${missionLabel(m)}: ${objectiveShort(m)}${status ? ` (${STATUS_WORD[status]})` : ""}`}
+      className={`bf-panel relative flex w-[78px] flex-col items-center gap-0.5 overflow-hidden !px-1 !py-2 ${on ? "bf-sel" : ""} ${status === "skipped" ? "opacity-45 grayscale" : ""} ${status === "open" ? "bf-route-open" : ""}`}
     >
+      {status === "done" && (
+        <span className="absolute right-0.5 top-0.5 z-[1] grid h-[18px] w-[18px] place-items-center rounded-full bg-emerald-400 text-indigo-950" aria-hidden="true">
+          <Check size={13} strokeWidth={3} />
+        </span>
+      )}
       <MissionMap m={m} className={`pointer-events-none absolute inset-1 h-[calc(100%-8px)] w-[calc(100%-8px)] ${on ? "opacity-80" : "opacity-55"}`} fill="rgb(186 230 253 / 0.35)" stroke="rgb(224 242 254 / 0.7)" />
       <Icon size={18} className={`relative ${final ? "text-amber-300" : "text-acc"}`} />
       <span className="relative text-lg font-extrabold leading-none text-white [text-shadow:0_1px_3px_rgb(0_0_0/0.8)]">
@@ -195,6 +209,7 @@ function Node({ m, on, final, onPick }: { m: MissionDef; on: boolean; final: boo
         {m.route !== "single" && <span className="text-amber-300">{m.route.split(" ")[0]!.toUpperCase()}</span>}
       </span>
       <span className="relative text-[11px] font-bold uppercase text-sky-100 [text-shadow:0_1px_3px_rgb(0_0_0/0.8)]">{objectiveShort(m)}</span>
+      {status && status !== "later" && <span className={`relative text-[10px] font-extrabold uppercase tracking-wider ${status === "open" ? "text-amber-300" : status === "done" ? "text-emerald-300" : "text-sky-200"}`}>{STATUS_WORD[status]}</span>}
     </button>
   );
 }

@@ -433,42 +433,33 @@ export function useAbilityPress(api: DragApi, onTap: (key: string, el: HTMLEleme
 }
 
 /**
- * Overhaul (8.8) as a Flagship button like the Bays (designer 2026-11-10): a square button with a
- * placeholder picture (a wrench over a gear), "Overhaul" under it, and above it one hexagonal cell
- * per Overhaul slot (used ones lit). Crippled (5.2): Overhaul is the only action, so the button
- * burns with a red running outline (`must`) and the screen points at it (FieldAsk.tsx).
+ * Overhaul (8.8): a small wrench mark beside the Flagship heading, with one hexagonal cell per
+ * Overhaul slot (used ones dim) (designer 2026-11-21, round 25, I32; it was a big button like the
+ * Bays, used about once a Campaign). Pressing it opens the Overhaul card with Confirm (App.tsx).
+ * Crippled (5.2): Overhaul is the only action, so the mark burns with a red running outline (`must`)
+ * and the screen points at it (FieldAsk.tsx).
  */
 export function OverhaulButton(p: { layout: Layout; used: number; slots: number; can: boolean; must: boolean; onPress: () => void }) {
   const left = p.slots - p.used;
   return (
-    <div className={`thing overhaul-thing ${p.must ? "must" : ""}`}>
-      {p.layout === "A" && (
-        <div className="thing-text">
-          <p className={p.can ? "" : "small"}>Overhaul: repair the Flagship, refill your energy, swap a Module, reset up to 2 units.</p>
-          <p className="small">
-            {left} of {p.slots} slot{p.slots === 1 ? "" : "s"} left
-          </p>
-        </div>
-      )}
-      <div className="thing-col">
-        <div className="oh-slots" role="meter" aria-valuenow={p.used} aria-valuemax={p.slots} aria-label={`Overhaul slots used ${p.used} of ${p.slots}`} title={`Overhaul slots used: ${p.used} of ${p.slots}`}>
-          {Array.from({ length: p.slots }, (_, i) => (
-            <i key={i} className={i < p.used ? "used" : ""} />
-          ))}
-        </div>
-        <button data-overhaul className={`thing-btn overhaul-btn ${p.can ? "can" : ""} ${p.must ? "must" : ""}`} disabled={!p.can} onClick={p.onPress} aria-label="Overhaul: repair the Flagship, refill energy, swap a Module (8.8)" title="Repair the Flagship, refill energy, swap a Module (8.8)">
-          <span className="thing-inner">
-            <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden>
-              <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="16" cy="16" r="5" />
-                <path d="M16 4v3M16 25v3M4 16h3M25 16h3M7.5 7.5l2.1 2.1M22.4 22.4l2.1 2.1M7.5 24.5l2.1-2.1M22.4 9.6l2.1-2.1" />
-                <path d="M21 27l5.5-5.5a3.5 3.5 0 0 0 4-4.6l-2.2 2.2-2.2-.6-.6-2.2 2.2-2.2a3.5 3.5 0 0 0-4.6 4L17.6 23.6" strokeWidth="1.8" />
-              </g>
-            </svg>
-            <small>Overhaul</small>
-          </span>
-        </button>
-      </div>
-    </div>
+    <span className={`oh-mark-wrap ${p.must ? "must" : ""}`}>
+      <span className="oh-slots" role="meter" aria-valuenow={p.used} aria-valuemax={p.slots} aria-label={`Overhaul slots used ${p.used} of ${p.slots}`} title={`Overhaul slots: ${left} of ${p.slots} left`}>
+        {Array.from({ length: p.slots }, (_, i) => (
+          <i key={i} className={i < p.used ? "used" : ""} />
+        ))}
+      </span>
+      <button
+        data-overhaul
+        className={`thing-btn overhaul-btn oh-mark ${p.can ? "can" : ""} ${p.must ? "must" : ""}`}
+        disabled={!p.can}
+        onClick={p.onPress}
+        aria-label={`Overhaul: repair the Flagship, refill energy, swap a Module (8.8). ${left} of ${p.slots} slots left`}
+        title={`Overhaul: repair the Flagship, refill energy, swap a Module, reset up to 2 units (8.8). ${left} of ${p.slots} slot${p.slots === 1 ? "" : "s"} left`}
+      >
+        <svg viewBox="0 0 32 32" width="18" height="18" aria-hidden>
+          <path d="M20.5 4.5a6.5 6.5 0 0 0-6.2 8.6L4.8 22.6a2.6 2.6 0 0 0 3.7 3.7l9.5-9.5a6.5 6.5 0 0 0 8.6-6.2l-3.6 3.6-3.6-1-1-3.6z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+        </svg>
+      </button>
+    </span>
   );
 }

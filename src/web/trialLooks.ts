@@ -8,15 +8,15 @@
  *   The notches along the bottom edge are no longer a trial: they are always drawn (designer 2026-11-21).
  * - readyUnit / readySector: the animation of units, and of Dark / Cleared sectors, ready to be tapped
  *   (one row each since 2026-11-21).
- * - counts: the "+N beneath" / "alone" and "N tiles" words on the tiles shown or hidden.
+ * - counts: the "+N beneath" / "alone" and "N tiles" words on the tiles; always hidden since round 25
+ *   (designer 2026-11-21), no longer in the Menu.
  * - names: the unit's name (B_03, S_12 ...) on its tile shown or hidden.
  * - overload: the Overload's look round the Field's edge (designer 2026-11-21): Original (the plasma
  *   wave drifting in and the plasma beams racing round the edge), or Inflow (the plasma wave kept, the
  *   racing beams replaced by streams of energy particles flowing in from the edge).
  * - next: where a sector's very next tile shows once the player has looked at it (designer
- *   2026-11-21, round 24): the tile under a unit, or a Dark sector's top tile. Original (nothing new;
- *   a Dark sector keeps its "? B_01" words), Corner (its glyph badge in the lower left corner), Peek
- *   (its badge peeking out from under the tile's lower left edge), Ghost (its glyph faint and large in
+ *   2026-11-21, round 24): the tile under a unit, or a Dark sector's top tile. Corner (its glyph badge in
+ *   the lower left corner; the default since round 25, when Original and Peek were removed), Ghost (its glyph faint and large in
  *   the tile), Chip (a small "next" chip with its glyph where the tile-count words are).
  */
 
@@ -27,7 +27,7 @@ export type ReadySector = "fill" | "embers" | "inner" | "sparkle" | "converge" |
 export type Ready = ReadyUnit | ReadySector;
 export type Counts = "shown" | "hidden";
 export type OverloadLook = "original" | "inflow";
-export type NextLook = "original" | "corner" | "peek" | "ghost" | "chip";
+export type NextLook = "corner" | "ghost" | "chip";
 
 export interface TrialLooks {
   corners: Corner;
@@ -95,15 +95,15 @@ export const OVERLOADS: { id: OverloadLook; label: string; note: string }[] = [
 ];
 
 export const NEXTS: { id: NextLook; label: string; note: string }[] = [
-  { id: "original", label: "Original", note: "not shown (a Dark sector keeps “? B_01”)" },
   { id: "corner", label: "Corner", note: "its glyph badge in the lower left corner of the tile" },
-  { id: "peek", label: "Peek", note: "its badge peeking out from under the tile's lower left edge" },
   { id: "ghost", label: "Ghost", note: "its glyph faint and large inside the tile" },
   { id: "chip", label: "Chip", note: "a small “next” chip with its glyph at the foot of the tile" },
 ];
 
 const KEY = "aphelion5.trialLooks";
-const DEFAULT: TrialLooks = { corners: "original", depth: "original", readyUnit: "original", readySector: "fill", counts: "shown", names: "shown", overload: "original", next: "original" };
+// Designer 2026-11-21 (round 25): Pebble corners and the Corner next tile are the defaults; the
+// tile-count words are hidden for good (their row left the Menu).
+const DEFAULT: TrialLooks = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "original", next: "corner" };
 const subs = new Set<() => void>();
 
 function load(): TrialLooks {
@@ -116,7 +116,7 @@ function load(): TrialLooks {
       depth: DEPTHS.some((x) => x.id === v.depth) ? v.depth! : DEFAULT.depth,
       readyUnit: READY_UNITS.some((x) => x.id === v.readyUnit) ? v.readyUnit! : DEFAULT.readyUnit,
       readySector: READY_SECTORS.some((x) => x.id === v.readySector) ? v.readySector! : DEFAULT.readySector,
-      counts: COUNTS.some((x) => x.id === v.counts) ? v.counts! : DEFAULT.counts,
+      counts: "hidden",
       names: NAMES.some((x) => x.id === v.names) ? v.names! : DEFAULT.names,
       overload: OVERLOADS.some((x) => x.id === v.overload) ? v.overload! : DEFAULT.overload,
       next: NEXTS.some((x) => x.id === v.next) ? v.next! : DEFAULT.next,

@@ -46,6 +46,11 @@
 # in a sector in a second hover bubble (T13_R24_01); the next tile's trial looks (T13_R24_02); M_03
 # with several equal ways (T13_R24_03). Checked by tests/unit/orders.test.ts,
 # tests/unit/round24.test.ts and scripts/ui-round24.mjs.
+# Round 25, 2026-11-21: trial look defaults (T13_R25_01, CHANGED note on T13_R24_02), the hover card
+# (T13_R25_02, CHANGED note on T13_R24_01), the Overhaul wrench (T13_R25_03), the Reserve card
+# (T13_R25_04), the Anomaly notice (T13_R25_05), the win then the Upgrade sheet (T13_R25_06), the
+# route screen (T13_R25_07), no Field before the mission intro (T13_R25_08). Checked by
+# scripts/ui-round25.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -2269,6 +2274,8 @@ note: A choice saved before this round that no longer exists (Thick slab, Shadow
       the runners, Corner wave, Ripple) falls back to Original.
 CHANGED (designer 2026-11-21, round 22): the Ready row is split into units and sectors, and a row
       for unit names is added (T13_R22_01).
+CHANGED (designer 2026-11-21, round 25): the tile-count words row is gone; the words are hidden for
+      good (T13_R25_01).
 
 id: T13_R21_03
 title: Allied Drop: faster fall, fine dust
@@ -2408,6 +2415,9 @@ then: beside the card text bubble (under it on a narrow Field) a second bubble "
       second bubble).
 given: no tile looked at in that sector
 then: only the card text bubble.
+CHANGED (designer 2026-11-21, round 25): with the mouse, a Dark or Cleared sector with nothing
+      looked at in it shows no bubble at all (a long tap still shows "Dark sector. N tiles."); no
+      bubble while tiles are in the hand (T13_R25_02).
 
 id: T13_R24_02
 title: The sector's next tile on the Field (trial look)
@@ -2420,6 +2430,8 @@ then: Original: nothing new (a Dark sector keeps "? B_01").
       Ghost: its glyph large and faint inside the tile, behind the words.
       Chip: a small dark "next" chip with its glyph at the foot of the tile.
       Kept in this browser; the first choice is Original.
+CHANGED (designer 2026-11-21, round 25): Original and Peek are gone; Corner is the first choice
+      (T13_R25_01).
 
 id: T13_R24_03
 title: M_03 Attacks at once when its ways there end the same
@@ -2431,3 +2443,100 @@ then: it moves and Attacks at once; no question about which sector to move to.
 given: the ways there would not end the same (the board after them differs)
 then: as before: the sectors it may move to light up, tap one.
 
+################################################################################
+=== SECTION: ROUND 25 ===
+# Round 25, 2026-11-21 (designer): trial look defaults, hover rules, the Overhaul wrench, the Reserve
+# card, the Anomaly notice, the route screen, two screen fixes (T13_R25_01-08; CHANGED notes on
+# T13_R24_01, T13_R24_02). I28, I30-I33 answered.
+
+id: T13_R25_01
+title: Trial looks: new defaults, two choices and one row gone
+source: designer 2026-11-21 (TEMPORARY trial looks)
+given: a browser that never chose a trial look
+then: Tile corners: Pebble. A sector's next tile: Corner. The tile-count words ("+N beneath", "alone",
+      "N tiles") are never shown, and their row is gone from Menu > Trial looks.
+      "A sector's next tile" offers Corner, Ghost and Chip only (Original and Peek are gone); a
+      browser that had chosen one of those two gets Corner.
+      Every other choice is still offered.
+
+id: T13_R25_02
+title: The hover card: plain Dark sectors, tiles in the hand
+source: designer 2026-11-21 (screen only)
+given: the mouse rests on a Dark sector or a Cleared sector with no tile looked at in it
+then: no bubble.
+given: the same sector held 0.5 s on a touch screen
+then: its card ("Dark sector. N tiles.", or the Cleared sector's line), as before.
+given: a Dark sector with tiles looked at in it, or a sector with a unit
+then: the bubbles as before (T13_R24_01).
+given: tiles are in the hand (V1 Bay 3 putting tiles back, "Put them back" after a look at the top
+       tiles of a sector, or a look card on the Field)
+then: no hover bubble at all, so nothing covers the tiles or "Put them back".
+
+id: T13_R25_03
+title: Overhaul is a small wrench beside the Flagship heading
+source: designer 2026-11-21 (I32 answered: (a))
+given: a game on a PC or tablet
+then: the Flagship heading has, at its right end, one small hexagon per Overhaul slot (used ones dim)
+      and a small wrench button; the big Overhaul button is gone. Phones: the same small wrench and
+      slots in the Bays' row at the foot of the Field.
+when: press the wrench while Overhaul is legal and the Flagship is not Crippled
+then: the "Overhaul now?" card with Confirm (8.8).
+given: Crippled (5.2)
+then: the wrench burns with the red running outline and the Field's bubble points at it; a press
+      Overhauls at once.
+
+id: T13_R25_04
+title: Tapping a Reserve colour
+source: designer 2026-11-21 (I33 answered: (c))
+when: tap one of the three Reserve bubbles in the top bar (not while the Reserve is being chosen from)
+then: the bubble glows and a small card opens under it: that colour's energy in your Reserve, on your
+      Modules and left in the Supply (of 15); a line on how paying works (a Module is paid in its own
+      colour: the energy on it first, then the Reserve, 8.6); with the Heat module also how Overclock
+      gives Heat (2 extra energy of the Module's colour for 1 Heat, then 1 extra Yellow for 1 more, H6).
+      Every ready Module of that colour whose cost the energy on it plus the Reserve covers glows in
+      that colour (Overload Modules too; the card says they run only in an Overload); if none, the
+      card says so.
+when: tap anywhere else, press Escape, or tap the same bubble again
+then: the card closes and the Modules stop glowing.
+
+id: T13_R25_05
+title: A notice when an Anomaly can be claimed
+source: designer 2026-11-21 (screen only)
+given: Overload End step 3 (9.3): the Field meets one or more of your Anomaly cards
+then: besides the glowing cards with Claim and the "Decline all" button, a bubble in the Field says
+      "An Anomaly is ready to claim" (or "N Anomalies are ready to claim") and how: press Claim on one
+      (to the bottom of the deck, choose a reward) or Decline all. It goes with the answer.
+
+id: T13_R25_06
+title: The win, then the Upgrade sheet at once
+source: designer 2026-11-21 (bug report)
+given: a mission is won and its win celebration plays
+when: it ends (or is skipped)
+then: the Upgrade sheet is there in the same picture; no question bubbles show on the Field for a
+      moment before it.
+
+id: T13_R25_07
+title: Choosing the next mission's route on its own screen
+source: designer 2026-11-21 (screen only; the rule is 7.2 step 1)
+given: the next mission number has two missions (Mission 2X / 2Y, 4X / 4Y)
+then: before the Threat screen, a screen in the briefing's look: the steps ribbon starts with "Route";
+      "Mission N: choose your route"; one card per route (its Field, objective, mission event, Mission
+      Order, number of sectors); the road of missions with every mission of the Campaign (won ones
+      ticked "won", the skipped one greyed "skipped", the two routes "choose now", the rest ahead); a
+      tap on any mission there opens its file (objective, event, Order, Field, units), again closes it.
+when: tap a route card
+then: it is selected and its whole file shows below, with its unit roster.
+when: "Take this route"
+then: the logo gate ("ROUTE LOCKED"), then the Threat screen of that mission; the other route is
+      skipped for this campaign. The Field is not shown in between.
+given: the next mission has only one mission
+then: no route screen, as before (Threat first).
+
+id: T13_R25_08
+title: No Field picture before the mission intro
+source: designer 2026-11-21 (bug report)
+given: the last Mission Preparation screen of a mission after the first (e.g. the Module draw of
+       Mission 2X)
+when: confirm it
+then: the gate closes and opens onto the mission intro's black space at once; the Field never shows
+      before the intro (only when the intro's ring opens onto it at the end).

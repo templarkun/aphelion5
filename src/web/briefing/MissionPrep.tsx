@@ -1,12 +1,12 @@
 /**
  * Mission Preparation on its own screen, in the briefing's look (designer 2026-11-14, round 2):
- * the Threat (7.2 step 3), the Module draw (step 6) and the Allied Drop's Ally and Mecha (step 9,
+ * the route (7.2 step 1, when two missions share a number; round 25, RouteSelect.tsx), the Threat (7.2 step 3), the Module draw (step 6) and the Allied Drop's Ally and Mecha (step 9,
  * 7.3) are each asked here before the Field is shown. Every screen only answers the engine's own
  * question with one of its options; no rule lives here.
  */
 
 import { useState } from "react";
-import { Check, Handshake, Package, ShieldAlert } from "lucide-react";
+import { Check, GitFork, Handshake, Package, ShieldAlert } from "lucide-react";
 import type { GameData } from "../../data/index.js";
 import type { Question } from "../../engine/questions.js";
 import type { GameState } from "../../engine/state.js";
@@ -22,6 +22,7 @@ import { missionLabel } from "./missionText.js";
 import { burstFrom, ring, sparkEdges } from "./particles.js";
 import { playConfirm, playOpenInfo, playSelect } from "./soundHooks.js";
 import { ThreatScreen } from "./ThreatScreen.js";
+import { ROUTE_PROMPT, RoutePick } from "./RouteSelect.js";
 import { briefStyle } from "./styles/index.js";
 import { UnitCard } from "./UnitCard.js";
 import { levelOf } from "./unitFacts.js";
@@ -33,7 +34,7 @@ const ALLY_MECHA = /^Allied Drop - Level (\d+): choose a Mecha/;
 
 type OptionQ = Question & { kind: "option" };
 
-export type PrepKind = "threat" | "module" | "ally" | "allyMecha";
+export type PrepKind = "route" | "threat" | "module" | "ally" | "allyMecha";
 
 /** Is this question one of the Mission Preparation screens? */
 export function prepKind(q: Question | undefined): PrepKind | undefined {
@@ -41,6 +42,7 @@ export function prepKind(q: Question | undefined): PrepKind | undefined {
   if (isThreatQuestion(q)) return "threat";
   if (q.kind !== "option") return undefined;
   if (q.prompt === MODULE_PROMPT) return "module";
+  if (ROUTE_PROMPT.test(q.prompt)) return "route";
   if (q.prompt.startsWith(ALLY_PROMPT)) return "ally";
   if (ALLY_MECHA.test(q.prompt)) return "allyMecha";
   return undefined;
@@ -52,10 +54,14 @@ export function MissionPrep({ data, state, q, onAnswer }: Props) {
   const kind = prepKind(q)!;
   const [acc, setAcc] = useState(() => briefStyle().acc);
   const camp = data.campaigns.find((c) => c.prefix === state.campaign);
-  const m = camp?.missionById.get(state.mission ?? "");
-  const drop = m?.event.type === "allied_drop";
+  // At the route question the mission is not chosen yet (state.mission is still the last one played).
+  const routeQ = kind === "route";
+  const m = routeQ ? undefined : camp?.missionById.get(state.mission ?? "");
+  const routes = routeQ ? (q as OptionQ).options.map((o) => camp?.missionById.get(o.id)) : [];
+  const drop = routeQ ? routes.some((x: (typeof routes)[number]) => x?.event.type === "allied_drop") : m?.event.type === "allied_drop";
   // The steps of this mission's preparation that get a screen.
   const steps: [PrepKind[], string, typeof Package][] = [
+    ...(routeQ || (m && m.route !== "single") ? ([[["route"], "Route", GitFork]] as [PrepKind[], string, typeof Package][]) : []),
     [["threat"], "Threat", ShieldAlert],
     [["module"], "Module", Package],
     ...(drop ? ([[["ally", "allyMecha"], "Allied Drop", Handshake]] as [PrepKind[], string, typeof Package][]) : []),
@@ -63,7 +69,7 @@ export function MissionPrep({ data, state, q, onAnswer }: Props) {
   const at = steps.findIndex((x) => x[0].includes(kind));
   const ribbon = (
     <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1" aria-label="Mission Preparation steps">
-      <span className="bf-label mr-1">{m ? missionLabel(m) : "Mission"} · preparation</span>
+      <span className="bf-label mr-1">{m ? missionLabel(m) : routeQ ? `Mission ${ROUTE_PROMPT.exec(q.prompt)?.[1] ?? ""}` : "Mission"} · preparation</span>
       {steps.map(([, name, Icon], i) => (
         <span key={name} className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[12px] font-extrabold uppercase tracking-wider ${i === at ? "bg-acc text-indigo-950" : i < at ? "bg-white/20 text-white" : "bg-white/5 text-sky-200/70"}`} data-prep-step={i === at ? "now" : i < at ? "done" : "next"}>
           {i < at ? <Check size={13} /> : <Icon size={13} />} {name}
@@ -75,7 +81,9 @@ export function MissionPrep({ data, state, q, onAnswer }: Props) {
     <div className="brief bf-ingame flex flex-col" style={{ "--acc": acc } as React.CSSProperties} data-prep={kind} onPointerOver={hoverHook} onPointerDown={tapSpark}>
       <AmbientLayer rgb={acc} />
       <FxLayer />
-      {kind === "threat" && isThreatQuestion(q) ? (
+      {kind === "route" ? (
+        <RouteStep key={q.prompt} data={data} state={state} q={q as OptionQ} steps={ribbon} onAnswer={(id) => onAnswer("option", id)} />
+      ) : kind === "threat" && isThreatQuestion(q) ? (
         <ThreatScreen key={`${state.mission}`} data={data} state={state} q={q} setAcc={setAcc} steps={ribbon} onAnswer={(cols) => onAnswer("several", cols)} />
       ) : kind === "module" ? (
         <ModulePick key={q.prompt} data={data} state={state} q={q as OptionQ} steps={ribbon} setAcc={setAcc} onAnswer={(id) => onAnswer("option", id)} />
@@ -108,6 +116,11 @@ function Head({ title, help }: { title: string; help: string }) {
       <p className="mt-0.5 max-w-2xl text-[15px] text-sky-100">{help}</p>
     </header>
   );
+}
+
+function RouteStep({ data, state, q, steps, onAnswer }: { data: GameData; state: GameState; q: OptionQ; steps: React.ReactNode; onAnswer: (id: string) => void }) {
+  const [sent, send] = useSend(onAnswer, briefStyle().acc);
+  return <RoutePick data={data} state={state} q={q} steps={steps} sent={sent} send={send} frame={(x) => <Frame {...x} />} head={(title, help) => <Head title={title} help={help} />} />;
 }
 
 /** Send the answer behind the logo gate (designer 2026-11-16): the doors close, the answer goes, the next screen opens. */

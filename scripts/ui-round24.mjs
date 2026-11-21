@@ -74,15 +74,15 @@ export async function round24Check(browser, url, out) {
       if (!(seen === want && rows === plan.rows.length && (w < 600 ? side === 0 : side === 1) && inside)) fails.push(`seen at ${w} px: looked at ${seen}/${want}, rows ${rows}/${plan.rows.length}, side by side ${side}, inside ${inside}`);
       await pg.close();
     }
-    // 2. The "next tile" trial looks: each draws something more on the Field than Original.
+    // 2. The "next tile" trial looks (round 25: Corner, Ghost, Chip): each draws the Field differently.
     const shots = {};
-    for (const look of ["original", "corner", "peek", "ghost", "chip"]) {
+    for (const look of ["corner", "ghost", "chip"]) {
       const pg = await open(browser, url, 1400, 900, JSON.stringify({ next: look }));
       watch(pg);
       await paste(pg, `${out}/seen-save.json`);
       await pg.mouse.move(5, 5);
       await pg.waitForTimeout(500);
-      shots[look] = (await pg.locator(".field canvas").screenshot({ path: `${out}/ui-next-${look}.png` })).length;
+      shots[look] = (await pg.locator(".field canvas").screenshot({ path: `${out}/ui-next-${look}.png` })).toString("base64");
       await pg.close();
     }
     // Pressed in the Menu and kept.
@@ -97,8 +97,8 @@ export async function round24Check(browser, url, out) {
       if (!/"next":"chip"/.test(kept ?? "")) fails.push(`next look not kept: ${kept}`);
       await pg.close();
     }
-    const differ = ["corner", "peek", "ghost", "chip"].filter((k) => shots[k] !== shots.original);
-    if (differ.length < 4) fails.push(`next-tile looks drawn: ${differ.join(",") || "none"}`);
+    const differ = [...new Set(Object.values(shots))];
+    if (differ.length < 3) fails.push(`next-tile looks drawn: ${differ.length} of 3 different`);
   } else fails.push("no seen save");
 
   // 3. The designer's save: M_03 dropped on O_01, reached by two equal ways: it Attacks, nothing asked.

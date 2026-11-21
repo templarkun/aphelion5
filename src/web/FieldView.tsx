@@ -51,7 +51,8 @@ export interface FieldProps {
   tones?: Record<string, DragKind> | undefined;
   selected: string[];
   onPick: (id: string) => void;
-  onHover: (sector: string | undefined) => void;
+  /** `held`: shown by a long tap (touch), not by the mouse resting on it. */
+  onHover: (sector: string | undefined, held?: boolean) => void;
   showHidden: boolean;
   dark: boolean;
   /** A facing being chosen (3.7): rotate buttons on that unit, drawn at `facing`. */
@@ -117,7 +118,7 @@ function addGlyphBadge(node: Container, unitId: string | undefined, cx: number, 
  */
 function addNextTile(node: Container, unitId: string | undefined, cx: number, cy: number, size: number, dark: boolean): void {
   const look = trialLooks().next;
-  if (!unitId || look === "original") return;
+  if (!unitId) return;
   let tex = badgeTextures.get(unitId);
   if (!tex) {
     const c = glyphBadge(unitId);
@@ -150,12 +151,6 @@ function addNextTile(node: Container, unitId: string | undefined, cx: number, cy
     m.poly([x - h * 0.16, y + h * 0.56, x + h * 0.16, y + h * 0.56, x, y + h * 0.74]).fill({ color: 0xffffff, alpha: 0.85 });
     m.eventMode = "none";
     node.addChild(m);
-  } else if (look === "peek") {
-    // Just inside the tile's lower left edge, tilted along it, as if the next tile showed beneath
-    // (outside the edge the next sector's tile would cover it).
-    const h = Math.max(18, size * 0.38);
-    const sp = put(h, cx - size * 0.36, cy + size * 0.5, 1);
-    sp.rotation = -0.5;
   } else if (look === "ghost") {
     // Behind the words: right after the tile's own plate.
     const sp = put(size * (dark ? 0.62 : 0.72), cx, cy + size * 0.06, dark ? 0.2 : 0.16);
@@ -707,7 +702,7 @@ export function FieldView(p: FieldProps) {
         const pr = press.current;
         if (!pr || drag.current) return;
         pr.held = true;
-        props.current.onHover(pr.k);
+        props.current.onHover(pr.k, true);
       }, 500);
   }
 

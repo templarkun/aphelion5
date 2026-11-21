@@ -116,6 +116,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   // The win celebration (designer 2026-11-20): a Developer-mode game at an action menu of Mission 1 (Eliminate Alpha),
   // where the Developer tool "win this mission" is offered.
   devwin: (q, g) => g.view.state.mission === "C1_M1" && g.view.state.phase === "command" && q.kind === "option" && q.options.some((o) => o.id === "devWin"),
+  // Round 25: the route of Mission 2 (2X / 2Y) on its own screen; a Developer-mode game won at once.
+  route: (q) => q.kind === "option" && /^Mission \d+: choose a route/.test(q.prompt),
   // A question that chooses one unit, answered on bubbles on the units (designer 2026-11-09).
   pickunit: (q) => q.kind === "units" && q.min === 1 && q.max === 1 && q.options.length >= 2 && !/Attacks/.test(q.prompt),
   // A unit effect that deals damage to one chosen unit (designer 2026-11-16: "1 damage" bubbles crashed).
@@ -198,7 +200,7 @@ if (!wanted) throw new Error(`unknown question kind ${what}`);
 for (let seed = 1; seed < 400; seed++) {
   const r = newRng(seed * 7 + 1);
   // The Upgrade sheet: a Developer-mode game, won at once with the Developer shortcut.
-  const dev = what.startsWith("upgrade") || what === "won" || what === "devwin";
+  const dev = what.startsWith("upgrade") || what === "won" || what === "devwin" || what === "route";
   let g = startGame(data, { seed, date: "2026-11-07", profile: emptyProfile(), developerMode: dev, autoAnswer: true });
   for (let n = 0; n < 400 && g.view.status === "question"; n++) {
     const q = g.view.question;
@@ -226,7 +228,12 @@ for (let seed = 1; seed < 400; seed++) {
         writeFileSync(`${out}.plan.json`, JSON.stringify({ module: id, colour: q.energy![id] }));
       }
       if (FX[what]) writeFileSync(`${out}.plan.json`, JSON.stringify({ shortcut: FX[what]!(q, g) }));
-      if (what === "seen") writeFileSync(`${out}.plan.json`, JSON.stringify({ sector: seenSector(g), rows: seenInSector(g.view.state, seenSector(g)!) }));
+      if (what === "seen") {
+        const st = g.view.state;
+        // Round 25: Dark or Cleared sectors with nothing looked at (the mouse shows no card there).
+        const plain = Object.keys(st.field).filter((k) => !st.field[k]!.some((t) => st.tiles[t]!.faceUp) && seenInSector(st, k).length === 0);
+        writeFileSync(`${out}.plan.json`, JSON.stringify({ sector: seenSector(g), rows: seenInSector(st, seenSector(g)!), plain }));
+      }
       if (what === "moddrag") writeFileSync(`${out}.plan.json`, JSON.stringify(moduleDrag(q, g)));
       if (what === "orderdrag") {
         const o = (q.shortcuts ?? []).find((x) => x.on?.kind === "order" && abilityTargets(data, g, { kind: "option", value: x.id }).length > 0)!;
@@ -241,7 +248,7 @@ for (let seed = 1; seed < 400; seed++) {
     if (what === "bay3-V1" && q.kind === "option" && /^Choose your Company/.test(q.prompt)) a = { kind: "option", value: "V1" };
     if (dev && q.kind === "option" && q.options.some((o) => o.id === "devWin")) a = { kind: "option", value: "devWin" };
     // On the way to the last mission: leave every Upgrade sheet at once.
-    if (what === "won" && q.upgrade) a = q.kind === "yesno" ? { kind: "yesno", value: true } : { kind: "option", value: "done" };
+    if ((what === "won" || what === "route") && q.upgrade) a = q.kind === "yesno" ? { kind: "yesno", value: true } : { kind: "option", value: "done" };
     if (what === "won" && q.kind === "option" && /^Choose your Company/.test(q.prompt)) a = { kind: "option", value: "V1" };
     for (let k = 0; k < 30 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, q);
     // Crippled: never Overhaul, Reveal as much as possible (the Flagship takes damage sooner).

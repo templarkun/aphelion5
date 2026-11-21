@@ -116,7 +116,7 @@ export async function looksCheck(browser, url, out) {
     const shot = async () => (await pg.locator(".field canvas").screenshot()).toString("base64");
     await pg.waitForTimeout(300);
     const before = await shot();
-    for (const id of ["corners:pebble", "depth:stackFine", "readyUnit:arcs", "readySector:tide", "counts:hidden", "names:hidden"]) {
+    for (const id of ["corners:round", "depth:stackFine", "readyUnit:arcs", "readySector:tide", "names:hidden"]) {
       await pg.locator(`[data-trial="${id}"]`).click();
       await pg.waitForTimeout(150);
     }
@@ -126,8 +126,8 @@ export async function looksCheck(browser, url, out) {
     const kept = await pg.evaluate(() => localStorage.getItem("aphelion5.trialLooks"));
     await pg.screenshot({ path: `${out}/ui-trial-looks.png` });
     await pg.close();
-    const okKept = /pebble/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /arcs/.test(kept ?? "") && /tide/.test(kept ?? "") && /"names":"hidden"/.test(kept ?? "");
-    if (!(offered === 38 && pressed === "corners:pebble,depth:stackFine,readyUnit:arcs,readySector:tide,counts:hidden,names:hidden,overload:original,next:original" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
+    const okKept = /"corners":"round"/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /arcs/.test(kept ?? "") && /tide/.test(kept ?? "") && /"names":"hidden"/.test(kept ?? "");
+    if (!(offered === 34 && pressed === "corners:round,depth:stackFine,readyUnit:arcs,readySector:tide,names:hidden,overload:original,next:corner" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
   }
 
   if (errors.length) fails.push(`page errors: ${errors.join(" | ")}`);
