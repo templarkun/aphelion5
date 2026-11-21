@@ -174,7 +174,7 @@ export async function celebrateCheck(browser, url, out) {
     await pg.waitForSelector("[data-win][data-act='3']", { timeout: 6000 }).catch(() => {});
     await pg.waitForTimeout(700);
     await pg.screenshot({ path: `${out}/ui-celebrate-win-phone.png` });
-    const box = await pg.locator(".cb-band").boundingBox();
+    const box = await pg.locator(".cb-band").boundingBox({ timeout: 8000 }).catch(() => null);
     await pg.mouse.click(195, 300);
     await pg.mouse.click(195, 300);
     const skipped = await pg.waitForSelector("[data-win]", { state: "detached", timeout: 3000 }).then(() => true, () => false);
