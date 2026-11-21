@@ -40,6 +40,10 @@ given: Demolition Blast ready, Reserve Yellow 2. 3 Command tokens.
 when: list legal actions
 then: no Run a Module (2 Yellow for a cost of 3) and no Issue an Order (3 tokens for 4).
       With 1 Yellow stored on Demolition Blast: Run a Module is legal (1 stored + 2 Reserve).
+note: CHANGED 2026-11-21 (designer: Campaign 1's Orders: C1_ORDER_1 is now "Deal 1 damage to one
+      Gyro or one Sleeper", 1 token, not [Overload]; new C1_ORDER_3 "Look at the top 2 tiles of one
+      sector", 1 token, not [Overload]; I30 asks to confirm the cost and [Overload]):
+      Issue an Order is offered: C1_ORDER_3 (1 token). Mission 1's Order (4 tokens) is still not.
 
 id: T3_ACT_03
 title: [Overload] actions are never offered in the Command phase
@@ -52,6 +56,11 @@ then: Use a Bay offers Bays 1-4, not Bay 5 ("[Overload] Remove 1 damage from a u
 note: CHANGED 2026-11-08 (designer, I9: a Bay ability or Order with no unit on the Field that
       fits it is greyed out and cannot be used; a rule of this program only):
       Bays 1-3 only. Bay 4 ("Place a Tick on a Level 1 unit") is greyed out: no Level 1 unit.
+      CHANGED 2026-11-21 (designer: Campaign 1's Orders: C1_ORDER_1 is now "Deal 1 damage to one
+      Gyro or one Sleeper", 1 token, not [Overload]; new C1_ORDER_3 "Look at the top 2 tiles of one
+      sector", 1 token, not [Overload]; I30 asks to confirm the cost and [Overload]):
+      Issue an Order is offered with C1_ORDER_3 only. C1_ORDER_1 is greyed out (no Gyro or
+      Sleeper on this Field); C1_ORDER_2 and Mission 4x's Order are [Overload].
 
 id: T3_ACT_04
 title: A Bay at 0 Integrity cannot be used
@@ -349,6 +358,11 @@ then: both destroyed (Destroy ignores the Barrier; the Barrier returns with its 
 note: CHANGED 2026-11-08 (designer, I9: a Bay ability or Order with no unit on the Field that
       fits it is greyed out and cannot be used; a rule of this program only):
       with no Level 2 Bot left, the Order is greyed out and not offered, though 2 tokens remain.
+      CHANGED 2026-11-21 (designer: Campaign 1's Orders: C1_ORDER_1 is now "Deal 1 damage to one
+      Gyro or one Sleeper", 1 token, not [Overload]; new C1_ORDER_3 "Look at the top 2 tiles of one
+      sector", 1 token, not [Overload]; I30 asks to confirm the cost and [Overload]):
+      "Issue an Order" asks which Order first (the Mission 2y Order chosen). Afterwards Issue an
+      Order is still offered, with C1_ORDER_3 only.
 
 ################################################################################
 === SECTION: OVERHAUL ===

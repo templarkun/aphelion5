@@ -38,7 +38,8 @@ describe("batch 3 - TAKING ACTIONS (8.1)", () => {
   it("T3_ACT_02 an action you cannot pay for is not legal", () => {
     const s = withModules(given("T3_ACT_02"), [[1, true]]);
     expect(legal(s)).not.toContain("runModule");
-    expect(legal(s)).not.toContain("issueOrder");
+    // CHANGED 2026-11-21: the new 1-token Order C1_ORDER_3 can be paid; Mission's 4-token Order still cannot.
+    expect(usableOrders(ctx(s)).map((o) => o.id)).toEqual(["C1_ORDER_3"]);
     const s2 = withModules(given("T3_ACT_02"), [[1, true, { Yellow: 1 }]]);
     expect(legal(s2)).toContain("runModule");
   });
@@ -47,7 +48,9 @@ describe("batch 3 - TAKING ACTIONS (8.1)", () => {
     const s = given("T3_ACT_03");
     expect(s.flagship).toEqual([6, 5, 4, 3, 2]);
     expect(usableBayAbilities(ctx(s)).map((b) => b.bay)).toEqual([1, 2, 3]); // CHANGED (I9): Bay 4, no Level 1 unit
-    expect(legal(s)).not.toContain("issueOrder");
+    // CHANGED 2026-11-21: only the new C1_ORDER_3 (not [Overload]); C1_ORDER_2 and Mission 4x's Order are [Overload],
+    // C1_ORDER_1 (now "1 damage to one Gyro or one Sleeper") has no Gyro or Sleeper to target.
+    expect(usableOrders(ctx(s)).map((o) => o.id)).toEqual(["C1_ORDER_3"]);
   });
 
   it("T3_ACT_04 a Bay at 0 Integrity cannot be used", () => {
@@ -65,10 +68,11 @@ describe("batch 3 - TAKING ACTIONS (8.1)", () => {
     const d1 = dark(v1);
     expect(usableBayAbilities(ctx(d1)).map((b) => b.id)).toEqual(["V1_BAY3"]);
     expect(noUnitToTarget(ctx(d1), "V1_BAY1")).toBe(true);
-    expect(legal(d1)).not.toContain("issueOrder");
+    // CHANGED 2026-11-21: "Look at the top 2 tiles of one sector" needs no unit.
+    expect(usableOrders(ctx(d1)).map((o) => o.id)).toEqual(["C1_ORDER_3"]);
     const d2 = dark(given("T3_ACT_03"));
     expect(usableBayAbilities(ctx(d2)).map((b) => b.id)).toEqual(["V2_BAY3"]);
-    expect(noUnitToTarget(ctx(d2), "C1_ORDER_1")).toBe(true); // [Overload] Teleport a Mecha
+    expect(noUnitToTarget(ctx(d2), "C1_ORDER_1")).toBe(true); // 1 damage to one Gyro or one Sleeper (2026-11-21)
     expect(noUnitToTarget(ctx(d2), "C1_M5_ORDER")).toBe(false); // Take an Anomaly card: no unit needed
   });
 
@@ -343,7 +347,7 @@ describe("batch 3 - ORDERS (5.6, 8.7)", () => {
   it("T3_ORD_01 Mission 1 Order: 1 damage to all units", () => {
     const s = given("T3_ORD_01");
     const b01 = at(s, "0,0");
-    const { state } = step(s, [A.option("issueOrder")]);
+    const { state } = step(s, [A.option("issueOrder"), A.option("C1_M1_ORDER")]); // CHANGED 2026-11-21: three Orders now
     expect(state.player.commandTokens).toBe(2);
     expect(where(state, b01)).toBe("discard");
     expect(tokensAt(state, "1,0")).toBe("");
@@ -356,13 +360,13 @@ describe("batch 3 - ORDERS (5.6, 8.7)", () => {
   it("T3_ORD_02 an Order can be issued again while you can pay", () => {
     const s = given("T3_ORD_02");
     const [x, y] = [at(s, "0,0"), at(s, "0,1")];
-    const r1 = step(s, [A.option("issueOrder"), A.units(x)]);
-    const r2 = step(r1.state, [A.option("issueOrder")]); // one Level 2 Bot left: chosen automatically
+    const r1 = step(s, [A.option("issueOrder"), A.option("C1_M2Y_ORDER"), A.units(x)]); // CHANGED 2026-11-21: C1_ORDER_3 offered too
+    const r2 = step(r1.state, [A.option("issueOrder"), A.option("C1_M2Y_ORDER")]); // one Level 2 Bot left: chosen automatically
     expect(where(r2.state, x)).toBe("discard");
     expect(where(r2.state, y)).toBe("discard");
     expect(r2.state.supply.barrier).toBe(10);
     expect(r2.state.player.commandTokens).toBe(2);
-    expect(legal(r2.state)).not.toContain("issueOrder"); // CHANGED (I9): no Level 2 Bot left
+    expect(usableOrders(ctx(r2.state)).map((o) => o.id)).toEqual(["C1_ORDER_3"]); // CHANGED (I9): no Level 2 Bot left; 2026-11-21: C1_ORDER_3
   });
 });
 

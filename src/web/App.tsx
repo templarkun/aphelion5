@@ -33,7 +33,7 @@ import { gameData } from "./data.js";
 import { FieldView } from "./FieldView.js";
 import { type DragKind, type DragPlan, type Affects, abilityTargets, actionAffects, mechaDragPlan, m03TapTargets, m01Targets } from "./drag.js";
 import { newEvents } from "../engine/events.js";
-import { energyFlights, paidShown, reserveFlights, trophyFlights } from "./flyers.js";
+import { clearReserveHeld, energyFlights, paidShown, reserveFlights, trophyFlights, useReserveHeld } from "./flyers.js";
 import { type ModPlan, normalise, planAnswer, planInfo } from "./modulePlan.js";
 import { Flame, HeatBar, type ModPop, ModuleCard, ModulePops } from "./Modules.js";
 import { AnomalyStrip } from "./Anomalies.js";
@@ -401,20 +401,20 @@ interface Confirm {
 }
 
 function GameScreen(p: GameProps) {
-  const { data, game } = p;
-  const real = game.view;
+  const { data, game: realGame } = p;
+  const real = realGame.view;
   const realQ = real.status === "question" ? real.question : undefined;
   // The mission celebrations (designer 2026-11-20, src/web/celebrate/). The kill plays on the Field by
   // itself (FieldView); the win is found here, in the answer that won the mission (8.2): until it has
   // played, the board stays as it was when the mission was won and the next screen (the Upgrade sheet,
   // the next mission's preparation, the outro) waits.
-  const [winSeen, setWinSeen] = useState(game);
+  const [winSeen, setWinSeen] = useState(realGame);
   const [win, setWin] = useState<WinShow | undefined>();
   // The objective's Trophies the Mission bar holds back while they fly in (the win's first moment).
   const [hold, setHold] = useState(0);
-  if (winSeen !== game) {
-    setWinSeen(game);
-    const w = winOf(data, winSeen, game);
+  if (winSeen !== realGame) {
+    setWinSeen(realGame);
+    const w = winOf(data, winSeen, realGame);
     setWin(w);
     setHold(w ? w.fresh : 0);
   }
@@ -429,7 +429,7 @@ function GameScreen(p: GameProps) {
   const faceQ = realQ?.kind === "option" && realQ.facing ? realQ : undefined;
   const [turn, setTurn] = usePerQuestion<number>(realQ, faceQ?.facing?.start ?? 0);
   const faceAnswer: Answer | undefined = faceQ ? { kind: "option", value: String(turn) } : undefined;
-  const ahead = useMemo(() => (faceAnswer ? playAnswer(data, game, faceAnswer) : undefined), [data, game, turn]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ahead = useMemo(() => (faceAnswer ? playAnswer(data, realGame, faceAnswer) : undefined), [data, realGame, turn]); // eslint-disable-line react-hooks/exhaustive-deps
   const aheadOk =
     ahead !== undefined &&
     ahead.result.status !== "illegal" &&
@@ -437,8 +437,13 @@ function GameScreen(p: GameProps) {
     ahead.game.view.status === "question" &&
     !ahead.game.view.question.facing &&
     ahead.game.view.state.hiddenInfo === real.state.hiddenInfo;
+  // Everything below works from the game as it is once the facing shown is kept (bug fix 2026-11-21:
+  // drags, M_01's targets, Heat Wave and the other actions were worked out from the game before the
+  // facing answer and sent without it, so they found nothing or were ignored, and the game got stuck).
+  const game = aheadOk ? ahead.game : realGame;
+  const onAnswer = (as: Answer[]) => p.onAnswer(aheadOk && faceAnswer ? [faceAnswer, ...as] : as);
   const v = winView ?? (aheadOk ? ahead.game.view : real);
-  const send = (a: Answer) => p.onAnswer(aheadOk && faceAnswer ? [faceAnswer, a] : [a]);
+  const send = (a: Answer) => onAnswer([a]);
   // A Module run from its selection (designer 2026-11-08): its X, Overclock and extra payment
   // were set on pop-ups before the run, so those questions are answered by the plan, never shown.
   const planRef = useRef<ModPlan | undefined>(undefined);
@@ -484,6 +489,7 @@ function GameScreen(p: GameProps) {
     const before = lastState.current;
     lastState.current = real.state;
     if (before === real.state) return;
+    clearReserveHeld();
     // An answer that won the mission: the board as it was then; its Trophies fly in when the win starts (MissionWin).
     energyFlights(before, win ? win.state : real.state);
     if (!win) trophyFlights(before, real.state);
@@ -509,6 +515,7 @@ function GameScreen(p: GameProps) {
   const s = v.state;
   const c = { data, state: s };
   const dark = useDark();
+  const held = useReserveHeld();
   const q = v.status === "question" ? v.question : undefined;
   // Selections, a pop-up or a split in progress belong to the question they were made for.
   const [selected, setSelected] = usePerQuestion<string[]>(q, []);
@@ -566,8 +573,8 @@ function GameScreen(p: GameProps) {
   const answer = (id: string) => {
     setPopup(undefined);
     setConfirm(undefined);
-    if (id.startsWith("way:")) return p.onAnswer(wayAnswers.current.get(id) ?? []);
-    if (id.startsWith("heatwave:")) return p.onAnswer(heatWaveBots.get(id.slice("heatwave:".length)) ?? []);
+    if (id.startsWith("way:")) return onAnswer(wayAnswers.current.get(id) ?? []);
+    if (id.startsWith("heatwave:")) return onAnswer(heatWaveBots.get(id.slice("heatwave:".length)) ?? []);
     // M_01 (designer 2026-11-08): Attack and Move light every target it can walk to (Dark sectors on the way); a tap there plays the steps.
     const m01 = /^mecha:([^:]+):(attack|ability:M_01)$/.exec(id);
     if (m01 && s.tiles[m01[1]!]?.unitId === "M_01" && v === game.view && s.phase === "command") {
@@ -668,7 +675,7 @@ function GameScreen(p: GameProps) {
     },
     onDrop: (answers) => {
       setPopup(undefined);
-      p.onAnswer(answers);
+      onAnswer(answers);
     },
     onNote: (text) => setNote({ text, warn: true, at: Date.now() }),
   };
@@ -689,7 +696,7 @@ function GameScreen(p: GameProps) {
       if (id !== undefined && modSel?.id === id) paidShown(id);
       setModSelRaw(undefined);
       setPopup(undefined);
-      p.onAnswer(answers);
+      onAnswer(answers);
     },
   };
   const modulePress = useAbilityPress(moduleDragApi, (key) => moduleState(Number(key.slice("module:".length))).onClick?.());
@@ -748,7 +755,7 @@ function GameScreen(p: GameProps) {
       const t = mechaSel.plan.targets.find((x) => x.sector === id && x.answers.length);
       setMechaSel(undefined);
       setPopup(undefined);
-      if (t) return p.onAnswer(t.answers);
+      if (t) return onAnswer(t.answers);
       return;
     }
     if (actors) {
@@ -768,7 +775,7 @@ function GameScreen(p: GameProps) {
     if (!q) return;
     const m3 = m03.find((t) => t.sector === (s.tiles[id] ? sectorOf(s, id) : id));
     if (m3) {
-      if (!m3.next) return p.onAnswer(m3.answers);
+      if (!m3.next) return onAnswer(m3.answers);
       const ways = m3.next()?.targets ?? [];
       const pickWay = new Map(ways.map((w) => [`way:${w.sector}`, w.answers]));
       wayAnswers.current = pickWay;
@@ -813,7 +820,7 @@ function GameScreen(p: GameProps) {
     keep(modAffects);
     setModSelRaw(undefined);
     paidShown(sel.id);
-    p.onAnswer([{ kind: "option", value: o.id }]);
+    onAnswer([{ kind: "option", value: o.id }]);
   };
   const selInfo = modSel ? planInfo(c, modSel.id, modSel) : undefined;
   useEffect(() => {
@@ -1029,13 +1036,14 @@ function GameScreen(p: GameProps) {
         </strong>
         {/* The Reserve in the top bar (designer 2026-11-08): each colour in its own bubble; energy flies in and out of it. */}
         <div className="reserve-bar" aria-label="Energy Reserve">
+          {/* While a Module is selected, its bar holds energy from here: one less per chip that leaves, one more per chip back (designer 2026-11-21). */}
           {(["Yellow", "Red", "Blue"] as const).map((col) => {
             const inSplit = splitOn === "reserve" && q?.kind === "split" && q.buckets.some((b) => b.id === col);
             const Tag = inSplit ? "button" : "span";
             return (
               <Tag key={col} data-reserve={col} className={`res-bubble ${col.toLowerCase()} ${inSplit ? "can" : ""} ${splitOn === "reserve" && !inSplit ? "dim" : ""}`} onClick={inSplit ? () => addSplit(col) : undefined} title={`${col} energy in your Reserve`}>
                 <EnergyGlyph colour={col} />
-                <b>{s.player.reserve[col]}</b>
+                <b>{Math.max(0, s.player.reserve[col] - held[col])}</b>
                 {inSplit && <SplitCount n={split[col] ?? 0} onMinus={() => subSplit(col)} />}
               </Tag>
             );
@@ -1123,7 +1131,7 @@ function GameScreen(p: GameProps) {
             onDrop={(answers) => {
               setPopup(undefined);
               setNote(undefined);
-              p.onAnswer(answers);
+              onAnswer(answers);
             }}
             onNote={(text, warn) => setNote({ text, warn, at: Date.now() })}
             affected={affected}
@@ -1271,7 +1279,7 @@ function GameScreen(p: GameProps) {
           q={realQ}
           onAnswer={(a) => {
             if (a.kind === "yesno" && a.value) setUpOpen(false);
-            p.onAnswer([a]);
+            onAnswer([a]);
           }}
           onContinue={() => setUpOpen(false)}
         />

@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { CORNERS, COUNTS, DEPTHS, NAMES, READY_SECTORS, READY_UNITS, onTrialLooks, setTrialLooks, trialLooks, type TrialLooks } from "./trialLooks.js";
+import { CORNERS, COUNTS, DEPTHS, NAMES, OVERLOADS, READY_SECTORS, READY_UNITS, onTrialLooks, setTrialLooks, trialLooks, type TrialLooks } from "./trialLooks.js";
 
 export function TrialLooksMenu() {
   const [t, setT] = useState(trialLooks());
@@ -30,6 +30,7 @@ export function TrialLooksMenu() {
       {row("readySector", "Ready to tap: Dark and Cleared sectors (animation)", READY_SECTORS)}
       {row("counts", "Tile-count words (+N beneath, N tiles)", COUNTS)}
       {row("names", "Unit names on the tiles", NAMES)}
+      {row("overload", "Overload: the Field's edge (animation)", OVERLOADS)}
     </details>
   );
 }

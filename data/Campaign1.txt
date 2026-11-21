@@ -63,13 +63,18 @@ at_overload: If adjacent to an Alpha unit, deal 1 damage to your Flagship.
 
 id: C1_ORDER_1
 tokens: 1
-overload_only: yes
-effect: Teleport a Mecha to a Dark sector.
+overload_only: no
+effect: Deal 1 damage to one Gyro or one Sleeper.
 
 id: C1_ORDER_2
 tokens: 1
 overload_only: yes
 effect: Swap a Mecha with another unit.
+
+id: C1_ORDER_3
+tokens: 1
+overload_only: no
+effect: Look at the top 2 tiles of one sector.
 
 ################################################################################
 === SECTION: MISSIONS ===

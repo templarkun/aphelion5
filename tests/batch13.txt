@@ -37,6 +37,11 @@
 # Mission Complete, Perimeter Sweep, Sector Flip (T13_CEL_17-20, CHANGED notes on T13_CEL_04, 07,
 # 08, 11, 14). I29 answered: Surface Terraform's Act 3 is "Hydrological shift" (CHANGED note on
 # T13_OUT_13).
+# Round 23, 2026-11-21: one banner for every win (CHANGED notes on T13_CEL_17, 18, 19); Campaign 1's
+# Orders (T13_R23_01-02; CHANGED notes on T13_BAY_01 here and in batches 3 and 4); a unit with arrows
+# no longer blocks the game (T13_R23_03); a walking Mecha over the sectors (T13_R23_04); the Reserve
+# with a selected Module (T13_R23_05); the Overload's edge trial look (T13_R23_06). Checked by
+# tests/unit/orders.test.ts and scripts/ui-round23.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -73,6 +78,11 @@ when: Company V2 instead, same Field
 then: only Bay 3 is offered; Bays 1, 2 and 4 are greyed out (Bay 5 is [Overload]; during an
       Overload it is greyed out too). The [Overload] Orders that target units are greyed out
       during an Overload; "Take an Anomaly card" never is.
+note: CHANGED 2026-11-21 (designer: Campaign 1's Orders: C1_ORDER_1 is now "Deal 1 damage to one
+      Gyro or one Sleeper", 1 token, not [Overload]; new C1_ORDER_3 "Look at the top 2 tiles of one
+      sector", 1 token, not [Overload]; I30 asks to confirm the cost and [Overload]):
+      with every sector Dark, Issue an Order is offered: C1_ORDER_3 (it chooses a Dark sector,
+      no unit needed). C1_ORDER_1 (one Gyro or one Sleeper) is greyed out.
 note: Flares and Wrecks do not count as units here (effects cannot choose them, 3.2).
       Greyed out = cannot be used; the pop-up says "No unit to target".
 when: units on the Field, but none that fits: V2 Bay 1 with no Level 3 unit, Bay 4 with no
@@ -2083,6 +2093,10 @@ note: Silent hooks: onTrophyCellIgnite(index, of), onMissionBarBurst, onVictoryW
       onVictoryBannerSlam, onBadgeDrop(index, of), onUpgradeSheetOpen.
 note: The same picture pieces as the other wins: the banner over the Field (no Debrief card: that
       card is the Campaign's, at the end of the game).
+note: CHANGED 2026-11-21 (designer: "I like the standard banner. Make it standard for all mission
+      wins"): act 3 shows the same banner as Mission Complete (T13_CEL_04): "MISSION COMPLETE"
+      slams in, the line under it fades in, the badges drop in one by one; no typing, caret,
+      stamped frames or colour fringe. Its moments stay as above (2.2-3.8 s).
 
 id: T13_CEL_18
 title: Sector Flip, the third win
@@ -2107,6 +2121,11 @@ then: after the Field's animations and the Trophy's flight, 5.2 s:
       4 (4.2-5.2 s) fine motes drift over the board while everything fades; then the Upgrade sheet.
 note: Silent hooks: onAltWinTrophyLock, onSectorLift(index, of), onSectorSlam(index, of),
       onAltWinDebrief, onUpgradeSheetOpen.
+note: CHANGED 2026-11-21 (designer: "I like the standard banner. Make it standard for all mission
+      wins"): act 3 shows the same banner as Mission Complete (T13_CEL_04): "MISSION COMPLETE"
+      slams in, the line under it fades in, the badges drop in one by one; no typing, caret,
+      stamped frames or glass card, no "OMEGA TARGETS CLEARED" / "SALVAGE SECURED" line. Its moments stay as
+      above (3.1-4.2 s).
 
 id: T13_CEL_19
 title: The new wins: speed, reduced motion, slow machines, skip
@@ -2121,6 +2140,7 @@ given: a slow machine (under about 40 frames a second)
 then: fewer particles, no blur (shadows, glow passes); the same timing, the flips and slams too.
 given: two taps (or key presses) within 1 s at any moment
 then: the win ends at once and the next screen opens.
+note: CHANGED 2026-11-21: the still pictures show the standard banner (T13_CEL_17, 18 notes).
 
 id: T13_CEL_20
 title: Salvage missions have a win too
@@ -2296,3 +2316,70 @@ when: drag it off its sector and let go over its own sector again (or, after M_0
 then: it floats back to its place; no red "cannot go there" message. Let go anywhere else that is
       not lit: the message shows as before.
 
+################################################################################
+=== SECTION: ROUND 23 ===
+
+id: T13_R23_01
+title: Campaign 1 Order: 1 damage to one Gyro or one Sleeper
+source: designer 2026-11-21 (Campaign1.txt C1_ORDER_1, replaces "[Overload] Teleport a Mecha to a
+        Dark sector"); cost and timing to be confirmed (I30)
+map: M1
+given: the Command phase, a Gyro or a Sleeper on the Field, 1 Command token or more
+when: Issue an Order, C1_ORDER_1 (the Orders panel: "1 token")
+then: choose one Gyro or one Sleeper (one only: chosen by itself); it takes 1 damage (6.1). 1 Command
+      token spent.
+given: no Gyro and no Sleeper on the Field (Wrecks and Flares do not count)
+then: C1_ORDER_1 is greyed out, "No unit to target" (I9).
+given: an Overload under way
+then: C1_ORDER_1 is not offered (it is not [Overload]).
+
+id: T13_R23_02
+title: Campaign 1 Order: look at the top 2 tiles of one sector
+source: designer 2026-11-21 (Campaign1.txt, new C1_ORDER_3); cost and timing to be confirmed (I30)
+map: M1
+given: the Command phase, 1 Command token or more
+when: Issue an Order, C1_ORDER_3
+then: choose one Dark sector (as V2 Bay 3); its top 2 tiles (1 if only one) lift out of it on the
+      Field, "Order: you looked at the top 2 tiles", then "Put them back" puts them back unchanged.
+      1 Command token spent. Never greyed out (it needs no unit).
+note: "one sector" read as one Dark sector, as V2 Bay 3 and the Modules that look at the top tiles
+      (I30 asks).
+      games saved before this change keep the old Orders (C1_ORDER_1 [Overload] Teleport a Mecha,
+      no C1_ORDER_3), so they replay the same (save format 9).
+
+id: T13_R23_03
+title: A unit with arrows revealed no longer blocks the game
+source: designer 2026-11-21 (bug report with a save: tests/fixtures/save-2026-11-21-facing-stuck.json)
+map: M2X
+given: a Reveal that turns up a unit with arrows (P_09 in the designer's save); the turn buttons on
+       it, the next question already shown (the facing shown is kept by the next action, 3.7)
+when: drag a Mecha (M_01) to a lit sector; or tap a Dark sector and Reveal; or any other action
+      (Heat Wave, a Module, a Bay, an Order, End the Overload)
+then: the facing shown is kept, then the action is done. Before: a drag found no targets and other
+      actions were ignored, so an Overload could get stuck with no way out.
+
+id: T13_R23_04
+title: A Mecha walking over several sectors stays on top
+source: designer 2026-11-21 (screen only)
+given: M_01 walks several sectors (or any unit moves one or more sectors)
+then: it moves over every sector it passes, never under one.
+
+id: T13_R23_05
+title: The Reserve counts down while a Module is selected
+source: designer 2026-11-21 (screen only)
+given: the Command phase; tap a Module you can run (it is selected; its bar fills from the Reserve)
+then: as each energy chip leaves the Reserve bubble, that colour's number drops by one.
+when: tap elsewhere (the Module is let go)
+then: the chips fly back; as each arrives, the number rises by one, back to where it was.
+when: tap the selected Module (it runs)
+then: the Reserve keeps the lower numbers (now really paid).
+
+id: T13_R23_06
+title: Overload: trial look of the Field's edge
+source: designer 2026-11-21 (TEMPORARY trial look)
+given: Menu > Trial looks (temporary) > "Overload: the Field's edge (animation)"
+then: Original: as before (energy drifting in from the edge, and plasma beams racing round it).
+      Inflow: the energy drifting in stays; the racing beams are gone; instead, streams of energy
+      particles (orange, some violet) flow in from all along the edge towards the middle, each a
+      short bright trail that curls a little and fades, with faint sparks lifting off the edge.
+      Kept in this browser; the first choice is Original.

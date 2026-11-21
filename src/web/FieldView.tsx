@@ -1514,6 +1514,7 @@ export function FieldView(p: FieldProps) {
                 L.dx = x - end.x;
                 L.dy = y - end.y;
                 L.scale = lift;
+                L.z = 1000; // on top of every sector it passes (designer 2026-11-21)
               }
             },
             end: () => g?.destroy({ children: true }),
@@ -1578,6 +1579,7 @@ export function FieldView(p: FieldProps) {
               L.dx = x - b2.x;
               L.dy = y - b2.y;
               L.scale = lift;
+              L.z = 1000; // on top of every sector it passes (designer 2026-11-21)
               L.alpha = tele ? q : 1;
             }
           },
@@ -1755,7 +1757,7 @@ export function FieldView(p: FieldProps) {
 
     // An Overload: a plasma beam swirls round the Field (designer 2026-11-09, instead of a tinted page).
     L.edge.clear();
-    if (props.current.state.phase === "overload" && host.current) drawOverloadRing(L.edge, host.current.clientWidth, host.current.clientHeight, stillRef.current ? 0 : now);
+    if (props.current.state.phase === "overload" && host.current) drawOverloadRing(L.edge, host.current.clientWidth, host.current.clientHeight, stillRef.current ? 0 : now, trialLooks().overload);
     corona.current?.update(host.current?.clientWidth ?? 0, host.current?.clientHeight ?? 0, now, props.current.state.phase === "overload" && !stillRef.current);
 
     // Barriers: a force field round their unit, following the tile as it moves.

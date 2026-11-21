@@ -10,6 +10,9 @@
  *   (one row each since 2026-11-21).
  * - counts: the "+N beneath" / "alone" and "N tiles" words on the tiles shown or hidden.
  * - names: the unit's name (B_03, S_12 ...) on its tile shown or hidden.
+ * - overload: the Overload's look round the Field's edge (designer 2026-11-21): Original (the plasma
+ *   wave drifting in and the plasma beams racing round the edge), or Inflow (the plasma wave kept, the
+ *   racing beams replaced by streams of energy particles flowing in from the edge).
  */
 
 export type Corner = "original" | "soft" | "round" | "pebble" | "bevel";
@@ -18,6 +21,7 @@ export type ReadyUnit = "original" | "embers" | "heartbeat" | "motes" | "sparkle
 export type ReadySector = "fill" | "embers" | "inner" | "sparkle" | "converge" | "drift" | "tide" | "core" | "haze";
 export type Ready = ReadyUnit | ReadySector;
 export type Counts = "shown" | "hidden";
+export type OverloadLook = "original" | "inflow";
 
 export interface TrialLooks {
   corners: Corner;
@@ -26,6 +30,7 @@ export interface TrialLooks {
   readySector: ReadySector;
   counts: Counts;
   names: Counts;
+  overload: OverloadLook;
 }
 
 export const CORNERS: { id: Corner; label: string; note: string }[] = [
@@ -77,8 +82,13 @@ export const NAMES: { id: Counts; label: string; note: string }[] = [
   { id: "hidden", label: "Hidden", note: "no unit names on the tiles" },
 ];
 
+export const OVERLOADS: { id: OverloadLook; label: string; note: string }[] = [
+  { id: "original", label: "Original", note: "energy drifting in, and plasma beams racing round the edge" },
+  { id: "inflow", label: "Inflow", note: "energy drifting in; streams of energy particles flow in from the edge (no racing beams)" },
+];
+
 const KEY = "aphelion5.trialLooks";
-const DEFAULT: TrialLooks = { corners: "original", depth: "original", readyUnit: "original", readySector: "fill", counts: "shown", names: "shown" };
+const DEFAULT: TrialLooks = { corners: "original", depth: "original", readyUnit: "original", readySector: "fill", counts: "shown", names: "shown", overload: "original" };
 const subs = new Set<() => void>();
 
 function load(): TrialLooks {
@@ -93,6 +103,7 @@ function load(): TrialLooks {
       readySector: READY_SECTORS.some((x) => x.id === v.readySector) ? v.readySector! : DEFAULT.readySector,
       counts: COUNTS.some((x) => x.id === v.counts) ? v.counts! : DEFAULT.counts,
       names: NAMES.some((x) => x.id === v.names) ? v.names! : DEFAULT.names,
+      overload: OVERLOADS.some((x) => x.id === v.overload) ? v.overload! : DEFAULT.overload,
     };
   } catch {
     return DEFAULT;

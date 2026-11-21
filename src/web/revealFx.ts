@@ -351,7 +351,8 @@ export function gyroBreak(g: Graphics, cx: number, cy: number, size: number, p: 
  * An Overload under way (designer 2026-11-09): beams of plasma race round the edge of the Field,
  * with sparks drifting in from it. `w`, `h`: the Field's size; `now` in ms (0 = still).
  */
-export function drawOverloadRing(g: Graphics, w: number, h: number, now: number): void {
+export function drawOverloadRing(g: Graphics, w: number, h: number, now: number, look: "original" | "inflow" = "original"): void {
+  if (look === "inflow") return drawOverloadInflow(g, w, h, now);
   const inset = 6;
   const W = w - 2 * inset;
   const H = h - 2 * inset;
@@ -409,3 +410,69 @@ export function drawOverloadRing(g: Graphics, w: number, h: number, now: number)
   }
 }
 
+
+/**
+ * Trial look "Inflow" (designer 2026-11-21): instead of beams racing round the edge, streams of energy
+ * particles flow in from the edge towards the middle, like the plasma wave beside them: each stream is
+ * born at a point of the edge, a short trail of bright motes curling a little as it goes, then fades.
+ * Every mote worked out from the time alone (`now` in ms; 0 = still: only the edge glow).
+ */
+function drawOverloadInflow(g: Graphics, w: number, h: number, now: number): void {
+  const inset = 6;
+  const W = w - 2 * inset;
+  const H = h - 2 * inset;
+  if (W <= 0 || H <= 0) return;
+  const per = 2 * (W + H);
+  /** A point on the edge (0..1 clockwise from the top left) and the way in from there. */
+  const edge = (t: number): { x: number; y: number; nx: number; ny: number } => {
+    let s = (((t % 1) + 1) % 1) * per;
+    if (s < W) return { x: inset + s, y: inset, nx: 0, ny: 1 };
+    s -= W;
+    if (s < H) return { x: inset + W, y: inset + s, nx: -1, ny: 0 };
+    s -= H;
+    if (s < W) return { x: inset + W - s, y: inset + H, nx: 0, ny: -1 };
+    s -= W;
+    return { x: inset, y: inset + H - s, nx: 1, ny: 0 };
+  };
+  const pulse = 0.5 + 0.5 * Math.sin(now / 420);
+  g.rect(inset, inset, W, H).stroke({ width: 14, color: 0xff3b1a, alpha: 0.08 + 0.06 * pulse });
+  g.rect(inset, inset, W, H).stroke({ width: 2, color: 0xff7a3a, alpha: 0.3 + 0.2 * pulse });
+  if (!now) return;
+  const reach = Math.min(110, Math.min(W, H) * 0.22);
+  const streams = Math.round(Math.min(64, Math.max(24, per / 34)));
+  for (let i = 0; i < streams; i++) {
+    const life = 1700 + 1300 * rnd(i + 300);
+    const cycle = now / life + rnd(i + 400);
+    const n = Math.floor(cycle);
+    const u = cycle - n;
+    // Each new life starts somewhere else on the edge.
+    const e = edge(rnd(i * 31 + n * 7 + 500));
+    const tx = -e.ny;
+    const ty = e.nx;
+    const curl = (rnd(i + n * 3 + 600) - 0.5) * 0.9;
+    const len = reach * (0.55 + 0.45 * rnd(i + n + 700));
+    const violet = rnd(i + 800) < 0.3;
+    const col = violet ? 0xb07cff : 0xff7a2a;
+    const core = violet ? 0xf0e6ff : 0xffe2a8;
+    const fade = Math.sin(Math.PI * Math.min(1, u * 1.15));
+    // The head and a short trail of motes behind it.
+    for (let k = 0; k < 7; k++) {
+      const p = Math.max(0, u - k * 0.035);
+      const d = len * (1 - (1 - p) ** 2);
+      const bend = curl * d * d / len;
+      const x = e.x + e.nx * d + tx * bend;
+      const y = e.y + e.ny * d + ty * bend;
+      const f = (1 - k / 7) * fade;
+      if (f <= 0.02) continue;
+      g.circle(x, y, (k === 0 ? 3.2 : 2.2) * (1 - p * 0.5)).fill({ color: col, alpha: 0.28 * f });
+      g.circle(x, y, (k === 0 ? 1.5 : 0.9) * (1 - p * 0.4)).fill({ color: core, alpha: 0.85 * f });
+    }
+  }
+  // A few faint sparks lifting off the edge itself.
+  for (let i = 0; i < 30; i++) {
+    const u = (now / 2600 + rnd(i + 900)) % 1;
+    const e = edge(rnd(i + 950) + now / 90000);
+    const d = 3 + u * 16;
+    g.circle(e.x + e.nx * d, e.y + e.ny * d, 1 + 1.2 * (1 - u)).fill({ color: i % 3 ? 0xff8a3a : 0xb07cff, alpha: 0.6 * (1 - u) });
+  }
+}

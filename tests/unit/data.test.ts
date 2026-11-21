@@ -120,8 +120,9 @@ describe("Campaign 1 file", () => {
       ["O_03", 25],
     ]);
     expect(c.orders.map((o) => [o.id, o.tokens, o.overloadOnly])).toEqual([
-      ["C1_ORDER_1", 1, true],
+      ["C1_ORDER_1", 1, false],
       ["C1_ORDER_2", 1, true],
+      ["C1_ORDER_3", 1, false],
     ]);
   });
 

@@ -85,7 +85,7 @@ export function sectorsWithNoTokens(c: Ctx): SectorKey[] {
 }
 
 /** Look at the top n tiles of a Dark sector (fewer if the stack is shorter). Returns them top first. */
-function* lookAtTop(c: RunCtx, id: string, n: number, anyNoTokens = false): Effect<{ sector: SectorKey; tiles: TileId[] } | undefined> {
+export function* lookAtTop(c: RunCtx, id: string, n: number, anyNoTokens = false): Effect<{ sector: SectorKey; tiles: TileId[] } | undefined> {
   const k = anyNoTokens ? yield* chooseSector(c, `${id}: choose a sector with no tokens.`, id, sectorsWithNoTokens(c)) : yield* chooseDarkSector(c, `${id}: choose a Dark sector.`, id);
   if (k === undefined) return undefined;
   const tiles = topTiles(c, k, n);

@@ -9,7 +9,7 @@
  *    sector's edge flashes white, cyan and gold as it crosses, then stays as a thin "secured" border with
  *    tactical corner ticks; the units recoil a little, away from the wave.
  * 3. (2.2-3.8 s) MISSION COMPLETE slams in with a micro-bounce and a split-colour glint on its edges, the
- *    line under it types in, stamped metal badges drop one by one with a spark puff each.
+ *    the standard banner (designer 2026-11-21) with its badges.
  * 4. (3.8-5.0 s) Embers drift up over the dimmed Field while everything cross-fades into the Upgrade sheet.
  *
  * Every moving thing is worked out from the time alone. A slow machine draws fewer particles and no glow

@@ -8,6 +8,7 @@ import { dealHit, destroy, gainEnergy, placeFuse } from "../engine/tokens.js";
 import { fromKey, key } from "../geometry/hex.js";
 import { chooseSector, chooseUnit } from "./helpers.js";
 import { registerAbility } from "./registry.js";
+import { lookAtTop } from "./bays.js";
 
 /** Deal `n` damage to every unit matching `filter`: one hit each; Flares and Wrecks skipped (6.1, 4.6, 4.8). Units counted when it starts (E4). */
 /** Usable only while a unit fits it (designer 2026-11-08, round 7, I9; a rule of this program only). */
@@ -28,13 +29,30 @@ function* damageAll(c: RunCtx, n: number, rule: string, filter: (u: TileId) => b
   for (const u of targets) yield* dealHit(c, u, n, rule);
 }
 
-// C1_ORDER_1 - [Overload] Teleport a Mecha to a Dark sector.
-registerAbility("C1_ORDER_1", function* (c) {
-  const m = yield* chooseUnit(c, "Teleport which Mecha?", "C1_ORDER_1", (u) => unitType(c, u) === "Mecha");
-  if (m === undefined) return;
-  const to = yield* chooseSector(c, "Teleport it to which Dark sector?", "C1_ORDER_1", sectorKeys(c.state).filter((k) => isOpenSector(c, k)));
-  if (to !== undefined) teleport(c, m, to, "C1_ORDER_1");
-}, { unitFits: (c) => fits(isMecha).unitFits(c) && sectorKeys(c.state).some((k) => isOpenSector(c, k)) });
+// C1_ORDER_1 - Deal 1 damage to one Gyro or one Sleeper (designer 2026-11-21; was [Overload] Teleport a Mecha).
+const isGyroOrSleeper = (c: Ctx) => (u: TileId) => unitType(c, u) === "Gyro" || unitType(c, u) === "Sleeper";
+const oldOrders = (c: Ctx) => c.state.settings.oldCampaignOrders === true;
+registerAbility(
+  "C1_ORDER_1",
+  function* (c) {
+    if (oldOrders(c)) {
+      // Games saved before format 9: [Overload] Teleport a Mecha to a Dark sector.
+      const m = yield* chooseUnit(c, "Teleport which Mecha?", "C1_ORDER_1", (u) => unitType(c, u) === "Mecha");
+      if (m === undefined) return;
+      const to = yield* chooseSector(c, "Teleport it to which Dark sector?", "C1_ORDER_1", sectorKeys(c.state).filter((k) => isOpenSector(c, k)));
+      if (to !== undefined) teleport(c, m, to, "C1_ORDER_1");
+      return;
+    }
+    const u = yield* chooseUnit(c, "Deal 1 damage to which Gyro or Sleeper?", "C1_ORDER_1", isGyroOrSleeper(c));
+    if (u !== undefined) yield* dealHit(c, u, 1, "C1_ORDER_1");
+  },
+  { unitFits: (c: Ctx) => (oldOrders(c) ? choosableUnits(c, isMecha(c)).length > 0 && sectorKeys(c.state).some((k) => isOpenSector(c, k)) : choosableUnits(c, isGyroOrSleeper(c)).length > 0) },
+);
+
+// C1_ORDER_3 - Look at the top 2 tiles of one sector (designer 2026-11-21): a Dark sector, as V2 Bay 3.
+registerAbility("C1_ORDER_3", function* (c) {
+  yield* lookAtTop(c, "C1_ORDER_3", 2);
+});
 
 // C1_ORDER_2 - [Overload] Swap a Mecha with another unit.
 registerAbility("C1_ORDER_2", function* (c) {

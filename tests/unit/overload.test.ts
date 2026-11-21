@@ -99,7 +99,7 @@ describe("batch 4 - OVERLOAD ACTIONS (9.2)", () => {
     // CHANGED (I9): Bay 5 greyed out, no unit has damage to remove.
     expect(menu(s)).toEqual([`alert:${at(s, "0,0")}`, "runModule", "issueOrder", "concede"]);
     expect(usableBayAbilities(ctx(s)).map((b) => b.id)).toEqual([]);
-    expect(usableOrders(ctx(s)).map((o) => o.id)).toEqual(["C1_ORDER_1", "C1_ORDER_2"]);
+    expect(usableOrders(ctx(s)).map((o) => o.id)).toEqual(["C1_ORDER_2"]); // CHANGED 2026-11-21: C1_ORDER_1 is no longer [Overload]
     // Running a Module offers only Charged Beam (one red Module: no question).
     const r = runEffect(data(), s, (c) => overloadStep(c), [A.option("runModule")]);
     expect(r.status).toBe("question");

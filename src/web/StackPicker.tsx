@@ -74,7 +74,8 @@ export function lookAskOf(look: { tile: string; unitId: string; sector?: string 
   const st = state.field[sector] ?? [];
   const top = st.slice(-look.length).reverse();
   if (top.join() !== look.map((t) => t.tile).join()) return undefined;
-  const name = look[0]!.rule ? `${look[0]!.rule.replace(/^V\d_/, "").replace("BAY", "Bay ")}: ` : "";
+  const rule = look[0]!.rule;
+  const name = !rule ? "" : /ORDER/.test(rule) ? "Order: " : `${rule.replace(/^V\d_/, "").replace("BAY", "Bay ")}: `;
   return { kind: "look", sector, tiles: top, title: `${name}you looked at the top ${look.length} tiles`, help: `Of (${sector}), top first. Hover or hold one to read it.` };
 }
 

@@ -5,6 +5,7 @@
  * energy (a few at most per colour); nothing here changes the game.
  */
 
+import { useSyncExternalStore } from "react";
 import type { GameState } from "../engine/state.js";
 import { noFlying } from "./motion.js";
 
@@ -71,6 +72,35 @@ export function paidShown(id: number | undefined): void {
 }
 
 /**
+ * Energy a selected Module's bar holds from the Reserve, not yet paid (designer 2026-11-21): the
+ * Reserve shows one less as each chip leaves it, and one more as each chip comes back. Cleared when
+ * the board changes (the run has then really paid it, or the selection was dropped).
+ */
+let held: Record<Colour, number> = { Yellow: 0, Red: 0, Blue: 0 };
+let heldGen = 0;
+const heldSubs = new Set<() => void>();
+function bump(col: Colour, d: number, gen: number): void {
+  if (gen !== heldGen) return;
+  held = { ...held, [col]: Math.max(0, held[col] + d) };
+  for (const f of heldSubs) f();
+}
+export function clearReserveHeld(): void {
+  heldGen++;
+  if (held.Yellow || held.Red || held.Blue) {
+    held = { Yellow: 0, Red: 0, Blue: 0 };
+    for (const f of heldSubs) f();
+  }
+}
+/** The Reserve energy held by a selection, per colour (the top bar shows the Reserve less this). */
+export function useReserveHeld(): Record<Colour, number> {
+  return useSyncExternalStore(
+    (f) => (heldSubs.add(f), () => heldSubs.delete(f)),
+    () => held,
+    () => held,
+  );
+}
+
+/**
  * A selected Module's bar filling from the Reserve, or letting it go (designer 2026-11-08):
  * one chip per slot that changed, Reserve to Module, or back.
  */
@@ -86,9 +116,21 @@ export function reserveFlights(id: number, before: { colour: Colour; fill: strin
     const res = document.querySelector(`[data-reserve="${col}"]`);
     const r = centre(res);
     if (!r) continue;
-    for (let i = 0; i < Math.min(6, Math.abs(d)); i++) {
-      if (d > 0) flyChip(col, r, m, delay, { onArrive: () => pulse(el, col) });
-      else flyChip(col, m, r, delay, { onArrive: () => pulse(res, col) });
+    const gen = heldGen;
+    for (let i = 0; i < Math.abs(d); i++) {
+      // Only a few chips fly; the Reserve still counts every energy, one at a time.
+      const fly = i < 6;
+      if (d > 0) {
+        // Out of the Reserve: one less there as the chip leaves it.
+        if (noFlying()) bump(col, 1, gen);
+        else window.setTimeout(() => bump(col, 1, gen), delay);
+        if (fly) flyChip(col, r, m, delay, { onArrive: () => pulse(el, col) });
+      } else {
+        // Back into the Reserve: one more there as the chip arrives.
+        if (fly) flyChip(col, m, r, delay, { onArrive: () => (bump(col, -1, gen), pulse(res, col)) });
+        else if (noFlying()) bump(col, -1, gen);
+        else window.setTimeout(() => bump(col, -1, gen), delay + 650);
+      }
       delay += 70;
     }
   }

@@ -85,11 +85,19 @@ export interface OrderOption {
   effect: string;
 }
 
+/** Campaign 1's Orders before 2026-11-21 (games saved before format 9). */
+const OLD_C1_ORDERS: OrderOption[] = [
+  { id: "C1_ORDER_1", tokens: 1, overloadOnly: true, effect: "Teleport a Mecha to a Dark sector." },
+  { id: "C1_ORDER_2", tokens: 1, overloadOnly: true, effect: "Swap a Mecha with another unit." },
+];
+
 /** The Campaign board's Orders and this mission's Order (5.6). */
 export function orders(c: Ctx): OrderOption[] {
   const camp = c.data.campaigns.find((x) => x.prefix === c.state.campaign)!;
   const m = camp.missionById.get(c.state.mission)!;
-  return [...camp.orders, ...(m.order ? [m.order] : [])];
+  // Games saved before format 9 keep Campaign 1's old Orders, so they replay the same (designer 2026-11-21).
+  const board = c.state.settings.oldCampaignOrders && camp.prefix === "C1" ? OLD_C1_ORDERS : camp.orders;
+  return [...board, ...(m.order ? [m.order] : [])];
 }
 
 export function usableOrders(c: Ctx): OrderOption[] {

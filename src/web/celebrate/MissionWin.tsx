@@ -398,8 +398,6 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
   const title = useRef<HTMLDivElement>(null);
   const flash = useRef<HTMLDivElement>(null);
   const sub = useRef<HTMLDivElement>(null);
-  const caret = useRef<HTMLElement>(null);
-  const kicker = useRef<HTMLDivElement>(null);
   const badgeRow = useRef<HTMLDivElement>(null);
   const cbs = useRef({ onHold, onShake, onDone });
   cbs.current = { onHold, onShake, onDone };
@@ -483,94 +481,39 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
 
     const badgeEls = () => (badgeRow.current ? ([...badgeRow.current.children] as HTMLElement[]) : []);
 
-    const styleComplete = (t: number) => {
-      const s = still ? 1 : span(t, WIN.slam);
+    // One banner for every win (designer 2026-11-21: the standard Mission Complete banner), each on its own timing.
+    const B =
+      id === "perimeterSweep"
+        ? { slam: SWEEP.slam, sub: SWEEP.sub, badgesAt: SWEEP.badgesAt, badgeStep: SWEEP.badgeStep, badgeFall: SWEEP.badgeFall }
+        : id === "sectorFlip"
+          ? { slam: FLIP.card, sub: FLIP.sub, badgesAt: FLIP.badgesAt, badgeStep: FLIP.badgeStep, badgeFall: FLIP.badgeFall }
+          : { slam: WIN.slam, sub: WIN.sub, badgesAt: WIN.badgesAt, badgeStep: WIN.badgeStep, badgeFall: WIN.badgeFall };
+    const styleBanner = (t: number) => {
+      const s = still ? 1 : span(t, B.slam);
       if (band.current) {
-        const jolt = !still && t > WIN.slam[1] && t < WIN.slam[1] + 0.3 ? Math.sin((t - WIN.slam[1]) * 60) * 4 * (1 - (t - WIN.slam[1]) / 0.3) : 0;
+        const jolt = !still && t > B.slam[1] && t < B.slam[1] + 0.3 ? Math.sin((t - B.slam[1]) * 60) * 4 * (1 - (t - B.slam[1]) / 0.3) : 0;
         band.current.style.opacity = String(s);
         band.current.style.transform = `translateY(${jolt.toFixed(2)}px)`;
       }
       if (title.current) title.current.style.transform = `scale(${(2.3 - 1.3 * (1 - (1 - s) ** 4)).toFixed(4)})`;
-      if (flash.current) flash.current.style.opacity = still ? "0" : String(t >= WIN.slam[1] ? Math.max(0, 1 - (t - WIN.slam[1]) / 0.32) : 0);
-      const sb = still ? 1 : easeOut(span(t, WIN.sub));
+      if (flash.current) flash.current.style.opacity = still ? "0" : String(t >= B.slam[1] ? Math.max(0, 1 - (t - B.slam[1]) / 0.32) : 0);
+      const sb = still ? 1 : easeOut(span(t, B.sub));
       if (sub.current) {
         sub.current.style.opacity = String(sb);
         sub.current.style.transform = `translateY(${((1 - sb) * 10).toFixed(2)}px)`;
       }
       badgeEls().forEach((e, i) => {
-        const at = WIN.badgesAt + i * WIN.badgeStep;
-        const u = still ? 1 : span(t, [at, at + WIN.badgeFall]);
+        const at = B.badgesAt + i * B.badgeStep;
+        const u = still ? 1 : span(t, [at, at + B.badgeFall]);
         e.style.opacity = String(still ? 1 : Math.min(1, u * 4));
         e.style.transform = `translateY(${(-38 * (1 - easeOutBack(u))).toFixed(2)}px)`;
-      });
-    };
-
-    const GLOW = "0 0 18px rgb(255 214 120 / 0.85), 0 0 34px rgb(92 214 255 / 0.6), 0 2px 4px rgb(0 0 0 / 0.8)";
-    const styleSweep = (t: number) => {
-      const s = still ? 1 : span(t, SWEEP.slam);
-      const after = t - SWEEP.slam[1];
-      if (band.current) band.current.style.opacity = String(Math.min(1, s * 3));
-      if (title.current) {
-        // A hard slam from above, then a tight micro-bounce; a split-colour glint on its edges as it lands.
-        const scale = still ? 1 : after < 0 ? 1.45 - 0.45 * s * s : 1 + 0.06 * Math.exp(-after / 0.06) * Math.cos(after * 46);
-        title.current.style.transform = `scale(${scale.toFixed(4)})`;
-        const d = !still && after >= 0 && after < 0.4 ? 3.2 * (1 - after / 0.4) : 0;
-        title.current.style.textShadow = d > 0 ? `${-d.toFixed(2)}px 0 0 rgb(255 70 90 / 0.75), ${d.toFixed(2)}px 0 0 rgb(70 220 255 / 0.75), ${GLOW}` : GLOW;
-      }
-      if (flash.current) flash.current.style.opacity = still ? "0" : String(after >= 0 ? Math.max(0, 1 - after / 0.25) * 0.8 : 0);
-      // The line types in, one letter at a time, with a block caret.
-      const typed = still ? 1 : span(t, SWEEP.sub);
-      const n = show.sub.length;
-      const shown = Math.round(typed * n) / Math.max(1, n);
-      if (sub.current) {
-        sub.current.style.opacity = t >= SWEEP.sub[0] || still ? "1" : "0";
-        sub.current.style.clipPath = `inset(-20% ${((1 - shown) * 100).toFixed(2)}% -20% 0)`;
-      }
-      if (caret.current) {
-        const on = !still && t >= SWEEP.sub[0] && t < SWEEP.embers && (typed < 1 || Math.floor(t * 4) % 2 === 0);
-        caret.current.style.opacity = on ? "1" : "0";
-        caret.current.style.left = `${(shown * 100).toFixed(2)}%`;
-      }
-      // Stamped badges: they fall fast and land hard, squashing for a moment.
-      badgeEls().forEach((e, i) => {
-        const at = SWEEP.badgesAt + i * SWEEP.badgeStep;
-        const u = still ? 1 : span(t, [at, at + SWEEP.badgeFall]);
-        const a = still ? 9 : t - at - SWEEP.badgeFall;
-        e.style.opacity = still || t >= at ? "1" : "0";
-        const k = a >= 0 ? Math.exp(-a / 0.045) : 0;
-        e.style.transform = `translateY(${(-34 * (1 - u * u)).toFixed(2)}px) scale(${(1 + 0.1 * k).toFixed(3)}, ${(1 - 0.16 * k * Math.cos(a * 40)).toFixed(3)})`;
-      });
-    };
-
-    const styleFlip = (t: number) => {
-      const s = still ? 1 : easeOut(span(t, FLIP.card));
-      if (band.current) {
-        band.current.style.opacity = String(s);
-        band.current.style.transform = `translateY(${((1 - s) * 18).toFixed(2)}px) scale(${(0.96 + 0.04 * s).toFixed(4)})`;
-      }
-      if (title.current) title.current.style.transform = "none";
-      if (flash.current) flash.current.style.opacity = still ? "0" : String(Math.max(0, 1 - Math.abs(t - FLIP.card[1]) / 0.2) * 0.35);
-      const k = still ? 1 : easeOut(span(t, [FLIP.card[0] + 0.1, FLIP.card[1] + 0.1]));
-      if (kicker.current) kicker.current.style.opacity = String(k);
-      const sb = still ? 1 : easeOut(span(t, FLIP.sub));
-      if (sub.current) {
-        sub.current.style.opacity = String(sb);
-        sub.current.style.transform = `translateY(${((1 - sb) * 6).toFixed(2)}px)`;
-      }
-      badgeEls().forEach((e, i) => {
-        const at = FLIP.badgesAt + i * FLIP.badgeStep;
-        const u = still ? 1 : span(t, [at, at + FLIP.badgeFall]);
-        e.style.opacity = String(Math.min(1, u * 3));
-        e.style.transform = `scale(${(0.6 + 0.4 * easeOutBack(u)).toFixed(4)})`;
       });
     };
 
     const style = (t: number, fade: number) => {
       const out = still ? 1 - fade : span(t, T.out);
       if (root.current) root.current.style.opacity = String(1 - out);
-      if (id === "perimeterSweep") styleSweep(t);
-      else if (id === "sectorFlip") styleFlip(t);
-      else styleComplete(t);
+      styleBanner(t);
     };
 
     /** The sounds and the gold bar, as the time crosses their moments. */
@@ -692,13 +635,12 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (typeof document === "undefined") return null;
-  const fs = box ? Math.round(Math.max(20, Math.min(id === "sectorFlip" ? 46 : 60, box.w / (id === "sectorFlip" ? 17 : 14)))) : 32;
-  const bs = Math.round(Math.max(22, Math.min(46, fs * (id === "sectorFlip" ? 0.8 : 0.9)) * (show.badges.length > 7 ? 0.82 : 1)));
+  const fs = box ? Math.round(Math.max(20, Math.min(60, box.w / 14))) : 32;
+  const bs = Math.round(Math.max(22, Math.min(46, fs * 0.9) * (show.badges.length > 7 ? 0.82 : 1)));
   const bh = Math.round(bs / (136 / 157));
   const urls = new Map<string, string | undefined>();
   const urlOf = (u: string) => (urls.has(u) ? urls.get(u) : (urls.set(u, glyphBadgeUrl(u)), urls.get(u)));
-  const stamp = id === "perimeterSweep";
-  const bandClass = `cb-band ${id === "sectorFlip" ? "cb-card" : id === "perimeterSweep" ? "cb-band-sweep" : ""}`;
+  const bandClass = "cb-band";
   return createPortal(
     <div ref={root} className="cb-win" data-win={show.piece.id} data-kind={show.kind} data-phase={phase} data-act={act} data-acts={acts} data-still={still ? "1" : "0"} data-from={show.from ?? ""} aria-live="polite" style={{ "--cb-acc": ENERGY } as React.CSSProperties}>
       <canvas ref={cv} className="cb-win-cv" />
@@ -706,11 +648,6 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         <div className="cb-over" style={{ left: box.x, top: box.y, width: box.w, height: box.h }}>
           <div ref={band} className={bandClass} style={{ opacity: 0 }}>
             <div ref={flash} className="cb-flash" />
-            {id === "sectorFlip" && (
-              <div ref={kicker} className="cb-kicker" style={{ fontSize: Math.max(11, Math.round(fs * 0.3)), opacity: 0 }}>
-                {show.kicker}
-              </div>
-            )}
             <div ref={title} className="cb-title" style={{ fontSize: fs }}>
               Mission complete
             </div>
@@ -718,7 +655,6 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
               <div ref={sub} className="cb-sub" style={{ fontSize: Math.round(fs * 0.36) }}>
                 {show.sub}
               </div>
-              {stamp && <i ref={caret} className="cb-caret" style={{ opacity: 0 }} />}
             </div>
             <div ref={badgeRow} className="cb-badges">
               {/* One badge per unit of the objective (a Salvage mission: its Power Nodes, then its Cleared sectors); an empty place for each not done (the Developer tool). */}
@@ -734,7 +670,7 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
                   <i className="cb-badge-dot" style={{ width: bs, height: bs }} />
                 );
                 return (
-                  <span key={i} className={stamp ? "cb-badge cb-stamp" : "cb-badge"} style={{ opacity: 0 }}>
+                  <span key={i} className="cb-badge" style={{ opacity: 0 }}>
                     {inner}
                   </span>
                 );

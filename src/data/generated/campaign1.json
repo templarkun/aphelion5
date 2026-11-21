@@ -45,14 +45,20 @@
     {
       "id": "C1_ORDER_1",
       "tokens": 1,
-      "overloadOnly": true,
-      "effect": "Teleport a Mecha to a Dark sector."
+      "overloadOnly": false,
+      "effect": "Deal 1 damage to one Gyro or one Sleeper."
     },
     {
       "id": "C1_ORDER_2",
       "tokens": 1,
       "overloadOnly": true,
       "effect": "Swap a Mecha with another unit."
+    },
+    {
+      "id": "C1_ORDER_3",
+      "tokens": 1,
+      "overloadOnly": false,
+      "effect": "Look at the top 2 tiles of one sector."
     }
   ],
   "missions": [

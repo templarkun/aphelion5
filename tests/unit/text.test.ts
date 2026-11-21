@@ -57,8 +57,8 @@ describe("text interface", () => {
   });
 
   it("the terminal program starts, shows the board and ends on Concede", () => {
-    // Concede is 5th: with no unit on the Field the Order (Deal 1 damage to all units) is not offered (designer 2026-11-08).
-    const out = execFileSync("npx", ["tsx", "scripts/play.ts", "--fixed", "5"], { input: "board\n5\n", encoding: "utf8", timeout: 60000 });
+    // Concede is 6th: Issue an Order is offered (C1_ORDER_3 needs no unit, designer 2026-11-21).
+    const out = execFileSync("npx", ["tsx", "scripts/play.ts", "--fixed", "5"], { input: "board\n6\n", encoding: "utf8", timeout: 60000 });
     expect(out).toMatch(/Objective: Eliminate 6 O_01/);
     expect(out).toMatch(/Game over \(you conceded\)/);
   });

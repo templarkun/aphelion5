@@ -100,6 +100,10 @@ then: Resolve S_01's Alert; Run a Module (Charged Beam only: Demolition Blast is
 note: CHANGED 2026-11-08 (designer, I9: a Bay ability or Order with no unit on the Field that
       fits it is greyed out and cannot be used; a rule of this program only):
       Use a Bay is not offered: Bay 5 is greyed out, as no unit has damage to remove.
+      CHANGED 2026-11-21 (designer: Campaign 1's Orders: C1_ORDER_1 is now "Deal 1 damage to one
+      Gyro or one Sleeper", 1 token, not [Overload]; new C1_ORDER_3 "Look at the top 2 tiles of one
+      sector", 1 token, not [Overload]; I30 asks to confirm the cost and [Overload]):
+      Issue an Order offers C1_ORDER_2 only (C1_ORDER_1 and C1_ORDER_3 are not [Overload]).
 
 id: T4_ACT_02
 title: Command a Mecha during an Overload: [Overload] abilities only
