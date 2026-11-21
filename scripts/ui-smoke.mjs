@@ -124,8 +124,8 @@ await start(page);
 await untilAction(page);
 const noMenu = (await panel.locator(".choices button, .ask-choices button").count()) === 0;
 await page.screenshot({ path: `${out}/ui-command.png` });
-// The Allied Drop's Mecha is on the Field: nothing greyed out for want of a unit.
-const greyAtStart = await page.locator(".no-units").count();
+// The Allied Drop's Mecha is on the Field: no Bay greyed out for want of a unit (C1_ORDER_1, "one Gyro or one Sleeper", rightly is: round 23).
+const greyAtStart = await page.locator(".no-units:not(.order-thing)").count();
 // A Dark sector opens a pop-up with Reveal; clicking outside closes it.
 const dark = JSON.parse((await page.locator(".field").getAttribute("data-choosable")) ?? "[]");
 await clickField(page, dark.length - 1);
@@ -678,6 +678,7 @@ async function dragThing(file, handle, name) {
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, file);
   const before = await logText(pg);
+  await pg.locator(handle(plan)).first().scrollIntoViewIfNeeded();
   const box = await pg.locator(handle(plan)).first().boundingBox();
   await dragMouse(pg, { x: box.x + box.width / 2, y: box.y + box.height / 2 }, await sectorPoint(pg, plan.targets[0]));
   const lit = await pg.locator(".thing-ghost").count();

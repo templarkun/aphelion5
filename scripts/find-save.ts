@@ -52,7 +52,13 @@ const FX: Record<string, (q: Question, g: Game) => string | undefined> = {
   heatwave: (q, g) => ((q.shortcuts ?? []).some((o) => o.id === "heatWave") && sectorKeys(g.view.state).some((k) => sectorState(g.view.state, k) === "occupied" && data.units.byId.get(g.view.state.tiles[topTileId(g.view.state, k)!]!.unitId ?? "")?.type === "Bot") ? "heatWave" : undefined),
   // A unit's own effect that hits another unit (designer 2026-11-09: each unit type its own shot).
   unitshot: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "hit" && /^[SFPGO]_\d+$/.test(e.rule ?? ""))),
-  flagship: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "flagship" && /^[A-Z]_\d+$/.test(e.rule))),
+  // ... and the damage is then chosen on the Bays (a wrecked Flagship has no choice to make).
+  flagship: (q, g) =>
+    (q.shortcuts ?? []).find((o) => {
+      if (!eventsOf(g, o.id).some((e) => e.kind === "flagship" && /^[A-Z]_\d+$/.test(e.rule))) return false;
+      const r = playAnswer(data, g, { kind: "option", value: o.id }).result;
+      return r.status === "question" && r.question.kind === "split" && /^Your Flagship takes/.test(r.question.prompt);
+    })?.id,
   // Build step 5 looks: a Reveal that starts an Overload, a Boost, tokens placed, an uncovered tile, an Overhaul.
   overloadstart: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "overload" && e.how === "start"), /^reveal:/),
   boost: (q, g) => shortcutWith(q, g, (es) => es.some((e) => e.kind === "tokens" && e.boost === true)),

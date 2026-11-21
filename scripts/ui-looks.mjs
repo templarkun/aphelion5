@@ -127,7 +127,7 @@ export async function looksCheck(browser, url, out) {
     await pg.screenshot({ path: `${out}/ui-trial-looks.png` });
     await pg.close();
     const okKept = /pebble/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /arcs/.test(kept ?? "") && /tide/.test(kept ?? "") && /"names":"hidden"/.test(kept ?? "");
-    if (!(offered === 31 && pressed === "corners:pebble,depth:stackFine,readyUnit:arcs,readySector:tide,counts:hidden,names:hidden" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
+    if (!(offered === 33 && pressed === "corners:pebble,depth:stackFine,readyUnit:arcs,readySector:tide,counts:hidden,names:hidden,overload:original" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
   }
 
   if (errors.length) fails.push(`page errors: ${errors.join(" | ")}`);
