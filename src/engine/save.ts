@@ -25,7 +25,7 @@ import { type GameState, type Profile, emptyProfile } from "./state.js";
  * A game saved in an older format cannot be replayed (its answers no longer fit),
  * except format 4: it replays, an answer to the Meltdown question (no longer asked) is skipped.
  */
-export const SAVE_FORMAT = 9;
+export const SAVE_FORMAT = 10;
 
 export interface GameStart {
   seed: number;
@@ -43,6 +43,8 @@ export interface GameStart {
   powerNodeHeat3?: boolean;
   /** Saved before format 9: Campaign 1's old Orders ([Overload] Teleport a Mecha; no "look at the top 2 tiles"; designer 2026-11-21). */
   oldCampaignOrders?: boolean;
+  /** Saved in format 9: C1_ORDER_3 looks at a Dark sector only (since 2026-11-21 round 24: any sector with tiles). */
+  darkLookOrder?: boolean;
   /** Fixed for the whole game, so replays ask the same questions (default on). */
   autoAnswer?: boolean;
   /** The profile as it was when the game started. */
@@ -67,7 +69,7 @@ export interface Game {
 }
 
 function initial(data: GameData, start: GameStart): GameState {
-  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false, powerNodeAtReveal: start.powerNodeAtReveal ?? false, flareEnergyChoice: start.flareEnergyChoice ?? false, powerNodeHeat3: start.powerNodeHeat3 ?? false, oldCampaignOrders: start.oldCampaignOrders ?? false });
+  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false, powerNodeAtReveal: start.powerNodeAtReveal ?? false, flareEnergyChoice: start.flareEnergyChoice ?? false, powerNodeHeat3: start.powerNodeHeat3 ?? false, oldCampaignOrders: start.oldCampaignOrders ?? false, darkLookOrder: start.darkLookOrder ?? false });
 }
 
 export function startGame(data: GameData, start: GameStart): Game {
@@ -184,6 +186,7 @@ export function readSave(text: string): SaveFile {
     // Format 7 or older: a Power Node gave 3 Heat (2 since 2026-11-16), so the game replays as played.
     if (f.formatVersion < 8) out.game = { ...out.game, start: { ...out.game.start, powerNodeHeat3: true } };
     if (f.formatVersion < 9) out.game = { ...out.game, start: { ...out.game.start, oldCampaignOrders: true } };
+    if (f.formatVersion === 9) out.game = { ...out.game, start: { ...out.game.start, darkLookOrder: true } };
   }
   return out;
 }

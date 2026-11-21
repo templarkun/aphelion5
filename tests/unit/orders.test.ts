@@ -16,18 +16,39 @@ describe("Campaign 1 Orders (designer 2026-11-21)", () => {
     expect(r.state.log.some((e) => /C1_ORDER_1|damage/.test(e.text))).toBe(true);
   });
 
-  it("C1_ORDER_3 looks at the top 2 tiles of one Dark sector, with no unit needed", () => {
+  it("C1_ORDER_3 looks at the top 2 tiles of one sector, with no unit needed", () => {
     // T3_ACT_03 with every tile face down: only Dark sectors, no unit.
     const s = given("T3_ACT_03");
     for (const t of Object.values(s.tiles)) t.faceUp = false;
     expect(usableOrders(ctx(s)).map((o) => o.id)).toEqual(["C1_ORDER_3"]);
     const r = runEffect(data(), s, (c) => commandStep(c), [A.option("issueOrder")]);
-    expect(r.status === "question" && r.question.prompt).toMatch(/C1_ORDER_3: choose a Dark sector/);
+    expect(r.status === "question" && r.question.prompt).toMatch(/C1_ORDER_3: choose a sector/);
     const k = r.status === "question" && r.question.kind === "sectors" ? r.question.options[0]! : "";
     const r2 = runEffect(data(), s, (c) => commandStep(c), [A.option("issueOrder"), A.sectors(k)]);
     if (r2.status === "illegal") throw new Error(r2.reason);
     expect(r2.state.log.some((e) => /C1_ORDER_3: look at the top \d tiles? of/.test(e.text))).toBe(true);
     expect(r2.state.player.commandTokens).toBe(5);
+  });
+
+  it("C1_ORDER_3 may choose a sector with a unit (round 24): its top 2 tiles, the unit's own first", () => {
+    const s = given("T3_ACT_03");
+    const r = runEffect(data(), s, (c) => commandStep(c), [A.option("issueOrder")]);
+    if (r.status !== "question" || r.question.kind !== "sectors") throw new Error("no sector question");
+    const occupied = r.question.options.find((k) => s.field[k]!.length > 1 && s.tiles[s.field[k]!.at(-1)!]!.faceUp);
+    expect(occupied).toBeDefined();
+    const r2 = runEffect(data(), s, (c) => commandStep(c), [A.option("issueOrder"), A.sectors(occupied!)]);
+    if (r2.status === "illegal") throw new Error(r2.reason);
+    const top = s.tiles[s.field[occupied!]!.at(-1)!]!.unitId!;
+    expect(r2.state.log.some((e) => e.text.includes(`C1_ORDER_3: look at the top 2 tiles of (${occupied}): ${top}, `))).toBe(true);
+  });
+
+  it("a game saved in format 9 keeps C1_ORDER_3 on Dark sectors, so it replays the same", () => {
+    const f = readSave(readFileSync("tests/fixtures/save-2026-11-21-m03-ways.json", "utf8"));
+    expect(f.game!.start.darkLookOrder).toBe(true);
+    expect(f.game!.start.oldCampaignOrders).toBeUndefined();
+    const g = replayGame(data(), f.game!.start, f.game!.answers);
+    expect(g.answers.length).toBe(f.game!.answers.length);
+    expect(readSave(JSON.stringify(toSave(g, f.profile))).game!.start.darkLookOrder).toBe(true);
   });
 
   it("a game saved before (format 8) keeps the old Orders and replays to the same question", () => {

@@ -15,6 +15,7 @@ import { abilityTargets, m01Targets, mechaDragPlan } from "../src/web/drag.js";
 import type { Game } from "../src/engine/save.js";
 import { normalise, planAnswer, planInfo } from "../src/web/modulePlan.js";
 import { noUnitToTarget } from "../src/engine/command.js";
+import { seenInSector } from "../src/web/seen.js";
 import { type GameEvent, newEvents } from "../src/engine/events.js";
 import { sectorKeys, sectorState, topTileId } from "../src/engine/field.js";
 
@@ -100,6 +101,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   yesno: (q, g) => q.kind === "yesno" && (g.view.state.phase === "command" || g.view.state.phase === "overload"),
   sectorpick: (q) => q.kind === "sectors" && q.max === 1 && q.options.length >= 3,
   gain: (q) => q.kind === "split" && q.pick === "reserve",
+  // A sector holding a tile the player has looked at (round 24: the second hover bubble, the next-tile looks).
+  seen: (q, g) => /choose an action/i.test(q.prompt) && seenSector(g) !== undefined,
   // Ready Alerts on the Field (token at the bottom corner and a pulsing rim, designer 2026-11-09).
   alert: (q, g) => /choose an action/i.test(q.prompt) && alertsOnField(g) >= 2,
   // Removing damage from the Flagship (bubbles by the Bays, designer 2026-11-09).
@@ -186,6 +189,9 @@ function moduleDrag(q: Question, g: Game): { id: number; targets: string[] } | u
   }
   return undefined;
 }
+function seenSector(g: Game): string | undefined {
+  return Object.keys(g.view.state.field).find((k) => seenInSector(g.view.state, k).some((r) => r.unitId));
+}
 const [what = "rows", out = "save.json"] = process.argv.slice(2);
 const wanted = WANTED[what];
 if (!wanted) throw new Error(`unknown question kind ${what}`);
@@ -220,6 +226,7 @@ for (let seed = 1; seed < 400; seed++) {
         writeFileSync(`${out}.plan.json`, JSON.stringify({ module: id, colour: q.energy![id] }));
       }
       if (FX[what]) writeFileSync(`${out}.plan.json`, JSON.stringify({ shortcut: FX[what]!(q, g) }));
+      if (what === "seen") writeFileSync(`${out}.plan.json`, JSON.stringify({ sector: seenSector(g), rows: seenInSector(g.view.state, seenSector(g)!) }));
       if (what === "moddrag") writeFileSync(`${out}.plan.json`, JSON.stringify(moduleDrag(q, g)));
       if (what === "orderdrag") {
         const o = (q.shortcuts ?? []).find((x) => x.on?.kind === "order" && abilityTargets(data, g, { kind: "option", value: x.id }).length > 0)!;

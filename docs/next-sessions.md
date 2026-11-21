@@ -143,5 +143,6 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    chosen, make the winners the look, remove the menu and the losers, and write CHANGED notes.
    2026-11-21: Notches made part of the game; second set of stack and ready choices and the
    tile-count words switch (T13_R21_01/02). Round 22: ready split into units and sectors, unit names switch. Round 23: the Overload's
-   edge (Original / Inflow, T13_R23_06). Still to choose: corners, stack depth, ready (units),
-   ready (sectors), words, names, Overload edge.
+   edge (Original / Inflow, T13_R23_06). Round 24: a sector's next tile (Original / Corner / Peek /
+   Ghost / Chip, T13_R24_02). Still to choose: corners, stack depth, ready (units), ready (sectors),
+   words, names, Overload edge, next tile.

@@ -218,6 +218,8 @@ export interface GameState {
     powerNodeHeat3?: boolean;
     /** Games saved before format 9: Campaign 1's Orders as they were (C1_ORDER_1 [Overload] Teleport a Mecha, no C1_ORDER_3). */
     oldCampaignOrders?: boolean;
+    /** Games saved in format 9: C1_ORDER_3 looked at a Dark sector only (round 24: any sector with tiles). */
+    darkLookOrder?: boolean;
     /** Core Rules as printed: a Mecha may Attack a Mecha (games saved before 2026-11-08 only; the computer version forbids it). */
     mechaAttacksMecha?: boolean;
     /** Developer mode: a game played with it never records a high score (spec "Developer mode"). */

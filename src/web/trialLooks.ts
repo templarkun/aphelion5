@@ -13,6 +13,11 @@
  * - overload: the Overload's look round the Field's edge (designer 2026-11-21): Original (the plasma
  *   wave drifting in and the plasma beams racing round the edge), or Inflow (the plasma wave kept, the
  *   racing beams replaced by streams of energy particles flowing in from the edge).
+ * - next: where a sector's very next tile shows once the player has looked at it (designer
+ *   2026-11-21, round 24): the tile under a unit, or a Dark sector's top tile. Original (nothing new;
+ *   a Dark sector keeps its "? B_01" words), Corner (its glyph badge in the lower left corner), Peek
+ *   (its badge peeking out from under the tile's lower left edge), Ghost (its glyph faint and large in
+ *   the tile), Chip (a small "next" chip with its glyph where the tile-count words are).
  */
 
 export type Corner = "original" | "soft" | "round" | "pebble" | "bevel";
@@ -22,6 +27,7 @@ export type ReadySector = "fill" | "embers" | "inner" | "sparkle" | "converge" |
 export type Ready = ReadyUnit | ReadySector;
 export type Counts = "shown" | "hidden";
 export type OverloadLook = "original" | "inflow";
+export type NextLook = "original" | "corner" | "peek" | "ghost" | "chip";
 
 export interface TrialLooks {
   corners: Corner;
@@ -31,6 +37,7 @@ export interface TrialLooks {
   counts: Counts;
   names: Counts;
   overload: OverloadLook;
+  next: NextLook;
 }
 
 export const CORNERS: { id: Corner; label: string; note: string }[] = [
@@ -87,8 +94,16 @@ export const OVERLOADS: { id: OverloadLook; label: string; note: string }[] = [
   { id: "inflow", label: "Inflow", note: "energy drifting in; streams of energy particles flow in from the edge (no racing beams)" },
 ];
 
+export const NEXTS: { id: NextLook; label: string; note: string }[] = [
+  { id: "original", label: "Original", note: "not shown (a Dark sector keeps “? B_01”)" },
+  { id: "corner", label: "Corner", note: "its glyph badge in the lower left corner of the tile" },
+  { id: "peek", label: "Peek", note: "its badge peeking out from under the tile's lower left edge" },
+  { id: "ghost", label: "Ghost", note: "its glyph faint and large inside the tile" },
+  { id: "chip", label: "Chip", note: "a small “next” chip with its glyph at the foot of the tile" },
+];
+
 const KEY = "aphelion5.trialLooks";
-const DEFAULT: TrialLooks = { corners: "original", depth: "original", readyUnit: "original", readySector: "fill", counts: "shown", names: "shown", overload: "original" };
+const DEFAULT: TrialLooks = { corners: "original", depth: "original", readyUnit: "original", readySector: "fill", counts: "shown", names: "shown", overload: "original", next: "original" };
 const subs = new Set<() => void>();
 
 function load(): TrialLooks {
@@ -104,6 +119,7 @@ function load(): TrialLooks {
       counts: COUNTS.some((x) => x.id === v.counts) ? v.counts! : DEFAULT.counts,
       names: NAMES.some((x) => x.id === v.names) ? v.names! : DEFAULT.names,
       overload: OVERLOADS.some((x) => x.id === v.overload) ? v.overload! : DEFAULT.overload,
+      next: NEXTS.some((x) => x.id === v.next) ? v.next! : DEFAULT.next,
     };
   } catch {
     return DEFAULT;

@@ -42,6 +42,10 @@
 # no longer blocks the game (T13_R23_03); a walking Mecha over the sectors (T13_R23_04); the Reserve
 # with a selected Module (T13_R23_05); the Overload's edge trial look (T13_R23_06). Checked by
 # tests/unit/orders.test.ts and scripts/ui-round23.mjs.
+# Round 24, 2026-11-21: the look Order on any sector (CHANGED note on T13_R23_02); the tiles looked at
+# in a sector in a second hover bubble (T13_R24_01); the next tile's trial looks (T13_R24_02); M_03
+# with several equal ways (T13_R24_03). Checked by tests/unit/orders.test.ts,
+# tests/unit/round24.test.ts and scripts/ui-round24.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -2342,9 +2346,12 @@ when: Issue an Order, C1_ORDER_3
 then: choose one Dark sector (as V2 Bay 3); its top 2 tiles (1 if only one) lift out of it on the
       Field, "Order: you looked at the top 2 tiles", then "Put them back" puts them back unchanged.
       1 Command token spent. Never greyed out (it needs no unit).
-note: "one sector" read as one Dark sector, as V2 Bay 3 and the Modules that look at the top tiles
-      (I30 asks).
-      games saved before this change keep the old Orders (C1_ORDER_1 [Overload] Teleport a Mecha,
+note: CHANGED 2026-11-21 (round 24, designer): any sector, Dark or with a unit (not Cleared). A unit's
+      sector: its top 2 tiles are the unit itself and the tile under it (as V1 Bay 3 reads "top 3
+      tiles"; I31 asks); they lift out and go back unchanged. Games saved in format 9 keep the Dark
+      sector only (save format 10).
+      Was: "one sector" read as one Dark sector (I30 asked).
+      Games saved before this change keep the old Orders (C1_ORDER_1 [Overload] Teleport a Mecha,
       no C1_ORDER_3), so they replay the same (save format 9).
 
 id: T13_R23_03
@@ -2383,3 +2390,44 @@ then: Original: as before (energy drifting in from the edge, and plasma beams ra
       particles (orange, some violet) flow in from all along the edge towards the middle, each a
       short bright trail that curls a little and fades, with faint sparks lifting off the edge.
       Kept in this browser; the first choice is Original.
+
+################################################################################
+=== SECTION: ROUND 24 ===
+
+id: T13_R24_01
+title: The tiles looked at in a sector, in a second hover bubble
+source: designer 2026-11-21 (screen only)
+given: you have looked at face-down tiles of a sector (a Bay 3, an Order, a Module), and they are still
+       face down in it
+when: hover the sector (touch: hold 0.5 s)
+then: beside the card text bubble (under it on a narrow Field) a second bubble "Looked at in this
+      sector": one line per tile from the top down to the deepest one looked at: where it is ("Top",
+      "2nd" ... for a Dark sector; "1st beneath", "2nd beneath" ... under a unit), its glyph, its type
+      and Level; a tile in between not looked at shows "?" "not looked at".
+      A Dark sector's card text is now only "Dark sector. N tiles." (the tiles looked at are in the
+      second bubble).
+given: no tile looked at in that sector
+then: only the card text bubble.
+
+id: T13_R24_02
+title: The sector's next tile on the Field (trial look)
+source: designer 2026-11-21 (TEMPORARY trial look)
+given: Menu > Trial looks (temporary) > "A sector's next tile, once you have looked at it"; a sector
+       whose next tile you have looked at (the tile under a unit, or a Dark sector's top tile)
+then: Original: nothing new (a Dark sector keeps "? B_01").
+      Corner: that tile's glyph badge in the lower left corner of the tile, with a small down mark.
+      Peek: its badge just inside the tile's lower left edge, tilted along it, as if showing beneath.
+      Ghost: its glyph large and faint inside the tile, behind the words.
+      Chip: a small dark "next" chip with its glyph at the foot of the tile.
+      Kept in this browser; the first choice is Original.
+
+id: T13_R24_03
+title: M_03 Attacks at once when its ways there end the same
+source: designer 2026-11-21 (bug report with a save: tests/fixtures/save-2026-11-21-m03-ways.json)
+given: M_03 can reach a unit only after its Passive move (to an adjacent Dark sector), and more than one
+       Dark sector would do (the designer's save: O_01 at (-1,2))
+when: drag M_03 onto that unit (or tap it among M_03's red targets)
+then: it moves and Attacks at once; no question about which sector to move to.
+given: the ways there would not end the same (the board after them differs)
+then: as before: the sectors it may move to light up, tap one.
+

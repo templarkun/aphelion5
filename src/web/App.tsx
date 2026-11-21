@@ -41,6 +41,7 @@ import { FlareEnergyChips } from "./FlareEnergy.js";
 import { type PickFoot, type PickItem, UnitPicks, sourceOf, verbOf } from "./UnitPicks.js";
 import { RowBubbles } from "./RowBubbles.js";
 import { UnitGlyph, UnitText } from "./UnitGlyph.js";
+import { seenInSector } from "./seen.js";
 import { EndOverload } from "./EndOverload.js";
 import { FlagshipDamage } from "./FlagshipDamage.js";
 import { Fps } from "./Fps.js";
@@ -1642,6 +1643,25 @@ export function typeGlyph(type: string): string {
   return type === "Sleeper" ? "Z" : type[0]!.toUpperCase();
 }
 
+/** The second bubble: what the player has looked at in this sector (round 24). */
+function SeenInfo({ data, rows }: { data: GameData; rows: ReturnType<typeof seenInSector> }) {
+  return (
+    <span className="info-lines seen-lines">
+      <b>Looked at in this sector</b>
+      {rows.map((r) => {
+        const u = r.unitId ? data.units.byId.get(r.unitId) : undefined;
+        return (
+          <span key={r.tile} className="seen-row">
+            <span className="seen-at">{r.label}</span>
+            {r.unitId ? <UnitGlyph id={r.unitId} size={22} /> : <span className="seen-q">?</span>}
+            <span>{u ? `${u.type}${u.level !== undefined && u.type !== "Flare" ? `, Level ${u.level}` : ""}` : "not looked at"}</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 /** The card text of a sector, as a bubble over the Field that nothing else moves for (designer 2026-11-08). */
 function InfoBubble({ data, state, sector }: { data: GameData; state: GameState; sector: string }) {
   const field = document.querySelector<HTMLElement>(".field");
@@ -1650,12 +1670,28 @@ function InfoBubble({ data, state, sector }: { data: GameData; state: GameState;
   const tileH = Number(field?.dataset.tile ?? 80);
   const w = field?.clientWidth ?? 400;
   if (!at) return null;
-  const above = at[1] - tileH / 2 > 90;
+  const rows = seenInSector(state, sector);
   const bw = isWide() ? 406 : 280; // 1.45 times as wide on the big PC screen (styles.css)
-  const style = { left: Math.max(8, Math.min(at[0] - bw / 2, w - bw - 8)), top: above ? at[1] - tileH / 2 - 6 : at[1] + tileH / 2 + 6 };
-  return (
-    <div className={`info-bubble ${above ? "above" : "below"}`} style={style}>
+  // Round 24: a second bubble beside the first (under it when the Field is too narrow).
+  const side = rows.length > 0 && w >= bw * 2 + 24;
+  // Two bubbles one above the other need more room above the tile (else they go below it).
+  const room = rows.length > 0 && !side ? 120 + rows.length * 26 : 90;
+  const above = at[1] - tileH / 2 > room;
+  const tw = side ? bw * 2 + 8 : bw;
+  const style = { left: Math.max(8, Math.min(at[0] - tw / 2, w - tw - 8)), top: above ? at[1] - tileH / 2 - 6 : at[1] + tileH / 2 + 6 };
+  const main = (
+    <div className="info-bubble" key="main">
       <HoverInfo data={data} state={state} sector={sector} />
+    </div>
+  );
+  const seen = rows.length > 0 && (
+    <div className="info-bubble seen-bubble" key="seen" data-seen={rows.filter((r) => r.unitId).length}>
+      <SeenInfo data={data} rows={rows} />
+    </div>
+  );
+  return (
+    <div className={`info-pair ${above ? "above" : "below"} ${side ? "side" : "stacked"}`} style={style}>
+      {above && !side ? [seen, main] : [main, seen]}
     </div>
   );
 }
@@ -1670,6 +1706,8 @@ export function HoverInfo({ data, state, sector, tileId }: { data: GameData; sta
   const stackHere = state.field[sector] ?? [];
   // A tile in the hand (looked at, being put back: StackPicker) is shown face up, with no "beneath" line.
   const top = tileId ?? stackHere.at(-1);
+  // A Dark sector (round 24): how many tiles; what was looked at is in the second bubble (seenInSector).
+  if (top && !tileId && !state.tiles[top]!.faceUp) return <b>Dark sector. {stackHere.length} tile{stackHere.length === 1 ? "" : "s"}.</b>;
   if (!top || (!tileId && !state.tiles[top]!.faceUp)) return <span>{sectorLine(data, state, sector)}</span>;
   const d = unitDef(c, top);
   const t = tile(state, top);

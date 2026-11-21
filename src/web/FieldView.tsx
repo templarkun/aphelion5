@@ -111,6 +111,73 @@ function addGlyphBadge(node: Container, unitId: string | undefined, cx: number, 
   node.addChild(sp);
 }
 
+/**
+ * Trial look (designer 2026-11-21, round 24): a sector's very next tile, once the player has looked
+ * at it (the tile under a unit, or a Dark sector's top tile), drawn on the tile in the chosen way.
+ */
+function addNextTile(node: Container, unitId: string | undefined, cx: number, cy: number, size: number, dark: boolean): void {
+  const look = trialLooks().next;
+  if (!unitId || look === "original") return;
+  let tex = badgeTextures.get(unitId);
+  if (!tex) {
+    const c = glyphBadge(unitId);
+    if (!c) return;
+    tex = Texture.from(c);
+    badgeTextures.set(unitId, tex);
+  }
+  const put = (h: number, x: number, y: number, alpha = 1) => {
+    const sp = new Sprite({ texture: tex, anchor: 0.5 });
+    sp.width = h * BADGE_ASPECT;
+    sp.height = h;
+    sp.position.set(x, y);
+    sp.alpha = alpha;
+    sp.eventMode = "none";
+    sp.label = "next-tile";
+    node.addChild(sp);
+    return sp;
+  };
+  if (look === "corner") {
+    // Mirrors the unit's own badge (upper right): lower left, a little smaller, with a small down mark.
+    const h = Math.max(15, size * 0.3);
+    const x = cx - size * 0.6;
+    const y = cy + size * 0.3;
+    const ring = new Graphics();
+    ring.circle(x, y, h * 0.6).fill({ color: 0x0b0f17, alpha: 0.55 });
+    ring.eventMode = "none";
+    node.addChild(ring);
+    put(h, x, y, 0.95);
+    const m = new Graphics();
+    m.poly([x - h * 0.16, y + h * 0.56, x + h * 0.16, y + h * 0.56, x, y + h * 0.74]).fill({ color: 0xffffff, alpha: 0.85 });
+    m.eventMode = "none";
+    node.addChild(m);
+  } else if (look === "peek") {
+    // Just inside the tile's lower left edge, tilted along it, as if the next tile showed beneath
+    // (outside the edge the next sector's tile would cover it).
+    const h = Math.max(18, size * 0.38);
+    const sp = put(h, cx - size * 0.36, cy + size * 0.5, 1);
+    sp.rotation = -0.5;
+  } else if (look === "ghost") {
+    // Behind the words: right after the tile's own plate.
+    const sp = put(size * (dark ? 0.62 : 0.72), cx, cy + size * 0.06, dark ? 0.2 : 0.16);
+    node.addChildAt(sp, Math.min(1, node.children.length - 1));
+  } else {
+    // A small dark chip at the tile's foot: the word "next" and the glyph.
+    const h = Math.max(13, size * 0.22);
+    const y = cy + size * (dark ? 0.6 : 0.72);
+    const t = new Text({ text: "next", style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(8, h * 0.62), fill: 0xffffff, fontWeight: "700" } });
+    const w = t.width + h * 1.55;
+    const chip = new Graphics();
+    chip.roundRect(cx - w / 2, y - h * 0.62, w, h * 1.24, h * 0.62).fill({ color: 0x0b0f17, alpha: 0.72 }).stroke({ width: 1, color: 0xffffff, alpha: 0.35 });
+    chip.eventMode = "none";
+    node.addChild(chip);
+    t.anchor.set(0, 0.5);
+    t.position.set(cx - w / 2 + h * 0.4, y);
+    t.eventMode = "none";
+    node.addChild(t);
+    put(h * 1.05, cx + w / 2 - h * 0.6, y);
+  }
+}
+
 const energyTextures = new Map<string, Texture>();
 function energyTexture(col: "Yellow" | "Red" | "Blue"): Texture | undefined {
   const have = energyTextures.get(col);
@@ -2007,6 +2074,7 @@ export function FieldView(p: FieldProps) {
         const known = showHidden || state.seen.includes(top!);
         label(known ? `? ${tile(state, top!).unitId ?? "?"}` : "?", -size * 0.1, size * 0.3, 0xffffff, true);
         if (trialLooks().counts === "shown") label(`${height} tile${height === 1 ? "" : "s"}`, size * 0.3, size * 0.18, 0xdfe7f1);
+        if (known) addNextTile(node, tile(state, top!).unitId ?? undefined, cx, cy, size, true);
       } else {
         const t = tile(state, unit!);
         const str = strength(c, unit!);
@@ -2030,6 +2098,9 @@ export function FieldView(p: FieldProps) {
         addFuseTokens(node, t.tokens, cx, cy, size);
         // Above the Alert token's place at the bottom corner (designer 2026-11-09).
         if (trialLooks().counts === "shown") label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.13);
+        // Trial look (round 24): the tile right under the unit, once looked at.
+        const under = stack(state, p.k).at(-2);
+        if (under && (showHidden || state.tiles[under]!.faceUp || state.seen.includes(under))) addNextTile(node, tile(state, under).unitId ?? undefined, cx, cy, size, false);
         // Trial rule (I2): the energy waiting on a Flare, as tokens on its tile (build step 3).
         const waiting = t.energy ? (["Yellow", "Red", "Blue"] as const).flatMap((col) => Array.from({ length: t.energy![col] ?? 0 }, () => col)) : [];
         if (waiting.length) {

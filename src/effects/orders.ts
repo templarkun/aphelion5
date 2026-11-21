@@ -49,9 +49,10 @@ registerAbility(
   { unitFits: (c: Ctx) => (oldOrders(c) ? choosableUnits(c, isMecha(c)).length > 0 && sectorKeys(c.state).some((k) => isOpenSector(c, k)) : choosableUnits(c, isGyroOrSleeper(c)).length > 0) },
 );
 
-// C1_ORDER_3 - Look at the top 2 tiles of one sector (designer 2026-11-21): a Dark sector, as V2 Bay 3.
+// C1_ORDER_3 - Look at the top 2 tiles of one sector (designer 2026-11-21): any Dark sector or sector with
+// a unit (round 24; I31 asks how a unit's sector is read). Games saved in format 9: a Dark sector only.
 registerAbility("C1_ORDER_3", function* (c) {
-  yield* lookAtTop(c, "C1_ORDER_3", 2);
+  yield* lookAtTop(c, "C1_ORDER_3", 2, c.state.settings.darkLookOrder ? false : "any");
 });
 
 // C1_ORDER_2 - [Overload] Swap a Mecha with another unit.

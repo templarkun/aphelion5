@@ -44,6 +44,24 @@ export interface DragPlan {
 const asUnits = (q: Question) => q.kind === "units" && q.min === 1 && q.max === 1;
 const asSectors = (q: Question) => q.kind === "sectors" && q.min === 1 && q.max === 1;
 
+/** The board after each list of answers (played on copies) is the same for all of them. */
+function sameEnd(data: GameData, game: Game, ways: Answer[][]): boolean {
+  let first: string | undefined;
+  for (const answers of ways) {
+    let g = game;
+    for (const a of answers) {
+      const r = playAnswer(data, g, a);
+      if (r.result.status === "illegal" || r.result.status === "blocked") return false;
+      g = r.game;
+    }
+    const s = g.view.state;
+    const print = JSON.stringify([s.phase, s.field, s.tiles, s.piles, s.supply, s.player, s.flagship, s.sheet, s.decks, s.rng, s.overloadPending, s.outcome]);
+    if (first === undefined) first = print;
+    else if (print !== first) return false;
+  }
+  return true;
+}
+
 /** Targets for the question that follows `answers` (one level), or from what happened when nothing was asked. */
 function targetsAfter(data: GameData, game: Game, tile: string, answers: Answer[], kind: DragKind, depth: number): DragTarget[] {
   let g = game;
@@ -87,7 +105,9 @@ function targetsAfter(data: GameData, game: Game, tile: string, answers: Answer[
           }
         }
         for (const [k, w] of ways) {
-          if (w.length === 1) out.push({ sector: k, kind, answers: w[0]!.answers, via: true });
+          // Designer 2026-11-21 (round 24): when every way there ends in the same board, it does not
+          // matter which: the first is taken and nothing is asked.
+          if (w.length === 1 || sameEnd(data, game, w.map((x) => x.answers))) out.push({ sector: k, kind, answers: w[0]!.answers, via: true });
           else out.push({ sector: k, kind, answers: [], via: true, next: () => ({ tile, unitId: "", from: k, targets: w }) });
         }
         return out;
