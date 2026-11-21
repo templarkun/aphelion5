@@ -666,7 +666,12 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         if (a !== shownAct) {
           shownAct = a;
           setAct(a);
-          setActs((x) => (x.endsWith(String(a)) ? x : x + a));
+          // A slow frame may jump over a short act: record every act passed, in order.
+          setActs((x) => {
+            let y = x;
+            for (let k = Number(y.slice(-1) || 0) + 1; k < a; k++) y += k;
+            return y.endsWith(String(a)) ? y : y + a;
+          });
         }
         if (t >= total) {
           stage = "done";
