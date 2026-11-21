@@ -313,17 +313,17 @@ export function Briefing(p: BriefingProps) {
               )}
               {p.onPreviewCelebration && (
                 <>
-                  {(["Alpha", "Beta", "Gamma"] as const).map((omega) => (
+                  {(["Alpha", "Beta", "Gamma", "Salvage"] as const).map((omega) => (
                     <Fragment key={omega}>
-                      <div className="bf-label mt-2">Mission celebrations · Eliminate {omega}</div>
+                      <div className="bf-label mt-2">Mission celebrations · {omega === "Salvage" ? "Salvage" : `Eliminate ${omega}`}</div>
                       {CELEBRATION_PREVIEWS.filter((w) => w.omega === omega).map((w) => (
-                        <button key={`${w.kind}:${w.piece ?? ""}`} type="button" className="bf-btn" data-action="celebration-preview" data-kind={w.kind} data-omega={w.omega} data-piece={w.piece ?? ""} onClick={() => (setDrawer(false), p.onPreviewCelebration?.(company, w))}>
+                        <button key={`${w.kind}:${w.piece ?? ""}:${w.win ?? ""}`} type="button" className="bf-btn" data-action="celebration-preview" data-kind={w.kind} data-omega={w.omega} data-piece={w.piece ?? ""} data-win-piece={w.win ?? ""} onClick={() => (setDrawer(false), p.onPreviewCelebration?.(company, w))}>
                           Play {w.label}
                         </button>
                       ))}
                     </Fragment>
                   ))}
-                  <p className="text-[14px] text-sky-100">On a made-up Field (Mission 1 for Alpha, Mission 3 for Beta, Mission 7 for Gamma). In a game the kill plays when the last required Omega unit is destroyed, the win when the mission is won (8.2); with several of a kind, one is picked at random each mission. They look the same for every Company.</p>
+                  <p className="text-[14px] text-sky-100">On a made-up Field (Mission 1 for Alpha, Mission 3 for Beta, Mission 7 for Gamma, Mission 2 for Salvage). In a game the kill plays when the last required Omega unit is destroyed, the win when the mission is won (8.2); with several of a kind, one is picked at random each mission (the three wins for every mission won). They look the same for every Company.</p>
                 </>
               )}
             </div>

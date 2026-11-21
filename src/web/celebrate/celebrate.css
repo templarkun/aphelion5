@@ -22,6 +22,36 @@
 .cb-badge-dot { display: block; border-radius: 50%; background: #9b6bd6; box-shadow: 0 0 8px #c9a6ff; }
 .cb-badge-empty { display: block; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: rgb(255 255 255 / 0.16); }
 
+.cb-badge { display: block; }
+.cb-badge-cleared { display: block; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: radial-gradient(circle at 40% 30%, #9fb3c4, #3d4b58 60%, #1d252d); box-shadow: inset 0 0 0 2px #cfe6f5; }
+.cb-subwrap { position: relative; display: inline-block; }
+.cb-sub { font-variant-numeric: tabular-nums; }
+
+/* Perimeter Sweep (designer 2026-11-21): a block caret while the line types in; stamped metal badges. */
+.cb-caret { position: absolute; top: 8%; bottom: 8%; width: 0.55em; margin-left: 2px; background: rgb(var(--cb-acc)); box-shadow: 0 0 8px rgb(var(--cb-acc) / 0.9); pointer-events: none; }
+.cb-band-sweep { border-top-color: rgb(255 206 120 / 0.55); border-bottom-color: rgb(255 206 120 / 0.55); }
+.cb-stamp { position: relative; padding: 5px 6px; transform-origin: 50% 100%;
+  background: linear-gradient(160deg, #eef3f8 0%, #8b96a3 22%, #3a424c 48%, #9aa6b3 70%, #2a3038 100%);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.cb-stamp::after { content: ""; position: absolute; inset: 3px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: radial-gradient(circle at 35% 25%, rgb(255 255 255 / 0.28), transparent 55%); mix-blend-mode: screen; pointer-events: none; }
+.cb-stamp img { filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.8)) contrast(1.05); }
+
+/* Sector Flip (designer 2026-11-21): the Debrief card: glass over dark metal, a 1 px tactical line, a rim light from above, a screen-blend highlight. */
+.cb-card { width: auto; max-width: min(92%, 640px); padding: 16px 26px 18px; border: 1px solid rgb(var(--cb-acc) / 0.5); border-radius: 3px;
+  background: radial-gradient(120% 90% at 50% -10%, rgb(92 214 255 / 0.18), transparent 60%), linear-gradient(180deg, rgb(14 20 32 / 0.9), rgb(6 8 14 / 0.92));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), inset 0 0 0 1px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(92 214 255 / 0.12), 0 14px 40px rgb(0 0 0 / 0.6), 0 0 40px rgb(92 214 255 / 0.16);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.cb-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(100deg, transparent 30%, rgb(160 230 255 / 0.12) 45%, transparent 60%); }
+.cb-card::after { content: ""; position: absolute; left: 10px; right: 10px; top: 6px; height: 6px; pointer-events: none;
+  border-top: 1px solid rgb(var(--cb-acc) / 0.6); border-left: 1px solid rgb(var(--cb-acc) / 0.6); border-right: 1px solid rgb(var(--cb-acc) / 0.6); }
+.cb-card .cb-title { text-shadow: 0 0 14px rgb(92 214 255 / 0.65), 0 2px 4px rgb(0 0 0 / 0.8); }
+.cb-card .cb-flash { background: radial-gradient(circle at 50% 0, rgb(160 230 255 / 0.5), transparent 70%); mix-blend-mode: screen; }
+.cb-kicker { font-weight: 700; letter-spacing: 0.38em; text-transform: uppercase; color: rgb(255 210 130); font-variant-numeric: tabular-nums; text-shadow: 0 0 8px rgb(255 190 90 / 0.6); }
+.cb-card .cb-badges img { filter: drop-shadow(0 0 5px rgb(92 214 255 / 0.8)); }
+
 /* The Mission bar once the win has gone through it: a gold glow (MissionWin sets data-cb-won on <html>). */
 html[data-cb-won] .mission-bar { border-color: #ffd27a; box-shadow: 0 0 0 2px rgb(255 210 122 / 0.55), 0 0 18px 4px rgb(255 200 90 / 0.45); }
 html[data-cb-won] .mission-bar .m-cell.on { background: #ffe9a8; box-shadow: 0 0 8px #ffcf6a; }

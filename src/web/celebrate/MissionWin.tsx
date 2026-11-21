@@ -17,20 +17,43 @@
  *
  * Two taps skip it (the screen's CelebrationSkip). Reduced motion and Instant: the banner still for
  * STILL seconds. Every moving thing is worked out from the time alone. Screen only: no rule here.
+ *
+ * This component also plays the other wins (designer 2026-11-21), on the same page and the same props:
+ * Perimeter Sweep (sweepFx.ts) and Sector Flip (flipFx.ts). It waits for the Field and the Trophies'
+ * flight, then plays the piece picked for the mission (`show.piece`), and every mission won has one:
+ * Eliminate Alpha, Beta, Gamma, and Salvage.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { easeOut, easeOutBack } from "../anim.js";
-import { playMissionComplete, playTrophyLand, playWinSweep } from "../briefing/soundHooks.js";
+import {
+  onAltWinDebrief,
+  onAltWinTrophyLock,
+  onBadgeDrop,
+  onMissionBarBurst,
+  onSectorLift,
+  onSectorSlam,
+  onTrophyCellIgnite,
+  onUpgradeSheetOpen,
+  onVictoryBannerSlam,
+  onVictoryWave,
+  playMissionComplete,
+  playTrophyLand,
+  playWinSweep,
+} from "../briefing/soundHooks.js";
 import { trophyFlights } from "../flyers.js";
 import { glyphBadgeUrl } from "../glyphs.js";
 import { isStill, speedFactor } from "../motion.js";
 import type { WinShow } from "./detect.js";
-import { type ShinePath, arrival, shineAt, shinePath } from "./shine.js";
-import { FLY, KILL_TIMES, STILL, WIN, span } from "./timeline.js";
+import { boardJolt, flipLook, flipStarts, paintFlip } from "./flipFx.js";
+import { arrival, shineAt } from "./shine.js";
+import { burstAt, cellAt, paintSweep, recoil } from "./sweepFx.js";
+import { FLIP, FLY, KILL_TIMES, STILL, SWEEP, WIN, span } from "./timeline.js";
+import { type Geo, dot, keepUp, measure, rgba, seq } from "./winKit.js";
 
-export type Shake = (key: string, now: number) => { dx: number; dy: number } | undefined;
+/** How a sector's tile is moved for a frame of a win: shaken, lifted (scale), squashed top to bottom (sy, a flip), hidden, drawn in front. */
+export type Shake = (key: string, now: number) => { dx: number; dy: number; scale?: number; sy?: number; alpha?: number; z?: number } | undefined;
 
 export interface MissionWinProps {
   show: WinShow;
@@ -43,22 +66,6 @@ export interface MissionWinProps {
   killOn?: boolean | undefined;
 }
 
-interface Geo {
-  /** The Field on the page. */
-  fx: number;
-  fy: number;
-  fw: number;
-  fh: number;
-  /** A tile's height (two hex radii). */
-  tile: number;
-  /** Sector centres, in the Field's own pixels. */
-  sectors: [string, number, number][];
-  /** The shine's way across the Field (shine.ts). */
-  shine: ShinePath;
-  /** The objective's cells in the Mission bar, on the page. */
-  cells: DOMRect[];
-}
-
 /**
  * One energy colour for every Company (designer 2026-11-20: the mission celebrations look the same for
  * every Company's vessel), with violet in the wake.
@@ -66,18 +73,6 @@ interface Geo {
 const ENERGY = "92 214 255";
 const VIOLET = "170 128 255";
 
-const rgba = (rgb: string, a: number) => `rgba(${rgb.trim().split(/\s+/).join(",")},${Math.max(0, Math.min(1, a)).toFixed(3)})`;
-
-/** A small fixed random sequence (the same every time). */
-function seq(seed: number): () => number {
-  let x = seed >>> 0 || 1;
-  return () => {
-    x ^= x << 13;
-    x ^= x >>> 17;
-    x ^= x << 5;
-    return ((x >>> 0) % 10000) / 10000;
-  };
-}
 const DRIFT = (() => {
   const r = seq(5150);
   return Array.from({ length: 48 }, () => ({ x: r(), born: 2.45 + r() * 2.2, life: 1.1 + r() * 0.9, rise: 0.18 + r() * 0.3, size: 1.2 + r() * 2.2, gold: r() < 0.55, wob: r() * 6 }));
@@ -97,54 +92,10 @@ const SECTOR_SPARKS = Array.from({ length: 7 }, (_, k) => {
   const r = seq(700 + k * 31);
   return Array.from({ length: 16 }, (_, j) => ({ along: r(), side: j % 2 ? 1 : -1, speed: 0.6 + r() * 1.1, swirl: (r() - 0.5) * 0.8, life: 0.35 + r() * 0.45, size: 0.6 + r() * 0.9, white: r() < 0.45 }));
 });
-/** A soft round particle of one colour (made once). */
-const DOTS = new Map<string, HTMLCanvasElement>();
-function dot(rgb: string): HTMLCanvasElement {
-  let c = DOTS.get(rgb);
-  if (c) return c;
-  c = document.createElement("canvas");
-  c.width = c.height = 32;
-  const g = c.getContext("2d")!;
-  const grd = g.createRadialGradient(16, 16, 0, 16, 16, 16);
-  grd.addColorStop(0, "rgba(255,255,255,1)");
-  grd.addColorStop(0.2, rgba(rgb, 0.95));
-  grd.addColorStop(0.5, rgba(rgb, 0.3));
-  grd.addColorStop(1, rgba(rgb, 0));
-  g.fillStyle = grd;
-  g.fillRect(0, 0, 32, 32);
-  DOTS.set(rgb, c);
-  return c;
-}
 const BURST = (() => {
   const r = seq(808);
   return Array.from({ length: 16 }, () => ({ a: r() * Math.PI * 2, far: 1.6 + r() * 2.2, gold: r() < 0.6 }));
 })();
-
-function measure(show: WinShow): Geo | undefined {
-  const el = document.querySelector<HTMLElement>(".field");
-  if (!el) return undefined;
-  const r = el.getBoundingClientRect();
-  if (r.width < 2 || r.height < 2) return undefined;
-  const raw: Record<string, [number, number]> = JSON.parse(el.dataset.sectors ?? "{}");
-  const sectors = Object.entries(raw).map(([k, [x, y]]) => [k, x, y] as [string, number, number]);
-  const tile = Number(el.dataset.tile) || Math.min(r.width, r.height) / 6;
-  // The shine sweeps away from the sector the unit left, through the Field's middle.
-  const shine = shinePath(r.width, r.height, tile, show.from ? raw[show.from] : undefined);
-  const cells = [...document.querySelectorAll<HTMLElement>("[data-mission-bar] [data-mission-group] .m-cell")].map((c) => c.getBoundingClientRect());
-  return { fx: r.left, fy: r.top, fw: r.width, fh: r.height, tile, sectors, shine, cells };
-}
-
-function hexPath(g: CanvasRenderingContext2D, x: number, y: number, r: number): void {
-  g.beginPath();
-  for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 180) * (60 * i - 30);
-    const px = x + r * Math.cos(a);
-    const py = y + r * Math.sin(a);
-    if (i === 0) g.moveTo(px, py);
-    else g.lineTo(px, py);
-  }
-  g.closePath();
-}
 
 /** One frame of the canvas at time t (s); `still`: the held picture. */
 function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, still: boolean, fade: number, badges: DOMRect[], bandBox: DOMRect | undefined): void {
@@ -152,9 +103,7 @@ function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, still: boolean,
   const P = ENERGY;
   const out = still ? 1 - fade : span(t, WIN.out);
   const all = 1 - out;
-  // The Field dims a little.
-  g.fillStyle = `rgba(3,5,12,${(0.34 * (still ? 1 : span(t, WIN.dim)) * all).toFixed(3)})`;
-  g.fillRect(fx, fy, fw, fh);
+  // The Field dims a little (its own tiles: MissionWin's onShake).
   if (still) return;
 
   // Act 1: the cells flare one after another; the last one bursts.
@@ -426,7 +375,16 @@ function paint(g: CanvasRenderingContext2D, geo: Geo, t: number, still: boolean,
   g.restore();
 }
 
+/** Each win's length, acts (as the browser check reads them) and how much of it shows (the cross-fade). */
+const PIECE_TIMES: Record<string, { total: number; out: readonly [number, number]; act: (t: number) => number }> = {
+  missionComplete: { total: WIN.total, out: WIN.out, act: (t) => (t < WIN.wave[0] ? 1 : t < WIN.slam[0] ? 2 : t < 3.8 ? 3 : 4) },
+  perimeterSweep: { total: SWEEP.total, out: SWEEP.out, act: (t) => (t < SWEEP.wave[0] ? 1 : t < SWEEP.slam[0] ? 2 : t < SWEEP.embers ? 3 : 4) },
+  sectorFlip: { total: FLIP.total, out: FLIP.out, act: (t) => (t < FLIP.flips[0] ? 1 : t < FLIP.card[0] ? 2 : t < 4.2 ? 3 : 4) },
+};
+
 export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWinProps) {
+  const id = PIECE_TIMES[show.piece.id] ? show.piece.id : "missionComplete";
+  const T = PIECE_TIMES[id]!;
   // The speed and motion settings as they were when it began.
   const still = useRef(isStill() || speedFactor() === 0).current;
   const speed = useRef(speedFactor() || 1).current;
@@ -440,13 +398,14 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
   const title = useRef<HTMLDivElement>(null);
   const flash = useRef<HTMLDivElement>(null);
   const sub = useRef<HTMLDivElement>(null);
+  const caret = useRef<HTMLElement>(null);
+  const kicker = useRef<HTMLDivElement>(null);
   const badgeRow = useRef<HTMLDivElement>(null);
   const cbs = useRef({ onHold, onShake, onDone });
   cbs.current = { onHold, onShake, onDone };
   // When the kill began (both in one answer).
   const killAt = useRef<number | undefined>(undefined);
   if (killOn && killAt.current === undefined) killAt.current = performance.now();
-  const badge = glyphBadgeUrl(show.target);
 
   useEffect(() => {
     let raf = 0;
@@ -461,11 +420,22 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
     let frames = 0;
     let shownAct = 0;
     let lastT = -1;
+    let q = 1;
+    // Sector Flip: when each sector flips, and the ones with no plate (Cleared).
+    let starts = new Map<string, number>();
+    const flat = new Set(Object.entries(show.state.field).filter(([, st]) => st.length === 0).map(([k]) => k));
     cbs.current.onHold(still ? 0 : show.fresh);
     // The Mission bar glows gold once the win has gone through it (on <html>: React rewrites the bar's own classes).
     const won = (on: boolean) => {
       if (on) document.documentElement.dataset.cbWon = "1";
       else delete document.documentElement.dataset.cbWon;
+    };
+    const tNow = (at: number) => ((at - t0) / 1000) * speed;
+    // How much the Field is dimmed at time t (0-1).
+    const [dimSpan, dimTo] = id === "perimeterSweep" ? [SWEEP.dim, SWEEP.dimTo] : id === "sectorFlip" ? [FLIP.dim, FLIP.dimTo] : [WIN.dim, 0.34];
+    const dimAt = (t: number) => {
+      if (still) return dimTo * Math.max(0, Math.min(1, t / 0.15, (STILL - t) / 0.15));
+      return dimTo * easeOut(span(t, dimSpan)) * (1 - span(t, T.out));
     };
 
     const startPlay = (now: number) => {
@@ -476,25 +446,44 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
       if (geo) {
         const r = geo;
         setBox({ x: r.fx, y: r.fy, w: r.fw, h: r.fh });
+        const at = new Map(r.sectors.map(([k, x, y]) => [k, [x, y] as const]));
+        starts = flipStarts(r.sectors, r.tile, show.from ? at.get(show.from) : undefined);
+        // The units move as the win passes (nothing moves in the still picture).
         const tau = new Map(r.sectors.map(([k, x, y]) => [k, arrival(r.shine, x, y)]));
-        // The units shiver as the shine passes (no shiver in the still picture).
-        if (!still)
-          cbs.current.onShake((key, at) => {
-            const age = ((at - t0) / 1000) * speed - (tau.get(key) ?? Infinity);
-            if (!(age >= 0 && age < 0.6)) return undefined;
-            const A = r.tile * 0.06 * Math.exp(-age / 0.2);
-            return { dx: A * Math.sin(age * 70), dy: A * 0.35 * Math.sin(age * 53 + 1) };
-          });
+        const move = (key: string, t: number): ReturnType<Shake> => {
+          if (still) return undefined;
+          if (id === "perimeterSweep") {
+            const p = at.get(key);
+            return p ? recoil(r, p[0], p[1], t) : undefined;
+          }
+          if (id === "sectorFlip") return flipLook(t, flat.has(key) ? undefined : starts.get(key), r.tile, boardJolt(t, starts.values(), r.tile));
+          const age = t - (tau.get(key) ?? Infinity);
+          if (!(age >= 0 && age < 0.6)) return undefined;
+          const A = r.tile * 0.06 * Math.exp(-age / 0.2);
+          return { dx: A * Math.sin(age * 70), dy: A * 0.35 * Math.sin(age * 53 + 1) };
+        };
+        // The Field dims (Perimeter Sweep by about 35%): its own tiles fade a little towards its black, so
+        // nothing laid over the page can miss it; the lifted plates of Sector Flip stay bright.
+        cbs.current.onShake((key, when) => {
+          const t = still ? ((when - t0) / 1000) : tNow(when);
+          const o = move(key, t);
+          const d = dimAt(t);
+          if (d <= 0.001) return o;
+          const lifted = o?.z !== undefined;
+          return { dx: 0, dy: 0, ...o, alpha: (o?.alpha ?? 1) * (lifted ? 1 : 1 - d) };
+        });
       }
       if (still) {
-        playMissionComplete();
+        if (id === "perimeterSweep") onVictoryBannerSlam();
+        else if (id === "sectorFlip") onAltWinDebrief();
+        else playMissionComplete();
         won(true);
       }
     };
 
-    const style = (t: number, fade: number) => {
-      const out = still ? 1 - fade : span(t, WIN.out);
-      if (root.current) root.current.style.opacity = String(1 - out);
+    const badgeEls = () => (badgeRow.current ? ([...badgeRow.current.children] as HTMLElement[]) : []);
+
+    const styleComplete = (t: number) => {
       const s = still ? 1 : span(t, WIN.slam);
       if (band.current) {
         const jolt = !still && t > WIN.slam[1] && t < WIN.slam[1] + 0.3 ? Math.sin((t - WIN.slam[1]) * 60) * 4 * (1 - (t - WIN.slam[1]) / 0.3) : 0;
@@ -508,14 +497,110 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         sub.current.style.opacity = String(sb);
         sub.current.style.transform = `translateY(${((1 - sb) * 10).toFixed(2)}px)`;
       }
-      const imgs = badgeRow.current ? [...badgeRow.current.children] : [];
-      imgs.forEach((el, i) => {
+      badgeEls().forEach((e, i) => {
         const at = WIN.badgesAt + i * WIN.badgeStep;
         const u = still ? 1 : span(t, [at, at + WIN.badgeFall]);
-        const e = el as HTMLElement;
         e.style.opacity = String(still ? 1 : Math.min(1, u * 4));
         e.style.transform = `translateY(${(-38 * (1 - easeOutBack(u))).toFixed(2)}px)`;
       });
+    };
+
+    const GLOW = "0 0 18px rgb(255 214 120 / 0.85), 0 0 34px rgb(92 214 255 / 0.6), 0 2px 4px rgb(0 0 0 / 0.8)";
+    const styleSweep = (t: number) => {
+      const s = still ? 1 : span(t, SWEEP.slam);
+      const after = t - SWEEP.slam[1];
+      if (band.current) band.current.style.opacity = String(Math.min(1, s * 3));
+      if (title.current) {
+        // A hard slam from above, then a tight micro-bounce; a split-colour glint on its edges as it lands.
+        const scale = still ? 1 : after < 0 ? 1.45 - 0.45 * s * s : 1 + 0.06 * Math.exp(-after / 0.06) * Math.cos(after * 46);
+        title.current.style.transform = `scale(${scale.toFixed(4)})`;
+        const d = !still && after >= 0 && after < 0.4 ? 3.2 * (1 - after / 0.4) : 0;
+        title.current.style.textShadow = d > 0 ? `${-d.toFixed(2)}px 0 0 rgb(255 70 90 / 0.75), ${d.toFixed(2)}px 0 0 rgb(70 220 255 / 0.75), ${GLOW}` : GLOW;
+      }
+      if (flash.current) flash.current.style.opacity = still ? "0" : String(after >= 0 ? Math.max(0, 1 - after / 0.25) * 0.8 : 0);
+      // The line types in, one letter at a time, with a block caret.
+      const typed = still ? 1 : span(t, SWEEP.sub);
+      const n = show.sub.length;
+      const shown = Math.round(typed * n) / Math.max(1, n);
+      if (sub.current) {
+        sub.current.style.opacity = t >= SWEEP.sub[0] || still ? "1" : "0";
+        sub.current.style.clipPath = `inset(-20% ${((1 - shown) * 100).toFixed(2)}% -20% 0)`;
+      }
+      if (caret.current) {
+        const on = !still && t >= SWEEP.sub[0] && t < SWEEP.embers && (typed < 1 || Math.floor(t * 4) % 2 === 0);
+        caret.current.style.opacity = on ? "1" : "0";
+        caret.current.style.left = `${(shown * 100).toFixed(2)}%`;
+      }
+      // Stamped badges: they fall fast and land hard, squashing for a moment.
+      badgeEls().forEach((e, i) => {
+        const at = SWEEP.badgesAt + i * SWEEP.badgeStep;
+        const u = still ? 1 : span(t, [at, at + SWEEP.badgeFall]);
+        const a = still ? 9 : t - at - SWEEP.badgeFall;
+        e.style.opacity = still || t >= at ? "1" : "0";
+        const k = a >= 0 ? Math.exp(-a / 0.045) : 0;
+        e.style.transform = `translateY(${(-34 * (1 - u * u)).toFixed(2)}px) scale(${(1 + 0.1 * k).toFixed(3)}, ${(1 - 0.16 * k * Math.cos(a * 40)).toFixed(3)})`;
+      });
+    };
+
+    const styleFlip = (t: number) => {
+      const s = still ? 1 : easeOut(span(t, FLIP.card));
+      if (band.current) {
+        band.current.style.opacity = String(s);
+        band.current.style.transform = `translateY(${((1 - s) * 18).toFixed(2)}px) scale(${(0.96 + 0.04 * s).toFixed(4)})`;
+      }
+      if (title.current) title.current.style.transform = "none";
+      if (flash.current) flash.current.style.opacity = still ? "0" : String(Math.max(0, 1 - Math.abs(t - FLIP.card[1]) / 0.2) * 0.35);
+      const k = still ? 1 : easeOut(span(t, [FLIP.card[0] + 0.1, FLIP.card[1] + 0.1]));
+      if (kicker.current) kicker.current.style.opacity = String(k);
+      const sb = still ? 1 : easeOut(span(t, FLIP.sub));
+      if (sub.current) {
+        sub.current.style.opacity = String(sb);
+        sub.current.style.transform = `translateY(${((1 - sb) * 6).toFixed(2)}px)`;
+      }
+      badgeEls().forEach((e, i) => {
+        const at = FLIP.badgesAt + i * FLIP.badgeStep;
+        const u = still ? 1 : span(t, [at, at + FLIP.badgeFall]);
+        e.style.opacity = String(Math.min(1, u * 3));
+        e.style.transform = `scale(${(0.6 + 0.4 * easeOutBack(u)).toFixed(4)})`;
+      });
+    };
+
+    const style = (t: number, fade: number) => {
+      const out = still ? 1 - fade : span(t, T.out);
+      if (root.current) root.current.style.opacity = String(1 - out);
+      if (id === "perimeterSweep") styleSweep(t);
+      else if (id === "sectorFlip") styleFlip(t);
+      else styleComplete(t);
+    };
+
+    /** The sounds and the gold bar, as the time crosses their moments. */
+    const cues = (t: number) => {
+      const crossed = (at: number) => lastT < at && t >= at;
+      const n = geo?.cells.length ?? 1;
+      if (id === "perimeterSweep") {
+        for (let i = 0; i < n; i++) if (crossed(cellAt(i, n))) onTrophyCellIgnite(i, n);
+        if (crossed(burstAt(n))) (onMissionBarBurst(), won(true));
+        if (crossed(SWEEP.wave[0])) onVictoryWave();
+        if (crossed(SWEEP.slam[1])) onVictoryBannerSlam();
+        const m = show.badges.length;
+        for (let i = 0; i < m; i++) if (crossed(SWEEP.badgesAt + i * SWEEP.badgeStep + SWEEP.badgeFall)) onBadgeDrop(i, m);
+        if (crossed(SWEEP.out[0])) onUpgradeSheetOpen();
+      } else if (id === "sectorFlip") {
+        const step = n > 1 ? Math.min(FLIP.cellStep, FLIP.cellsIn / (n - 1)) : 0;
+        if (crossed(FLIP.cellsAt + (n - 1) * step + FLIP.lockAfter)) (onAltWinTrophyLock(), won(true));
+        const list = [...starts.entries()].filter(([k]) => !flat.has(k)).sort((x, y) => x[1] - y[1]);
+        list.forEach(([, st], i) => {
+          if (crossed(st)) onSectorLift(i, list.length);
+          if (crossed(st + FLIP.slamAt)) onSectorSlam(i, list.length);
+        });
+        if (crossed(FLIP.card[0])) onAltWinDebrief();
+        if (crossed(FLIP.out[0])) onUpgradeSheetOpen();
+      } else {
+        if (crossed(WIN.wave[0])) playWinSweep();
+        if (crossed(WIN.slam[1])) playMissionComplete();
+        const lastCell = WIN.cellsAt + Math.max(0, n - 1) * WIN.cellStep + WIN.burstAfter;
+        if (crossed(lastCell)) won(true);
+      }
     };
 
     const loop = (now: number) => {
@@ -551,8 +636,9 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         if (now >= flyEnd && !busy) startPlay(now);
       }
       if (stage === "play") {
+        q = keepUp(now);
         const t = ((now - t0) / 1000) * (still ? 1 : speed);
-        const total = still ? STILL : WIN.total;
+        const total = still ? STILL : T.total;
         const fade = still ? Math.min(1, t / 0.15, (total - t) / 0.15) : 1;
         if (frames++ % 30 === 0) geo = measure(show) ?? geo;
         const c = cv.current;
@@ -567,19 +653,16 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
           }
           g.setTransform(k, 0, 0, k, 0, 0);
           g.clearRect(0, 0, window.innerWidth, window.innerHeight);
-          const badges = badgeRow.current ? [...badgeRow.current.children].map((e) => e.getBoundingClientRect()) : [];
-          paint(g, geo, t, still, fade, badges, band.current?.getBoundingClientRect());
+          const badges = badgeEls().map((e) => e.getBoundingClientRect());
+          const all = 1 - (still ? 1 - fade : span(t, T.out));
+          if (id === "perimeterSweep") paintSweep(g, geo, t, still, all, q, badges);
+          else if (id === "sectorFlip") paintFlip(g, geo, t, still, all, q, starts, flat);
+          else paint(g, geo, t, still, fade, badges, band.current?.getBoundingClientRect());
         }
         style(t, fade);
-        if (!still) {
-          const crossed = (at: number) => lastT < at && t >= at;
-          if (crossed(WIN.wave[0])) playWinSweep();
-          if (crossed(WIN.slam[1])) playMissionComplete();
-          const lastCell = WIN.cellsAt + Math.max(0, (geo?.cells.length ?? 1) - 1) * WIN.cellStep + WIN.burstAfter;
-          if (crossed(lastCell)) won(true);
-        }
+        if (!still) cues(t);
         lastT = t;
-        const a = still ? 3 : t < WIN.wave[0] ? 1 : t < WIN.slam[0] ? 2 : t < 3.8 ? 3 : 4;
+        const a = still ? 3 : T.act(t);
         if (a !== shownAct) {
           shownAct = a;
           setAct(a);
@@ -604,32 +687,53 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (typeof document === "undefined") return null;
-  const fs = box ? Math.round(Math.max(20, Math.min(60, box.w / 14))) : 32;
-  const bs = Math.round(Math.max(24, Math.min(46, fs * 0.9)));
+  const fs = box ? Math.round(Math.max(20, Math.min(id === "sectorFlip" ? 46 : 60, box.w / (id === "sectorFlip" ? 17 : 14)))) : 32;
+  const bs = Math.round(Math.max(22, Math.min(46, fs * (id === "sectorFlip" ? 0.8 : 0.9)) * (show.badges.length > 7 ? 0.82 : 1)));
+  const bh = Math.round(bs / (136 / 157));
+  const urls = new Map<string, string | undefined>();
+  const urlOf = (u: string) => (urls.has(u) ? urls.get(u) : (urls.set(u, glyphBadgeUrl(u)), urls.get(u)));
+  const stamp = id === "perimeterSweep";
+  const bandClass = `cb-band ${id === "sectorFlip" ? "cb-card" : id === "perimeterSweep" ? "cb-band-sweep" : ""}`;
   return createPortal(
-    <div ref={root} className="cb-win" data-win={show.piece.id} data-phase={phase} data-act={act} data-acts={acts} data-still={still ? "1" : "0"} data-from={show.from ?? ""} aria-live="polite" style={{ "--cb-acc": ENERGY } as React.CSSProperties}>
+    <div ref={root} className="cb-win" data-win={show.piece.id} data-kind={show.kind} data-phase={phase} data-act={act} data-acts={acts} data-still={still ? "1" : "0"} data-from={show.from ?? ""} aria-live="polite" style={{ "--cb-acc": ENERGY } as React.CSSProperties}>
       <canvas ref={cv} className="cb-win-cv" />
       {box && phase === "play" && (
         <div className="cb-over" style={{ left: box.x, top: box.y, width: box.w, height: box.h }}>
-          <div ref={band} className="cb-band" style={{ opacity: 0 }}>
+          <div ref={band} className={bandClass} style={{ opacity: 0 }}>
             <div ref={flash} className="cb-flash" />
+            {id === "sectorFlip" && (
+              <div ref={kicker} className="cb-kicker" style={{ fontSize: Math.max(11, Math.round(fs * 0.3)), opacity: 0 }}>
+                {show.kicker}
+              </div>
+            )}
             <div ref={title} className="cb-title" style={{ fontSize: fs }}>
               Mission complete
             </div>
-            <div ref={sub} className="cb-sub" style={{ fontSize: Math.round(fs * 0.36) }}>
-              {show.name} eliminated · {show.have} / {show.count}
+            <div className="cb-subwrap">
+              <div ref={sub} className="cb-sub" style={{ fontSize: Math.round(fs * 0.36) }}>
+                {show.sub}
+              </div>
+              {stamp && <i ref={caret} className="cb-caret" style={{ opacity: 0 }} />}
             </div>
             <div ref={badgeRow} className="cb-badges">
-              {/* One badge per unit of the objective; after the Developer tool, an empty place for each not destroyed. */}
-              {Array.from({ length: show.count }, (_, i) =>
-                i >= show.have ? (
-                  <i key={i} className="cb-badge-empty" style={{ width: bs, height: Math.round(bs / (136 / 157)), opacity: 0 }} />
-                ) : badge ? (
-                  <img key={i} src={badge} alt="" width={bs} height={Math.round(bs / (136 / 157))} style={{ opacity: 0 }} />
+              {/* One badge per unit of the objective (a Salvage mission: its Power Nodes, then its Cleared sectors); an empty place for each not done (the Developer tool). */}
+              {show.badges.map((b, i) => {
+                const url = b.unit ? urlOf(b.unit) : undefined;
+                const inner = !b.filled ? (
+                  <i className="cb-badge-empty" style={{ width: bs, height: bh }} />
+                ) : b.cleared ? (
+                  <i className="cb-badge-cleared" style={{ width: bs, height: bh }} />
+                ) : url ? (
+                  <img src={url} alt="" width={bs} height={bh} />
                 ) : (
-                  <i key={i} className="cb-badge-dot" style={{ width: bs, height: bs, opacity: 0 }} />
-                ),
-              )}
+                  <i className="cb-badge-dot" style={{ width: bs, height: bs }} />
+                );
+                return (
+                  <span key={i} className={stamp ? "cb-badge cb-stamp" : "cb-badge"} style={{ opacity: 0 }}>
+                    {inner}
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>

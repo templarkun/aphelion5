@@ -62,7 +62,7 @@
   .ou-end .ou-tel, .ou-end .ou-elev-mark { opacity: 0; }
 }
 
-, as in the intro (two taps anywhere within 1 s; SkipHint.tsx). */
+/* "Tap twice to skip" at the foot, as in the intro (two taps anywhere within 1 s; SkipHint.tsx). */
 .ou-skip { position: absolute; left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 5px;
   pointer-events: none; font-size: 11px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: rgb(224 242 254 / 0.72);
   text-shadow: 0 1px 6px rgb(0 0 0 / 0.8); animation: ou-rise 0.5s 0.5s ease-out both; }

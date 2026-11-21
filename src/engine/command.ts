@@ -205,6 +205,10 @@ export function* overhaul(c: RunCtx): Effect {
 // Objective, losing, Overload start
 // ---------------------------------------------------------------------------
 
+/** A Salvage mission's objective (8.2): Power Nodes in the Trophy pile, and Cleared sectors. */
+export const SALVAGE_NODES = 5;
+export const SALVAGE_CLEARED = 3;
+
 /** Is the mission objective met (8.2)? */
 export function objectiveMet(c: Ctx): boolean {
   const camp = c.data.campaigns.find((x) => x.prefix === c.state.campaign)!;
@@ -213,7 +217,7 @@ export function objectiveMet(c: Ctx): boolean {
   if (m.objective.type === "salvage") {
     const nodes = trophy.filter((u) => u === "F_01").length;
     const cleared = sectorKeys(c.state).filter((k) => sectorState(c.state, k) === "cleared").length;
-    return nodes >= 5 && cleared >= 3;
+    return nodes >= SALVAGE_NODES && cleared >= SALVAGE_CLEARED;
   }
   const target = m.objective.target;
   return trophy.filter((u) => u === target).length >= m.objective.count;

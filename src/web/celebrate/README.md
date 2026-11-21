@@ -15,9 +15,9 @@ Several pieces are planned for each kind of mission: Eliminate (an Alpha; a Beta
 Gamma more still) and Salvage. Which one plays (I19): one at random each mission, the same one again
 if the save is reloaded (`pickPiece`: the game's seed and the mission, never the game's own random
 numbers). Built so far: two kills for Alpha (I21), one for Beta, three for Gamma (I26; Dimensional Shatter
-2026-11-21); Mission Complete
-for Alpha missions and, until wins of their own, Beta (I22) and Gamma missions (I27: the designer will
-come back to it). Salvage missions: nothing yet.
+2026-11-21); three wins, Mission Complete, Perimeter Sweep and Sector Flip, for every mission won
+(designer 2026-11-21: Eliminate Alpha, Beta, Gamma, and Salvage), one picked at random each mission.
+A lost or conceded game has none. Salvage missions have no kill.
 
 Every piece looks the same whatever the Company's vessel, and the pick is the same for every Company
 (I25): no Company colours here. Anything made of energy (walls, sweeps, sparks) is drawn with particle
@@ -27,7 +27,9 @@ drawn with `drawImage` (`dot()` in `MissionWin.tsx`).
 
 The numbers ("ALPHA DOWN · 5 / 6", "ALPHA ELIMINATED · 6 / 6", the badges) come from the mission's
 objective in the Campaign file (`objectiveOf` in `detect.ts`): a mission needing 5 shows "4 / 5" to
-"5 / 5" and five badges with nothing to build.
+"5 / 5" and five badges with nothing to build. A Salvage mission (8.2: 5 Power Nodes, 3 Cleared
+sectors; `SALVAGE_NODES`, `SALVAGE_CLEARED` in the engine) shows "POWER NODES 5 / 5 · CLEARED 3 / 3",
+five Power Node badges and three Cleared sector badges (`WinShow.sub`, `badges`, `kicker`).
 
 | Piece | Kind | For | What it is |
 | --- | --- | --- | --- |
@@ -37,7 +39,9 @@ objective in the Campaign file (`objectiveOf` in `detect.ts`): a mission needing
 | `gammaHorizon` | kill | Gamma | Event Horizon (I26), about 8 s: the camera tilts the whole Field into 3D (`tilt.ts`), hexagonal brackets lock on; the Gamma collapses into a black sphere with a whirling disc of particles (its far side bent over the top), the board's space sags into a well; the two rings of sectors round it lift off, turn to the camera and are pulled in, light torn off them spiralling into the disc; it snaps to a point, a frozen moment, a jet of light fires up and a flat ring of light races over the board, flipping every sector like a card; the lifted sectors drop back one by one with dust; a fading crater over what lay beneath; "GAMMA DOWN · 1 / 2" to "2 / 2"; the board turns flat as the zoom eases back. |
 | `gammaArray` | kill | Gamma | Field Array (I26), about 8.2 s: the whole Field is the weapon: every sector's edge lights from the Field's edge inwards, ring by ring, then beams of particles leap ring to ring and tighten on the Gamma; its dome of shield cells (particles) cracks and breaks; the camera turns to a side view (`tilt.ts`), the beams lift the Gamma out as a column with its tile on top, four blades cut it into slices that slide apart; back to the view from above as they fall into the sector, which caves in to stars, then shows what lay beneath; the lattice crumbles into sparks. |
 | `gammaShatter` | kill | Gamma | Dimensional Shatter (2026-11-21), 8.0 s in four acts: (1, 0-2.2) the killing blow held still for 0.2 s, then the zoom, the board tilts (54°) under a growing tremor (`shakeOffset`); the tile darkens, crimson fractures with white-hot cores spread to its six edges with rays leaking up, motes and chips of the sectors round it are pulled into a tiny singularity, every sector's edge glows threat crimson; (2, 2.2-4.8) the tile bursts into 28-36 Voronoi shards (`breakage`: the fractures were their edges), solids tumbling in perspective with glowing broken faces, rim light and dying circuitry, hanging in bullet time (`timeDilation`, `shardTime`: the shards' clock in closed form) with sparks and the burst's ring frozen, arcs of plasma between them, a rift into dark space pulsing under them; the core implodes; (3, 4.8-6.6) time snaps back: white-gold flash, the shards blasted away and burnt up, a white-cyan ring of particles and a split-colour distortion wave cross the whole Field (lifting the sectors), each sector's edge flaring and turning crimson to cyan as the first reaches it; (4, 6.6-8.0) a smouldering crater, rising embers, telemetry "TARGET NEUTRALIZED // SECTOR CLEAR", the board flat again. Reduced motion / Instant: its own 2 s still (`stillTotal`): a flash of the core and the hexes lit ring by ring. A slow machine draws fewer particles (each has a rank) and 28 shards, never slower. |
-| `missionComplete` | win | Alpha, Beta, Gamma | Mission Complete, about 5 s: the Field dims, the Mission bar's cells flare one after another and the last bursts (the bar turns gold); an energy sweep (I23, I24: a crackling front made of particles, filaments, an ionised wake with ripples, a spray of particles) crosses the whole Field from beyond one edge to beyond the other, away from the sector the unit left; energy traces each sector's edge, throwing off sparks; the units shiver; "MISSION COMPLETE" slams in with "ALPHA ELIMINATED · 6 / 6" (I20, to try; "BETA ELIMINATED · 3 / 3") and a badge per unit dropping in; sparks drift, it fades. |
+| `missionComplete` | win | every mission | Mission Complete, about 5 s: the Field dims, the Mission bar's cells flare one after another and the last bursts (the bar turns gold); an energy sweep (I23, I24: a crackling front made of particles, filaments, an ionised wake with ripples, a spray of particles) crosses the whole Field from beyond one edge to beyond the other, away from the sector the unit left; energy traces each sector's edge, throwing off sparks; the units shiver; "MISSION COMPLETE" slams in with "ALPHA ELIMINATED · 6 / 6" (I20, to try; "BETA ELIMINATED · 3 / 3") and a badge per unit dropping in; sparks drift, it fades. |
+| `perimeterSweep` | win | every mission | Perimeter Sweep (2026-11-21, `sweepFx.ts`), 5.0 s: the Field dims about 35%; the Mission bar's cells charge and ignite left to right, the last bursts in a starburst with spark trails; a crisp ring of energy (white core, cyan body, particles riding it) sweeps out from the sector the unit left right off the Field, each sector's edge flashing then staying "secured" (thin line, gold corner ticks), the units recoiling a little; MISSION COMPLETE slams in with a micro-bounce and a split-colour glint, the line types in behind a block caret, stamped-metal badges drop 0.1 s apart with a spark puff; embers rise as it fades. |
+| `sectorFlip` | win | every mission | Sector Flip (2026-11-21, `flipFx.ts`), 5.2 s: the Field dims, the cells light and the last locks with a ring; column by column every sector (a heavy plate) lifts, turns a full 360° showing its bevelled edge and its underside (machined metal, circuit traces, chevrons), flashes its rim and slams down (shock ring, dust and sparks, a 1-2 px jolt of the board); the units ride on their tiles; Cleared sectors only light; a glass Debrief-style card: kicker ("OMEGA TARGETS CLEARED" / "SALVAGE SECURED"), MISSION COMPLETE, the line, the badges; motes drift as it fades. |
 
 ## How to add one
 
@@ -53,8 +57,12 @@ objective in the Campaign file (`objectiveOf` in `detect.ts`): a mission needing
    may also set where the unit sits on the screen (`focus`) and a still picture of its own length
    (`stillTotal`; the frame's `st` is the time in it: light may change in it, nothing may move). List it in `kills.ts` (`KILL_STEPS`) and its times in `timeline.ts` (`KILL_TIMES`:
    the win waits for its pull-out when both come in one answer).
-3. A win is a React component taking `MissionWinProps` (`MissionWin.tsx`); pick it by id where the
-   game screen (`App.tsx`) and the preview mount `MissionWin`.
+3. A win is played by `MissionWin` (`MissionWin.tsx`, the same props for every win: it waits for the
+   Field and the Trophies' flight, then plays `show.piece`): add its times (`PIECE_TIMES`), its
+   painter on the canvas (see `sweepFx.ts`, `flipFx.ts`), how it moves the Field's tiles (`onShake`:
+   shake, lift, squash top to bottom, hide, bring to front) and its banner styling. The Field's dim
+   is drawn by the Field itself (its tiles darken a little): a layer laid over the page did not show
+   over the Field in the browser check.
 4. Times in seconds in `timeline.ts`; silent sound hooks in `briefing/soundHooks.ts`; a preview
    button in System options (`CELEBRATION_PREVIEWS` in `previewBoards.ts`; a new Omega type needs its
    made-up board there too); test scenarios in batch 13.
@@ -78,10 +86,13 @@ tilt.ts                the board seen in 3D: tilt, perspective, lifted sectors (
 horizonFx.ts           Event Horizon (PixiJS)
 arrayFx.ts             Field Array (PixiJS)
 shatterFx.ts           Dimensional Shatter (PixiJS): the breakage, bullet time's shards, the rift, the shock wave
-MissionWin.tsx         Mission Complete: canvas over the page, the banner and badges (React)
+MissionWin.tsx         the wins: canvas over the page, the banner and badges (React); Mission Complete's painter
+winKit.ts              what the wins share: where the Field and the Mission bar are, particles, how well the machine keeps up
 shine.ts               Mission Complete's energy sweep: where its front lies at each moment
+sweepFx.ts             Perimeter Sweep: the cells, the ring, the secured borders, the stamps, the embers
+flipFx.ts              Sector Flip: the wave, each plate's lift, turn and slam, its edge and underside, the jolt
 CelebrationSkip.tsx    "Tap twice to skip", catches every tap while a piece plays
 CelebrationPreview.tsx System options: the pieces on a made-up Field
-previewBoards.ts       that Field (Mission 1 for Alpha, Mission 3 for Beta) and the buttons (also used by the tests)
+previewBoards.ts       that Field (Mission 1 for Alpha, 3 for Beta, 7 for Gamma, 2 for Salvage) and the buttons (also used by the tests)
 celebrate.css          their looks (prefix cb-)
 ```

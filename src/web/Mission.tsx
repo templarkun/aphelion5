@@ -64,7 +64,7 @@ const roleOf = (c: Ctx, u: string) => (u === "F_01" ? "Power Node" : (c.data.uni
 export function MissionBar({ c, phase, hold = 0 }: { c: Ctx; phase: string; hold?: number }) {
   const all = missionGroups(c);
   const { type, target } = all;
-  const groups = hold > 0 ? all.groups.map((g) => (g.glyph === "omega" ? { ...g, have: Math.max(0, g.have - hold) } : g)) : all.groups;
+  const groups = hold > 0 ? all.groups.map((g) => (g.glyph === "omega" || g.glyph === "node" ? { ...g, have: Math.max(0, g.have - hold) } : g)) : all.groups;
   const [open, setOpen] = useState<Anchor | undefined>();
   // A Trophy that just came in pops into its cell.
   const prev = useRef<Record<string, number>>({});

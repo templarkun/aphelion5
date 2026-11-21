@@ -13,9 +13,10 @@
  * mission, the same one again if the save is reloaded (from the game's seed and the mission, never
  * the game's own random numbers). Screen only: nothing here is a rule.
  *
- * Built so far: two kills for Alpha (I21), one for Beta, three for Gamma (I26; Dimensional Shatter 2026-11-21); Mission Complete for Alpha
- * and, until wins of their own are built, Beta (I22) and Gamma missions (I27: to come back to later).
- * Salvage missions: nothing yet.
+ * Built so far: two kills for Alpha (I21), one for Beta, three for Gamma (I26; Dimensional Shatter 2026-11-21).
+ * Wins (designer 2026-11-21): Mission Complete, Perimeter Sweep and Sector Flip, for every mission won
+ * (Eliminate Alpha, Beta, Gamma, and Salvage), one picked at random each mission. A lost or conceded game
+ * has none.
  */
 
 export interface Piece {
@@ -35,8 +36,13 @@ export const KILL_PIECES: Piece[] = [
   { id: "gammaShatter", name: "Dimensional Shatter", for: ["Gamma"] },
 ];
 
-/** Wins: the mission won. */
-export const WIN_PIECES: Piece[] = [{ id: "missionComplete", name: "Mission Complete", for: ["Alpha", "Beta", "Gamma"] }];
+const EVERY_MISSION = ["Alpha", "Beta", "Gamma", "Salvage"] as const;
+/** Wins: the mission won. Every win plays for every mission won (designer 2026-11-21: Eliminate Alpha, Beta, Gamma and Salvage), one picked at random (I19). */
+export const WIN_PIECES: Piece[] = [
+  { id: "missionComplete", name: "Mission Complete", for: EVERY_MISSION },
+  { id: "perimeterSweep", name: "Perimeter Sweep", for: EVERY_MISSION },
+  { id: "sectorFlip", name: "Sector Flip", for: EVERY_MISSION },
+];
 
 /** A small fixed hash (FNV-1a) of a text. */
 function hash(text: string): number {

@@ -13,6 +13,8 @@ import { type GameEvent, newEvents } from "../../engine/events.js";
 import type { Answer } from "../../engine/questions.js";
 import type { Game } from "../../engine/save.js";
 import { type SessionView, answerSession } from "../../engine/session.js";
+import { SALVAGE_CLEARED, SALVAGE_NODES } from "../../engine/command.js";
+import { sectorKeys, sectorState } from "../../engine/field.js";
 import type { GameState, TileId } from "../../engine/state.js";
 import { KILL_PIECES, type Piece, WIN_PIECES, pickPiece } from "./pieces.js";
 
@@ -72,14 +74,30 @@ export function killOf(data: GameData, before: GameState | undefined, events: re
   return piece ? { index, piece, name, count: o.count } : undefined;
 }
 
+/** One badge in the win's row: a unit's glyph (filled: destroyed or taken), or a Cleared sector. */
+export interface WinBadge {
+  unit?: string | undefined;
+  cleared?: boolean | undefined;
+  filled: boolean;
+}
+
 export interface WinShow {
   piece: Piece;
+  /** The objective's kind (8.2). */
+  kind: "eliminate" | "salvage";
+  /** The line under MISSION COMPLETE: "Alpha eliminated · 6 / 6", "Power Nodes 5 / 5 · Cleared 3 / 3". */
+  sub: string;
+  /** The Debrief card's first line (Sector Flip): "Omega targets cleared", "Salvage secured". */
+  kicker: string;
+  /** The row of badges: one per unit of the objective (a Salvage mission: the Power Nodes, then the Cleared sectors). */
+  badges: WinBadge[];
   /** The board when the mission was won (8.2), before Mission End's steps. */
   state: GameState;
   /** The board before the winning answer (its Trophies fly to the Mission bar first). */
   before: GameState;
+  /** The objective's unit ("O_01"; a Salvage mission: the Power Node, F_01). */
   target: string;
-  /** "Alpha". */
+  /** "Alpha" ("Salvage"). */
   name: string;
   count: number;
   /** How many of them are in the Trophy pile (the count, except after the Developer tool). */
@@ -115,45 +133,61 @@ export function wonStateOf(data: GameData, prev: Game, answers: readonly Answer[
   return undefined;
 }
 
-/** The win piece for a board won from `before` (the Developer tool, or the objective). `forceKill`: the kill piece played with it (the previews). */
-export function winShowOf(data: GameData, before: GameState, won: GameState, seed: number, forceKill?: string): WinShow | undefined {
+/** The win piece for a board won from `before` (the Developer tool, or the objective). `forceKill`: the kill piece played with it (the previews); `forceWin`: the win piece. */
+export function winShowOf(data: GameData, before: GameState, won: GameState, seed: number, forceKill?: string, forceWin?: string): WinShow | undefined {
   const o = objectiveOf(data, before);
-  if (!o || o.type !== "eliminate") return undefined;
-  const name = omegaName(data, o.target);
-  const piece = pickPiece(WIN_PIECES, name, seed, before.mission, "win");
+  if (!o) return undefined;
+  const salvage = o.type === "salvage";
+  const target = salvage ? "F_01" : o.target;
+  const count = salvage ? SALVAGE_NODES : o.count;
+  const name = salvage ? "Salvage" : omegaName(data, target);
+  const piece = pickPiece(WIN_PIECES, name, seed, before.mission, "win", forceWin);
   if (!piece) return undefined;
   const ev = newEvents(before.events, won.events);
   const dev = ev.some((e) => e.kind === "won" && e.dev === true);
-  // The deciding unit: the objective's number-th of its type in the Trophy pile; where it was destroyed.
-  const mine = won.piles.trophy.filter((t) => won.tiles[t]?.unitId === o.target);
-  const decider: TileId | undefined = dev ? undefined : mine[o.count - 1];
+  const mine = won.piles.trophy.filter((t) => won.tiles[t]?.unitId === target);
+  const had = new Set(before.piles.trophy);
+  const freshAll = won.piles.trophy.filter((t) => !had.has(t));
+  // Where the wave starts. Eliminate: where the deciding unit (the objective's number-th of its type in the
+  // Trophy pile) was destroyed. Salvage: where the last Power Node of this answer was taken from.
+  const decider: TileId | undefined = dev ? undefined : salvage ? freshAll.filter((t) => won.tiles[t]?.unitId === target).at(-1) : mine[o.count - 1];
   let from: string | undefined;
   if (decider !== undefined) {
     const all = won.events ?? [];
     for (let j = all.length - 1; j >= 0; j--) {
-      const e = all[j]!;
-      if (e.kind === "destroyed" && e.tile === decider) {
+      const e = all[j]! as GameEvent & { tile?: TileId; sector?: string };
+      if (e.tile === decider && typeof e.sector === "string" && (salvage || e.kind === "destroyed")) {
         from = e.sector;
         break;
       }
     }
   }
-  const joined = decidingKill(data, before, ev) >= 0;
-  const had = new Set(before.piles.trophy);
-  const freshAll = won.piles.trophy.filter((t) => !had.has(t));
+  const joined = !salvage && decidingKill(data, before, ev) >= 0;
+  const have = Math.min(count, mine.length);
+  const badges: WinBadge[] = Array.from({ length: count }, (_, i) => ({ unit: target, filled: i < have }));
+  let sub = `${name} eliminated · ${have} / ${count}`;
+  if (salvage) {
+    const cleared = Math.min(SALVAGE_CLEARED, sectorKeys(won).filter((k) => sectorState(won, k) === "cleared").length);
+    for (let i = 0; i < SALVAGE_CLEARED; i++) badges.push({ cleared: true, filled: i < cleared });
+    sub = `Power Nodes ${have} / ${count} · Cleared ${cleared} / ${SALVAGE_CLEARED}`;
+  }
   return {
     piece,
+    kind: salvage ? "salvage" : "eliminate",
+    sub,
+    kicker: salvage ? "Salvage secured" : "Omega targets cleared",
+    badges,
     state: won,
     before,
-    target: o.target,
+    target,
     name,
-    count: o.count,
-    have: Math.min(o.count, mine.length),
+    count,
+    have,
     from,
     dev,
     joined,
     kill: joined ? killOf(data, before, ev, seed, forceKill)?.piece.id : undefined,
-    fresh: freshAll.filter((t) => won.tiles[t]?.unitId === o.target).length,
+    fresh: freshAll.filter((t) => won.tiles[t]?.unitId === target).length,
     flights: freshAll.length > 0,
   };
 }

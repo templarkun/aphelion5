@@ -245,6 +245,69 @@ export const WIN = {
   out: [4.4, 5.0] as const,
 };
 
+/**
+ * Perimeter Sweep, the second win (designer 2026-11-21): 5.0 s of precision victory telemetry. The Mission
+ * bar's cells charge like capacitors and the last bursts; a ring of energy sweeps out over the whole Field,
+ * each sector's edge flashing and staying "secured"; the banner slams in, the line under it types in,
+ * stamped metal badges drop; embers rise and it fades into the Upgrade sheet.
+ */
+export const SWEEP = {
+  total: 5.0,
+  /** Act 1 (0-1.0): the Field dims by about 35%; the cells ignite left to right (onTrophyCellIgnite), the last overcharges and bursts (onMissionBarBurst). */
+  dim: [0, 0.45] as const,
+  dimTo: 0.35,
+  cellsAt: 0.12,
+  /** The cells' cascade fits in this long, whatever their number (at most 0.11 s apart). */
+  cellsIn: 0.62,
+  cellStep: 0.11,
+  burstAfter: 0.16,
+  /** Act 2 (1.0-2.2): the ring sweeps out from the sector the unit left (onVictoryWave), right off the Field by the end. */
+  wave: [1.0, 2.2] as const,
+  /** Act 3 (2.2-3.8): MISSION COMPLETE slams in with a micro-bounce (onVictoryBannerSlam); the line types in; the badges stamp down 0.1 s apart (onBadgeDrop). */
+  slam: [2.2, 2.42] as const,
+  sub: [2.5, 2.95] as const,
+  badgesAt: 2.95,
+  badgeStep: 0.1,
+  badgeFall: 0.16,
+  /** Act 4 (3.8-5.0): embers drift up; the overlay cross-fades out (onUpgradeSheetOpen) into the Upgrade sheet. */
+  embers: 3.8,
+  out: [4.2, 5.0] as const,
+};
+
+/**
+ * Sector Flip, the third win (designer 2026-11-21): 5.2 s. The Mission bar locks in; one by one in a wave
+ * across the Field every sector (a heavy plate) lifts, turns a full 360° and slams back down; the Debrief
+ * card with the readout; motes drift and it fades into the Upgrade sheet.
+ */
+export const FLIP = {
+  total: 5.2,
+  /** Act 1 (0-1.0): the Field dims; the cells light in sequence, the last one pulses with a ring and locks (onAltWinTrophyLock). */
+  dim: [0, 0.5] as const,
+  dimTo: 0.3,
+  cellsAt: 0.1,
+  cellsIn: 0.6,
+  cellStep: 0.1,
+  lockAfter: 0.12,
+  /** Act 2 (1.0-3.1): the sectors flip in a wave, column by column, at most 0.16 s apart. */
+  flips: [1.0, 3.1] as const,
+  maxStep: 0.16,
+  /** One sector's flip, seconds from its start: lift (onSectorLift), the turn, the drop and the slam (onSectorSlam). */
+  lift: [0, 0.16] as const,
+  turn: [0.1, 0.56] as const,
+  drop: [0.58, 0.7] as const,
+  slamAt: 0.7,
+  /** All of one sector's flip, its rim flash and its dust (0.7 s up and down, 0.3 s of after-effects). */
+  one: 1.0,
+  /** Act 3 (3.1-4.2): the Debrief card enters with the readout and the badges (onAltWinDebrief). */
+  card: [3.1, 3.5] as const,
+  sub: [3.35, 3.65] as const,
+  badgesAt: 3.6,
+  badgeStep: 0.06,
+  badgeFall: 0.22,
+  /** Act 4 (4.2-5.2): motes drift; the overlay cross-fades out (onUpgradeSheetOpen). */
+  out: [4.4, 5.2] as const,
+};
+
 /** The still picture of either piece (reduced motion, Instant), seconds. */
 export const STILL = 1.5;
 

@@ -132,8 +132,9 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    the new mission events and the effects made from blocks; open C6-C8.
 12. **Mission celebrations: come back to the Gamma win** (designer 2026-11-20, I27). Gamma missions
    (Mission 7) play Mission Complete after the Gamma kill for now, as Beta missions do (I22). The
-   designer asked to be reminded to come back to it: a win of its own for Gamma (and Beta), and
-   Salvage missions, which have no celebration yet. Gamma now has three kills (Event Horizon, Field Array,
+   designer asked to be reminded to come back to it: a win of its own for Gamma (and Beta). Since
+   2026-11-21 every mission won (Salvage too) plays one of three wins at random (Mission Complete,
+   Perimeter Sweep, Sector Flip); none is a Gamma win of its own yet. Gamma now has three kills (Event Horizon, Field Array,
    Dimensional Shatter 2026-11-21); I28 (should Dimensional Shatter use the Company's colour?) is open.
 
 13. **Trial looks: the designer's choice** (designer 2026-11-20). Menu > "Trial looks (temporary)"

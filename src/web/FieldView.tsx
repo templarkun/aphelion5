@@ -75,7 +75,7 @@ export interface FieldProps {
   /** A kill celebration starts or ends (the screen shows "Tap twice to skip"). */
   onCelebrate?: ((on: boolean) => void) | undefined;
   /** The win celebration's shine makes the units shiver (offset in pixels for a sector now). */
-  shake?: ((key: string, now: number) => { dx: number; dy: number } | undefined) | undefined;
+  shake?: ((key: string, now: number) => { dx: number; dy: number; scale?: number; sy?: number; alpha?: number; z?: number } | undefined) | undefined;
 }
 
 const ENERGY_HEX: Record<string, number> = { Yellow: 0xf2c230, Red: 0xe8402f, Blue: 0x2f74e8 };
@@ -1723,6 +1723,15 @@ export function FieldView(p: FieldProps) {
         const v = look(k);
         v.dx += o.dx;
         v.dy += o.dy;
+        // Sector Flip (designer 2026-11-21): a sector lifted (scale), turned (squashed top to bottom), hidden while its underside shows, in front.
+        if (o.scale !== undefined) v.scale *= o.scale;
+        if (o.sy !== undefined) {
+          const c = Math.abs(o.sy) < 0.02 ? (o.sy < 0 ? -0.02 : 0.02) : o.sy;
+          v.scale *= c;
+          v.scaleX /= c;
+        }
+        if (o.alpha !== undefined) v.alpha *= o.alpha;
+        if (o.z !== undefined) v.z = (v.z ?? 0) + o.z;
       }
     const d = drag.current;
     const size = geo.current.size;

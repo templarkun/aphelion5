@@ -12,6 +12,11 @@ import { emptyProfile } from "../../src/engine/state.js";
 import { Player, type Step } from "../../src/web/anim.js";
 import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winShowOf, wonStateOf } from "../../src/web/celebrate/detect.js";
 import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
+import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
+import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
+import { FLIP, SWEEP } from "../../src/web/celebrate/timeline.js";
+
+const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip"];
 import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
 import { betaFlows, crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
@@ -68,7 +73,13 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     ["gammaArray", ["Gamma"]],
     ["gammaShatter", ["Gamma"]],
   ]);
-  expect(WIN_PIECES.map((p) => [p.id, p.for])).toEqual([["missionComplete", ["Alpha", "Beta", "Gamma"]]]);
+  // Every win for every mission won (designer 2026-11-21): Eliminate Alpha, Beta, Gamma, and Salvage.
+  const every = ["Alpha", "Beta", "Gamma", "Salvage"];
+  expect(WIN_PIECES.map((p) => [p.id, p.for])).toEqual([
+    ["missionComplete", every],
+    ["perimeterSweep", every],
+    ["sectorFlip", every],
+  ]);
   for (const p of KILL_PIECES) {
     expect(KILL_STEPS[p.id]).toBeTypeOf("function");
     expect(KILL_TIMES[p.id]).toBeDefined();
@@ -77,29 +88,38 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   for (let seed = 1; seed < 40; seed++) alphas.add(pickPiece(KILL_PIECES, "Alpha", seed, "C1_M1", "kill")!.id);
   expect([...alphas].sort()).toEqual(["alphaDown", "alphaPurge"]);
   expect(pickPiece(KILL_PIECES, "Beta", 7, "C1_M3", "kill")?.id).toBe("betaBreach");
-  expect(pickPiece(WIN_PIECES, "Beta", 7, "C1_M3", "win")?.id).toBe("missionComplete");
+  expect(WIN_IDS).toContain(pickPiece(WIN_PIECES, "Beta", 7, "C1_M3", "win")?.id);
   const gammas = new Set<string>();
   for (let seed = 1; seed < 40; seed++) gammas.add(pickPiece(KILL_PIECES, "Gamma", seed, "C1_M7", "kill")!.id);
   expect([...gammas].sort()).toEqual(["gammaArray", "gammaHorizon", "gammaShatter"]);
-  expect(pickPiece(WIN_PIECES, "Gamma", 7, "C1_M7", "win")?.id).toBe("missionComplete");
+  expect(WIN_IDS).toContain(pickPiece(WIN_PIECES, "Gamma", 7, "C1_M7", "win")?.id);
   expect(pickPiece(KILL_PIECES, "Salvage", 7, "C1_M2", "kill")).toBeUndefined();
-  // System options: a button for each kill, the win and each kill with the win, for Alpha, Beta and Gamma.
-  expect(CELEBRATION_PREVIEWS.map((w) => `${w.omega} ${w.kind} ${w.piece ?? ""}`.trim())).toEqual([
+  // System options: a button for each kill, each win, and each kill with Mission Complete, for Alpha, Beta, Gamma; each win for Salvage.
+  expect(CELEBRATION_PREVIEWS.map((w) => `${w.omega} ${w.kind} ${w.piece ?? ""} ${w.win ?? ""}`.replace(/ +/g, " ").trim())).toEqual([
     "Alpha kill alphaDown",
     "Alpha kill alphaPurge",
-    "Alpha win",
-    "Alpha both alphaDown",
-    "Alpha both alphaPurge",
+    "Alpha win missionComplete",
+    "Alpha win perimeterSweep",
+    "Alpha win sectorFlip",
+    "Alpha both alphaDown missionComplete",
+    "Alpha both alphaPurge missionComplete",
     "Beta kill betaBreach",
-    "Beta win",
-    "Beta both betaBreach",
+    "Beta win missionComplete",
+    "Beta win perimeterSweep",
+    "Beta win sectorFlip",
+    "Beta both betaBreach missionComplete",
     "Gamma kill gammaHorizon",
     "Gamma kill gammaArray",
     "Gamma kill gammaShatter",
-    "Gamma win",
-    "Gamma both gammaHorizon",
-    "Gamma both gammaArray",
-    "Gamma both gammaShatter",
+    "Gamma win missionComplete",
+    "Gamma win perimeterSweep",
+    "Gamma win sectorFlip",
+    "Gamma both gammaHorizon missionComplete",
+    "Gamma both gammaArray missionComplete",
+    "Gamma both gammaShatter missionComplete",
+    "Salvage win missionComplete",
+    "Salvage win perimeterSweep",
+    "Salvage win sectorFlip",
   ]);
 });
 
@@ -113,7 +133,9 @@ test("the engine reports the win (8.2) as a display event, also for the Develope
   expect(ev.filter((e) => e.kind === "won")).toEqual([expect.objectContaining({ kind: "won", dev: true })]);
   // The win of that answer: the board as it was won (before Mission End collects the Field), from the middle.
   const w = winOf(data(), g, res.game)!;
-  expect(w.piece.id).toBe("missionComplete");
+  expect(WIN_IDS).toContain(w.piece.id);
+  expect(w.sub).toBe("Alpha eliminated · 0 / 6");
+  expect(w.badges).toEqual(Array.from({ length: 6 }, () => ({ unit: "O_01", filled: false })));
   expect(w.dev).toBe(true);
   expect(w.from).toBeUndefined();
   expect(w.joined).toBe(false);
@@ -190,7 +212,7 @@ test("Beta (Mission 3, Eliminate 3 Betas): the third Beta destroyed is the decid
   expect(ev[d]).toEqual(expect.objectContaining({ unitId: "O_02", wreck: false }));
   expect(killOf(data(), b.start, ev, PREVIEW_SEED)).toEqual(expect.objectContaining({ index: d, name: "Beta", count: 3, piece: expect.objectContaining({ id: "betaBreach" }) }));
   const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED)!;
-  expect(j.piece.id).toBe("missionComplete");
+  expect(WIN_IDS).toContain(j.piece.id);
   expect([j.name, j.target, j.count, j.have, j.from, j.joined, j.kill, j.fresh]).toEqual(["Beta", "O_02", 3, 3, "0,1", true, "betaBreach", 1]);
   // The win alone (after the kill): from the same sector, nothing left to fly in.
   const w = winShowOf(data(), b.kill, b.won, PREVIEW_SEED)!;
@@ -211,7 +233,7 @@ test("Gamma (Mission 7, Eliminate 2 Gammas): the second Gamma destroyed is the d
   expect([k.index, k.name, k.count]).toEqual([d, "Gamma", 2]);
   expect(["gammaHorizon", "gammaArray", "gammaShatter"]).toContain(k.piece.id);
   expect(killOf(data(), b.start, ev, PREVIEW_SEED, "gammaArray")?.piece.id).toBe("gammaArray");
-  const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED, "gammaHorizon")!;
+  const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED, "gammaHorizon", "missionComplete")!;
   expect(j.piece.id).toBe("missionComplete");
   expect([j.name, j.target, j.count, j.have, j.from, j.joined, j.kill]).toEqual(["Gamma", "O_03", 2, 2, "0,1", true, "gammaHorizon"]);
 });
@@ -498,4 +520,93 @@ test("the Field's player: one tap finishes animations up to a celebration, which
   i.speed = 0;
   i.add([step("kill2", { twoTap: true, still: step("still2", { twoTap: true, fixed: true, ms: 1500 }) })]);
   expect(i.busy).toBe(true);
+});
+
+test("every mission won has a win (designer 2026-11-21): one of three, at random per mission, the same on reload; Salvage too", () => {
+  for (const what of ["Alpha", "Beta", "Gamma", "Salvage"]) {
+    const got = new Set<string>();
+    for (let seed = 1; seed < 60; seed++) got.add(pickPiece(WIN_PIECES, what, seed, "C1_M2X", "win")!.id);
+    expect([...got].sort()).toEqual([...WIN_IDS].sort());
+  }
+  // The Salvage board (Mission 2: 5 Power Nodes, 3 Cleared sectors, 8.2): the fifth Power Node comes in, the mission is won.
+  const b = previewBoards(data(), "V1", "Salvage")!;
+  expect(b).toBeDefined();
+  expect(objectiveOf(data(), b.start)).toEqual({ type: "salvage" });
+  for (const id of WIN_IDS) {
+    const w = winShowOf(data(), b.start, b.won, PREVIEW_SEED, undefined, id)!;
+    expect(w.piece.id).toBe(id);
+    expect([w.kind, w.name, w.target, w.count, w.have, w.from, w.joined, w.fresh, w.flights]).toEqual(["salvage", "Salvage", "F_01", 5, 5, "0,1", false, 1, true]);
+    expect(w.sub).toBe("Power Nodes 5 / 5 · Cleared 3 / 3");
+    expect(w.kicker).toBe("Salvage secured");
+    expect(w.badges).toEqual([...Array.from({ length: 5 }, () => ({ unit: "F_01", filled: true })), ...Array.from({ length: 3 }, () => ({ cleared: true, filled: true }))]);
+  }
+  // Eliminate: the readout from the objective.
+  const a = previewBoards(data(), "V1")!;
+  const w = winShowOf(data(), a.kill, a.won, PREVIEW_SEED, undefined, "sectorFlip")!;
+  expect([w.kind, w.sub, w.kicker, w.badges.length]).toEqual(["eliminate", "Alpha eliminated · 6 / 6", "Omega targets cleared", 6]);
+});
+
+test("Perimeter Sweep: the cells ignite within act 1, the ring sweeps right off the Field, worked out from the time alone", () => {
+  expect(SWEEP.total).toBe(5.0);
+  for (const n of [1, 3, 6, 8]) {
+    expect(cellAt(0, n)).toBeCloseTo(SWEEP.cellsAt);
+    for (let i = 1; i < n; i++) expect(cellAt(i, n) - cellAt(i - 1, n)).toBeLessThanOrEqual(SWEEP.cellStep + 1e-9);
+    expect(burstAt(n)).toBeLessThan(SWEEP.wave[0]);
+  }
+  // The ring: from nothing to beyond the farthest corner; never standing still.
+  const geo = { fw: 900, fh: 600, ox: 200, oy: 300, tile: 90 };
+  const reach = farthest(geo.fw, geo.fh, geo.ox, geo.oy) + geo.tile * 1.5;
+  expect(ringAt(SWEEP.wave[0], reach)).toBe(0);
+  expect(ringAt(SWEEP.wave[1], reach)).toBeCloseTo(reach);
+  for (let p = 0; p < 1; p += 0.05) expect(ringShare(p + 0.05) - ringShare(p)).toBeGreaterThan(0.02);
+  // A point is reached when the ring's radius gets to it, nearer ones first.
+  for (const d of [0, 100, 400, 700]) expect(ringAt(ringArrival(d, reach), reach)).toBeCloseTo(d, 0);
+  expect(ringArrival(100, reach)).toBeLessThan(ringArrival(500, reach));
+  // The units recoil away from where the wave starts, and settle.
+  const at = ringArrival(Math.hypot(500 - 200, 300 - 300), reach);
+  expect(recoil(geo, 500, 300, at - 0.01)).toBeUndefined();
+  const r = recoil(geo, 500, 300, at + 0.03)!;
+  expect(r.dx).toBeGreaterThan(0);
+  expect(Math.abs(r.dy)).toBeLessThan(1e-9);
+  expect(recoil(geo, 500, 300, at + 0.6)).toBeUndefined();
+  expect(recoil(geo, 500, 300, at + 0.03)).toEqual(r);
+});
+
+test("Sector Flip: a wave of lifts, full 360° turns and slams, all down before the card; the jolt 1-2 px", () => {
+  expect(FLIP.total).toBe(5.2);
+  // One sector: lifts, turns all the way round, back right side up, slams.
+  expect(flipPose(0)).toEqual({ lift: 0, turn: 0, slam: -1 });
+  expect(flipPose(0.3).lift).toBe(1);
+  expect(Math.cos(flipPose((FLIP.turn[0] + FLIP.turn[1]) / 2).turn)).toBeLessThan(-0.99);
+  expect(flipPose(FLIP.turn[1]).turn).toBeCloseTo(2 * Math.PI);
+  expect(flipPose(FLIP.slamAt).lift).toBe(0);
+  expect(flipPose(FLIP.slamAt + 0.1).slam).toBeCloseTo(0.1);
+  // Its tile: hidden while its underside shows, in front while up, back in place after.
+  const mid = flipLook(10 + (FLIP.turn[0] + FLIP.turn[1]) / 2, 10, 80, 0);
+  expect([mid.alpha, mid.z]).toEqual([0, 500]);
+  expect(mid.dy).toBeLessThan(-80 * 0.15);
+  expect(flipLook(10 + 0.12, 10, 80, 0).alpha).toBe(1);
+  expect(flipLook(12, 10, 80, 0)).toEqual({ dx: 0, dy: 0 });
+  // A Field of hexes: the wave goes column by column, at most 0.16 s apart, every slam by the end of act 2.
+  const sectors: [string, number, number][] = [];
+  for (let q = -3; q <= 3; q++) for (let r = -3; r <= 3; r++) if (Math.abs(q + r) <= 3) sectors.push([`${q},${r}`, 400 + 69 * (r + q / 2), 300 + 60 * q]);
+  const st = flipStarts(sectors, 80);
+  expect(st.size).toBe(sectors.length);
+  const times = [...st.values()].sort((a, b) => a - b);
+  expect(times[0]! - FLIP.flips[0]).toBeLessThan(0.05);
+  expect(times.at(-1)! + FLIP.slamAt).toBeLessThanOrEqual(FLIP.flips[1] + 1e-9);
+  const cols = [...new Set(times.map((t) => t.toFixed(2)))];
+  expect(cols.length).toBeGreaterThan(5);
+  // Left to right; from a sector on the right, right to left.
+  const left = sectors.reduce((a, b) => (b[1] < a[1] ? b : a));
+  const right = sectors.reduce((a, b) => (b[1] > a[1] ? b : a));
+  expect(st.get(left[0])!).toBeLessThan(st.get(right[0])!);
+  const back = flipStarts(sectors, 80, [right[1], right[2]]);
+  expect(back.get(right[0])!).toBeLessThan(back.get(left[0])!);
+  // The board's jolt: never more than about 2 px, and gone a moment after the last slam.
+  let most = 0;
+  for (let t = 0; t < FLIP.total; t += 0.004) most = Math.max(most, Math.abs(boardJolt(t, st.values(), 80)));
+  expect(most).toBeGreaterThan(0.5);
+  expect(most).toBeLessThanOrEqual(2.5);
+  expect(boardJolt(FLIP.flips[1] + 0.3, st.values(), 80)).toBe(0);
 });

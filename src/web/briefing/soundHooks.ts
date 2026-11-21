@@ -126,3 +126,36 @@ export function playTrophyLand(): void {}
 export function playWinSweep(): void {}
 /** Win, Act 3: MISSION COMPLETE slams in. Also the still picture (reduced motion, Instant). */
 export function playMissionComplete(): void {}
+
+/** Perimeter Sweep (win), Act 1: one of the Mission bar's cells ignites (index of count), a harmonic chime. */
+export function onTrophyCellIgnite(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Perimeter Sweep, Act 1: the last cell overcharges and bursts. */
+export function onMissionBarBurst(): void {}
+/** Perimeter Sweep, Act 2: the ring of energy sweeps out over the Field. */
+export function onVictoryWave(): void {}
+/** Perimeter Sweep, Act 3: MISSION COMPLETE slams in. Also its still picture (reduced motion, Instant). */
+export function onVictoryBannerSlam(): void {}
+/** Perimeter Sweep, Act 3: a stamped badge lands (index of count). */
+export function onBadgeDrop(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Perimeter Sweep and Sector Flip, Act 4: the overlay fades into the Upgrade sheet (or the next screen). */
+export function onUpgradeSheetOpen(): void {}
+/** Sector Flip (win), Act 1: the last Trophy cell pulses and locks in. */
+export function onAltWinTrophyLock(): void {}
+/** Sector Flip, Act 2: a sector lifts off the board (index of count). */
+export function onSectorLift(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Sector Flip, Act 2: a sector slams back down (index of count). */
+export function onSectorSlam(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Sector Flip, Act 3: the Debrief card enters. Also its still picture (reduced motion, Instant). */
+export function onAltWinDebrief(): void {}

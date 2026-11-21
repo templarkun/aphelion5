@@ -14,7 +14,7 @@
 export const FILM_SECONDS = 12.5;
 /** When each act begins. */
 export const ACT_AT = [0, 3.0, 6.5, 10.0] as const;
-export const ACT_NAMES = ["Spire ignition", "Atmospheric cleansing", "Biosphere bloom", "Living world"] as const;
+export const ACT_NAMES = ["Spire ignition", "Atmospheric cleansing", "Hydrological shift", "Living world"] as const;
 
 /** The three spires near the camera (the valley shows three of the pylons; designer 2026-11-19). */
 export const SPIRES = 3;

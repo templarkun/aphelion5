@@ -1,6 +1,6 @@
 // Browser check of the mission celebrations (designer 2026-11-20), called by ui-smoke.mjs; can also run
 // alone: node scripts/ui-celebrate.mjs [url] [outDir]. The previews in System options (Alpha Down, Alpha
-// Purge, Beta Breach, the three Gamma kills, the win, a kill and the win in one answer) at 1400 and 390 px, one tap vs two taps,
+// Purge, Beta Breach, the three Gamma kills, the three wins, a kill and the win in one answer, Salvage) at 1400 and 390 px, one tap vs two taps,
 // reduced motion, and a real game won with the Developer tool: the win plays first and the Upgrade sheet
 // waits for it.
 import { createRequire } from "node:module";
@@ -42,13 +42,13 @@ export async function celebrateCheck(browser, url, out) {
     await pg.addInitScript(() => { try { localStorage.setItem("aphelion5.intro", "off"); } catch {} });
     return pg;
   };
-  const preview = async (pg, kind, omega = "Alpha", piece = kind === "win" ? "" : "alphaDown") => {
+  const preview = async (pg, kind, omega = "Alpha", piece = kind === "win" ? "" : "alphaDown", win = kind === "kill" ? "" : "missionComplete") => {
     await pg.goto(url);
     await pg.waitForSelector('.brief[data-step=campaign][data-busy="0"]', { timeout: 15000 });
     await pg.getByRole("button", { name: "System options" }).click();
     const listed = await pg.locator("[data-action=celebration-preview]").count();
     await watch(pg);
-    await pg.locator(`[data-action=celebration-preview][data-kind=${kind}][data-omega=${omega}][data-piece="${piece}"]`).click();
+    await pg.locator(`[data-action=celebration-preview][data-kind=${kind}][data-omega=${omega}][data-piece="${piece}"][data-win-piece="${win}"]`).click();
     return listed;
   };
   /** How long the kill's catcher stayed (ms), from the page's own log. */
@@ -75,7 +75,7 @@ export async function celebrateCheck(browser, url, out) {
     const l = await log(pg);
     const ms = killMs(l);
     await pg.close();
-    if (!(listed === 15 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
+    if (!(listed === 24 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
   }
 
   // 1b. Alpha Purge (1100 px), the second Alpha kill (I21): about 4.5 s, then the preview closes.
@@ -215,6 +215,33 @@ export async function celebrateCheck(browser, url, out) {
     const ms = killMs(await log(pg));
     await pg.close();
     if (!(on && closed && ms > 1500 && ms < 4000)) fails.push(`reduced motion, Dimensional Shatter: on ${on}, closed ${closed}, ${ms} ms`);
+  }
+
+  // 4c. The other wins (designer 2026-11-21): Perimeter Sweep for Gamma (1400 px) and Sector Flip for Salvage (390 px):
+  //     four acts, the banner, the line under it, the badges (Salvage: five Power Nodes and three Cleared sectors), the bar gold.
+  for (const [w, h, omega, win, want, imgs, all] of [
+    [1400, 900, "Gamma", "perimeterSweep", /gamma eliminated · 2 \/ 2/, 2, 2],
+    [390, 844, "Salvage", "sectorFlip", /power nodes 5 \/ 5 · cleared 3 \/ 3/, 5, 8],
+  ]) {
+    const pg = await open(w, h);
+    await preview(pg, "win", omega, "", win);
+    const shown = await pg.waitForSelector(`[data-win="${win}"]`, { timeout: 12000 }).then(() => true, () => false);
+    await pg.waitForSelector("[data-win][data-act='2']", { timeout: 12000 }).catch(() => {});
+    await pg.waitForTimeout(250);
+    await pg.screenshot({ path: `${out}/ui-celebrate-${win}-2.png` });
+    await pg.waitForSelector("[data-win][data-act='3']", { timeout: 8000 }).catch(() => {});
+    await pg.waitForTimeout(900);
+    const title = ((await pg.locator(".cb-title").innerText().catch(() => "")) ?? "").toLowerCase();
+    const sub = ((await pg.locator(".cb-sub").innerText().catch(() => "")) ?? "").toLowerCase();
+    const badges = await pg.locator(".cb-badges img").count();
+    const places = await pg.locator(".cb-badges > .cb-badge").count();
+    await pg.screenshot({ path: `${out}/ui-celebrate-${win}-3.png` });
+    const closed = await pg.waitForSelector("[data-celebration-preview]", { state: "detached", timeout: 12000 }).then(() => true, () => false);
+    const l = (await log(pg)).map(([, s]) => s);
+    const acts = l.map((s) => s.split(" ")[2]).filter(Boolean).pop() ?? "";
+    const gold = l.some((s) => s.endsWith("gold"));
+    await pg.close();
+    if (!(shown && acts === "1234" && title === "mission complete" && want.test(sub) && badges === imgs && places === all && gold && closed)) fails.push(`${win} (${omega}, ${w} px): shown ${shown}, acts "${acts}", title "${title}", sub "${sub}", badges ${badges}/${places}, gold ${gold}, closed ${closed}`);
   }
 
   // 5. A real game, won with the Developer tool (Mission 1, Eliminate Alpha): the win plays from the middle of the

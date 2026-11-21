@@ -42,7 +42,7 @@ export function CelebrationPreview({ data, company, what, onClose }: { data: Gam
       if (kind === "kill") return setState(boards.kill);
       const before = kind === "win" ? boards.kill : boards.start;
       const next = kind === "win" ? boards.won : boards.wonJoined;
-      const w = winShowOf(data, before, next, SEED, killPiece);
+      const w = winShowOf(data, before, next, SEED, killPiece, what.win);
       setState(next);
       setWin(w);
       setHold(w?.fresh ?? 0);
@@ -63,7 +63,7 @@ export function CelebrationPreview({ data, company, what, onClose }: { data: Gam
 
   if (!boards || !state || typeof document === "undefined") return null;
   return createPortal(
-    <div className="cb-preview" data-celebration-preview={kind} data-omega={omega} data-piece={killPiece ?? ""}>
+    <div className="cb-preview" data-celebration-preview={kind} data-omega={omega} data-piece={killPiece ?? ""} data-win-piece={what.win ?? ""}>
       <div className="top-strip">
         <span className="cb-pv-label">
           Preview · {what.label} · a made-up {PREVIEW_MISSION[omega].name}

@@ -18,37 +18,49 @@ import { applyLoadout } from "../briefing/launch.js";
 export const PREVIEW_SEED = 20261120;
 
 export type PreviewKind = "kill" | "win" | "both";
-export type PreviewOmega = "Alpha" | "Beta" | "Gamma";
-/** One preview button: what plays (the kill piece for "kill" and "both"). */
+/** What the made-up mission is: Eliminate an Omega type, or Salvage. */
+export type PreviewOmega = "Alpha" | "Beta" | "Gamma" | "Salvage";
+/** One preview button: what plays (the kill piece for "kill" and "both"; the win piece for "win" and "both"). */
 export interface PreviewWhat {
   kind: PreviewKind;
   omega: PreviewOmega;
   piece?: string | undefined;
+  win?: string | undefined;
   label: string;
 }
 /** The buttons in System options, in order. */
 export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
   { kind: "kill", omega: "Alpha", piece: "alphaDown", label: "Alpha Down" },
   { kind: "kill", omega: "Alpha", piece: "alphaPurge", label: "Alpha Purge" },
-  { kind: "win", omega: "Alpha", label: "Mission Complete" },
-  { kind: "both", omega: "Alpha", piece: "alphaDown", label: "Alpha Down, then Mission Complete" },
-  { kind: "both", omega: "Alpha", piece: "alphaPurge", label: "Alpha Purge, then Mission Complete" },
+  { kind: "win", omega: "Alpha", win: "missionComplete", label: "Mission Complete" },
+  { kind: "win", omega: "Alpha", win: "perimeterSweep", label: "Perimeter Sweep" },
+  { kind: "win", omega: "Alpha", win: "sectorFlip", label: "Sector Flip" },
+  { kind: "both", omega: "Alpha", piece: "alphaDown", win: "missionComplete", label: "Alpha Down, then Mission Complete" },
+  { kind: "both", omega: "Alpha", piece: "alphaPurge", win: "missionComplete", label: "Alpha Purge, then Mission Complete" },
   { kind: "kill", omega: "Beta", piece: "betaBreach", label: "Beta Breach" },
-  { kind: "win", omega: "Beta", label: "Mission Complete" },
-  { kind: "both", omega: "Beta", piece: "betaBreach", label: "Beta Breach, then Mission Complete" },
+  { kind: "win", omega: "Beta", win: "missionComplete", label: "Mission Complete" },
+  { kind: "win", omega: "Beta", win: "perimeterSweep", label: "Perimeter Sweep" },
+  { kind: "win", omega: "Beta", win: "sectorFlip", label: "Sector Flip" },
+  { kind: "both", omega: "Beta", piece: "betaBreach", win: "missionComplete", label: "Beta Breach, then Mission Complete" },
   { kind: "kill", omega: "Gamma", piece: "gammaHorizon", label: "Event Horizon" },
   { kind: "kill", omega: "Gamma", piece: "gammaArray", label: "Field Array" },
   { kind: "kill", omega: "Gamma", piece: "gammaShatter", label: "Dimensional Shatter" },
-  { kind: "win", omega: "Gamma", label: "Mission Complete" },
-  { kind: "both", omega: "Gamma", piece: "gammaHorizon", label: "Event Horizon, then Mission Complete" },
-  { kind: "both", omega: "Gamma", piece: "gammaArray", label: "Field Array, then Mission Complete" },
-  { kind: "both", omega: "Gamma", piece: "gammaShatter", label: "Dimensional Shatter, then Mission Complete" },
+  { kind: "win", omega: "Gamma", win: "missionComplete", label: "Mission Complete" },
+  { kind: "win", omega: "Gamma", win: "perimeterSweep", label: "Perimeter Sweep" },
+  { kind: "win", omega: "Gamma", win: "sectorFlip", label: "Sector Flip" },
+  { kind: "both", omega: "Gamma", piece: "gammaHorizon", win: "missionComplete", label: "Event Horizon, then Mission Complete" },
+  { kind: "both", omega: "Gamma", piece: "gammaArray", win: "missionComplete", label: "Field Array, then Mission Complete" },
+  { kind: "both", omega: "Gamma", piece: "gammaShatter", win: "missionComplete", label: "Dimensional Shatter, then Mission Complete" },
+  { kind: "win", omega: "Salvage", win: "missionComplete", label: "Mission Complete" },
+  { kind: "win", omega: "Salvage", win: "perimeterSweep", label: "Perimeter Sweep" },
+  { kind: "win", omega: "Salvage", win: "sectorFlip", label: "Sector Flip" },
 ];
 /** The mission the preview's board stands for. */
 export const PREVIEW_MISSION: Record<PreviewOmega, { id: string; name: string }> = {
   Alpha: { id: "C1_M1", name: "Mission 1" },
   Beta: { id: "C1_M3", name: "Mission 3" },
   Gamma: { id: "C1_M7", name: "Mission 7" },
+  Salvage: { id: "C1_M2X", name: "Mission 2" },
 };
 
 /** A first legal answer, to reach the Command phase of Mission 1 (only for the preview's board). */
@@ -121,6 +133,7 @@ export function previewBoards(data: GameData, company: string, omega: PreviewOme
     s.field[k]!.push(t);
     return t;
   };
+  if (omega === "Salvage") return salvageBoards(s, take);
   // Alpha: five Alphas already destroyed this mission. Beta: two Betas. Gamma: one Gamma.
   // Betas and Gammas have no Destroyed effect: no Wreck (4.8).
   const beta = omega !== "Alpha";
@@ -190,4 +203,50 @@ export function previewBoards(data: GameData, company: string, omega: PreviewOme
     return w;
   };
   return { start: s, kill, won: wonFrom(kill, resolved), wonJoined: wonFrom(s, [hit, destroyed, ...resolved]) };
+}
+
+/**
+ * Salvage (the same Field, called Mission 2; 8.2: 5 Power Nodes in the Trophy pile and 3 Cleared sectors):
+ * four Power Nodes already in the Trophy pile and three Cleared sectors; the fifth on the Field, its Alert
+ * resolved, goes to the Trophy pile and the mission is won. Mission 1 deals only three Power Nodes, so the
+ * picture makes the others (copies of one, new tile ids): a picture only.
+ */
+function salvageBoards(s: GameState, take: (unitId: string) => TileId | undefined): PreviewBoards | undefined {
+  s.mission = PREVIEW_MISSION.Salvage.id;
+  const model = Object.entries(s.tiles).find(([, t]) => t.unitId === "F_01");
+  if (!model) return undefined;
+  let made = 0;
+  const node = (): TileId => {
+    const t = take("F_01");
+    if (t !== undefined) return t;
+    const id = `preview-node-${++made}`;
+    s.tiles[id] = structuredClone(model[1]);
+    return id;
+  };
+  for (let i = 0; i < 4; i++) {
+    const t = node();
+    s.tiles[t] = { ...s.tiles[t]!, faceUp: true, tokens: noTokens() };
+    s.piles.trophy.push(t);
+  }
+  const at = key({ q: 0, r: 1 });
+  const last = node();
+  if (!s.field[at]) return undefined;
+  s.tiles[last] = { ...s.tiles[last]!, faceUp: true, facing: 0, tokens: { ...noTokens(), alert: true } };
+  s.field[at]!.push(last);
+  for (const [q, r] of [[-1, 0], [1, 1], [0, -1], [1, -1], [-1, 2], [0, 0]] as const) {
+    const k = key({ q, r });
+    if (k === at || !s.field[k]) continue;
+    if (Object.values(s.field).filter((st) => st.length === 0).length >= 3) break;
+    s.piles.discard.push(...s.field[k]!);
+    s.field[k] = [];
+  }
+  s.seen = [];
+  const n0 = (s.events?.at(-1)?.seq ?? 0) + 1;
+  const won = structuredClone(s);
+  won.events = [...(s.events ?? []), { kind: "activated", tile: last, unitId: "F_01", type: "Flare", sector: at, how: "alert", seq: n0 } as GameEvent, { kind: "won", seq: n0 + 1 } as GameEvent];
+  won.field[at] = won.field[at]!.filter((t) => t !== last);
+  won.tiles[last]!.tokens = noTokens();
+  won.piles.trophy.push(last);
+  won.phase = "missionEnd";
+  return { start: s, kill: s, won, wonJoined: won };
 }

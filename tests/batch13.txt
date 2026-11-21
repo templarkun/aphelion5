@@ -33,6 +33,10 @@
 # T13_CEL_07, 08, 14).
 # 2026-11-21 (later): Surface Terraform's new look, hard and gritty (CHANGED notes on T13_OUT_13,
 # 14, 17; T13_OUT_24, the recon feed).
+# 2026-11-21 (later still): every mission won has a win, Salvage too, one of three picked at random:
+# Mission Complete, Perimeter Sweep, Sector Flip (T13_CEL_17-20, CHANGED notes on T13_CEL_04, 07,
+# 08, 11, 14). I29 answered: Surface Terraform's Act 3 is "Hydrological shift" (CHANGED note on
+# T13_OUT_13).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1337,6 +1341,8 @@ note: CHANGED 2026-11-21 (designer: "completely overhaul its visual direction ..
       (T13_OUT_24). Captions under the act names: "Radiator fins open · N of 3 ion plumes firing",
       "The plumes carve an eye in the storm · sunlight breaks through", "Water returns · the
       basalt turns wet and mineral-rich", "<Campaign> · a frontier made habitable".
+note: CHANGED 2026-11-21 (designer, I29): Act 3 is called "HYDROLOGICAL SHIFT" (was "BIOSPHERE
+      BLOOM"); Act 4 keeps "LIVING WORLD".
 
 id: T13_OUT_14
 title: Surface Terraform: the spires
@@ -1751,6 +1757,11 @@ note: CHANGED 2026-11-20 (designer, I24: the shine looked like a detergent adver
       on the hexes. It comes in from beyond one edge and leaves beyond the other with its whole
       wake. The colours are the same for every Company (cyan energy, violet in the wake; I25): no
       Company colour in Mission Complete any more, the line under the banner too.
+note: CHANGED 2026-11-21 (designer): Mission Complete is now one of three wins, picked at random
+      for each mission won (T13_CEL_07, 17-19), for Eliminate Alpha, Beta and Gamma missions and for
+      Salvage missions. For a Salvage mission the line reads "POWER NODES 5 / 5 · CLEARED 3 / 3",
+      with five Power Node badges and three Cleared sector badges. The Field's dim is now drawn by
+      the Field itself (its tiles darken a little), the same look.
 
 id: T13_CEL_05
 title: Both in one answer
@@ -1795,6 +1806,9 @@ note: CHANGED 2026-11-20 round 6 (I26): Gamma has two kills, Event Horizon and F
 note: CHANGED 2026-11-21: Gamma has three kills: Event Horizon, Field Array and Dimensional Shatter
       (T13_CEL_15); each Gamma mission plays one of them, picked this way (over many games all three
       come up). A game saved during a Gamma mission may now get another of the three on reload.
+note: CHANGED 2026-11-21 (designer): wins too: every mission won plays one of three wins (Mission
+      Complete, Perimeter Sweep, Sector Flip), picked this way (over many games all three come up,
+      for every kind of mission). A game saved during a mission may now get another win on reload.
 
 id: T13_CEL_08
 title: The Developer tool and the preview
@@ -1826,6 +1840,11 @@ note: CHANGED 2026-11-20 round 6 (I26, I27): also "Mission celebrations · Elimi
       Trophy pile, the second on the Field (already carrying 23 Damage tokens).
 note: CHANGED 2026-11-21: "Mission celebrations · Eliminate Gamma" also has "Dimensional Shatter"
       and "Dimensional Shatter, then Mission Complete" (15 buttons in all).
+note: CHANGED 2026-11-21: each Eliminate group has three win buttons (Mission Complete, Perimeter
+      Sweep, Sector Flip); the "..., then Mission Complete" buttons stay. New group "Mission
+      celebrations · Salvage": Play Mission Complete / Perimeter Sweep / Sector Flip, on the same
+      made-up Field called Mission 2 (four Power Nodes in the Trophy pile, three Cleared sectors, the
+      fifth Power Node taken from the Field). 24 buttons in all.
 
 id: T13_CEL_09
 title: Alpha Purge, the second kill for Alpha
@@ -1910,6 +1929,8 @@ note: CHANGED 2026-11-20 (I24): the energy sweep (T13_CEL_04) in place of the sh
 then: Gamma missions (Mission 7) and Salvage missions show neither piece yet.
 note: CHANGED 2026-11-20 round 6 (I26, I27): Gamma missions now have both pieces (T13_CEL_12-14);
       Salvage missions still show neither.
+note: CHANGED 2026-11-21: Salvage missions now have the wins too (T13_CEL_20); the win after
+      Beta Breach is any of the three (T13_CEL_07).
 
 id: T13_CEL_12
 title: Event Horizon, the first kill for Gamma (the board tilts into 3D)
@@ -1975,6 +1996,8 @@ then: the Gamma kill plays; as its camera pulls out the Trophy flies into the Mi
       sweep starting from the Gamma's sector. Then the Upgrade sheet.
 note: CHANGED 2026-11-21: also after Dimensional Shatter (T13_CEL_15); Mission Complete waits for
       its pull-back (from 6.9 s).
+note: CHANGED 2026-11-21: the win is any of the three (T13_CEL_07, 17-19), not only Mission
+      Complete.
 
 id: T13_CEL_15
 title: Dimensional Shatter, the third kill for Gamma (the tile breaks out of the flat board)
@@ -2034,6 +2057,82 @@ then: 2 s of light only, nothing moves or shakes and nothing flies: the close-up
 
 
 === SECTION: BIG SCREENS, ALLIED DROP, TRIAL LOOKS (designer 2026-11-20, screen only, no rule change) ===
+
+id: T13_CEL_17
+title: Perimeter Sweep, the second win
+source: designer 2026-11-21 ("precision aerospace victory telemetry")
+map: M1
+given: any mission won (Eliminate Alpha, Beta, Gamma, or Salvage), and the mission picked Perimeter
+       Sweep (T13_CEL_07)
+then: after the Field's animations and the Trophy's flight, 5.0 s:
+      1 (0-1.0 s) the Field dims by about a third; the Mission bar's cells charge from the bottom and
+      ignite left to right, each with a hard flash and a steady glow; the last overcharges and bursts
+      in a starburst of rays with spark trails; the bar turns gold.
+      2 (1.0-2.2 s) a crisp ring of energy (a white core, a cyan body, particles riding it) sweeps out
+      from the sector the unit left (the middle after the Developer tool) right off the Field's
+      edges. As it crosses each sector its edge flashes white, cyan, gold, then stays as a thin
+      "secured" border with short gold ticks at its corners; the units recoil a little, away from
+      the ring, and settle (the tiles do not move).
+      3 (2.2-3.8 s) "MISSION COMPLETE" slams in with a tight bounce and a red / blue fringe on its
+      edges for a moment; the line under it ("ALPHA ELIMINATED · 6 / 6"; Salvage "POWER NODES 5 / 5
+      · CLEARED 3 / 3") types in letter by letter behind a block caret; the badges, each in a hexagonal
+      stamped-metal frame, drop one by one 0.1 s apart and land hard with a spark puff.
+      4 (3.8-5.0 s) embers drift up over the dimmed Field while everything fades; then the Upgrade
+      sheet (or the next screen).
+note: Silent hooks: onTrophyCellIgnite(index, of), onMissionBarBurst, onVictoryWave,
+      onVictoryBannerSlam, onBadgeDrop(index, of), onUpgradeSheetOpen.
+note: The same picture pieces as the other wins: the banner over the Field (no Debrief card: that
+      card is the Campaign's, at the end of the game).
+
+id: T13_CEL_18
+title: Sector Flip, the third win
+source: designer 2026-11-21
+map: M1
+given: any mission won, and the mission picked Sector Flip (T13_CEL_07)
+then: after the Field's animations and the Trophy's flight, 5.2 s:
+      1 (0-1.0 s) the Field dims; the Mission bar's cells light in sequence; the last pulses with a
+      ring and locks; the bar turns gold.
+      2 (1.0-3.1 s) in a wave across the Field, column by column (at most 0.16 s apart; starting on
+      the side of the sector the unit left), each sector, a heavy plate, lifts a little off the
+      board, its dark shadow and its empty slot left beneath; it turns a full 360° top over bottom,
+      its bevelled metal edge and then its underside (dark machined metal, cyan circuit traces to
+      the corners, three gold chevrons) showing on the way round; right side up again its rim
+      flashes, and it drops fast and lands hard: a small ring, dust and sparks at its rim, a
+      1-2 px jolt of the whole board. The units stay on their tiles all the way. Cleared sectors
+      have no plate: their edge lights as the wave passes. Every sector ends with a thin cyan
+      "secured" rim.
+      3 (3.1-4.2 s) a card enters over the middle of the Field (dark glass, a 1 px cyan line, light
+      from above): "OMEGA TARGETS CLEARED" (Salvage: "SALVAGE SECURED"), "MISSION COMPLETE", the
+      line ("ALPHA ELIMINATED · 6 / 6"), and the badges popping in.
+      4 (4.2-5.2 s) fine motes drift over the board while everything fades; then the Upgrade sheet.
+note: Silent hooks: onAltWinTrophyLock, onSectorLift(index, of), onSectorSlam(index, of),
+      onAltWinDebrief, onUpgradeSheetOpen.
+
+id: T13_CEL_19
+title: The new wins: speed, reduced motion, slow machines, skip
+source: designer 2026-11-21
+given: speed Slow / Fast
+then: Perimeter Sweep and Sector Flip take twice as long / half as long.
+given: reduced motion on (or speed Instant)
+then: about 1.5 s of a still picture: Perimeter Sweep, the lit Mission bar, every sector with its
+      secured border, the banner, the line and the stamped badges; Sector Flip, every sector with its
+      secured rim and the card with its badges; nothing spins, shakes or flies. Then the next screen.
+given: a slow machine (under about 40 frames a second)
+then: fewer particles, no blur (shadows, glow passes); the same timing, the flips and slams too.
+given: two taps (or key presses) within 1 s at any moment
+then: the win ends at once and the next screen opens.
+
+id: T13_CEL_20
+title: Salvage missions have a win too
+source: designer 2026-11-21 ("Mission Complete animations suitable for every mission ending ...
+        and Salvage missions")
+map: M2X
+given: a Salvage mission (Mission 2); the answer that brings the 5th Power Node into the Trophy
+       pile with 3 Cleared sectors on the Field (8.2)
+then: the Power Node's Trophy flies in, then one of the three wins (T13_CEL_07), its wave from the
+      sector the Power Node left: "MISSION COMPLETE", "POWER NODES 5 / 5 · CLEARED 3 / 3", five
+      Power Node badges and three Cleared sector badges. No kill piece (none for Salvage). A lost or
+      conceded game shows no win.
 
 id: T13_R20_01
 title: Setup screens bigger on a big PC screen
