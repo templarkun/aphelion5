@@ -69,6 +69,8 @@ export interface CloseTimes {
   count: number;
   /** The moment the still picture shows. */
   stillAt: number;
+  /** How long the still picture shows (seconds; STILL when not given). */
+  stillTotal?: number;
 }
 
 /** What a piece's drawing gets each frame. */
@@ -77,6 +79,8 @@ export interface Frame {
   /** The still picture (reduced motion, Instant) and its fade in and out. */
   still: boolean;
   fade: number;
+  /** Seconds into the still picture (0 when not still): a piece with a still of its own (`stillTotal`) can change light in it, never move things. */
+  st: number;
   /** The unit's centre and radius on the screen now; the hex radius on the Field; the zoom now, at its fullest, and how far in (0-1). */
   Sx: number;
   Sy: number;
@@ -99,6 +103,8 @@ export interface CloseupPiece<P> {
   times: CloseTimes;
   /** The unit's radius on the screen at the full zoom, as a share of the Field's smaller side (Alpha 0.2). */
   size?: number;
+  /** Where the unit sits on the screen at the full zoom, as shares of the Field (wide: 0.4, 0.5; narrow: 0.5, 0.38). */
+  focus?: (wide: boolean) => readonly [number, number];
   /** The clear hole round the unit, in its radii (Alpha 1.25). */
   hole?: number;
   /** "ALPHA DOWN": the label's words before the count. */
@@ -348,7 +354,7 @@ export function closeupStep<P>(env: KillEnv, k: KillTarget, piece: CloseupPiece<
   }
 
   /** One frame at time t (s). `still`: the close-up held (reduced motion, Instant), `fade` its fade in and out. */
-  function draw(t: number, look: (key: string) => NodeLook, still = false, fade = 1) {
+  function draw(t: number, look: (key: string) => NodeLook, still = false, fade = 1, st = 0) {
     const b = build();
     const n = env.node();
     const { w, h } = env.field();
@@ -356,7 +362,8 @@ export function closeupStep<P>(env: KillEnv, k: KillTarget, piece: CloseupPiece<
     const R = env.size() * 0.9;
     const wide = w >= h * 0.9;
     const Z = Math.max(1.2, Math.min(2.6, (Math.min(w, h) * (piece.size ?? 0.2)) / R));
-    const F = wide ? { x: w * 0.4, y: h * 0.5 } : { x: w * 0.5, y: h * 0.38 };
+    const fc = piece.focus?.(wide) ?? (wide ? [0.4, 0.5] : [0.5, 0.38]);
+    const F = { x: w * fc[0], y: h * fc[1] };
     // The zoom: in at the start, out at the end.
     const q = still ? 1 : t < T.back[0] ? easeInOut(span(t, T.zoomIn)) : 1 - easeInOut(span(t, T.back));
     const z = 1 + (Z - 1) * q;
@@ -420,7 +427,7 @@ export function closeupStep<P>(env: KillEnv, k: KillTarget, piece: CloseupPiece<
       b.stamp.alpha = wi * fade;
     }
 
-    piece.draw({ t, still, fade, Sx, Sy, Rs, R, z, Z, q, w, h, wide, broke, look, cx: n.cx, cy: n.cy }, b.own);
+    piece.draw({ t, still, fade, st, Sx, Sy, Rs, R, z, Z, q, w, h, wide, broke, look, cx: n.cx, cy: n.cy }, b.own);
     drawLabel(b, t, still, fade, { Sx, Sy, Rs, R, Z, w, h, wide });
   }
 
@@ -518,8 +525,9 @@ export function closeupStep<P>(env: KillEnv, k: KillTarget, piece: CloseupPiece<
       cleanup();
     },
   };
+  const ST = T.stillTotal ?? STILL;
   main.still = {
-    ms: STILL * 1000,
+    ms: ST * 1000,
     fixed: true,
     twoTap: true,
     start: () => {
@@ -527,8 +535,8 @@ export function closeupStep<P>(env: KillEnv, k: KillTarget, piece: CloseupPiece<
       playKillConfirmed();
     },
     frame: (p, look) => {
-      const s = p * STILL;
-      draw(T.stillAt, look, true, Math.min(1, s / 0.15, (STILL - s) / 0.15));
+      const s = p * ST;
+      draw(T.stillAt, look, true, Math.min(1, s / 0.15, (ST - s) / 0.15), s);
     },
     end: cleanup,
   };

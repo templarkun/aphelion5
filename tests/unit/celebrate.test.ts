@@ -2,7 +2,8 @@
 // plays (the destroyed event that reaches the Eliminate objective's number, 8.2), when the win plays
 // (the engine's display event "won") and the board it shows, the animation player's two-tap steps; the
 // second Alpha kill (I21), the Beta kill and Mission Complete for Beta (I22), the win's energy sweep (I23, I24); the same for every Company (I25);
-// the two Gamma kills on a tilted board (I26) and Mission Complete for Gamma (I27).
+// the two Gamma kills on a tilted board (I26) and Mission Complete for Gamma (I27); the third Gamma kill,
+// Dimensional Shatter (designer 2026-11-21): bullet time, the breakage, the shake, all from the time alone.
 import { expect, test } from "vitest";
 import { newEvents, type GameEvent } from "../../src/engine/events.js";
 import { newRng } from "../../src/engine/rng.js";
@@ -15,7 +16,8 @@ import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
 import { betaFlows, crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
 import { arrival, shineAt, shinePath, sweep } from "../../src/web/celebrate/shine.js";
-import { ARRAY, BREACH, HORIZON, KILL, KILL_TIMES, PURGE, STILL, WIN } from "../../src/web/celebrate/timeline.js";
+import { ARRAY, BREACH, HORIZON, KILL, KILL_TIMES, PURGE, SHATTER, SLOW_RATE, STILL, WIN, shardTime, timeDilation } from "../../src/web/celebrate/timeline.js";
+import { breakage, flights, shakeOffset, shardAt, shardCount } from "../../src/web/celebrate/shatterFx.js";
 import { hexDist, project, tiltBoard } from "../../src/web/celebrate/tilt.js";
 import type { Frame } from "../../src/web/celebrate/closeup.js";
 import type { NodeLook } from "../../src/web/anim.js";
@@ -55,8 +57,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   // A preview may ask for one piece; only if it fits.
   expect(pickPiece(two, "Alpha", 1, "C1_M1", "kill", "b")?.id).toBe("b");
   expect(pickPiece(two, "Alpha", 1, "C1_M1", "kill", "c")?.id).not.toBe("c");
-  // Today: two kills for Alpha (Alpha Down, Alpha Purge, I21), one for Beta (Beta Breach), two for Gamma (Event
-  // Horizon, Field Array, I26); Mission Complete for Alpha, Beta (I22) and Gamma missions (I27); nothing for
+  // Today: two kills for Alpha (Alpha Down, Alpha Purge, I21), one for Beta (Beta Breach), three for Gamma (Event
+  // Horizon, Field Array, I26; Dimensional Shatter, 2026-11-21); Mission Complete for Alpha, Beta (I22) and Gamma missions (I27); nothing for
   // Salvage yet. Every kill piece has its step and times.
   expect(KILL_PIECES.map((p) => [p.id, p.for])).toEqual([
     ["alphaDown", ["Alpha"]],
@@ -64,6 +66,7 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     ["betaBreach", ["Beta"]],
     ["gammaHorizon", ["Gamma"]],
     ["gammaArray", ["Gamma"]],
+    ["gammaShatter", ["Gamma"]],
   ]);
   expect(WIN_PIECES.map((p) => [p.id, p.for])).toEqual([["missionComplete", ["Alpha", "Beta", "Gamma"]]]);
   for (const p of KILL_PIECES) {
@@ -77,7 +80,7 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   expect(pickPiece(WIN_PIECES, "Beta", 7, "C1_M3", "win")?.id).toBe("missionComplete");
   const gammas = new Set<string>();
   for (let seed = 1; seed < 40; seed++) gammas.add(pickPiece(KILL_PIECES, "Gamma", seed, "C1_M7", "kill")!.id);
-  expect([...gammas].sort()).toEqual(["gammaArray", "gammaHorizon"]);
+  expect([...gammas].sort()).toEqual(["gammaArray", "gammaHorizon", "gammaShatter"]);
   expect(pickPiece(WIN_PIECES, "Gamma", 7, "C1_M7", "win")?.id).toBe("missionComplete");
   expect(pickPiece(KILL_PIECES, "Salvage", 7, "C1_M2", "kill")).toBeUndefined();
   // System options: a button for each kill, the win and each kill with the win, for Alpha, Beta and Gamma.
@@ -92,9 +95,11 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Beta both betaBreach",
     "Gamma kill gammaHorizon",
     "Gamma kill gammaArray",
+    "Gamma kill gammaShatter",
     "Gamma win",
     "Gamma both gammaHorizon",
     "Gamma both gammaArray",
+    "Gamma both gammaShatter",
   ]);
 });
 
@@ -204,7 +209,7 @@ test("Gamma (Mission 7, Eliminate 2 Gammas): the second Gamma destroyed is the d
   expect(ev[d]).toEqual(expect.objectContaining({ unitId: "O_03", wreck: false }));
   const k = killOf(data(), b.start, ev, PREVIEW_SEED)!;
   expect([k.index, k.name, k.count]).toEqual([d, "Gamma", 2]);
-  expect(["gammaHorizon", "gammaArray"]).toContain(k.piece.id);
+  expect(["gammaHorizon", "gammaArray", "gammaShatter"]).toContain(k.piece.id);
   expect(killOf(data(), b.start, ev, PREVIEW_SEED, "gammaArray")?.piece.id).toBe("gammaArray");
   const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED, "gammaHorizon")!;
   expect(j.piece.id).toBe("missionComplete");
@@ -306,7 +311,80 @@ test("the celebrations' timing (the plan agreed 2026-11-20)", () => {
   expect(ARRAY.count).toBeGreaterThan(ARRAY.fall[1]);
   for (const [id, t] of Object.entries(KILL_TIMES)) expect(t.back[1], id).toBe(t.total);
   // Silent sound hooks, ready for audio files.
-  for (const f of [sound.playTargetLock, sound.playOmegaBreak, sound.playKillConfirmed, sound.playPurgeBeam, sound.playBetaSurge, sound.playBetaDetonation, sound.playGammaCollapse, sound.playGammaJet, sound.playSectorLand, sound.playArrayArm, sound.playLatticeLock, sound.playGammaCut, sound.playTrophyLand, sound.playWinSweep, sound.playMissionComplete]) expect(typeof f).toBe("function");
+  for (const f of [sound.playTargetLock, sound.playOmegaBreak, sound.playKillConfirmed, sound.playPurgeBeam, sound.playBetaSurge, sound.playBetaDetonation, sound.playGammaCollapse, sound.playGammaJet, sound.playSectorLand, sound.playArrayArm, sound.playLatticeLock, sound.playGammaCut, sound.playBossCoreCritical, sound.playDimensionalRift, sound.playSlowMoShatter, sound.playCataclysmShockwave, sound.playSectorPurified, sound.playTrophyLand, sound.playWinSweep, sound.playMissionComplete]) expect(typeof f).toBe("function");
+});
+
+test("Dimensional Shatter (designer 2026-11-21): four acts in 8 s; bullet time, the shards and the shake worked out from the time alone", () => {
+  // The acts: criticality (0-2.2, a frozen 0.2 s first), the shatter in slow motion (2.2-4.8), the shock wave (4.8-6.6), purified (6.6-8).
+  expect(SHATTER.total).toBe(8);
+  expect(SHATTER.hitStop).toEqual([0, 0.2]);
+  expect([SHATTER.shatter, SHATTER.blast, SHATTER.purified]).toEqual([2.2, 4.8, 6.6]);
+  expect(SHATTER.zoomIn[0]).toBe(SHATTER.hitStop[1]);
+  expect(SHATTER.cracks[1]).toBeLessThanOrEqual(SHATTER.shatter);
+  expect(SHATTER.rift[0]).toBeGreaterThan(SHATTER.shatter);
+  expect(SHATTER.implode[1]).toBe(SHATTER.blast);
+  expect(SHATTER.wave1[0]).toBe(SHATTER.blast);
+  expect(SHATTER.wave2[0]).toBeGreaterThan(SHATTER.wave1[0]);
+  expect(SHATTER.count).toBeLessThan(SHATTER.purified);
+  expect(SHATTER.back).toEqual([6.9, 8]);
+  expect(SHATTER.still).toBe(2);
+  expect(KILL_TIMES.gammaShatter).toBe(SHATTER);
+  // Bullet time: normal speed at the burst, almost stopped while the shards hang, normal again at the shock wave.
+  expect(timeDilation(2.21)).toBe(1);
+  expect(timeDilation(3.5)).toBe(SLOW_RATE);
+  expect(timeDilation(SHATTER.blast)).toBe(1);
+  // The shards' clock is the exact sum of that speed: no frame-by-frame adding up, the same at any frame rate.
+  expect(shardTime(SHATTER.shatter)).toBe(0);
+  let sum = 0;
+  const dt = 0.0005;
+  for (let t = SHATTER.shatter; t < 6 - 1e-9; t += dt) sum += timeDilation(t + dt / 2) * dt;
+  expect(Math.abs(shardTime(6) - sum)).toBeLessThan(1e-3);
+  for (let t = 2.2; t < 7; t += 0.05) expect(shardTime(t + 0.05)).toBeGreaterThanOrEqual(shardTime(t));
+  expect(shardTime(5.3) - shardTime(4.8)).toBeCloseTo(0.5, 6);
+  // 28-36 shards (fewer on a slow machine), cut the same way every time; together they are the whole tile.
+  expect([shardCount(1), shardCount(0.45), shardCount(0.1)]).toEqual([36, 28, 28]);
+  for (const n of [28, 32, 36]) {
+    const b = breakage(n);
+    expect(b.cells).toHaveLength(n);
+    let area = 0;
+    for (const c of b.cells) {
+      let a = 0;
+      c.pts.forEach(([x0, y0], i) => {
+        const [x1, y1] = c.pts[(i + 1) % c.pts.length]!;
+        a += x0 * y1 - x1 * y0;
+        // Every corner inside the tile (unit radius, pointy top).
+        const [x, y] = [x0 + c.cx, y0 + c.cy];
+        for (let k = 0; k < 6; k++) expect(x * Math.cos((k * Math.PI) / 3) + y * Math.sin((k * Math.PI) / 3)).toBeLessThan(0.8661);
+      });
+      area += Math.abs(a / 2);
+      expect(c.near.length).toBeGreaterThan(0);
+    }
+    expect(area).toBeCloseTo((3 * Math.sqrt(3)) / 2, 2);
+    // The fractures of act 1 are the edges between the shards.
+    expect(b.cracks).toHaveLength(b.pairs.length);
+  }
+  expect(breakage(32)).toEqual(breakage(32));
+  // The shards fly up and out fast, then hang near the top while time is slowed.
+  const b = breakage(32);
+  const fl = flights(b);
+  fl.forEach((f, i) => {
+    const c = b.cells[i]!;
+    const at = (t: number) => shardAt(f, c, Math.min(shardTime(t), shardTime(SHATTER.blast)));
+    expect(at(2.3).h).toBeGreaterThan(0);
+    expect(Math.abs(at(4.4).h - at(3.2).h)).toBeLessThan(Math.abs(at(2.3).h - at(2.2).h) + 0.1);
+    expect(at(2.2)).toEqual(at(2.2));
+  });
+  // The shake: the killing blow held still for 0.2 s, a tremor that grows towards the shatter, a jolt at the shock wave, none at the end.
+  expect(shakeOffset(0.05)).toEqual(shakeOffset(0.15));
+  const peak = (a: number, b2: number) => {
+    let m = 0;
+    for (let t = a; t < b2; t += 0.01) m = Math.max(m, Math.hypot(...shakeOffset(t)));
+    return m;
+  };
+  expect(peak(1.8, 2.2)).toBeGreaterThan(peak(0.25, 0.6) * 3);
+  expect(peak(4.8, 5.0)).toBeGreaterThan(peak(3.0, 4.4) * 3);
+  expect(peak(6.6, 8)).toBeLessThan(0.002);
+  expect(shakeOffset(5.0)).toEqual(shakeOffset(5.0));
 });
 
 test("the win's energy sweep (I23, I24): it sweeps right across the Field, starting and ending beyond its edges, never standing still on it", () => {

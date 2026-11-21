@@ -38,9 +38,11 @@ export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
   { kind: "both", omega: "Beta", piece: "betaBreach", label: "Beta Breach, then Mission Complete" },
   { kind: "kill", omega: "Gamma", piece: "gammaHorizon", label: "Event Horizon" },
   { kind: "kill", omega: "Gamma", piece: "gammaArray", label: "Field Array" },
+  { kind: "kill", omega: "Gamma", piece: "gammaShatter", label: "Dimensional Shatter" },
   { kind: "win", omega: "Gamma", label: "Mission Complete" },
   { kind: "both", omega: "Gamma", piece: "gammaHorizon", label: "Event Horizon, then Mission Complete" },
   { kind: "both", omega: "Gamma", piece: "gammaArray", label: "Field Array, then Mission Complete" },
+  { kind: "both", omega: "Gamma", piece: "gammaShatter", label: "Dimensional Shatter, then Mission Complete" },
 ];
 /** The mission the preview's board stands for. */
 export const PREVIEW_MISSION: Record<PreviewOmega, { id: string; name: string }> = {

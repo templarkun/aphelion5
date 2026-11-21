@@ -13,7 +13,7 @@
  * mission, the same one again if the save is reloaded (from the game's seed and the mission, never
  * the game's own random numbers). Screen only: nothing here is a rule.
  *
- * Built so far: two kills for Alpha (I21), one for Beta, two for Gamma (I26); Mission Complete for Alpha
+ * Built so far: two kills for Alpha (I21), one for Beta, three for Gamma (I26; Dimensional Shatter 2026-11-21); Mission Complete for Alpha
  * and, until wins of their own are built, Beta (I22) and Gamma missions (I27: to come back to later).
  * Salvage missions: nothing yet.
  */
@@ -32,6 +32,7 @@ export const KILL_PIECES: Piece[] = [
   { id: "betaBreach", name: "Beta Breach", for: ["Beta"] },
   { id: "gammaHorizon", name: "Event Horizon", for: ["Gamma"] },
   { id: "gammaArray", name: "Field Array", for: ["Gamma"] },
+  { id: "gammaShatter", name: "Dimensional Shatter", for: ["Gamma"] },
 ];
 
 /** Wins: the mission won. */

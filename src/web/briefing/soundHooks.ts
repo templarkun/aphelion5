@@ -109,6 +109,16 @@ export function playArrayArm(): void {}
 export function playLatticeLock(): void {}
 /** Field Array, Act 3: the beams cut the Gamma's column into slices. */
 export function playGammaCut(): void {}
+/** Dimensional Shatter (Gamma), Act 1: after the frozen moment, the Gamma's core goes critical and the tremor starts. */
+export function playBossCoreCritical(): void {}
+/** Dimensional Shatter, Act 2: the tile bursts into shards and time slows. */
+export function playSlowMoShatter(): void {}
+/** Dimensional Shatter, Act 2: the rift tears open under the shards. */
+export function playDimensionalRift(): void {}
+/** Dimensional Shatter, Act 3: time snaps back, the core implodes and the shock wave crosses the Field. */
+export function playCataclysmShockwave(): void {}
+/** Dimensional Shatter, Act 4: the wave has passed; the sector is clear. */
+export function playSectorPurified(): void {}
 /** The win, Mission Complete: the mission is won (8.2). */
 /** Win: a Trophy that came in with the winning answer lands in the Mission bar. */
 export function playTrophyLand(): void {}

@@ -29,6 +29,8 @@
 # faster drop with fine dust (T13_R21_01-03, CHANGED notes on T13_R20_05, 06, 07). Round 22 the
 # same day: ready-to-tap split into units and sectors, unit names switch, dust from the unit's edges,
 # no message when a Mecha is put back where it was (T13_R22_01-03, CHANGED notes on T13_R21_02, 03).
+# Later the same day: Dimensional Shatter, the third Gamma kill (T13_CEL_15-16, CHANGED notes on
+# T13_CEL_07, 08, 14).
 ################################################################################
 
 === FORMAT SPEC ===
@@ -1741,6 +1743,9 @@ note: CHANGED 2026-11-20 (designer, I25): every kill and win looks the same what
       V1 and for V2.
 note: CHANGED 2026-11-20 round 6 (I26): Gamma has two kills, Event Horizon and Field Array; each
       Gamma mission plays one of them, picked this way.
+note: CHANGED 2026-11-21: Gamma has three kills: Event Horizon, Field Array and Dimensional Shatter
+      (T13_CEL_15); each Gamma mission plays one of them, picked this way (over many games all three
+      come up). A game saved during a Gamma mission may now get another of the three on reload.
 
 id: T13_CEL_08
 title: The Developer tool and the preview
@@ -1770,6 +1775,8 @@ note: CHANGED 2026-11-20 round 6 (I26, I27): also "Mission celebrations · Elimi
       Event Horizon / Field Array / Mission Complete / Event Horizon, then Mission Complete / Field
       Array, then Mission Complete, on the same made-up Field called Mission 7: one Gamma in the
       Trophy pile, the second on the Field (already carrying 23 Damage tokens).
+note: CHANGED 2026-11-21: "Mission celebrations · Eliminate Gamma" also has "Dimensional Shatter"
+      and "Dimensional Shatter, then Mission Complete" (15 buttons in all).
 
 id: T13_CEL_09
 title: Alpha Purge, the second kill for Alpha
@@ -1917,6 +1924,65 @@ given: Mission 7; the 2nd O_03 destroyed (the mission is usually won in the same
 then: the Gamma kill plays; as its camera pulls out the Trophy flies into the Mission bar; then
       Mission Complete (T13_CEL_04) with "GAMMA ELIMINATED · 2 / 2" and two Gamma badges, the energy
       sweep starting from the Gamma's sector. Then the Upgrade sheet.
+note: CHANGED 2026-11-21: also after Dimensional Shatter (T13_CEL_15); Mission Complete waits for
+      its pull-back (from 6.9 s).
+
+id: T13_CEL_15
+title: Dimensional Shatter, the third kill for Gamma (the tile breaks out of the flat board)
+source: designer 2026-11-21 ("break the flat tabletop illusion": an unstable dimensional breach,
+        shattered in slow motion, then the whole Field cleansed)
+map: M1
+given: Mission 7 (Eliminate 2 Gamma units): one O_03 in the Trophy pile, an O_03 on the Field, and
+       the mission picked Dimensional Shatter (T13_CEL_07)
+when: an action destroys that O_03 (no Wreck, straight to the Trophy pile, 4.8)
+then: 8.0 s (Normal speed), centred on the unit, lower on the screen than the other kills (the
+      shards fly up above it):
+      1 (0-2.2 s) reactor criticality: for 0.2 s everything is held still on the killing blow (a
+      stark white flash on the tile, a light star, the screen jolted and frozen); then the zoom,
+      the board tilts back into 3D, and a tremor grows faster and harder. The tile darkens;
+      crimson fractures with white-hot cores spread from its middle out to its six edges (main
+      spokes first, the joining rings fainter and later), bright points running at their tips,
+      rays of light leaking up out of them; motes from the sectors round it spiral in and loose
+      chips hop in towards it; in its core a tiny dark singularity forms in a ring of light; the
+      sectors round it shiver and lean in; every sector's edge glows a growing threat crimson.
+      2 (2.2-4.8 s) the shatter: a flash, and the tile bursts upwards into 28-36 shards (fewer on
+      a slow machine), cut along the fractures; time slows almost to a stop (bullet time: the
+      world dims): the shards hang near the top of the burst, slowly tumbling in perspective, dark
+      glass with violet tops and dying circuit traces, glowing broken faces, rim-lit; sparks hang
+      in the air as points; the burst's ring hangs on the board; arcs of plasma flicker between
+      the shards and down to the core; under them a jagged rift into dark space (drifting dark
+      matter, far stars) tears open and pulses, a black core with a swirling corona hanging over
+      it. At the end the core implodes: light pours into a white-gold point, the shards are drawn
+      in, their rims turning gold.
+      3 (4.8-6.6 s) time snaps back: a blinding white-gold flash and fireball; the shards are
+      blasted away and burn up into vapour; a searing white-cyan ring of particles races over the
+      whole Field and past its edge, then a distortion wave with its colours split (red, green,
+      blue fringes) that lifts the sectors as it passes; as the first ring reaches each sector its
+      edge flares white and turns from crimson to the cleared colour (cyan), throwing off sparks;
+      the darkness round the unit lifts; the label "GAMMA DOWN · 1 / 2" turns to "2 / 2".
+      4 (6.6-8.0 s) purified: the Gamma's sector is a smouldering crater (an ember-gold rim cooling,
+      sparks, golden and cyan embers rising) over what lay beneath; holographic telemetry types in
+      over it, "TARGET NEUTRALIZED // SECTOR CLEAR", with brackets, a ruler of ticks and a scan
+      line; the board turns flat as the zoom eases back and the cyan edges settle and fade.
+then: one tap does not skip it, two taps do (T13_CEL_03); the speed setting stretches or shortens it
+      (every moving thing is worked out from the time alone, so a slow frame rate skips frames but
+      never changes where anything is). Nothing on the board changes: the sectors only look lifted.
+then: the same for every Company (I25): one cleared colour (cyan, Mission Complete's), not the
+      Company's (open question I28).
+note: Silent hooks: playBossCoreCritical (0.2 s), playSlowMoShatter (2.2 s), playDimensionalRift
+      (2.3 s), playCataclysmShockwave (4.8 s), playKillConfirmed (the count), playSectorPurified
+      (6.6 s).
+
+id: T13_CEL_16
+title: Dimensional Shatter with reduced motion or the speed Instant
+source: designer 2026-11-21
+given: as T13_CEL_15, with reduced motion (the device's setting or Menu > Settings) or the speed
+       Instant
+then: 2 s of light only, nothing moves or shakes and nothing flies: the close-up of the crater with
+      the label "GAMMA DOWN · 2 / 2" and the telemetry; the plasma core flashes white-gold once and
+      fades; then the sectors' edges light up ring by ring from the Gamma outwards, crimson to cyan.
+      Then the win (still picture) or the next screen.
+
 
 === SECTION: BIG SCREENS, ALLIED DROP, TRIAL LOOKS (designer 2026-11-20, screen only, no rule change) ===
 

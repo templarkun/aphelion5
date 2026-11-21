@@ -10,6 +10,7 @@ import type { KillEnv, KillTarget } from "./closeup.js";
 import { gammaHorizonStep } from "./horizonFx.js";
 import { alphaDownStep } from "./killFx.js";
 import { alphaPurgeStep } from "./purgeFx.js";
+import { gammaShatterStep } from "./shatterFx.js";
 
 export const KILL_STEPS: Record<string, (env: KillEnv, k: KillTarget) => Step> = {
   alphaDown: alphaDownStep,
@@ -17,6 +18,7 @@ export const KILL_STEPS: Record<string, (env: KillEnv, k: KillTarget) => Step> =
   betaBreach: betaBreachStep,
   gammaHorizon: gammaHorizonStep,
   gammaArray: gammaArrayStep,
+  gammaShatter: gammaShatterStep,
 };
 
 /** The step of a kill piece (Alpha Down if the id is unknown). */
