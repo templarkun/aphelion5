@@ -50,7 +50,8 @@ const briefAt = (pg, step) => pg.waitForSelector(`.brief[data-step=${step}][data
 async function settle(pg) {
   await pg.waitForSelector("[data-gate]", { state: "detached", timeout: 6000 }).catch(() => {});
   if (await pg.waitForSelector("[data-mission-intro]", { timeout: 400 }).then(() => true, () => false)) {
-    await pg.locator("[data-mission-intro]").click({ force: true });
+    // It may be fading out by itself at that moment (then it is gone before the tap: nothing to do).
+    await pg.locator("[data-mission-intro]").click({ force: true, timeout: 3000 }).catch(() => {});
     await pg.waitForSelector("[data-mission-intro]", { state: "detached", timeout: 4000 }).catch(() => {});
   }
 }
