@@ -1007,6 +1007,25 @@ if (has(`${out}/crippled-save.json`)) {
   }
   askCheck = res.every((x) => x === "ok") ? "ok" : `failed (${res.filter((x) => x !== "ok").join("; ")})`;
 }
+// Resting (designer 2026-11-22, iPad heat): 20 s untouched with nothing playing, the Field stops
+// drawing, the FPS counter stops, the CSS animations pause; a mouse move wakes it all.
+let restCheck = "skipped (no save)";
+if (runs("game") && has(`${out}/drag-save.json`)) {
+  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 1 });
+  pg.on("pageerror", (e) => errors.push(e.message));
+  await pasteSave(pg, `${out}/drag-save.json`);
+  await pg.mouse.move(5, 300);
+  const state = () => pg.evaluate(() => ({ resting: document.documentElement.classList.contains("resting"), fps: document.querySelector(".fps")?.getAttribute("data-fps"), anim: getComputedStyle(document.querySelector(".can") ?? document.body).animationPlayState }));
+  const early = await state();
+  await pg.waitForFunction(() => document.documentElement.classList.contains("resting"), null, { timeout: 30000 }).catch(() => {});
+  const rest = await state();
+  await pg.mouse.move(400, 400, { steps: 4 });
+  await pg.waitForTimeout(800);
+  const back = await state();
+  await pg.close();
+  const ok = !early.resting && rest.resting && rest.fps === "rest" && /paused/.test(rest.anim) && !back.resting && back.fps !== "rest" && !/paused/.test(back.anim);
+  restCheck = ok ? "ok" : `failed (at first ${JSON.stringify(early)}, after 20 s ${JSON.stringify(rest)}, after a move ${JSON.stringify(back)})`;
+}
 // Command briefing (2026-11-13): the long intro on a first visit, two taps skip it; then the short one.
 let introCheck = "ok";
 if (runs("intro")) {
@@ -1507,12 +1526,12 @@ const round23Check = runs("round23") ? await runRound23Check(browser, url, out) 
 const round24Check = runs("round24") ? await runRound24Check(browser, url, out) : "skipped (not asked for)";
 const round25Check = runs("round25") ? await runRound25Check(browser, url, out) : "skipped (not asked for)";
 const round26Check = runs("round26") ? await runRound26Check(browser, url, out) : "skipped (not asked for)";
-console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
+console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
 // A group not asked for passes; its checks keep their "skipped" value in the report above.
 const game = runs("game");
-const gameChecks = [rowCheck, energyCheck, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck];
+const gameChecks = [rowCheck, energyCheck, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck];
 const gameOk = !game || (gameChecks.every((x) => x === "ok") && noMenu && rotateShown && !!facingKept && closedByOutside && bubbles && raised && breathing && (tapThrough === "ok" || tapThrough === "only one Dark sector") && !!popupTitle?.startsWith("Dark sector") && scrollW <= 390);
 const groupOk = [["intro", introCheck], ["intro", styleCheck], ["outro", outroCheck], ["pages", pagesCheck], ["celebrate", celebrateCheck], ["looks", looksCheck], ["round23", round23Check], ["round24", round24Check], ["round25", round25Check], ["round26", round26Check]].every(([g, x]) => !runs(g) || x === "ok");
 if (errors.length || !gameOk || !groupOk) process.exit(1);
