@@ -1735,7 +1735,7 @@ export function typeGlyph(type: string): string {
 }
 
 /** The second bubble: what the player has looked at in this sector (round 24). */
-function SeenInfo({ data, rows }: { data: GameData; rows: ReturnType<typeof seenInSector> }) {
+function SeenInfo({ data, rows, total }: { data: GameData; rows: ReturnType<typeof seenInSector>; total: number }) {
   return (
     <span className="info-lines seen-lines">
       <b>Looked at in this sector</b>
@@ -1749,6 +1749,9 @@ function SeenInfo({ data, rows }: { data: GameData; rows: ReturnType<typeof seen
           </span>
         );
       })}
+      <span className="seen-total" data-seen-total={total}>
+        {total} tile{total === 1 ? "" : "s"} total
+      </span>
     </span>
   );
 }
@@ -1762,11 +1765,14 @@ function InfoBubble({ data, state, sector }: { data: GameData; state: GameState;
   const w = field?.clientWidth ?? 400;
   if (!at) return null;
   const rows = seenInSector(state, sector);
+  const stackHere = state.field[sector] ?? [];
+  // Designer 2026-11-22: a Dark sector with tiles looked at shows only the second bubble (no "Dark sector. N tiles.").
+  const darkSeen = rows.length > 0 && !!stackHere.length && !state.tiles[stackHere.at(-1)!]!.faceUp;
   const bw = isWide() ? 406 : 280; // 1.45 times as wide on the big PC screen (styles.css)
   // Round 24: a second bubble beside the first (under it when the Field is too narrow).
-  const side = rows.length > 0 && w >= bw * 2 + 24;
+  const side = rows.length > 0 && !darkSeen && w >= bw * 2 + 24;
   // Two bubbles one above the other need more room above the tile (else they go below it).
-  const room = rows.length > 0 && !side ? 120 + rows.length * 26 : 90;
+  const room = rows.length > 0 && !side ? (darkSeen ? 70 : 120) + rows.length * 26 : 90;
   const above = at[1] - tileH / 2 > room;
   const tw = side ? bw * 2 + 8 : bw;
   const style = { left: Math.max(8, Math.min(at[0] - tw / 2, w - tw - 8)), top: above ? at[1] - tileH / 2 - 6 : at[1] + tileH / 2 + 6 };
@@ -1777,12 +1783,12 @@ function InfoBubble({ data, state, sector }: { data: GameData; state: GameState;
   );
   const seen = rows.length > 0 && (
     <div className="info-bubble seen-bubble" key="seen" data-seen={rows.filter((r) => r.unitId).length}>
-      <SeenInfo data={data} rows={rows} />
+      <SeenInfo data={data} rows={rows} total={stackHere.length} />
     </div>
   );
   return (
     <div className={`info-pair ${above ? "above" : "below"} ${side ? "side" : "stacked"}`} style={style}>
-      {above && !side ? [seen, main] : [main, seen]}
+      {darkSeen ? seen : above && !side ? [seen, main] : [main, seen]}
     </div>
   );
 }

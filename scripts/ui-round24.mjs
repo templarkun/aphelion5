@@ -70,8 +70,11 @@ export async function round24Check(browser, url, out) {
       await pg.screenshot({ path: `${out}/ui-seen-${w}.png` });
       // Inside the window, both bubbles.
       const boxes = await pg.locator(".info-pair .info-bubble").evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((r) => [r.left, r.right]));
-      const inside = boxes.length === 2 && boxes.every(([l, r]) => l >= 0 && r <= w);
-      if (!(seen === want && rows === plan.rows.length && (w < 600 ? side === 0 : side === 1) && inside)) fails.push(`seen at ${w} px: looked at ${seen}/${want}, rows ${rows}/${plan.rows.length}, side by side ${side}, inside ${inside}`);
+      // Designer 2026-11-22: a Dark sector shows only the second bubble; every second bubble ends with "N tiles total".
+      const inside = boxes.length === (plan.dark ? 1 : 2) && boxes.every(([l, r]) => l >= 0 && r <= w);
+      const total = await pg.locator(".seen-bubble .seen-total").textContent().catch(() => "");
+      const sideOk = plan.dark || w < 600 ? side === 0 : side === 1;
+      if (!(seen === want && rows === plan.rows.length && sideOk && inside && total === `${plan.total} tile${plan.total === 1 ? "" : "s"} total`)) fails.push(`seen at ${w} px: looked at ${seen}/${want}, rows ${rows}/${plan.rows.length}, side by side ${side}, inside ${inside}, dark ${plan.dark}, total "${total}"`);
       await pg.close();
     }
     // 2. The "next tile" trial looks (round 25: Corner, Ghost, Chip): each draws the Field differently.

@@ -51,6 +51,8 @@ export interface KillTarget {
   name: string;
   /** The objective's number: the label goes from count − 1 to count. */
   count: number;
+  /** Salvage's Sector Lock: the other Cleared sectors. */
+  others?: string[] | undefined;
 }
 
 type Span = readonly [number, number];

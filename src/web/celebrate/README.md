@@ -96,3 +96,8 @@ CelebrationPreview.tsx System options: the pieces on a made-up Field
 previewBoards.ts       that Field (Mission 1 for Alpha, 3 for Beta, 7 for Gamma, 2 for Salvage) and the buttons (also used by the tests)
 celebrate.css          their looks (prefix cb-)
 ```
+
+Salvage milestones (designer 2026-11-22): `salvageFx.ts` holds Grid Online (the fifth Power Node taken)
+and Sector Lock (the third Cleared sector, five Power Nodes taken), close-up Field steps like the kills,
+found by `salvageMarkOf` (detect.ts) from the board before and after an answer (no event needed);
+`SALVAGE_PIECES` in pieces.ts, times `NODES` / `CLEARED` in timeline.ts, played by `salvageStep` in FieldView.tsx.

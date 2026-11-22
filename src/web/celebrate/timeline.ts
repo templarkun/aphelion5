@@ -209,6 +209,44 @@ export function shardTime(t: number): number {
   return s;
 }
 
+
+/**
+ * Salvage milestones (designer 2026-11-22; salvageFx.ts). Grid Online: the fifth Power Node reaches the
+ * Trophy pile (8.2). About 4.6 s.
+ */
+export const NODES = {
+  total: 4.6,
+  /** Act 1: zoom in; energy of the three colours circles the Power Node. */
+  zoomIn: [0, 0.8] as const,
+  orbit: [0.1, 1.75] as const,
+  /** Act 2: four streams pour in from the top of the Field (the four Power Nodes already taken). */
+  link: [0.75, 1.6] as const,
+  /** Act 3: the node ignites and goes up as a column of energy (playGridOnline). */
+  ignite: 1.75,
+  column: [1.75, 2.9] as const,
+  wreckIn: [2.0, 2.4] as const,
+  label: [2.2, 2.45] as const,
+  count: 2.7,
+  back: [3.7, 4.6] as const,
+};
+
+/** Sector Lock: the third Cleared sector, with 5 Power Nodes already taken (designer 2026-11-22). About 4.6 s. */
+export const CLEARED = {
+  total: 4.6,
+  zoomIn: [0, 0.8] as const,
+  /** Act 1: a scan ring of particles sweeps the empty sector. */
+  scan: [0.2, 1.0] as const,
+  /** Act 2: beams of particles leap to the other Cleared sectors (playClearedLink). */
+  beams: [1.0, 1.7] as const,
+  /** Act 3: lock; the sectors flash, a field fills between them, a ring goes out (playSectorLock). */
+  lock: 1.75,
+  field: [1.75, 3.4] as const,
+  wreckIn: [1.0, 1.3] as const,
+  label: [2.1, 2.35] as const,
+  count: 2.6,
+  back: [3.7, 4.6] as const,
+};
+
 /** Each kill's length and pull-out (the win waits for the pull-out when both come in one answer). */
 export const KILL_TIMES: Record<string, { total: number; back: readonly [number, number] }> = {
   alphaDown: KILL,
@@ -217,6 +255,8 @@ export const KILL_TIMES: Record<string, { total: number; back: readonly [number,
   gammaHorizon: HORIZON,
   gammaArray: ARRAY,
   gammaShatter: SHATTER,
+  salvageNodes: NODES,
+  salvageCleared: CLEARED,
 };
 
 /** Mission Complete, the win: about 5 s (after the Trophies that came in with the answer have flown to the Mission bar). */

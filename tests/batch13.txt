@@ -51,6 +51,9 @@
 # (T13_R25_04), the Anomaly notice (T13_R25_05), the win then the Upgrade sheet (T13_R25_06), the
 # route screen (T13_R25_07), no Field before the mission intro (T13_R25_08). Checked by
 # scripts/ui-round25.mjs.
+# Round 26, 2026-11-22: the looked-at bubble alone on a Dark sector, with "N tiles total" (T13_R26_01,
+# CHANGED note on T13_R24_01); the Salvage milestones Grid Online and Sector Lock (T13_R26_02-04).
+# Checked by tests/unit/celebrate.test.ts, scripts/ui-round24.mjs and scripts/ui-round26.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -2418,6 +2421,9 @@ then: only the card text bubble.
 CHANGED (designer 2026-11-21, round 25): with the mouse, a Dark or Cleared sector with nothing
       looked at in it shows no bubble at all (a long tap still shows "Dark sector. N tiles."); no
       bubble while tiles are in the hand (T13_R25_02).
+CHANGED (designer 2026-11-22, round 26): on a Dark sector with tiles looked at, only the second
+      bubble shows (no "Dark sector. N tiles."); every second bubble ends with "N tiles total"
+      (T13_R26_01).
 
 id: T13_R24_02
 title: The sector's next tile on the Field (trial look)
@@ -2540,3 +2546,55 @@ given: the last Mission Preparation screen of a mission after the first (e.g. th
 when: confirm it
 then: the gate closes and opens onto the mission intro's black space at once; the Field never shows
       before the intro (only when the intro's ring opens onto it at the end).
+
+################################################################################
+=== SECTION: ROUND 26 (designer 2026-11-22) ===
+# The looked-at bubble on Dark sectors, the Salvage milestones (T13_R26_01-04). Screen only.
+################################################################################
+
+id: T13_R26_01
+title: A Dark sector with tiles looked at: only "Looked at in this sector", with the total
+source: designer 2026-11-22 (screen only)
+given: a Dark sector of 10 tiles; you have looked at its top 3
+when: hover it with the mouse (touch: hold 0.5 s)
+then: one bubble only, "Looked at in this sector": Top, 2nd, 3rd with glyph, type and Level, then a
+      line "10 tiles total". No "Dark sector. 10 tiles." bubble.
+given: a sector with a unit, and tiles under it looked at
+then: the unit's card text and, beside it, "Looked at in this sector" ending with "N tiles total"
+      (every tile of the sector, the unit counted).
+
+id: T13_R26_02
+title: Salvage: Grid Online when the fifth Power Node is taken
+source: designer 2026-11-22 (screen only)
+given: a Salvage mission (8.2), 4 Power Nodes in the Trophy pile
+when: the fifth Power Node goes to the Trophy pile (Overload End step 4, 9.3), whether or not three
+      sectors are Cleared yet
+then: on the Field, about 4.6 s (two taps skip it): the Field zooms in on the sector it left and the
+      rest darkens; energy of the three colours circles the Power Node; four streams of particles pour
+      in from the top (the four already taken); it ignites into a column of energy up towards the
+      Mission bar, with a flash and a ring; a label "POWER NODES · 4 / 5" turns to "5 / 5"; the zoom
+      eases back. Reduced motion or Instant: a still picture.
+given: three sectors were already Cleared (the mission is won by this answer)
+then: Grid Online first, then the mission's win.
+
+id: T13_R26_03
+title: Salvage: Sector Lock when the third sector is Cleared, five Power Nodes taken
+source: designer 2026-11-22 (screen only)
+given: a Salvage mission, 5 Power Nodes in the Trophy pile, 2 Cleared sectors
+when: a third sector becomes Cleared (its last tile leaves)
+then: on the Field, about 4.6 s (two taps skip it): a small zoom on the sector just Cleared, a ring
+      of particles scans it; beams of particles leap to the other two Cleared sectors; they lock: their
+      edges flash, particles fill the triangle between them, a ring goes out; "CLEARED · 2 / 3" turns
+      to "3 / 3"; then the mission's win plays.
+given: fewer than 5 Power Nodes in the Trophy pile
+then: no Sector Lock when the third sector is Cleared (Grid Online plays later, when the fifth Power
+      Node comes in).
+given: the fifth Power Node and the third Cleared sector in the same answer
+then: Grid Online only.
+
+id: T13_R26_04
+title: Previews of the Salvage milestones
+source: designer 2026-11-22 (screen only)
+when: System options > Mission celebrations · Salvage
+then: four more buttons: "Grid Online (5th Power Node)", "Sector Lock (3rd Cleared sector)", and each
+      of them then Mission Complete, on the made-up Mission 2 Field.

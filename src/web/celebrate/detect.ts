@@ -14,9 +14,9 @@ import type { Answer } from "../../engine/questions.js";
 import type { Game } from "../../engine/save.js";
 import { type SessionView, answerSession } from "../../engine/session.js";
 import { SALVAGE_CLEARED, SALVAGE_NODES } from "../../engine/command.js";
-import { sectorKeys, sectorState } from "../../engine/field.js";
+import { sectorKeys, sectorOf, sectorState } from "../../engine/field.js";
 import type { GameState, TileId } from "../../engine/state.js";
-import { KILL_PIECES, type Piece, WIN_PIECES, pickPiece } from "./pieces.js";
+import { KILL_PIECES, type Piece, SALVAGE_PIECES, WIN_PIECES, pickPiece } from "./pieces.js";
 
 export type Objective = { type: "salvage" } | { type: "eliminate"; target: string; count: number };
 
@@ -51,6 +51,54 @@ export function decidingKill(data: GameData, before: GameState | undefined, even
     if (++n === o.count) return i;
   }
   return -1;
+}
+
+
+/** Power Nodes in the Trophy pile (8.2). */
+const nodesIn = (s: GameState) => s.piles.trophy.filter((t) => s.tiles[t]?.unitId === "F_01").length;
+const clearedIn = (s: GameState) => sectorKeys(s).filter((k) => sectorState(s, k) === "cleared");
+
+/** A Salvage milestone of one answer (designer 2026-11-22): which piece, on which sector. */
+export interface SalvageMark {
+  piece: Piece;
+  /** "nodes": the fifth Power Node reached the Trophy pile; "cleared": the third Cleared sector, 5 Power Nodes already taken. */
+  kind: "nodes" | "cleared";
+  /** The sector the fifth Power Node left, or the sector just cleared. */
+  sector: string;
+  /** Sector Lock: the other Cleared sectors. */
+  others: string[];
+  /** The Power Node's tile (Grid Online). */
+  tile?: TileId | undefined;
+}
+
+/**
+ * The Salvage milestone from `before` to `after`, if any. The fifth Power Node first (whether or not three
+ * sectors are Cleared yet); else the third Cleared sector, once five Power Nodes are in the Trophy pile. Both
+ * in one answer: Grid Online only.
+ */
+export function salvageMarkOf(data: GameData, before: GameState | undefined, after: GameState, seed: number, force?: string): SalvageMark | undefined {
+  if (!before || before.mission !== after.mission) return undefined;
+  if (objectiveOf(data, before)?.type !== "salvage") return undefined;
+  const n0 = nodesIn(before);
+  const n1 = nodesIn(after);
+  if (n0 < SALVAGE_NODES && n1 >= SALVAGE_NODES) {
+    const had = new Set(before.piles.trophy);
+    const fresh = after.piles.trophy.filter((t) => !had.has(t) && after.tiles[t]?.unitId === "F_01");
+    const tile = fresh[SALVAGE_NODES - n0 - 1] ?? fresh.at(-1);
+    const sector = tile !== undefined ? sectorOf(before, tile) : undefined;
+    const piece = pickPiece(SALVAGE_PIECES, "Power Nodes", seed, before.mission, "kill", force);
+    if (sector && piece) return { piece, kind: "nodes", sector, others: [], tile };
+    return undefined;
+  }
+  const c0 = clearedIn(before);
+  const c1 = clearedIn(after);
+  if (n1 >= SALVAGE_NODES && c0.length < SALVAGE_CLEARED && c1.length >= SALVAGE_CLEARED) {
+    const was = new Set(c0);
+    const sector = c1.find((k) => !was.has(k));
+    const piece = pickPiece(SALVAGE_PIECES, "Cleared", seed, before.mission, "kill", force);
+    if (sector && piece) return { piece, kind: "cleared", sector, others: c1.filter((k) => k !== sector).slice(0, SALVAGE_CLEARED - 1), tile: undefined };
+  }
+  return undefined;
 }
 
 export interface KillInfo {
@@ -186,7 +234,7 @@ export function winShowOf(data: GameData, before: GameState, won: GameState, see
     from,
     dev,
     joined,
-    kill: joined ? killOf(data, before, ev, seed, forceKill)?.piece.id : undefined,
+    kill: joined ? killOf(data, before, ev, seed, forceKill)?.piece.id : salvage && !dev ? salvageMarkOf(data, before, won, seed, forceKill)?.piece.id : undefined,
     fresh: freshAll.filter((t) => won.tiles[t]?.unitId === target).length,
     flights: freshAll.length > 0,
   };

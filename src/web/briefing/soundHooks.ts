@@ -159,3 +159,10 @@ export function onSectorSlam(index: number, of: number): void {
 }
 /** Sector Flip, Act 3: the Debrief card enters. Also its still picture (reduced motion, Instant). */
 export function onAltWinDebrief(): void {}
+
+/** Salvage: the fifth Power Node ignites (Grid Online). */
+export function playGridOnline(): void {}
+/** Salvage: the beams reach the other Cleared sectors (Sector Lock). */
+export function playClearedLink(): void {}
+/** Salvage: the three Cleared sectors lock (Sector Lock). */
+export function playSectorLock(): void {}

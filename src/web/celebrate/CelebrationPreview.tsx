@@ -20,7 +20,7 @@ import { PREVIEW_MISSION, PREVIEW_SEED as SEED, type PreviewWhat, previewBoards 
 
 export function CelebrationPreview({ data, company, what, onClose }: { data: GameData; company: string; what: PreviewWhat; onClose: () => void }) {
   const { kind, omega, piece: killPiece } = what;
-  const boards = useMemo(() => previewBoards(data, company, omega), [data, company, omega]);
+  const boards = useMemo(() => previewBoards(data, company, omega, killPiece), [data, company, omega, killPiece]);
   const [state, setState] = useState<GameState | undefined>(boards ? (kind === "win" ? boards.kill : boards.start) : undefined);
   const [win, setWin] = useState<WinShow | undefined>();
   const [hold, setHold] = useState(0);

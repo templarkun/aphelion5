@@ -54,6 +54,10 @@ export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
   { kind: "win", omega: "Salvage", win: "missionComplete", label: "Mission Complete" },
   { kind: "win", omega: "Salvage", win: "perimeterSweep", label: "Perimeter Sweep" },
   { kind: "win", omega: "Salvage", win: "sectorFlip", label: "Sector Flip" },
+  { kind: "kill", omega: "Salvage", piece: "salvageNodes", label: "Grid Online (5th Power Node)" },
+  { kind: "kill", omega: "Salvage", piece: "salvageCleared", label: "Sector Lock (3rd Cleared sector)" },
+  { kind: "both", omega: "Salvage", piece: "salvageNodes", win: "missionComplete", label: "Grid Online, then Mission Complete" },
+  { kind: "both", omega: "Salvage", piece: "salvageCleared", win: "missionComplete", label: "Sector Lock, then Mission Complete" },
 ];
 /** The mission the preview's board stands for. */
 export const PREVIEW_MISSION: Record<PreviewOmega, { id: string; name: string }> = {
@@ -102,7 +106,7 @@ export interface PreviewBoards {
 }
 
 /** The made-up boards: Mission 1 dealt as in a game, then units placed for the picture. */
-export function previewBoards(data: GameData, company: string, omega: PreviewOmega = "Alpha"): PreviewBoards | undefined {
+export function previewBoards(data: GameData, company: string, omega: PreviewOmega = "Alpha", piece?: string): PreviewBoards | undefined {
   let g: Game = startGame(data, { seed: PREVIEW_SEED, date: "2026-11-20", profile: emptyProfile(), developerMode: false, autoAnswer: true });
   g = applyLoadout(data, g, { campaign: "C1", company, freshness: "fresh", expansions: [], developerMode: false, seed: PREVIEW_SEED });
   for (let i = 0; i < 80 && g.view.status === "question" && g.view.state.phase !== "command"; i++) {
@@ -133,7 +137,7 @@ export function previewBoards(data: GameData, company: string, omega: PreviewOme
     s.field[k]!.push(t);
     return t;
   };
-  if (omega === "Salvage") return salvageBoards(s, take);
+  if (omega === "Salvage") return salvageBoards(s, take, piece === "salvageCleared");
   // Alpha: five Alphas already destroyed this mission. Beta: two Betas. Gamma: one Gamma.
   // Betas and Gammas have no Destroyed effect: no Wreck (4.8).
   const beta = omega !== "Alpha";
@@ -206,12 +210,14 @@ export function previewBoards(data: GameData, company: string, omega: PreviewOme
 }
 
 /**
- * Salvage (the same Field, called Mission 2; 8.2: 5 Power Nodes in the Trophy pile and 3 Cleared sectors):
- * four Power Nodes already in the Trophy pile and three Cleared sectors; the fifth on the Field, its Alert
- * resolved, goes to the Trophy pile and the mission is won. Mission 1 deals only three Power Nodes, so the
- * picture makes the others (copies of one, new tile ids): a picture only.
+ * Salvage (the same Field, called Mission 2; 8.2: 5 Power Nodes in the Trophy pile and 3 Cleared sectors).
+ * Grid Online (and the wins): four Power Nodes already in the Trophy pile and three Cleared sectors; the
+ * fifth on the Field, its Alert resolved, goes to the Trophy pile ("kill"), and the mission is won.
+ * Sector Lock (`cleared`): five Power Nodes in the Trophy pile and two Cleared sectors; a Bot alone on
+ * its sector is destroyed ("kill"), the sector is Cleared, and the mission is won. Mission 1 deals only
+ * three Power Nodes, so the picture makes the others (copies of one, new tile ids): a picture only.
  */
-function salvageBoards(s: GameState, take: (unitId: string) => TileId | undefined): PreviewBoards | undefined {
+function salvageBoards(s: GameState, take: (unitId: string) => TileId | undefined, cleared = false): PreviewBoards | undefined {
   s.mission = PREVIEW_MISSION.Salvage.id;
   const model = Object.entries(s.tiles).find(([, t]) => t.unitId === "F_01");
   if (!model) return undefined;
@@ -223,30 +229,40 @@ function salvageBoards(s: GameState, take: (unitId: string) => TileId | undefine
     s.tiles[id] = structuredClone(model[1]);
     return id;
   };
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < (cleared ? 5 : 4); i++) {
     const t = node();
     s.tiles[t] = { ...s.tiles[t]!, faceUp: true, tokens: noTokens() };
     s.piles.trophy.push(t);
   }
   const at = key({ q: 0, r: 1 });
-  const last = node();
   if (!s.field[at]) return undefined;
-  s.tiles[last] = { ...s.tiles[last]!, faceUp: true, facing: 0, tokens: { ...noTokens(), alert: true } };
+  const last = cleared ? take("B_02") : node();
+  if (last === undefined) return undefined;
+  if (cleared) {
+    s.piles.discard.push(...s.field[at]!);
+    s.field[at] = [];
+  }
+  s.tiles[last] = { ...s.tiles[last]!, faceUp: true, facing: 0, tokens: { ...noTokens(), alert: !cleared } };
   s.field[at]!.push(last);
   for (const [q, r] of [[-1, 0], [1, 1], [0, -1], [1, -1], [-1, 2], [0, 0]] as const) {
     const k = key({ q, r });
     if (k === at || !s.field[k]) continue;
-    if (Object.values(s.field).filter((st) => st.length === 0).length >= 3) break;
+    if (Object.values(s.field).filter((st) => st.length === 0).length >= (cleared ? 2 : 3)) break;
     s.piles.discard.push(...s.field[k]!);
     s.field[k] = [];
   }
   s.seen = [];
   const n0 = (s.events?.at(-1)?.seq ?? 0) + 1;
-  const won = structuredClone(s);
-  won.events = [...(s.events ?? []), { kind: "activated", tile: last, unitId: "F_01", type: "Flare", sector: at, how: "alert", seq: n0 } as GameEvent, { kind: "won", seq: n0 + 1 } as GameEvent];
-  won.field[at] = won.field[at]!.filter((t) => t !== last);
-  won.tiles[last]!.tokens = noTokens();
-  won.piles.trophy.push(last);
+  const gone: GameEvent = cleared
+    ? ({ kind: "destroyed", tile: last, unitId: "B_02", type: "Bot", sector: at, wreck: false, seq: n0 } as GameEvent)
+    : ({ kind: "activated", tile: last, unitId: "F_01", type: "Flare", sector: at, how: "alert", seq: n0 } as GameEvent);
+  const kill = structuredClone(s);
+  kill.events = [...(s.events ?? []), gone];
+  kill.field[at] = kill.field[at]!.filter((t) => t !== last);
+  kill.tiles[last]!.tokens = noTokens();
+  (cleared ? kill.piles.discard : kill.piles.trophy).push(last);
+  const won = structuredClone(kill);
+  won.events = [...kill.events, { kind: "won", seq: n0 + 1 } as GameEvent];
   won.phase = "missionEnd";
-  return { start: s, kill: s, won, wonJoined: won };
+  return { start: s, kill, won, wonJoined: won };
 }

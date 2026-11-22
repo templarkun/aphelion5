@@ -232,6 +232,7 @@ html.still .popup .bubble, html.still .popup.bubbles .popup-title { animation: n
 .info-pair.above { transform: translateY(-100%); }
 .info-pair > .info-bubble { position: static; }
 .seen-row { display: flex; align-items: center; gap: 6px; }
+.seen-total { display: block; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.18); font-weight: 700; }
 .seen-at { min-width: 74px; font-weight: 600; opacity: 0.8; }
 .seen-q { display: inline-grid; place-items: center; width: 19px; height: 22px; font-weight: 800; opacity: 0.6; }
 .info-lines { display: flex; flex-direction: column; gap: 3px; }

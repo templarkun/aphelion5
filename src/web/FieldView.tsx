@@ -39,7 +39,8 @@ import { isStill, onMotion, speedFactor } from "./motion.js";
 import { alongOutline, hexOutline, onTrialLooks, trialLooks } from "./trialLooks.js";
 import { PlasmaWave } from "./plasmaFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
-import { killOf } from "./celebrate/detect.js";
+import { type SalvageMark, killOf, salvageMarkOf } from "./celebrate/detect.js";
+import { SALVAGE_CLEARED, SALVAGE_NODES } from "../engine/command.js";
 import { killStepFor } from "./celebrate/kills.js";
 
 export interface FieldProps {
@@ -997,6 +998,40 @@ export function FieldView(p: FieldProps) {
       badgeTextures.set(unitId, tex);
     }
     return tex;
+  }
+
+  /** A Salvage milestone's piece on the Field, in the kills' close-up (celebrate/salvageFx.ts). */
+  function salvageStep(mark: SalvageMark): Step {
+    const L = layers.current!;
+    let g: Container | undefined;
+    if (mark.kind === "nodes") {
+      g = ghost("Flare", "F_01");
+      g.visible = false;
+      L.fx.addChild(g);
+    }
+    const step = killStepFor(
+      mark.piece.id,
+      {
+        layer: L.celebrate,
+        under: L.under,
+        zoom: zoomBoard,
+        slots: (on) => {
+          hideSlots.current = !on;
+          const sl = slotsRef.current;
+          if (sl && !sl.destroyed) sl.visible = on;
+        },
+        centres: () => [...nodes.current].map(([k, n]) => [k, n.cx, n.cy] as const),
+        node: () => nodes.current.get(mark.sector),
+        size: () => geo.current.size,
+        field: () => ({ w: host.current?.clientWidth ?? 0, h: host.current?.clientHeight ?? 0 }),
+        badge: badgeTexture,
+        ghost: g,
+        onPlay: (on) => props.current.onCelebrate?.(on),
+      },
+      { sector: mark.sector, unitId: "F_01", wreck: false, onBoard: false, name: mark.kind, count: mark.kind === "nodes" ? SALVAGE_NODES : SALVAGE_CLEARED, others: mark.others },
+    );
+    const end = step.end;
+    return { ...step, end: () => (end(), g?.destroy({ children: true })) };
   }
 
   function stepsFor(events: GameEvent[], s: GameState, before?: GameState): Step[] {
@@ -2177,7 +2212,12 @@ export function FieldView(p: FieldProps) {
     lastState.current = state;
     if (before && before !== state) {
       const ev = newEvents(before.events, state.events);
-      if (ev.length) player.current.add(stepsFor(ev, state, before));
+      const steps = ev.length ? stepsFor(ev, state, before) : [];
+      // Salvage milestones (designer 2026-11-22): after the answer's own steps.
+      const P0 = props.current;
+      const mark = P0.seed !== undefined ? salvageMarkOf(P0.data, before, state, P0.seed, P0.killPiece) : undefined;
+      if (mark) steps.push(salvageStep(mark));
+      if (steps.length) player.current.add(steps);
     }
     // Apply this frame's looks at once, so a hidden tile never flashes up before its animation.
     frame();

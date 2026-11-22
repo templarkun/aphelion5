@@ -120,6 +120,10 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Salvage win missionComplete",
     "Salvage win perimeterSweep",
     "Salvage win sectorFlip",
+    "Salvage kill salvageNodes",
+    "Salvage kill salvageCleared",
+    "Salvage both salvageNodes missionComplete",
+    "Salvage both salvageCleared missionComplete",
   ]);
 });
 
@@ -609,4 +613,40 @@ test("Sector Flip: a wave of lifts, full 360° turns and slams, all down before 
   expect(most).toBeGreaterThan(0.5);
   expect(most).toBeLessThanOrEqual(2.5);
   expect(boardJolt(FLIP.flips[1] + 0.3, st.values(), 80)).toBe(0);
+});
+
+test("Salvage milestones (designer 2026-11-22): Grid Online at the fifth Power Node, Sector Lock at the third Cleared sector with five taken", async () => {
+  const { salvageMarkOf } = await import("../../src/web/celebrate/detect.js");
+  // The fifth Power Node, with three sectors already Cleared.
+  const n = previewBoards(data(), "V1", "Salvage", "salvageNodes")!;
+  const a = salvageMarkOf(data(), n.start, n.kill, PREVIEW_SEED)!;
+  expect([a.kind, a.piece.id, a.sector]).toEqual(["nodes", "salvageNodes", "0,1"]);
+  expect(salvageMarkOf(data(), n.kill, n.won, PREVIEW_SEED)).toBeUndefined();
+  // ...and with fewer than three Cleared: still Grid Online.
+  const few = structuredClone(n.start);
+  const after = structuredClone(n.kill);
+  for (const k of Object.keys(few.field).filter((k) => few.field[k]!.length === 0).slice(0, 2)) {
+    few.field[k] = ["x" + k];
+    after.field[k] = ["x" + k];
+    few.tiles["x" + k] = after.tiles["x" + k] = structuredClone(Object.values(few.tiles)[0]!);
+  }
+  expect(salvageMarkOf(data(), few, after, PREVIEW_SEED)?.kind).toBe("nodes");
+  // The third Cleared sector with five Power Nodes taken.
+  const c = previewBoards(data(), "V1", "Salvage", "salvageCleared")!;
+  const b = salvageMarkOf(data(), c.start, c.kill, PREVIEW_SEED)!;
+  expect([b.kind, b.piece.id, b.sector, b.others.length]).toEqual(["cleared", "salvageCleared", "0,1", 2]);
+  // Four Power Nodes only: no Sector Lock.
+  const four = structuredClone(c.start);
+  const four2 = structuredClone(c.kill);
+  four.piles.trophy.pop();
+  four2.piles.trophy.pop();
+  expect(salvageMarkOf(data(), four, four2, PREVIEW_SEED)).toBeUndefined();
+  // Not on Eliminate missions; the win in the same answer waits for the piece.
+  const e = previewBoards(data(), "V1")!;
+  expect(salvageMarkOf(data(), e.start, e.won, PREVIEW_SEED)).toBeUndefined();
+  expect(winShowOf(data(), c.start, c.won, PREVIEW_SEED)!.kill).toBe("salvageCleared");
+  expect(winShowOf(data(), n.start, n.won, PREVIEW_SEED)!.kill).toBe("salvageNodes");
+  expect(KILL_STEPS.salvageNodes).toBeDefined();
+  expect(KILL_TIMES.salvageCleared!.total).toBeGreaterThan(4);
+  expect(CELEBRATION_PREVIEWS.filter((w) => w.omega === "Salvage" && w.piece).length).toBe(4);
 });

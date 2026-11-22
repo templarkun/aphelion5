@@ -36,6 +36,16 @@ export const KILL_PIECES: Piece[] = [
   { id: "gammaShatter", name: "Dimensional Shatter", for: ["Gamma"] },
 ];
 
+/**
+ * Salvage milestones (designer 2026-11-22), played on the Field like the kills: "Power Nodes" when the
+ * fifth Power Node reaches the Trophy pile, "Cleared" when the third Cleared sector appears with 5 Power
+ * Nodes already taken (8.2).
+ */
+export const SALVAGE_PIECES: Piece[] = [
+  { id: "salvageNodes", name: "Grid Online", for: ["Power Nodes"] },
+  { id: "salvageCleared", name: "Sector Lock", for: ["Cleared"] },
+];
+
 const EVERY_MISSION = ["Alpha", "Beta", "Gamma", "Salvage"] as const;
 /** Wins: the mission won. Every win plays for every mission won (designer 2026-11-21: Eliminate Alpha, Beta, Gamma and Salvage), one picked at random (I19). */
 export const WIN_PIECES: Piece[] = [

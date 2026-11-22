@@ -232,7 +232,7 @@ for (let seed = 1; seed < 400; seed++) {
         const st = g.view.state;
         // Round 25: Dark or Cleared sectors with nothing looked at (the mouse shows no card there).
         const plain = Object.keys(st.field).filter((k) => !st.field[k]!.some((t) => st.tiles[t]!.faceUp) && seenInSector(st, k).length === 0);
-        writeFileSync(`${out}.plan.json`, JSON.stringify({ sector: seenSector(g), rows: seenInSector(st, seenSector(g)!), plain }));
+        writeFileSync(`${out}.plan.json`, JSON.stringify({ sector: seenSector(g), rows: seenInSector(st, seenSector(g)!), plain, dark: !st.tiles[st.field[seenSector(g)!]!.at(-1)!]!.faceUp, total: st.field[seenSector(g)!]!.length }));
       }
       if (what === "moddrag") writeFileSync(`${out}.plan.json`, JSON.stringify(moduleDrag(q, g)));
       if (what === "orderdrag") {

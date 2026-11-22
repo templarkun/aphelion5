@@ -323,7 +323,7 @@ export function Briefing(p: BriefingProps) {
                       ))}
                     </Fragment>
                   ))}
-                  <p className="text-[14px] text-sky-100">On a made-up Field (Mission 1 for Alpha, Mission 3 for Beta, Mission 7 for Gamma, Mission 2 for Salvage). In a game the kill plays when the last required Omega unit is destroyed, the win when the mission is won (8.2); with several of a kind, one is picked at random each mission (the three wins for every mission won). They look the same for every Company.</p>
+                  <p className="text-[14px] text-sky-100">On a made-up Field (Mission 1 for Alpha, Mission 3 for Beta, Mission 7 for Gamma, Mission 2 for Salvage). In a game the kill plays when the last required Omega unit is destroyed, the win when the mission is won (8.2); Salvage also plays Grid Online when the fifth Power Node is taken and Sector Lock when the third sector is Cleared with five Power Nodes taken; with several of a kind, one is picked at random each mission (the three wins for every mission won). They look the same for every Company.</p>
                 </>
               )}
             </div>
