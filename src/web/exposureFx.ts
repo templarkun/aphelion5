@@ -99,7 +99,8 @@ export function exposureStep(look: Exposure, from: () => (Pt & { r: number }) | 
   /** A burst at a unit: flash, ring and sparks, r in 0..1. */
   const burst = (c: ExpTarget, r: number, seed: number) => {
     if (r <= 0 || r >= 1) return;
-    dot(c.x, c.y, c.size * (0.3 + 0.4 * r), ENERGY.core, 0.55 * (1 - r) ** 2);
+    dot(c.x, c.y, c.size * (0.5 + 0.6 * r), ENERGY.hot, 0.3 * (1 - r) ** 2);
+    dot(c.x, c.y, c.size * (0.3 + 0.4 * r), ENERGY.core, 0.6 * (1 - r) ** 2);
     if (ctx) {
       ctx.strokeStyle = `rgba(${ENERGY.hot},${0.8 * (1 - r)})`;
       ctx.lineWidth = 3 * (1 - r) + 0.5;
@@ -107,10 +108,10 @@ export function exposureStep(look: Exposure, from: () => (Pt & { r: number }) | 
       ctx.arc(c.x, c.y, c.size * (0.3 + 0.8 * r), 0, Math.PI * 2);
       ctx.stroke();
     }
-    for (let j = 0; j < 14; j++) {
+    for (let j = 0; j < 24; j++) {
       const ang = rnd(seed + j) * Math.PI * 2;
-      const d = c.size * (0.15 + 0.9 * easeOut(r) * (0.5 + 0.5 * rnd(seed + j + 50)));
-      dot(c.x + Math.cos(ang) * d, c.y + Math.sin(ang) * d - c.size * 0.2 * r, 1.6 * (1 - r) + 0.4, j % 3 ? ENERGY.hot : ENERGY.core, 1 - r);
+      const d = c.size * (0.15 + 1.1 * easeOut(r) * (0.4 + 0.6 * rnd(seed + j + 50)));
+      dot(c.x + Math.cos(ang) * d, c.y + Math.sin(ang) * d - c.size * 0.25 * r, 2.4 * (1 - r) + 0.5, j % 3 ? ENERGY.hot : ENERGY.core, 1 - r);
     }
   };
   /** A wavy path from p to q (bulging to one side by `bend`), as points. */
@@ -182,9 +183,13 @@ export function exposureStep(look: Exposure, from: () => (Pt & { r: number }) | 
           const q = clamp01((p - t0) / 0.62);
           const path = curve(a, t, (rnd(i + 3) - 0.5) * 0.35);
           if (q > 0 && q < 1) {
-            for (let j = 0; j < 12; j++) {
-              const at = along(path, easeIn(q) - j * 0.02);
-              dot(at.x + (rnd(i * 50 + j) - 0.5) * 3, at.y + (rnd(i * 50 + j + 9) - 0.5) * 3, (j ? 2.2 : 5) * (1 - j / 12) + 0.5, j < 2 ? ENERGY.core : i % 3 ? ENERGY.hot : ENERGY.violet, 0.9 * (1 - j / 12));
+            const head = along(path, easeIn(q));
+            dot(head.x, head.y, 16, ENERGY.hot, 0.22);
+            dot(head.x, head.y, 8, ENERGY.hot, 0.5);
+            for (let j = 0; j < 20; j++) {
+              const at = along(path, easeIn(q) - j * 0.016);
+              const sp = (rnd(i * 50 + j) - 0.5) * (3 + j * 0.8);
+              dot(at.x + sp, at.y + (rnd(i * 50 + j + 9) - 0.5) * (3 + j * 0.8), (j ? 3 : 5.5) * (1 - j / 20) + 0.6, j < 2 ? ENERGY.core : i % 3 ? ENERGY.hot : ENERGY.violet, 0.95 * (1 - j / 20));
             }
           }
           burst(t, (p - t0 - 0.62) / 0.33, i * 31);
@@ -195,14 +200,16 @@ export function exposureStep(look: Exposure, from: () => (Pt & { r: number }) | 
           // The unit glows as it is drained, then dims.
           const g = Math.sin(Math.PI * clamp01(p / 0.8));
           dot(t.x, t.y, t.size * 0.6, ENERGY.hot, 0.18 * g);
-          for (let j = 0; j < 26; j++) {
+          for (let j = 0; j < 36; j++) {
             const t0 = 0.55 * rnd(i * 70 + j);
             const q = clamp01((p - t0) / 0.42);
             if (q <= 0 || q >= 1) continue;
             const at = along(path, easeIn(q));
             const swirl = (1 - q) * t.size * 0.5;
             const ang = rnd(i * 70 + j + 3) * Math.PI * 2 + q * 5;
-            dot(at.x + Math.cos(ang) * swirl, at.y + Math.sin(ang) * swirl, 1.3 + 1.6 * (1 - q), j % 4 ? ENERGY.hot : ENERGY.violet, 0.85 * Math.sin(Math.PI * Math.min(1, q * 1.2)));
+            const fade = Math.sin(Math.PI * Math.min(1, q * 1.2));
+            dot(at.x + Math.cos(ang) * swirl, at.y + Math.sin(ang) * swirl, 5 * (1 - q) + 2, j % 4 ? ENERGY.hot : ENERGY.violet, 0.18 * fade);
+            dot(at.x + Math.cos(ang) * swirl, at.y + Math.sin(ang) * swirl, 1.6 + 1.8 * (1 - q), j % 4 ? ENERGY.core : ENERGY.violet, 0.9 * fade);
           }
         });
         const fl = clamp01((p - 0.82) / 0.18);

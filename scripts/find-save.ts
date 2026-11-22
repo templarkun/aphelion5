@@ -81,8 +81,14 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   ...Object.fromEntries(Object.entries(FX).map(([k, f]) => [k, (q: Question, g: Game) => /choose an action/i.test(q.prompt) && f(q, g) !== undefined])),
   // End the Overload offered (its button, designer 2026-11-09).
   endoverload: (q) => (q.shortcuts ?? []).some((o) => o.id === "endOverload"),
-  // Round 28: End the Overload with two or more units alone on their plates (Exposure, 9.3 step 2).
-  exposure: (q, g) => (q.shortcuts ?? []).some((o) => o.id === "endOverload") && eventsOf(g, "endOverload").filter((e) => e.kind === "hit" && e.rule === "9.3").length >= 2,
+  // Round 28: End the Overload with a unit alone on their plates (Exposure, 9.3 step 2).
+  exposure: (q, g) => {
+    if (!(q.shortcuts ?? []).some((o) => o.id === "endOverload")) return false;
+    const res = playAnswer(data, g, { kind: "option", value: "endOverload" });
+    if (res.result.status !== "question" || res.game.view.state.phase === "gameEnd" || /Crippled/.test(res.result.question.prompt)) return false;
+    // A unit alone at least, and the game goes on.
+    return newEvents(g.view.state.events, res.game.view.state.events).filter((e) => e.kind === "hit" && e.rule === "9.3").length >= 1;
+  },
   // A Barrier and a Fuse token on the Field at once (drawn as pieces, designer 2026-11-09).
   tokens: (q, g) => {
     const s = g.view.state;

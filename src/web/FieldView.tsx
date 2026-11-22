@@ -777,19 +777,17 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
     return;
   }
   if (how === "aurora") {
-    // A soft curtain of light waves gently across the plate.
+    // A soft curtain of light motes waves gently across the plate (particles, no drawn bands).
     g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
-    for (let i = 0; i < 22; i++) {
-      const px = (i / 21 - 0.5) * 1.5 * r;
-      const wave = Math.sin(px / r * 3 + now / 900) * r * 0.16 + Math.sin(px / r * 7 - now / 1300) * r * 0.05;
-      const k = 0.5 + 0.5 * Math.sin(px / r * 2 - now / 1600);
-      const top = cy + wave - r * 0.28;
-      const bot = cy + wave + r * 0.18;
-      const lim = r * 0.74 - Math.abs(px) * 0.577;
-      const a = Math.max(-lim, top - cy) + cy;
-      const b = Math.min(lim, bot - cy) + cy;
-      if (b <= a) continue;
-      g.moveTo(cx + px, a).lineTo(cx + px, b).stroke({ width: r * 0.07, color: 0xffd27a, alpha: 0.05 + 0.1 * k });
+    for (let i = 0; i < 40; i++) {
+      const fx = hash3(seed, i, 51) * 2 - 1;
+      const px = fx * 0.72 * r;
+      const wave = Math.sin(fx * 3 + now / 900) * r * 0.16 + Math.sin(fx * 7 - now / 1300) * r * 0.05;
+      const py = wave + (hash3(seed, i, 52) - 0.6) * r * 0.42 + Math.sin(now / 600 + i) * r * 0.03;
+      if (Math.abs(px) * 0.866 + Math.abs(py) * 0.5 > r * 0.74 || Math.abs(py) > r * 0.7) continue;
+      const k = 0.5 + 0.5 * Math.sin(fx * 2 - now / 1600);
+      const tw = 0.5 + 0.5 * Math.sin(now / (500 + 300 * hash3(seed, i, 53)) + i);
+      g.circle(cx + px, cy + py, size * (0.007 + 0.009 * k)).fill({ color: k > 0.7 ? 0xfff1c9 : 0xffd27a, alpha: (0.15 + 0.45 * k) * tw });
     }
     return;
   }
