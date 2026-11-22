@@ -9,11 +9,18 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isStill, noFlying } from "./motion.js";
 import { CORONAL_REACH, drawCoronalWaves } from "./coronalFx.js";
 import { endOverloadAt } from "./exposureFx.js";
+import { drawEndButton } from "./endButtonFx.js";
+import { features, onFeatures, type EndButton } from "./features.js";
+import { isResting, onResting } from "./idle.js";
 
 const SPARKS = 26;
 
-/** The coronal waves round the button (coronalFx.ts), on a canvas big enough to hold all of them. */
-function useCorona(canvas: React.RefObject<HTMLCanvasElement | null>) {
+/**
+ * The coronal waves round the button (coronalFx.ts), on a canvas big enough to hold all of them; or,
+ * with another look chosen (Features, round 29), the whole button drawn there (endButtonFx.ts). The
+ * canvas stops while the game rests (idle.ts) and starts again on the first touch.
+ */
+function useCorona(canvas: React.RefObject<HTMLCanvasElement | null>, look: EndButton) {
   useEffect(() => {
     const cv = canvas.current;
     if (!cv) return;
@@ -47,12 +54,20 @@ function useCorona(canvas: React.RefObject<HTMLCanvasElement | null>) {
         walls.bottom = Math.min(px, (field.bottom - cr.top) * f);
       }
       const fade = Math.min(1, (ms - start) / 900);
-      drawCoronalWaves(ctx, px / 2, (d / 2) * k, ms / 1000, isStill() ? 1 : fade, walls);
-      if (!isStill()) raf = requestAnimationFrame(draw);
+      if (look === "sun") drawCoronalWaves(ctx, px / 2, (d / 2) * k, ms / 1000, isStill() ? 1 : fade, walls);
+      else drawEndButton(ctx, look, px / 2, (d / 2) * k, isStill() ? 0 : ms / 1000, isStill() ? 1 : fade, walls);
+      raf = 0;
+      if (!isStill() && !isResting()) raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
-  }, [canvas]);
+    const off = onResting((r) => {
+      if (!r && !raf && !isStill()) raf = requestAnimationFrame(draw);
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      off();
+    };
+  }, [canvas, look]);
 }
 
 /** Distance from a point to a pointy-top hexagon (centre cx, cy; corner radius r); 0 inside. */
@@ -143,7 +158,9 @@ export function EndOverload(p: { onEnd: () => void }) {
   const still = noFlying();
   const plasma = useRef<HTMLCanvasElement>(null);
   const self = useRef<HTMLButtonElement>(null);
-  useCorona(plasma);
+  const [look, setLook] = useState<EndButton>(features().endButton);
+  useEffect(() => onFeatures(() => setLook(features().endButton)), []);
+  useCorona(plasma, look);
   const place = usePlace(self);
   // Where the button is, for Exposure's look after it is pressed (exposureFx.ts; round 28).
   const remember = () => {
@@ -157,7 +174,8 @@ export function EndOverload(p: { onEnd: () => void }) {
   return (
     <button
       ref={self}
-      className={`end-overload ${burst ? "bursting" : ""} ${place ? "placed" : ""}`}
+      className={`end-overload ${look === "sun" ? "" : `eo-look eo-${look}`} ${burst ? "bursting" : ""} ${place ? "placed" : ""}`}
+      data-eo-look={look}
       style={place ? ({ left: place.x - place.d / 2, top: place.y - place.d / 2, width: place.d, height: place.d, fontSize: place.d < 80 ? 10 : undefined } as React.CSSProperties) : { visibility: "hidden" }}
       title="No Alert tokens remain (9.2)"
       disabled={burst}

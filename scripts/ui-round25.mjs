@@ -65,7 +65,9 @@ export async function round25Check(browser, url, out) {
       const locked = await pg.locator("[data-action=prep]").isDisabled();
       const pickId = await pg.locator("[data-prep-pick]").nth(1).getAttribute("data-prep-pick");
       await pg.locator("[data-prep-pick]").nth(1).click();
-      const file = await pg.locator(`[data-route-file="${pickId}"]`).count();
+      // Round 29: the route picked is selected in the road of missions at once, its file open there (not twice).
+      const file = (await pg.locator(`[data-mission-detail="${pickId}"]`).count()) + (await pg.locator(`[data-route-file="${pickId}"]`).count());
+      const inRoad = await pg.locator(`[data-mission="${pickId}"][aria-pressed=true]`).count();
       // Any mission's file opens from the road.
       await pg.locator("[data-mission][data-status=later]").first().click();
       const roadFile = await pg.locator("[data-mission-detail]").count();
@@ -92,8 +94,8 @@ export async function round25Check(browser, url, out) {
       const intro = first >= 0 && fr[first][1];
       const solid = fr.filter((x) => x[1]).every((x) => x[2] === "1" && x[3] === "rgb(2, 4, 12)");
       await pg.close();
-      if (!(kind === "route" && picks === 2 && done === 1 && openN === 2 && locked && file === 1 && roadFile >= 1 && wide <= w && /2[XY]/.test(mission ?? "") && intro && solid))
-        fails.push(`route at ${w} px: screen ${kind}, routes ${picks}, won ${done}, open ${openN}, locked first ${locked}, file ${file}, road file ${roadFile}, width ${wide}, then "${mission}", intro at once ${intro}, intro solid ${solid}`);
+      if (!(kind === "route" && picks === 2 && done === 1 && openN === 2 && locked && file === 1 && inRoad === 1 && roadFile >= 1 && wide <= w && /2[XY]/.test(mission ?? "") && intro && solid))
+        fails.push(`route at ${w} px: screen ${kind}, routes ${picks}, won ${done}, open ${openN}, locked first ${locked}, file ${file}, in road ${inRoad}, road file ${roadFile}, width ${wide}, then "${mission}", intro at once ${intro}, intro solid ${solid}`);
     }
   } else fails.push("no route save");
 

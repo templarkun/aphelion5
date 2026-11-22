@@ -86,6 +86,14 @@ export async function looksCheck(browser, url, out) {
       return Object.values(s).every(([x, y]) => !(r.left + x > card.left && r.left + x < card.right && r.top + y > card.top && r.top + y < card.bottom));
     });
     await pg.screenshot({ path: `${out}/ui-allied-drop.png` });
+    // Round 29: the mouse over the Ally's Mecha shows its card text (as units in the game); away, it goes.
+    await pg.locator("[data-ally-drop] .ally-drop-unit").hover();
+    await pg.waitForTimeout(300);
+    const cardText = (await pg.locator("[data-ally-card]").innerText().catch(() => "")) ?? "";
+    await pg.screenshot({ path: `${out}/ui-allied-drop-card.png` });
+    await pg.mouse.move(5, 5);
+    await pg.waitForTimeout(200);
+    const cardGone = (await pg.locator("[data-ally-card]").count()) === 0;
     const prompt0 = await pg.locator(".game").getAttribute("data-prompt");
     const pt = await pg.evaluate(() => {
       const f = document.querySelector(".field");
@@ -102,7 +110,7 @@ export async function looksCheck(browser, url, out) {
     const gone = (await pg.locator("[data-ally-drop]").count()) === 0;
     const prompt1 = await pg.locator(".game").getAttribute("data-prompt");
     await pg.close();
-    if (!(shown && /^M_/.test(shown) && clear && gone && prompt1 !== prompt0)) fails.push(`Allied Drop: shown ${shown}, clear of sectors ${clear}, gone after ${gone}, prompt "${prompt0}" -> "${prompt1}"`);
+    if (!(shown && /^M_/.test(shown) && clear && gone && prompt1 !== prompt0 && /^Mecha\. Level/.test(cardText) && cardGone)) fails.push(`Allied Drop: shown ${shown}, clear of sectors ${clear}, gone after ${gone}, prompt "${prompt0}" -> "${prompt1}", card "${cardText.slice(0, 40)}" then gone ${cardGone}`);
   } else fails.push("no allied drop save");
 
   // 4. Features in the Menu: every choice is offered, kept in this browser, and the Field is drawn again.
@@ -127,7 +135,7 @@ export async function looksCheck(browser, url, out) {
     await pg.screenshot({ path: `${out}/ui-features-menu.png` });
     await pg.close();
     const okKept = /"corners":"round"/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /arcs/.test(kept ?? "") && /tide/.test(kept ?? "") && /"names":"hidden"/.test(kept ?? "");
-    if (!(offered === 63 && pressed === "corners:round,depth:stackFine,readyUnit:arcs,readySector:tide,names:hidden,overload:original,next:corner,gyroEnergy:tokens,exposure:strike" && before !== after && okKept)) fails.push(`features: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
+    if (!(offered === 74 && pressed === "corners:round,depth:stackFine,readyUnit:arcs,readySector:tide,names:hidden,overload:original,next:corner,gyroEnergy:tokens,exposure:strike,endButton:sun" && before !== after && okKept)) fails.push(`features: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
   }
 
   if (errors.length) fails.push(`page errors: ${errors.join(" | ")}`);

@@ -22,6 +22,7 @@
  *   badge tucked just behind the unit's own badge, like a card under a card).
  * - gyroEnergy (designer 2026-11-22, round 28): how an Energy Gyro (G_01-G_09) shows the energy you gain by
  *   destroying it (its "destroyed" line in the unit list). Drawn once with the board (nothing moves).
+ * - endButton (designer 2026-11-22, round 29): the End the Overload button itself (endButtonFx.ts).
  * - exposure (designer 2026-11-22, round 28): the look of Exposure (9.3 step 2: every unit alone on its sector
  *   plate takes 1 damage) after End the Overload is pressed: energy from the button to those units, or drawn
  *   out of them into it, and three more (exposureFx.ts).
@@ -29,14 +30,15 @@
 
 export type Corner = "original" | "soft" | "round" | "pebble" | "bevel";
 export type Depth = "original" | "stack" | "stackFine" | "stackHint" | "glass";
-export type ReadyUnit = "original" | "embers" | "heartbeat" | "motes" | "sparkle" | "gather" | "aura" | "current" | "arcs" | "comet" | "scan" | "brackets" | "ripple" | "corona" | "chase";
+export type ReadyUnit = "original" | "embers" | "heartbeat" | "motes" | "sparkle" | "gather" | "aura" | "current" | "arcs" | "comet" | "scan" | "brackets" | "ripple" | "fountain" | "gyroscope";
 export type ReadySector = "fill" | "embers" | "inner" | "sparkle" | "converge" | "drift" | "tide" | "core" | "haze" | "pond" | "lattice" | "rain" | "vortex" | "beacon" | "aurora";
 export type Ready = ReadyUnit | ReadySector;
 export type Counts = "shown" | "hidden";
-export type OverloadLook = "original" | "inflow" | "storm" | "pulse" | "veil";
+export type OverloadLook = "original" | "inflow" | "loops" | "tempest" | "torrent" | "breath" | "embers" | "rift";
 export type NextLook = "corner" | "ghost" | "chip" | "behind";
-export type GyroEnergy = "tokens" | "corner" | "bar" | "ring" | "tag" | "cells" | "watermark";
+export type GyroEnergy = "tokens" | "corner" | "ring" | "orbit" | "pips" | "honeycomb" | "chain" | "string";
 export type Exposure = "strike" | "drain" | "chain" | "nova" | "surge";
+export type EndButton = "sun" | "reactor" | "singularity" | "orb" | "hazard" | "forge" | "gate";
 
 export interface Features {
   corners: Corner;
@@ -49,6 +51,7 @@ export interface Features {
   next: NextLook;
   gyroEnergy: GyroEnergy;
   exposure: Exposure;
+  endButton: EndButton;
 }
 
 export const CORNERS: { id: Corner; label: string; note: string }[] = [
@@ -77,12 +80,12 @@ export const READY_UNITS: { id: ReadyUnit; label: string; note: string }[] = [
   { id: "aura", label: "Aura", note: "a slow swirl of fine particles just outside the edge" },
   { id: "current", label: "Current", note: "fine particles flow round the edge like a current" },
   { id: "arcs", label: "Arcs", note: "small sparks of electricity jump along the edge now and then" },
-  { id: "comet", label: "Comet", note: "one bright spark circles the edge with a tail of fading motes" },
+  { id: "comet", label: "Comet", note: "now and then a comet streaks across the tile, its tail breaking up into sparks" },
   { id: "scan", label: "Scan", note: "a thin line of light sweeps slowly down the tile, shedding a few motes" },
   { id: "brackets", label: "Lock-on", note: "six corner marks breathe in and out, like a target held" },
   { id: "ripple", label: "Ripple", note: "a ring of fine particles leaves the edge now and then and fades outwards" },
-  { id: "corona", label: "Corona", note: "short rays of light flicker round the edge like a small sun" },
-  { id: "chase", label: "Chase", note: "the six corners light one after another round the tile" },
+  { id: "fountain", label: "Fountain", note: "sparks spring up from the top corner and fall down round the sides" },
+  { id: "gyroscope", label: "Gyroscope", note: "two rings of fine particles turn round the tile, tilted like a gyroscope" },
 ];
 
 export const READY_SECTORS: { id: ReadySector; label: string; note: string }[] = [
@@ -116,9 +119,13 @@ export const NAMES: { id: Counts; label: string; note: string }[] = [
 export const OVERLOADS: { id: OverloadLook; label: string; note: string }[] = [
   { id: "original", label: "Original", note: "energy drifting in, and plasma beams racing round the edge" },
   { id: "inflow", label: "Inflow", note: "energy drifting in; streams of energy particles flow in from the edge (no racing beams)" },
-  { id: "storm", label: "Storm", note: "energy drifting in; arcs of lightning crawl along the edge and crackle out" },
-  { id: "pulse", label: "Pulse", note: "energy drifting in; pulses of light run from the corners and burst where they meet" },
-  { id: "veil", label: "Veil", note: "energy drifting in; a curtain of particles ripples along the edge, red to violet" },
+  // Round 29 (designer 2026-11-22): Storm, Pulse and Veil replaced by six new, bigger looks (revealFx.ts).
+  { id: "loops", label: "Solar loops", note: "arches of plasma stand on the edge, particles streaming along them, then snap and fling sparks in" },
+  { id: "tempest", label: "Ion tempest", note: "glowing ion clouds drift along the edge; lightning leaps between them and forks inwards" },
+  { id: "torrent", label: "Plasma torrent", note: "a thick river of particles churns round the whole edge, eddies curling off into the Field" },
+  { id: "breath", label: "Shock breath", note: "the edge gathers itself, then blows a wall of particles inwards across the Field, which falls back" },
+  { id: "embers", label: "Ember rise", note: "embers well up from the bottom edge and drift up the sides on hot air into a smouldering top" },
+  { id: "rift", label: "Void rift", note: "violet tears open along the edges and pull motes out of the Field into them" },
 ];
 
 export const NEXTS: { id: NextLook; label: string; note: string }[] = [
@@ -128,14 +135,17 @@ export const NEXTS: { id: NextLook; label: string; note: string }[] = [
   { id: "behind", label: "Behind", note: "its glyph badge tucked just behind the unit's own badge, like a card under a card" },
 ];
 
+// Round 29 (designer 2026-11-22): Charge bar, Tag, Cells and Watermark removed; new looks after Tokens,
+// Glyph ring and Cells. Tokens now curve round the tile's left edges (no second column).
 export const GYRO_ENERGY: { id: GyroEnergy; label: string; note: string }[] = [
-  { id: "tokens", label: "Tokens", note: "one energy token per energy, along the tile's left edge" },
+  { id: "tokens", label: "Tokens", note: "one energy token per energy, curving round the tile's left edges" },
   { id: "corner", label: "Corner", note: "the number and the energy glyph in the upper left corner" },
-  { id: "bar", label: "Charge bar", note: "a short bar of cells in the energy's colour inside the left edge" },
   { id: "ring", label: "Glyph ring", note: "one lit segment per energy round the unit's glyph badge" },
-  { id: "tag", label: "Tag", note: "a small “+N” tag with the energy glyph under the Level badge" },
-  { id: "cells", label: "Cells", note: "small hexagonal cells in the energy's colour along the upper left edge" },
-  { id: "watermark", label: "Watermark", note: "the energy glyph faint and large in the tile, the number on it" },
+  { id: "orbit", label: "Token ring", note: "small energy tokens set over the unit's glyph badge like a crown" },
+  { id: "pips", label: "Pip ring", note: "a ring of pips round the glyph badge, one lit and glowing per energy" },
+  { id: "honeycomb", label: "Honeycomb", note: "hexagonal energy cells packed together at the tile's left side" },
+  { id: "chain", label: "Cell chain", note: "hexagonal energy cells linked in a chain, curving round the left edges" },
+  { id: "string", label: "Bead string", note: "a thin thread of the energy's colour along the left edges, one glowing bead per energy" },
 ];
 
 export const EXPOSURES: { id: Exposure; label: string; note: string }[] = [
@@ -146,12 +156,24 @@ export const EXPOSURES: { id: Exposure; label: string; note: string }[] = [
   { id: "surge", label: "Plate surge", note: "threads of energy run to each unit's sector plate, whose edge flares up into the unit" },
 ];
 
+// Round 29 (designer 2026-11-22): a Feature for the End the Overload button itself (EndOverload.tsx,
+// endButtonFx.ts): its shape, colour, and the effects inside and round it.
+export const END_BUTTONS: { id: EndButton; label: string; note: string }[] = [
+  { id: "sun", label: "Sun", note: "a round, see-through small sun with coronal waves round it (as before)" },
+  { id: "reactor", label: "Reactor", note: "a cyan hexagon: rings of particles spin round a beating core; sparks jump from its corners" },
+  { id: "singularity", label: "Singularity", note: "a black hole: a disc of glowing matter whirls round it; motes spiral in from afar" },
+  { id: "orb", label: "Plasma orb", note: "a violet glass sphere: plasma threads wander inside; tendrils crackle out from it" },
+  { id: "hazard", label: "Hazard", note: "an amber diamond: chevrons of light rise inside; a warning beacon sweeps round it" },
+  { id: "forge", label: "Forge", note: "a molten square: churning heat inside; embers rise from it and drift away" },
+  { id: "gate", label: "Star gate", note: "a ring with a swirling portal in it; marks light one by one round its rim" },
+];
+
 const KEY = "aphelion5.features";
 /** Where the choices were kept while they were called "trial looks" (until 2026-11-22); read once. */
 const OLD_KEY = "aphelion5.trialLooks";
 // Designer 2026-11-21 (round 25): Pebble corners and the Corner next tile are the defaults; the
 // tile-count words are hidden for good (their row left the Menu).
-const DEFAULT: Features = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "original", next: "corner", gyroEnergy: "tokens", exposure: "strike" };
+const DEFAULT: Features = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "original", next: "corner", gyroEnergy: "tokens", exposure: "strike", endButton: "sun" };
 const subs = new Set<() => void>();
 
 function load(): Features {
@@ -170,6 +192,7 @@ function load(): Features {
       next: NEXTS.some((x) => x.id === v.next) ? v.next! : DEFAULT.next,
       gyroEnergy: GYRO_ENERGY.some((x) => x.id === v.gyroEnergy) ? v.gyroEnergy! : DEFAULT.gyroEnergy,
       exposure: EXPOSURES.some((x) => x.id === v.exposure) ? v.exposure! : DEFAULT.exposure,
+      endButton: END_BUTTONS.some((x) => x.id === v.endButton) ? v.endButton! : DEFAULT.endButton,
     };
   } catch {
     return DEFAULT;
@@ -290,4 +313,5 @@ export const FEATURE_ROWS: FeatureRow[] = [
   { key: "next", title: "Next tile", about: "Where a sector's next tile shows once you have looked at it.", list: NEXTS },
   { key: "gyroEnergy", title: "Energy Gyro reward", about: "How an Energy Gyro shows the energy you gain by destroying it.", list: GYRO_ENERGY },
   { key: "exposure", title: "Overload End: Exposure", about: "When the Overload ends, every unit alone on its sector plate takes 1 damage (9.3). How that is shown.", list: EXPOSURES },
+  { key: "endButton", title: "Overload End button", about: "The look of the End the Overload button: its shape, colour, and the effects inside and round it.", list: END_BUTTONS },
 ] as FeatureRow[];

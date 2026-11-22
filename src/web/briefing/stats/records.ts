@@ -1,8 +1,9 @@
 /**
  * The statistics and achievements page's numbers (designer 2026-11-17; screen only, no rule).
  * Everything is read from the profile's finished games (`Profile.history`, written at Game End,
- * 10.3); nothing here is stored. Games played in Developer mode are listed but left out of the
- * totals and the achievements.
+ * 10.3) and, since round 29 (designer 2026-11-22), the game being played as of its last Mission End
+ * (`Profile.live`, live.ts); nothing here is stored. Games played in Developer mode are listed but left
+ * out of the totals and the achievements.
  */
 
 import type { GameRecord, Profile } from "../../../engine/state.js";
@@ -14,6 +15,11 @@ export interface Totals {
   won: number;
   lost: number;
   conceded: number;
+  /** Round 29 (designer): Lost and Conceded shown as one number. */
+  lostConceded: number;
+  /** The game under way (counted from its first Mission End) and games left with no result. */
+  playing: number;
+  unfinished: number;
   /** Missions completed and Threat columns conquered, all games. */
   missions: number;
   threatColumns: number;
@@ -28,22 +34,29 @@ export interface Totals {
   byCompany: Record<string, { games: number; won: number }>;
 }
 
-/** The finished games that count (not Developer mode), oldest first. */
+/** Every game listed: the finished ones, oldest first, then the one under way (if a mission of it has ended). */
+export function listed(p: Profile): GameRecord[] {
+  return [...(p.history ?? []), ...(p.live ? [p.live.record] : [])];
+}
+
+/** The games that count (not Developer mode), oldest first; the game under way last. */
 export function counted(p: Profile): GameRecord[] {
-  return (p.history ?? []).filter((g) => !g.developer);
+  return listed(p).filter((g) => !g.developer);
 }
 
 export function totals(games: readonly GameRecord[]): Totals {
-  const t: Totals = { games: 0, won: 0, lost: 0, conceded: 0, missions: 0, threatColumns: 0, overloads: 0, destroyed: {}, triggered: {}, drained: 0, moduleRuns: {}, byCompany: {} };
+  const t: Totals = { games: 0, won: 0, lost: 0, conceded: 0, lostConceded: 0, playing: 0, unfinished: 0, missions: 0, threatColumns: 0, overloads: 0, destroyed: {}, triggered: {}, drained: 0, moduleRuns: {}, byCompany: {} };
   const add = (into: Record<string | number, number>, from: Record<string | number, number>) => {
     for (const [k, v] of Object.entries(from)) into[k] = (into[k] ?? 0) + v;
   };
   for (const g of games) {
     t.games++;
     t[g.result]++;
+    if (g.result === "lost" || g.result === "conceded") t.lostConceded++;
     t.missions += g.missions.length;
     t.threatColumns += g.missions.reduce((n, m) => n + m.threat.length, 0);
-    t.best = Math.max(t.best ?? -Infinity, g.score);
+    // The best score is a finished game's (the game under way has no final score yet).
+    if (g.result !== "playing" && g.result !== "unfinished") t.best = Math.max(t.best ?? -Infinity, g.score);
     t.overloads += g.stats.overloads;
     t.drained += g.stats.drained;
     add(t.destroyed, g.stats.destroyed);
@@ -54,6 +67,13 @@ export function totals(games: readonly GameRecord[]): Totals {
     if (g.result === "won") c.won++;
   }
   return t;
+}
+
+/** The same totals for each Campaign played (round 29: every number opens into one row per Campaign). */
+export function byCampaign(games: readonly GameRecord[]): { campaign: string; t: Totals }[] {
+  const order: string[] = [];
+  for (const g of games) if (!order.includes(g.campaign)) order.push(g.campaign);
+  return order.map((campaign) => ({ campaign, t: totals(games.filter((g) => g.campaign === campaign)) }));
 }
 
 export const sumOf = (r: Record<string, number>) => Object.values(r).reduce((a, b) => a + b, 0);
@@ -75,7 +95,7 @@ const most = (games: readonly GameRecord[], f: (g: GameRecord) => number) => gam
 const count = (games: readonly GameRecord[], f: (g: GameRecord) => boolean) => games.filter(f).length;
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: "first-game", name: "First Deployment", text: "Finish a game.", need: 1, progress: (g) => g.length },
+  { id: "first-game", name: "First Deployment", text: "Finish a game.", need: 1, progress: (g) => count(g, (x) => x.result !== "playing") },
   { id: "first-win", name: "Campaign Complete", text: "Win a Campaign.", need: 1, progress: (g) => count(g, (x) => x.result === "won") },
   { id: "veteran-win", name: "Veteran Commander", text: "Win a Veteran Campaign.", need: 1, progress: (g) => count(g, (x) => x.result === "won" && x.freshness === "veteran") },
   { id: "heat-win", name: "Running Hot", text: "Win a Campaign with the Heat module.", need: 1, progress: (g) => count(g, (x) => x.result === "won" && x.heatModule) },

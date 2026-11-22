@@ -1572,6 +1572,10 @@ then: a page in the menu style with three tabs. STATISTICS: games, won, lost, co
       missions and numbers. "Command deck" goes back to the briefing as it was.
 then: games played in Developer mode are listed (marked "Developer") but never counted in the
       totals or the achievements.
+CHANGED (designer 2026-11-22, round 29): Best score first; Lost and Conceded one box "Lost /
+      Conceded"; no Overloads under "Triggered and drained"; every box, unit row and Vessel opens into
+      its numbers per Campaign; the game under way counts after each Mission End (batch 14
+      T14_R29_06-08).
 
 id: T13_STAT_03
 title: Achievements
@@ -2546,6 +2550,8 @@ then: the logo gate ("ROUTE LOCKED"), then the Threat screen of that mission; th
       skipped for this campaign. The Field is not shown in between.
 given: the next mission has only one mission
 then: no route screen, as before (Threat first).
+CHANGED (designer 2026-11-22, round 29): tapping a route card also selects that mission in the road of
+      missions, its file opening there (batch 14 T14_R29_04).
 
 id: T13_R25_08
 title: No Field picture before the mission intro

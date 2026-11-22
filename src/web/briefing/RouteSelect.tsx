@@ -50,7 +50,13 @@ export function RoutePick(p: {
     playSelect();
     sparkEdges(el, briefStyle().acc);
     setPick(id);
-    setFocus(undefined);
+    // Round 29 (designer 2026-11-22): the route picked is selected in the road of missions at once (its file opens there).
+    setFocus(id);
+  };
+  // And the other way: tapping a route to choose in the road picks it too.
+  const onFocus = (id: string | undefined) => {
+    setFocus(id);
+    if (id && !p.sent && q.options.some((o) => o.id === id)) setPick(id);
   };
   return p.frame({
     data: { "data-route-pick": String(q.options.length) },
@@ -97,9 +103,9 @@ export function RoutePick(p: {
         </div>
         <section className="bf-panel mt-4 p-3 sm:p-4" aria-label="Road of missions">
           <div className="bf-label mb-2">Road of missions · tap one to open its file, again to close it</div>
-          <MissionTimeline data={data} campaign={camp} focus={focus} onFocus={setFocus} status={status} />
+          <MissionTimeline data={data} campaign={camp} focus={focus} onFocus={onFocus} status={status} />
         </section>
-        {chosen && (
+        {chosen && focus !== chosen.id && (
           <section className="bf-panel mt-4 p-3 sm:p-4" aria-label={`${missionLabel(chosen)} file`} data-route-file={chosen.id}>
             <div className="bf-label">Mission file</div>
             <MissionFile key={chosen.id} data={data} campaign={camp} m={chosen} />

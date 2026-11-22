@@ -170,7 +170,8 @@ button.mini { min-height: 0; padding: 0 8px; line-height: 1.4; }
 @keyframes pop-in { from { opacity: 0; transform: translate(-14px, -50%) scale(0.6); } to { opacity: 1; transform: translate(0, -50%) scale(1); } }
 @keyframes pop-pulse { 0%, 100% { box-shadow: 0 6px 18px rgb(0 0 0 / 0.25), 0 0 0 0 var(--pop); } 50% { box-shadow: 0 6px 18px rgb(0 0 0 / 0.25), 0 0 0 6px color-mix(in srgb, var(--pop) 35%, transparent); } }
 .glyph { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 800; flex: none; box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.2); }
-.glyph.yellow { background: var(--yellow); } .glyph.red { background: var(--red); } .glyph.blue { background: var(--blue); }
+/* Round 29 (designer): Yellow energy tokens a lighter, lemon yellow, apart from the Flare's gold. */
+.glyph.yellow { background: #ffec6e; } .glyph.red { background: var(--red); } .glyph.blue { background: var(--blue); }
 /* Energy glyphs (designer 2026-11-10): the designer's pictures in place of the letters Y, R, B. */
 /* :where() keeps this weak, so tokens placed with position: fixed (Flare energy) stay fixed. */
 :where(.glyph.yellow, .glyph.red, .glyph.blue) { position: relative; }
@@ -1008,6 +1009,9 @@ html.still .sp-tile { transition: none; animation: none; }
 @keyframes ally-hover { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(3px); } }
 html.still .ally-drop-unit { animation: none; }
 @media (min-width: 1600px) { .ally-drop-label { font-size: 15px; } .ally-drop-sub { font-size: 14px; } }
+/* Round 29: the Ally's Mecha shows its card text on hover or a 0.5 s touch hold, beside the box. */
+.ally-drop-unit { pointer-events: auto; cursor: help; touch-action: none; -webkit-touch-callout: none; user-select: none; }
+.ally-drop .ally-info { color: var(--ink, #fff); text-align: left; letter-spacing: normal; text-transform: none; animation: bubble-in 0.25s ease-out both; }
 /* Features in the Menu (designer 2026-11-20 as "trial looks"; renamed "Features" 2026-11-22, FeaturesMenu.tsx). */
 .features-menu { border: 1px dashed var(--line); border-radius: 8px; padding: 4px 8px 8px; }
 .features-menu summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 4px 0; }
@@ -1056,3 +1060,15 @@ html.still .module.peek { animation: none; }
 .seen-arrow { font-weight: 800; opacity: 0.65; font-size: 15px; line-height: 1; }
 .seen-strip .seen-total { display: inline-flex; align-items: center; gap: 2px; margin: 0 0 0 6px; padding: 0 0 0 7px; border-top: 0; border-left: 1px solid rgba(255, 255, 255, 0.22); font-weight: 700; }
 .seen-strip .seen-q { width: 18px; height: 22px; }
+
+/* Round 29 (designer 2026-11-22): the End the Overload button's other looks (Features, endButtonFx.ts):
+   the button itself see-through, its whole body drawn on its canvas. */
+.end-overload.eo-look { border-color: transparent; background: none; backdrop-filter: none; box-shadow: none; animation: none; }
+.end-overload.eo-look .eo-core { display: none; }
+.end-overload.eo-look.bursting { animation: eo-flash 0.38s ease-out forwards; }
+.end-overload.eo-look .eo-label { text-shadow: 0 1px 3px rgb(0 0 0 / 0.9), 0 0 8px rgb(0 0 0 / 0.6); }
+.end-overload.eo-reactor .eo-burst i, .end-overload.eo-gate .eo-burst i { background: #e6fbff; box-shadow: 0 0 8px 3px #39c8ff; }
+.end-overload.eo-orb .eo-burst i { background: #f3e8ff; box-shadow: 0 0 8px 3px #a46bff; }
+.end-overload.eo-reactor .eo-burst .ring, .end-overload.eo-gate .eo-burst .ring { border-color: #8fe6ff; }
+.end-overload.eo-orb .eo-burst .ring { border-color: #cfa8ff; }
+.end-overload.eo-hazard .eo-label { color: #fff7e0; }

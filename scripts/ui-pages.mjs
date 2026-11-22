@@ -58,6 +58,23 @@ export async function pagesCheck(browser, url, out) {
     const total = async (k) => ((await pg.locator(`[data-total=${k}] div`).first().innerText().catch(() => "")) ?? "").trim();
     const games = await total("games");
     const best = await total("best");
+    // Round 29: Best score first, Lost and Conceded one box, no Overloads under "Triggered and drained";
+    // a box opens into one row per Campaign; a Vessel opens into its wins per Campaign.
+    const order = await pg.locator("[data-total]").evaluateAll((els) => els.map((e) => e.getAttribute("data-total")).join());
+    const lostBox = await total("lost");
+    await pg.locator("[data-total=games]").click();
+    const perGames = await pg.locator("[data-breakdown=games] [data-campaign]").count();
+    await pg.locator("[data-total=won]").click();
+    const perWon = await pg.locator("[data-breakdown=won] [data-campaign]").count();
+    const oneOpen = await pg.locator("[data-breakdown-of]").count();
+    await pg.locator("[data-vessel] button").first().click();
+    const perVessel = await pg.locator("[data-vessel] [data-breakdown] [data-campaign]").count();
+    await pg.locator("[data-count='Bots'] button").click();
+    const perBots = await pg.locator("[data-count='Bots'] [data-campaign]").count();
+    const triggeredOverloads = await pg.locator("section", { hasText: "Triggered and drained" }).getByText("Overloads", { exact: true }).count();
+    await pg.screenshot({ path: `${out}/ui-stats-open${name}.png`, fullPage: true });
+    const stats29 = order === "best,games,won,lost,missions,threat,overloads" && lostBox === "1" && perGames >= 1 && perWon >= 1 && oneOpen === 1 && perVessel >= 1 && perBots >= 1 && triggeredOverloads === 0;
+    if (!stats29) fails.push(`stats round 29 at ${w} px: order ${order}, lost ${lostBox}, per Campaign games ${perGames} won ${perWon}, open ${oneOpen}, vessel ${perVessel}, bots ${perBots}, Overloads in triggered ${triggeredOverloads}`);
     await pg.waitForTimeout(500);
     await pg.screenshot({ path: `${out}/ui-stats${name}.png`, fullPage: false });
     await pg.locator("[data-tab=achievements]").click();
@@ -90,7 +107,7 @@ export async function pagesCheck(browser, url, out) {
       await pg.locator('[data-feature-pick="corners:pebble"]').click();
       await pg.locator("[data-action=page-back]").click();
       const back = (await pg.locator("[data-page=features]").count()) === 0;
-      if (!(cards === 9 && picks === 63 && svgs === 63 && pressed === "true" && kept === "round" && back && sw <= w + 2))
+      if (!(cards === 10 && picks === 74 && svgs === 74 && pressed === "true" && kept === "round" && back && sw <= w + 2))
         fails.push(`features at ${w} px: cards ${cards}, picks ${picks}, previews ${svgs}, pressed ${pressed}, kept ${kept}, back ${back}, width ${sw}`);
     }
 

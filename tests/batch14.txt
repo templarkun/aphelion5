@@ -13,6 +13,12 @@
 # shrink (T14_R28_09), Exposure at Overload End (T14_R28_10), Mecha landing dust (T14_R28_11).
 # CHANGED notes on T14_R27_04 and batch 13's T13_R24_01, T13_R24_02, T13_R25_03, T13_R26_01.
 # Checked by tests/unit/round28.test.ts, scripts/ui-pages.mjs, ui-looks.mjs, ui-round24.mjs.
+# Round 29, 2026-11-22: lighter yellow energy tokens (T14_R29_01), the Allied Drop card (T14_R29_02),
+# the End the Overload button Feature (T14_R29_03), the route picked in the road (T14_R29_04), Threat
+# boxes (T14_R29_05), statistics after every mission and per Campaign (T14_R29_06-08; I35). CHANGED
+# notes on T14_R27_04, T14_R28_02, T14_R28_04, T14_R28_06, T14_R28_10, T14_R28_11 and batch 13's
+# T13_STAT_02, T13_R25_07. Checked by tests/unit/round29.test.ts, scripts/ui-round29.mjs, ui-pages.mjs,
+# ui-looks.mjs, ui-round25.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -77,6 +83,8 @@ note: the in-game Menu keeps its short Features list, ending with "With previews
       Features".
 CHANGED (designer 2026-11-22, round 28): nine cards (two new: Energy Gyro reward, Overload End:
       Exposure) and 63 choices in all (T14_R28_01-06, T14_R28_10).
+CHANGED (designer 2026-11-22, round 29): ten cards (new: Overload End button) and 74 choices in all
+      (T14_R29_03; Energy Gyro reward and Overload edge now 8 choices each).
 
 id: T14_REST_01
 title: The game rests when nobody touches it
@@ -112,6 +120,11 @@ then: six new choices, each kept light (a few dozen points of light at most):
       Ripple: now and then a ring of fine particles leaves the edge and fades outwards.
       Corona: short rays of light flicker round the edge like a small sun.
       Chase: the six corners light one after another round the tile.
+CHANGED (designer 2026-11-22, round 29): Corona and Chase removed, replaced by
+      Fountain: sparks spring up from the tile's top corner, arc over and fall down round its sides.
+      Gyroscope: two tilted rings of fine particles turn round the tile, the part behind dimmer.
+      Comet changed (too like Fireflies' dot going round): now and then a comet streaks across the
+      tile on a slanting line, its tail breaking up into sparks that drift and fade.
 
 id: T14_R28_03
 title: Features: six more ready-to-tap looks for Dark and Cleared sectors
@@ -134,6 +147,17 @@ then: three new choices, each with the plasma wave drifting in as before:
       Pulse: pulses of light run from the four corners along the edges and burst into motes where
       they meet, every 2.4 s.
       Veil: a curtain of particles ripples along the whole edge, red shading to violet.
+CHANGED (designer 2026-11-22, round 29: "change all particle effects to new ones and be more
+      ambitious"): Storm, Pulse and Veil removed; six new choices (the plasma wave still under them):
+      Solar loops: arches of plasma stand on the edge, particles streaming along them foot to foot;
+      each swells, then snaps and flings its particles in.
+      Ion tempest: glowing ion clouds drift along the edge; lightning made of beads leaps between
+      them and forks inwards.
+      Plasma torrent: a thick river of particles churns round the whole edge, eddies curling off.
+      Shock breath: the edge gathers, then blows a wall of particles inwards, which falls back.
+      Ember rise: embers well up from the bottom edge, drift up the sides, smoulder along the top.
+      Void rift: violet tears open along the edges and pull motes out of the Field into them.
+      Games with Storm, Pulse or Veil chosen show Original.
 
 id: T14_R28_05
 title: Features: a fourth next-tile look
@@ -161,6 +185,12 @@ then: it shows its "destroyed" energy (unit list: G_01 2 Yellow, G_02 4 Yellow, 
       Watermark: the energy glyph large and faint in the tile, the number on it.
       Other Gyros (G_10-G_36) and other units: nothing new. Drawn once (nothing moves).
 note: screen only; the energy is gained as the card says, as before.
+CHANGED (designer 2026-11-22, round 29): Charge bar, Tag, Cells and Watermark removed. Tokens now
+      curve round the tile's left edges, centred on its left side (never a second column). New:
+      Token ring (tokens over the glyph badge like a crown), Pip ring (a ring of pips round the badge,
+      one lit per energy), Honeycomb (hexagonal cells packed at the left side), Cell chain (hexagonal
+      cells linked by a thread round the left edges), Bead string (a thread of the energy's colour
+      along the left edges, one glowing bead per energy). A removed choice shows Tokens.
 
 id: T14_R28_07
 title: "Looked at in this sector": one small row under the card text
@@ -214,6 +244,11 @@ then: before their damage shows, the look chosen in Features > Overload End: Exp
       finishes it; speed setting; reduced motion: none.
 given: no unit alone on its plate
 then: nothing new plays.
+CHANGED (designer 2026-11-22, round 29: Strike and Drain "more prolonged, continuous"):
+      Strike: a steady stream of energy pours from the button into each unit for about 2 s, each
+      unit charging up brighter, then it bursts (about 2.4 s in all).
+      Drain: energy is drawn out of each unit in steady curling streams, the units dimming and the
+      button swelling, then it flares (about 2.6 s). Chain, Nova and Plate surge as before.
 
 id: T14_R28_11
 title: Dust when a Mecha lands after moving
@@ -222,3 +257,107 @@ given: a Mecha moves (tapped, dragged and dropped, or M_01's walk at its last se
 then: as it lands, a small puff of fine dust from under its edges, mostly the lower ones, settling
       in under a second. The game does not wait for it. Not for a teleport; none with reduced
       motion or the speed Instant.
+CHANGED (designer 2026-11-22, round 29: "too subtle to spot"): more dust (about 170 grains),
+      bigger, brighter and thrown further, a low ring of dust rolling out along the ground and a soft
+      haze; about 1.1 s.
+
+################################################################################
+=== SECTION: ROUND 29 (designer 2026-11-22) ===
+
+id: T14_R29_01
+title: Yellow energy tokens a lighter yellow
+source: designer 2026-11-22 ("Energy token background: a lighter yellow, different from the Flare
+        unit background")
+given: Yellow energy shown as a token: on a Flare (its energy waiting), an Energy Gyro's reward, the
+       energy chips and glyphs (Reserve, pop-ups, flying chips)
+then: the token is a light lemon yellow, clearly apart from the Flare's golden tile; the black
+      energy glyph stays on it. Red and Blue as before; Module rims and text as before.
+
+id: T14_R29_02
+title: The Ally's Mecha shows its card text
+source: designer 2026-11-22 ("Long tap or hover over that Allied Drop unit should show that unit's
+        card, as in gameplay for units")
+given: an Allied Drop: the Ally's Mecha hangs in a corner of the Field ("Choose where it lands")
+when: the mouse over it, or a touch held 0.5 s
+then: a card beside it (above or below it on a narrow Field) as units have in the game: "Mecha.
+      Level N." in bold, then its ability; it goes when the mouse leaves or the finger lifts.
+      "Put here" on the sectors works as before.
+
+id: T14_R29_03
+title: Features: the Overload End button
+source: designer 2026-11-22 ("a new category in Features for the Overload end button: several
+        variations; change shape, colour, inner and outer effects; be more ambitious")
+given: Features > Overload End button (Menu and the Command Deck's Features page, with previews);
+       an Overload with End the Overload shown
+then: seven choices:
+      Sun (first choice): as before, a see-through small sun with coronal waves round it.
+      Reactor: a cyan hexagon; rings of particles spin round a beating core; sparks jump from its
+      corners; motes drift out.
+      Singularity: a black hole; a disc of glowing matter whirls round it, in front and behind; a
+      bright ring hugs the dark; motes spiral in from afar.
+      Plasma orb: a violet glass sphere; plasma threads wander inside; tendrils crackle out.
+      Hazard: an amber diamond; chevrons of light rise inside; a warning beacon sweeps round it, a
+      red ring blinks.
+      Forge: a molten rounded square; churning heat inside; embers rise and drift away.
+      Star gate: a ring with a swirling portal of particles; nine marks light one by one round its
+      rim; a ring of motes turns outside.
+then: the button stays where it was (never over a sector), the same size, "End the Overload" on
+      it; pressing it works as before (its burst in the look's colours). Nothing drawn past the
+      Field's edge. It stands still while the game rests (20 s untouched) and with reduced motion.
+
+id: T14_R29_04
+title: The route picked is selected in the road of missions
+source: designer 2026-11-22 ("When I press to select route X or Y, immediately select this route
+        inside Road of mission")
+given: the route screen (T13_R25_07)
+when: tap a route card
+then: it is selected, and the same mission is selected in the road of missions at once (lit), its
+      file open there (not shown twice).
+when: tap a mission marked "choose now" in the road
+then: that route is picked too (its card selected).
+when: tap any other mission in the road
+then: its file opens there; the picked route's file shows below the road again.
+
+id: T14_R29_05
+title: Threats in boxes
+source: designer 2026-11-22 ("Insert Threats inside boxes; then centre the Threat A / B / C / D text in
+        the box")
+given: a mission file's unit roster (route screen, Campaign step)
+then: each Threat (A-D) sits in a box of its own, its name centred at the top, its tiles centred
+      under it; four boxes in a row where they fit; on a phone the Threat buttons as before, the
+      one opened shown in a box.
+
+id: T14_R29_06
+title: Statistics after every mission
+source: designer 2026-11-22 ("Start collecting statistics. They should be updated after every
+        mission, not just after the whole campaign"); I35 answered (a)
+given: a game under way
+when: a mission ends (Mission End)
+then: the Statistics page counts the game so far: Games, Missions done, Threat columns, Overloads,
+      units destroyed, triggered, drained, Modules run, Vessels; a line says it includes the game
+      under way and how many of its missions are done. It is listed under Games as "In progress".
+      Won or Lost / Conceded and Best score only when it ends (Game End then writes its final record
+      in its place).
+given: a game under way after at least one mission, and a new game is started over it
+then: the old game counts as Lost / Conceded (I35).
+given: before its first Mission End
+then: the game is not counted yet. Developer-mode games are listed but never counted, as before.
+
+id: T14_R29_07
+title: Statistics: the top numbers
+source: designer 2026-11-22 (points 2, 3, 5)
+then: the boxes in this order: Best score, Games, Won, Lost / Conceded (one number: lost and conceded
+      games together), Missions done, Threat columns, Overloads. "Triggered and drained" has no
+      Overloads row any more (it is in the boxes).
+
+id: T14_R29_08
+title: Statistics: every number per Campaign
+source: designer 2026-11-22 (points 4 and 6)
+when: tap a box (Games, Won, Lost / Conceded, Best score, Missions done, Threat columns, Overloads)
+then: it opens: right under its row, one line per Campaign played with that number for it (Best
+      score: that Campaign's best); tap it again, or another box, to close it or switch.
+when: tap a row of Units destroyed or Triggered and drained
+then: it opens with the same number per Campaign.
+when: tap a Vessel
+then: it opens with how many games it won per Campaign ("N won of M").
+

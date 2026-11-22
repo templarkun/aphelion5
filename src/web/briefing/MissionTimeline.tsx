@@ -105,7 +105,8 @@ function MissionRoster({ data, campaign, m }: { data: GameData; campaign: Campai
   // All four Threats on one row when they fit with tiles of at least 34 px; else four Threat buttons.
   const perThreat = Math.max(...threats.map((t) => t.ids.length), 1);
   const gap = 14;
-  const fit = Math.floor((width - 24 - gap * (threats.length - 1)) / (threats.length * perThreat) - 6);
+  // Round 29 (designer 2026-11-22): each Threat in a box of its own (about 16 px of frame each).
+  const fit = Math.floor((width - 24 - gap * (threats.length - 1) - threats.length * 16) / (threats.length * perThreat) - 6);
   const threatTile = Math.min(full, fit);
   const threatRow = threatTile >= 34;
   const tileBtn = (id: string, size: number, count?: number, key?: string) => {
@@ -132,9 +133,9 @@ function MissionRoster({ data, campaign, m }: { data: GameData; campaign: Campai
         {threats.length > 0 && threatRow && (
           <div className="flex min-w-0 flex-nowrap items-start" style={{ gap }} data-threat-row="1">
             {threats.map((t) => (
-              <div key={t.c} className="min-w-0" data-threat-col={t.c}>
-                <span className="block text-[12px] font-bold uppercase tracking-wider text-sky-100">Threat {t.c}</span>
-                <span className="flex flex-nowrap items-end gap-x-0.5">{t.ids.map((id, k) => tileBtn(id, threatTile, undefined, `${id}:${k}`))}</span>
+              <div key={t.c} className="min-w-0 rounded-lg border border-white/30 bg-indigo-950/35 px-1.5 pb-1.5 pt-1" data-threat-col={t.c} data-threat-box="1">
+                <span className="mb-0.5 block text-center text-[12px] font-bold uppercase tracking-wider text-sky-100">Threat {t.c}</span>
+                <span className="flex flex-nowrap items-end justify-center gap-x-0.5">{t.ids.map((id, k) => tileBtn(id, threatTile, undefined, `${id}:${k}`))}</span>
               </div>
             ))}
           </div>
@@ -149,8 +150,8 @@ function MissionRoster({ data, campaign, m }: { data: GameData; campaign: Campai
               ))}
             </div>
             {threatOpen && (
-              <span key={threatOpen} className="bf-pop mt-1 flex flex-nowrap items-end justify-center gap-x-1" data-threat-col={threatOpen}>
-                {threats.find((t) => t.c === threatOpen)!.ids.map((id, k) => tileBtn(id, rowTile(perThreat), undefined, `${id}:${k}`))}
+              <span key={threatOpen} className="bf-pop mt-1 flex flex-nowrap items-end justify-center gap-x-1 rounded-lg border border-white/30 bg-indigo-950/35 p-1.5" data-threat-col={threatOpen} data-threat-box="1">
+                {threats.find((t) => t.c === threatOpen)!.ids.map((id, k) => tileBtn(id, Math.max(24, Math.min(full, Math.floor((width - 40) / perThreat) - 6)), undefined, `${id}:${k}`))}
               </span>
             )}
           </div>

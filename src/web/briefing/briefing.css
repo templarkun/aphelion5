@@ -388,14 +388,14 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
 .fp-aurora { fill: none; stroke: #fbbf24; stroke-width: 9; stroke-opacity: 0.22; stroke-linecap: round; animation: fp-sway 3s ease-in-out infinite alternate; }
 .fp-gyro { fill: #2f5f3c; stroke: #55b36b; }
 .fp-gyrobadge { fill: #55b36b; stroke: #d1fae5; }
-.fp-svg circle.fp-energy { fill: #f2c230; stroke: #fff; stroke-width: 0.8; }
+.fp-svg circle.fp-energy { fill: #ffec6e; stroke: #fff; stroke-width: 0.8; }
 .fp-svg circle.fp-faintfill { fill-opacity: 0.22; stroke-opacity: 0.3; }
 .fp-gyrotext { font: 800 13px/1 system-ui, sans-serif; fill: #fff; stroke: #0b0f17; stroke-width: 2; paint-order: stroke; }
 .fp-barbg { fill: #0b0f17; fill-opacity: 0.6; }
-.fp-energyrect { fill: #f2c230; }
-.fp-energyarc { fill: none; stroke: #f2c230; stroke-width: 2.4; stroke-linecap: round; }
-.fp-energyhex { fill: #f2c230; stroke: #0b0f17; stroke-width: 0.8; }
-.fp-tag { fill: #0b0f17; stroke: #f2c230; stroke-width: 1; }
+.fp-energyrect { fill: #ffec6e; }
+.fp-energyarc { fill: none; stroke: #ffec6e; stroke-width: 2.4; stroke-linecap: round; }
+.fp-energyhex { fill: #ffec6e; stroke: #0b0f17; stroke-width: 0.8; }
+.fp-tag { fill: #0b0f17; stroke: #ffec6e; stroke-width: 1; }
 .fp-svg circle.fp-eo { fill: #f97316; fill-opacity: 0.55; stroke: #fed7aa; stroke-width: 1.2; }
 .fp-svg circle.fp-fly { fill: #fdba74; animation: fp-fly 1.4s ease-in infinite; }
 .fp-chain { fill: none; stroke: #e9d5ff; stroke-width: 1.6; stroke-linejoin: round; animation: fp-twinkle 0.5s steps(2) infinite; }
@@ -412,5 +412,38 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
 @keyframes fp-nova { from { transform: scale(0.6); opacity: 1; } to { transform: scale(9); opacity: 0; } }
 @keyframes fp-thread { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -124; } }
 @keyframes fp-surge { 0%, 40%, 100% { stroke: #5b6b86; } 60% { stroke: #fdba74; stroke-width: 2.4; } }
+/* Round 29 previews: Comet, Fountain, Gyroscope; new Gyro rewards; Overload edges; End the Overload buttons; streams. */
+.fp-comet { animation: fp-comet 2.6s ease-in infinite; }
+@keyframes fp-comet { from { transform: translate(0, 0); opacity: 0; } 10% { opacity: 1; } 55% { transform: translate(64px, 34px); opacity: 1; } 56%, 100% { transform: translate(64px, 34px); opacity: 0; } }
+.fp-svg circle.fp-fount { animation: fp-fount 1.4s ease-in infinite; }
+@keyframes fp-fount { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 1; } 45% { transform: translate(calc(var(--fx) * 0.5), -10px); } 100% { transform: translate(var(--fx), 30px); opacity: 0; } }
+.fp-gyroring { fill: none; stroke: #fde68a; stroke-width: 1.6; stroke-dasharray: 2 5; animation: fp-dash 1.6s linear infinite; }
+@keyframes fp-dash { to { stroke-dashoffset: -28; } }
+.fp-svg circle.fp-pipoff { fill: #0b0f17; stroke: #ffec6e; stroke-width: 0.6; stroke-opacity: 0.6; }
+.fp-chainlink { fill: none; stroke: #ffec6e; stroke-width: 1; stroke-opacity: 0.8; }
+.fp-svg circle.fp-bead { stroke: #fff; filter: drop-shadow(0 0 2px #ffec6e); }
+.fp-loop { fill: none; stroke: #fb923c; stroke-width: 2.2; stroke-dasharray: 3 3; animation: fp-dash 1s linear infinite, fp-twinkle 1.6s ease-in-out infinite; }
+.fp-svg circle.fp-cloud { fill: #8b5cf6; fill-opacity: 0.45; animation: fp-twinkle 1.2s ease-in-out infinite; }
+.fp-torrent { fill: none; stroke: #fb923c; stroke-width: 4; stroke-dasharray: 2 4 6 3; animation: fp-dash 0.9s linear infinite; }
+.fp-breathwall { fill: none; stroke: #fdba74; stroke-width: 3; animation: fp-blow 2.4s ease-in-out infinite; }
+@keyframes fp-blow { 0%, 35% { transform: scale(1); opacity: 0.9; } 60% { transform: scale(0.72); opacity: 0.35; } 100% { transform: scale(1); opacity: 0.9; } }
+.fp-rift { fill: #7c3aed; stroke: #f3e8ff; stroke-width: 1; animation: fp-breath 2.2s ease-in-out infinite, fp-twinkle 2.2s ease-in-out infinite; }
+.fp-eob-body { stroke-width: 1.4; }
+.fp-eob-sun .fp-eob-body { fill: #f97316; fill-opacity: 0.45; stroke: #fed7aa; }
+.fp-eob-sun .fp-eob-corona { fill: none; stroke: #fb923c; stroke-width: 6; stroke-opacity: 0.25; animation: fp-breath 2.4s ease-in-out infinite; }
+.fp-eob-reactor .fp-eob-body { fill: #0c4a6e; fill-opacity: 0.8; stroke: #7dd3fc; }
+.fp-eob-singularity .fp-eob-body { fill: #000; stroke: #fde68a; }
+.fp-eob-orb .fp-eob-body { fill: #4c1d95; fill-opacity: 0.75; stroke: #ddd6fe; }
+.fp-eob-hazard .fp-eob-body { fill: #78350f; stroke: #fcd34d; }
+.fp-eob-forge .fp-eob-body { fill: #9a3412; stroke: #fdba74; animation: fp-forge 2.4s ease-in-out infinite; }
+@keyframes fp-forge { 0%, 100% { fill: #9a3412; } 50% { fill: #c2410c; } }
+.fp-eob-gate .fp-eob-body { fill: #0b1530; stroke: #7dd3fc; stroke-width: 5; }
+.fp-eob-ring { fill: none; stroke: #a5f3fc; stroke-width: 1.4; stroke-dasharray: 2 3; }
+.fp-svg circle.fp-eob-core { fill: #ecfeff; filter: drop-shadow(0 0 3px #67e8f9); animation: fp-twinkle 1.2s ease-in-out infinite; }
+.fp-disc { fill: none; stroke: #fb923c; stroke-width: 3; stroke-opacity: 0.6; }
+.fp-chevron { fill: none; stroke: #fde68a; stroke-width: 2; animation: fp-chev 1.35s linear infinite; }
+@keyframes fp-chev { from { transform: translateY(6px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(-14px); opacity: 0; } }
+.fp-sweep { fill: #fbbf24; fill-opacity: 0.28; }
+.fp-svg circle.fp-stream { animation-duration: 1.8s; animation-timing-function: linear; }
 html.still .fp-svg *, .fp-choice:disabled .fp-svg * { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .fp-svg * { animation: none !important; } }

@@ -86,6 +86,12 @@ export interface Profile {
    * page; display only, no rule reads it). Written at Game End (10.3). Absent in older profiles.
    */
   history?: GameRecord[];
+  /**
+   * The game being played (designer 2026-11-22, round 29: the statistics update after every mission,
+   * not only at Game End): its record as of its last Mission End, `result` "playing". Written by the
+   * screen (src/web/briefing/stats/live.ts), never by a rule; `key` = the game's start date and seed.
+   */
+  live?: { key: string; record: GameRecord };
 }
 
 /** One finished game, as the statistics page shows it. */
@@ -96,7 +102,8 @@ export interface GameRecord {
   campaign: string;
   company: string;
   freshness: "fresh" | "veteran";
-  result: "won" | "lost" | "conceded";
+  /** "playing": the game under way (Profile.live); "unfinished": left for a new game, kept with no result. */
+  result: "won" | "lost" | "conceded" | "playing" | "unfinished";
   score: number;
   /** Missions completed, in order, with their Threat columns. */
   missions: MissionResult[];

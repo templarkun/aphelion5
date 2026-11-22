@@ -25,11 +25,11 @@ function hexPath(cx: number, cy: number, r: number, corners: Corner): string {
 }
 
 /** Which moving pattern sketches each ready-to-tap look. */
-type Kind = "breath" | "rise" | "orbit" | "twinkle" | "beat" | "inward" | "glow" | "core" | "arcs" | "tide" | "comet" | "scan" | "brackets" | "outward" | "rays" | "chase" | "pond" | "lattice" | "rain" | "vortex" | "beacon" | "aurora";
+type Kind = "breath" | "rise" | "orbit" | "twinkle" | "beat" | "inward" | "glow" | "core" | "arcs" | "tide" | "comet" | "scan" | "brackets" | "outward" | "rays" | "chase" | "fountain" | "gyroscope" | "pond" | "lattice" | "rain" | "vortex" | "beacon" | "aurora";
 const READY_KIND: Record<string, Kind> = {
   original: "breath", embers: "rise", heartbeat: "beat", motes: "orbit", sparkle: "twinkle", gather: "inward", aura: "orbit", current: "orbit", arcs: "arcs",
   fill: "glow", inner: "glow", converge: "inward", drift: "rise", tide: "tide", core: "core", haze: "rise",
-  comet: "comet", scan: "scan", brackets: "brackets", ripple: "outward", corona: "rays", chase: "chase",
+  comet: "comet", scan: "scan", brackets: "brackets", ripple: "outward", fountain: "fountain", gyroscope: "gyroscope",
   pond: "pond", lattice: "lattice", rain: "rain", vortex: "vortex", beacon: "beacon", aurora: "aurora",
 };
 /** The six corners of the preview hexagon (pointy top), radius r. */
@@ -75,12 +75,30 @@ function Dots({ kind, hex }: { kind: string; hex: string }) {
     );
   if (kind === "arcs") return <path d={hex} className="fp-arcs" />;
   if (kind === "comet")
+    // Round 29: a comet streaking across the tile, its tail breaking up into sparks.
     return (
-      <g className="fp-spin" style={{ transformOrigin: `${C}px ${C}px`, animationDuration: "3.2s" }}>
-        {[0, 1, 2, 3, 4, 5].map((i) => {
-          const a = -Math.PI / 2 - i * 0.16;
-          return <circle key={i} cx={C + Math.cos(a) * R} cy={C + Math.sin(a) * R} r={3 - i * 0.42} style={{ opacity: 1 - i * 0.15 }} />;
-        })}
+      <g className="fp-comet">
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <circle key={i} cx={C - 30 + 10 - i * 4.2} cy={C - 16 - i * 1.8 + (i % 2 ? 1.5 : -1.5) * (i / 3)} r={Math.max(0.6, 3 - i * 0.38)} style={{ opacity: 1 - i * 0.12 }} />
+        ))}
+      </g>
+    );
+  if (kind === "fountain")
+    return (
+      <g>
+        {[...Array(10).keys()].map((i) => (
+          <circle key={i} cx={C} cy={C - R} r={1.6} className="fp-fount" style={{ "--fx": `${(i % 2 ? 1 : -1) * (10 + (i * 7) % 22)}px`, animationDelay: `${((i * 0.17) % 1.4).toFixed(2)}s` } as CSSProperties} />
+        ))}
+      </g>
+    );
+  if (kind === "gyroscope")
+    return (
+      <g>
+        {[0, 1].map((k) => (
+          <g key={k} transform={`rotate(${k ? -28 : 28} ${C} ${C})`}>
+            <ellipse cx={C} cy={C} rx={R + 4} ry={(R + 4) * 0.32} className="fp-gyroring" style={{ animationDelay: `${k * 0.6}s` }} />
+          </g>
+        ))}
       </g>
     );
   if (kind === "scan") return <line x1={C - R * 0.85} x2={C + R * 0.85} y1={C - R * 0.7} y2={C - R * 0.7} className="fp-scanline" />;
@@ -155,14 +173,24 @@ function Dots({ kind, hex }: { kind: string; hex: string }) {
   return null;
 }
 
-/** Energy Gyro reward looks (round 28): a green Gyro tile with "4 Yellow" shown each way. */
+/** Energy Gyro reward looks (round 28; round 29 set): a green Gyro tile with "4 Yellow" shown each way. */
 function GyroPreview({ id, hex, corners }: { id: string; hex: string; corners: Corner }) {
   const tok = (x: number, y: number, r = 4.2) => <circle cx={x} cy={y} r={r} className="fp-energy" />;
+  const bx = C + 18;
+  const by = C - 12;
+  // Four places curving round the left edges (as the Field: centred on the left side).
+  const left = (inset: number, gap: number, n = 4) =>
+    [...Array(n).keys()].map((i) => {
+      const a = Math.PI + ((i - (n - 1) / 2) * gap) / (R - inset);
+      const r = (R - inset) / Math.max(Math.abs(Math.cos(a - Math.PI)), 0.87);
+      return { x: C + Math.cos(a) * r * 0.87, y: C + Math.sin(a) * r * 0.9 };
+    });
+  const hexAt = (x: number, y: number, r: number) => [...Array(6).keys()].map((k) => `${(x + r * Math.cos((Math.PI / 3) * k - Math.PI / 2)).toFixed(1)},${(y + r * Math.sin((Math.PI / 3) * k - Math.PI / 2)).toFixed(1)}`).join(" ");
   return (
     <g>
       <path d={hex} className="fp-tile fp-gyro" />
-      <path d={hexPath(C + 18, C - 12, 8, corners)} className="fp-badge fp-gyrobadge" />
-      {id === "tokens" && [0, 1, 2, 3].map((i) => <g key={i}>{tok(C - R * 0.62, C - 13 + i * 8.7)}</g>)}
+      <path d={hexPath(bx, by, 8, corners)} className="fp-badge fp-gyrobadge" />
+      {id === "tokens" && left(6, 9.2).map((q, i) => <g key={i}>{tok(q.x, q.y)}</g>)}
       {id === "corner" && (
         <g>
           <text x={C - 23} y={C - 6} className="fp-gyrotext">
@@ -171,47 +199,115 @@ function GyroPreview({ id, hex, corners }: { id: string; hex: string; corners: C
           {tok(C - 10, C - 10, 5)}
         </g>
       )}
-      {id === "bar" && (
-        <g>
-          <rect x={C - R * 0.75} y={C - 15} width={6} height={30} rx={2} className="fp-barbg" />
-          {[0, 1, 2, 3].map((i) => (
-            <rect key={i} x={C - R * 0.75 + 1} y={C + 15 - (i + 1) * 7.2} width={4} height={6} rx={1} className="fp-energyrect" />
-          ))}
-        </g>
-      )}
       {id === "ring" &&
         [0, 1, 2, 3].map((i) => {
           const a0 = -Math.PI / 2 + (i / 4) * Math.PI * 2 + 0.2;
           const a1 = a0 + Math.PI / 2 - 0.4;
-          const x = C + 18;
-          const y = C - 12;
           const r = 11.5;
-          return <path key={i} d={`M${x + Math.cos(a0) * r},${y + Math.sin(a0) * r} A${r},${r} 0 0 1 ${x + Math.cos(a1) * r},${y + Math.sin(a1) * r}`} className="fp-energyarc" />;
+          return <path key={i} d={`M${bx + Math.cos(a0) * r},${by + Math.sin(a0) * r} A${r},${r} 0 0 1 ${bx + Math.cos(a1) * r},${by + Math.sin(a1) * r}`} className="fp-energyarc" />;
         })}
-      {id === "tag" && (
-        <g>
-          <rect x={C - 13} y={C - 22} width={26} height={11} rx={5.5} className="fp-tag" />
-          <text x={C - 9} y={C - 13.5} className="fp-chiptext">
-            +4
-          </text>
-          {tok(C + 7, C - 16.5, 3.4)}
-        </g>
-      )}
-      {id === "cells" &&
+      {id === "orbit" &&
         [0, 1, 2, 3].map((i) => {
-          const t = 0.18 + i * 0.22;
-          const x = C - R * 0.866 + R * 0.866 * t + 4;
-          const y = C - R * 0.5 - R * 0.5 * t + 6;
-          return <path key={i} d={hexPath(x, y, 3.6, "original")} className="fp-energyhex" />;
+          const a = -Math.PI * 0.62 + (i - 1.5) * 0.62;
+          return <g key={i}>{tok(bx + Math.cos(a) * 13, by + Math.sin(a) * 13, 3.2)}</g>;
         })}
-      {id === "watermark" && (
+      {id === "pips" &&
+        [0, 1, 2, 3, 4, 5].map((i) => {
+          const a = -Math.PI / 2 + (i / 6) * Math.PI * 2;
+          return <circle key={i} cx={bx + Math.cos(a) * 12} cy={by + Math.sin(a) * 12} r={i < 4 ? 2.4 : 1.6} className={i < 4 ? "fp-energy" : "fp-pipoff"} />;
+        })}
+      {id === "honeycomb" &&
+        [
+          [0, 0],
+          [6.6, 0],
+          [3.3, -5.7],
+          [3.3, 5.7],
+        ].map(([dx, dy], i) => <polygon key={i} points={hexAt(C - 21 + dx!, C + 1 + dy!, 3.7)} className="fp-energyhex" />)}
+      {id === "chain" && (
         <g>
-          <circle cx={C} cy={C + 3} r={20} className="fp-energy fp-faintfill" />
-          <text x={C - 19} y={C + 20} className="fp-gyrotext">
-            4
-          </text>
+          <polyline points={left(7, 9.2).map((q) => `${q.x},${q.y}`).join(" ")} className="fp-chainlink" />
+          {left(7, 9.2).map((q, i) => (
+            <polygon key={i} points={hexAt(q.x, q.y, 3.8)} className="fp-energyhex" />
+          ))}
         </g>
       )}
+      {id === "string" && (
+        <g>
+          <polyline points={left(5, 8, 6).map((q) => `${q.x},${q.y}`).join(" ")} className="fp-chainlink" />
+          {left(5, 8, 6)
+            .slice(1, -1)
+            .map((q, i) => (
+              <circle key={i} cx={q.x} cy={q.y} r={2.6} className="fp-energy fp-bead" />
+            ))}
+        </g>
+      )}
+    </g>
+  );
+}
+
+/** End the Overload button looks (round 29): a sketch of each shape, its colours and its effects. */
+function EndButtonPreview({ id }: { id: string }) {
+  const c = 50;
+  const shape = (cls: string) => {
+    if (id === "reactor") return <polygon points={[...Array(6).keys()].map((k) => `${c + 22 * Math.cos((Math.PI / 3) * k - Math.PI / 2)},${c + 22 * Math.sin((Math.PI / 3) * k - Math.PI / 2)}`).join(" ")} className={cls} />;
+    if (id === "hazard") return <polygon points={`${c},${c - 25} ${c + 25},${c} ${c},${c + 25} ${c - 25},${c}`} className={cls} />;
+    if (id === "forge") return <rect x={c - 20} y={c - 20} width={40} height={40} rx={10} className={cls} />;
+    if (id === "gate") return <circle cx={c} cy={c} r={20} className={cls} />;
+    return <circle cx={c} cy={c} r={id === "singularity" ? 12 : 21} className={cls} />;
+  };
+  const dots = (n: number, r: number, cls: string, delay = 0.13) =>
+    [...Array(n).keys()].map((i) => {
+      const a = (i / n) * Math.PI * 2;
+      return <circle key={i} cx={c + Math.cos(a) * r} cy={c + Math.sin(a) * r} r={1.7} className={cls} style={{ animationDelay: `${(i * delay).toFixed(2)}s` }} />;
+    });
+  return (
+    <g className={`fp-eob fp-eob-${id}`}>
+      <rect x={4} y={4} width={92} height={92} rx={6} className="fp-field" />
+      {id === "singularity" && (
+        <g className="fp-spin" style={{ transformOrigin: `${c}px ${c}px`, animationDuration: "2.6s" }}>
+          <ellipse cx={c} cy={c} rx={30} ry={9} className="fp-disc" />
+          {dots(10, 22, "fp-twinkle")}
+        </g>
+      )}
+      {shape("fp-eob-body")}
+      {id === "sun" && <circle cx={c} cy={c} r={30} className="fp-eob-corona" />}
+      {id === "reactor" && (
+        <g>
+          <g className="fp-spin" style={{ transformOrigin: `${c}px ${c}px`, animationDuration: "2s" }}>
+            <ellipse cx={c} cy={c} rx={13} ry={5} className="fp-eob-ring" />
+          </g>
+          <g className="fp-spin" style={{ transformOrigin: `${c}px ${c}px`, animationDuration: "3s", animationDirection: "reverse" }}>
+            <ellipse cx={c} cy={c} rx={5} ry={13} className="fp-eob-ring" />
+          </g>
+          <circle cx={c} cy={c} r={4.5} className="fp-eob-core" />
+        </g>
+      )}
+      {id === "orb" && (
+        <g>
+          <polyline points={`${c},${c} ${c + 7},${c - 6} ${c + 12},${c - 3} ${c + 17},${c - 10}`} className="fp-chain" />
+          <polyline points={`${c},${c} ${c - 8},${c + 4} ${c - 11},${c + 12}`} className="fp-chain" />
+          <circle cx={c} cy={c} r={4} className="fp-eob-core" />
+        </g>
+      )}
+      {id === "hazard" &&
+        [0, 1, 2].map((k) => <polyline key={k} points={`${c - 9},${c + 8} ${c},${c + 2} ${c + 9},${c + 8}`} className="fp-chevron" style={{ animationDelay: `${k * 0.45}s` }} />)}
+      {id === "hazard" && (
+        <g className="fp-spin" style={{ transformOrigin: `${c}px ${c}px`, animationDuration: "2.8s" }}>
+          <path d={`M${c},${c} L${c + 40},${c - 10} A41,41 0 0 1 ${c + 40},${c + 10} Z`} className="fp-sweep" />
+        </g>
+      )}
+      {id === "forge" && [0, 1, 2, 3, 4].map((i) => <circle key={i} className="fp-rise" cx={c - 14 + i * 7} cy={c - 18} r={1.6} style={{ animationDelay: `${((i * 0.37) % 1.6).toFixed(2)}s` }} />)}
+      {id === "gate" && (
+        <g>
+          <g className="fp-spin" style={{ transformOrigin: `${c}px ${c}px`, animationDuration: "1.6s", animationDirection: "reverse" }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <circle key={i} cx={c + Math.cos(i * 1.26) * (4 + i * 2.6)} cy={c + Math.sin(i * 1.26) * (4 + i * 2.6)} r={1.6} />
+            ))}
+          </g>
+          {dots(9, 20, "fp-chase", 0.17)}
+        </g>
+      )}
+      {id === "sun" && <circle cx={c} cy={c} r={10} className="fp-eob-core" />}
     </g>
   );
 }
@@ -233,10 +329,11 @@ function ExposurePreview({ id, corners }: { id: string; corners: Corner }) {
       <circle cx={btn.x} cy={btn.y} r={8} className="fp-eo" />
       {(id === "strike" || id === "drain") &&
         units.flatMap((u, i) =>
-          [0, 1, 2].map((j) => {
+          // Round 29: a steady stream (many motes, evenly spaced), not one quick burst.
+          [0, 1, 2, 3, 4, 5].map((j) => {
             const a = id === "strike" ? btn : u;
             const b = id === "strike" ? u : btn;
-            return <circle key={`${i}-${j}`} cx={a.x} cy={a.y} r={2.4 - j * 0.6} className="fp-fly" style={{ "--dx": `${b.x - a.x}px`, "--dy": `${b.y - a.y}px`, animationDelay: `${(i * 0.12 + j * 0.06).toFixed(2)}s` } as CSSProperties} />;
+            return <circle key={`${i}-${j}`} cx={a.x} cy={a.y} r={1.8} className="fp-fly fp-stream" style={{ "--dx": `${b.x - a.x}px`, "--dy": `${b.y - a.y}px`, animationDelay: `${(j * 0.3 + i * 0.07).toFixed(2)}s` } as CSSProperties} />;
           }),
         )}
       {id === "chain" && <polyline points={`${btn.x},${btn.y} 66,52 ${units[1]!.x},${units[1]!.y} 44,26 ${units[0]!.x},${units[0]!.y} 22,48 ${units[2]!.x},${units[2]!.y}`} className="fp-chain" />}
@@ -253,6 +350,7 @@ function Preview({ k, id, corners }: { k: keyof Features; id: string; corners: C
   if (k === "corners") body = <path d={hexPath(C, C, R + 10, id as Corner)} className="fp-tile fp-edge" />;
   else if (k === "gyroEnergy") body = <GyroPreview id={id} hex={hex} corners={corners} />;
   else if (k === "exposure") body = <ExposurePreview id={id} corners={corners} />;
+  else if (k === "endButton") body = <EndButtonPreview id={id} />;
   else if (k === "depth") {
     const n = id === "original" ? 0 : 4;
     const gap = id === "stack" ? 4 : 2.6;
@@ -296,17 +394,24 @@ function Preview({ k, id, corners }: { k: keyof Features; id: string; corners: C
         <rect x={8} y={14} width={84} height={72} rx={6} className="fp-plasma" />
         {id === "original" ? (
           <rect x={8} y={14} width={84} height={72} rx={6} className="fp-beam" />
-        ) : id === "storm" ? (
-          <polyline points="8,30 14,24 20,32 28,22 34,28 40,16" className="fp-chain" />
-        ) : id === "pulse" ? (
-          [
-            [8, 14],
-            [92, 14],
-            [92, 86],
-            [8, 86],
-          ].map(([x, y], i) => <circle key={i} cx={x} cy={y} r={3.5} className="fp-chase" style={{ animationDelay: `${i * 0.1}s` }} />)
-        ) : id === "veil" ? (
-          [...Array(16).keys()].map((i) => <circle key={i} cx={10 + i * 5.4} cy={i % 2 ? 18 : 82} r={1.8} className="fp-twinkle" style={{ animationDelay: `${((i * 0.29) % 1.4).toFixed(2)}s` }} />)
+        ) : id === "loops" ? (
+          [20, 58].map((x, i) => <path key={i} d={`M${x},86 Q${x + 11},${60 - i * 6} ${x + 22},86`} className="fp-loop" style={{ animationDelay: `${i * 0.8}s` }} />)
+        ) : id === "tempest" ? (
+          <g>
+            {[18, 50, 82].map((x, i) => <circle key={i} cx={x} cy={14} r={6} className="fp-cloud" style={{ animationDelay: `${i * 0.4}s` }} />)}
+            <polyline points="18,14 26,20 32,12 40,19 50,14" className="fp-chain" />
+          </g>
+        ) : id === "torrent" ? (
+          <rect x={8} y={14} width={84} height={72} rx={6} className="fp-torrent" />
+        ) : id === "breath" ? (
+          <rect x={8} y={14} width={84} height={72} rx={6} className="fp-breathwall" style={{ transformOrigin: "50px 50px" }} />
+        ) : id === "embers" ? (
+          [...Array(10).keys()].map((i) => <circle key={i} className="fp-rise" cx={i < 5 ? 12 + i * 2 : 88 - (i - 5) * 2} cy={84} r={1.6} style={{ animationDelay: `${((i * 0.33) % 1.6).toFixed(2)}s` }} />)
+        ) : id === "rift" ? (
+          <g>
+            <path d="M30,86 Q40,80 50,86 Q40,90 30,86 Z" className="fp-rift" />
+            <path d="M92,30 Q86,40 92,50 Q96,40 92,30 Z" className="fp-rift" style={{ animationDelay: "1.1s" }} />
+          </g>
         ) : (
           [0, 1, 2, 3, 4, 5].map((i) => <circle key={i} className="fp-inflow" cx={8 + (i % 3) * 42} cy={i > 2 ? 86 : 14} r={2} style={{ animationDelay: `${i * 0.3}s` }} />)
         )}

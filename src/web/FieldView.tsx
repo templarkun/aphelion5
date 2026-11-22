@@ -83,7 +83,8 @@ export interface FieldProps {
   shake?: ((key: string, now: number) => { dx: number; dy: number; scale?: number; sy?: number; alpha?: number; z?: number } | undefined) | undefined;
 }
 
-const ENERGY_HEX: Record<string, number> = { Yellow: 0xf2c230, Red: 0xe8402f, Blue: 0x2f74e8 };
+// Round 29 (designer): the Yellow energy token a lighter, lemon yellow, apart from the Flare's gold (TYPE_COLOUR 0xf2c94c).
+const ENERGY_HEX: Record<string, number> = { Yellow: 0xffec6e, Red: 0xe8402f, Blue: 0x2f74e8 };
 const ENERGY_CSS: Record<string, string> = { Yellow: "var(--yellow)", Red: "var(--red)", Blue: "var(--blue)" };
 const MOVE = 0x23c4a8;
 const ATTACK = 0xff5a36;
@@ -215,20 +216,41 @@ function addGyroEnergy(node: Container, n: number, colour: "Yellow" | "Red" | "B
     t.eventMode = "none";
     node.addChild(t);
   };
-  const edgeX = cx - size * 0.9 * 0.866;
+  // Round 29: places along the tile's left edges (an inset outline), centred on the middle of the left side,
+  // reaching up and down round the corners as there are more (never a second column).
+  const along = (inset: number, n: number, gap: number): { x: number; y: number }[] => {
+    const R = size * 0.9 - inset;
+    const pts = hexOutline(cx, cy, R);
+    let u0 = 0;
+    let best = Infinity;
+    for (let i = 0; i < 240; i++) {
+      const q = alongOutline(pts, i / 240);
+      const d = Math.hypot(q.x - (cx - R * 0.866), q.y - cy);
+      if (d < best) (best = d), (u0 = i / 240);
+    }
+    let per = 0;
+    for (let i = 0; i < pts.length; i += 2) per += Math.hypot(pts[(i + 2) % pts.length]! - pts[i]!, pts[(i + 3) % pts.length]! - pts[i + 1]!);
+    const du = gap / Math.max(1, per);
+    return Array.from({ length: n }, (_, i) => alongOutline(pts, u0 + (i - (n - 1) / 2) * du));
+  };
+  // The unit's glyph badge (upper right corner, glyphs.ts) and its size.
+  const badge = { x: cx + size * 0.6, y: cy - size * 0.33, h: Math.max(18, size * 0.38) };
+  const hexAt = (x: number, y: number, r: number): number[] => {
+    const pts: number[] = [];
+    for (let k = 0; k < 6; k++) {
+      const a = (Math.PI / 3) * k - Math.PI / 2;
+      pts.push(x + r * Math.cos(a), y + r * Math.sin(a));
+    }
+    return pts;
+  };
+  const light = shade(col, 1.45);
   if (look === "tokens") {
-    // One token per energy, placed one by one down the tile's left edge (two columns past 4).
-    const r = size * Math.min(0.085, 0.34 / Math.max(4, Math.min(n, 6)));
-    const per = Math.min(n, 4);
-    const gap = r * 2.25;
-    for (let i = 0; i < n; i++) {
-      const colI = Math.floor(i / per);
-      const row = i % per;
-      const x = edgeX + r * 1.35 + colI * gap;
-      const y = cy + (row - (per - 1) / 2) * gap;
-      g.circle(x, y, r * 1.18).fill({ color: 0x0b0f17, alpha: 0.5 });
-      g.circle(x, y, r).fill({ color: col }).stroke({ width: 1, color: 0xffffff, alpha: 0.6 });
-      glyph(x, y, r * 1.3);
+    // One token per energy, curving round the left edges (round 29: no second column past 4).
+    const r = size * Math.min(0.085, 0.6 / Math.max(7, n));
+    for (const q of along(r * 1.45, n, r * 2.3)) {
+      g.circle(q.x, q.y, r * 1.18).fill({ color: 0x0b0f17, alpha: 0.5 });
+      g.circle(q.x, q.y, r).fill({ color: col }).stroke({ width: 1, color: 0xffffff, alpha: 0.6 });
+      glyph(q.x, q.y, r * 1.3);
     }
   } else if (look === "corner") {
     // The number and the energy glyph in the upper left corner.
@@ -239,73 +261,89 @@ function addGyroEnergy(node: Container, n: number, colour: "Yellow" | "Red" | "B
     num(String(n), x, y, h * 0.95, 1);
     g.circle(x + h * 0.55, y, h * 0.48).fill({ color: col }).stroke({ width: 1, color: 0xffffff, alpha: 0.6 });
     glyph(x + h * 0.55, y, h * 0.62);
-  } else if (look === "bar") {
-    // A short bar of cells in the energy's colour just inside the left edge, bottom up.
-    const h = size * 0.8;
-    const w = Math.max(5, size * 0.09);
-    const x = edgeX + w * 0.9;
-    const top = cy - h / 2;
-    const cell = h / Math.max(n, 3);
-    g.roundRect(x - w / 2 - 1.5, top - 1.5, w + 3, cell * Math.max(n, 3) + 3, 3).fill({ color: 0x0b0f17, alpha: 0.6 });
-    for (let i = 0; i < n; i++) {
-      const y = top + (Math.max(n, 3) - 1 - i) * cell;
-      g.roundRect(x - w / 2, y + 1, w, cell - 2, 2).fill({ color: col }).stroke({ width: 0.8, color: 0xffffff, alpha: 0.45 });
-    }
-    glyph(x, top - w * 1.5, Math.max(9, w * 1.9));
   } else if (look === "ring") {
     // One lit segment per energy round the unit's glyph badge (upper right).
-    const h = Math.max(18, size * 0.38);
-    const x = cx + size * 0.6;
-    const y = cy - size * 0.33;
-    const R = h * 0.68;
+    const R = badge.h * 0.68;
     const gapA = 0.18;
     for (let i = 0; i < n; i++) {
       const a0 = -Math.PI / 2 + (i / n) * Math.PI * 2 + gapA / 2;
       const a1 = a0 + (Math.PI * 2) / n - gapA;
-      g.moveTo(x + Math.cos(a0) * R, y + Math.sin(a0) * R).arc(x, y, R, a0, a1).stroke({ width: Math.max(2.5, size * 0.045), color: col, cap: "round" });
+      g.moveTo(badge.x + Math.cos(a0) * R, badge.y + Math.sin(a0) * R).arc(badge.x, badge.y, R, a0, a1).stroke({ width: Math.max(2.5, size * 0.045), color: col, cap: "round" });
     }
-    g.circle(x, y, R + size * 0.04).stroke({ width: 1, color: 0x0b0f17, alpha: 0.5 });
-  } else if (look === "tag") {
-    // A small "+N" tag with the glyph in the tile's lower left, clear of the name and the tokens.
-    const h = Math.max(12, size * 0.19);
-    const w = h * 2.45;
-    const x = cx - size * 0.42;
-    const y = cy + size * 0.47;
-    g.roundRect(x - w / 2, y - h * 0.62, w, h * 1.24, h * 0.62).fill({ color: 0x0b0f17, alpha: 0.8 }).stroke({ width: 1.2, color: col, alpha: 0.95 });
-    num(`+${n}`, x - h * 0.42, y, h * 0.88);
-    g.circle(x + w / 2 - h * 0.62, y, h * 0.44).fill({ color: col });
-    glyph(x + w / 2 - h * 0.62, y, h * 0.6);
-  } else if (look === "cells") {
-    // Small hexagonal cells in the energy's colour along the upper left edge.
-    // Just inside the edge, from the left corner up towards the Level badge (six fit before it).
-    const r = Math.max(4, size * 0.06);
-    const ax = cx - size * 0.9 * 0.866;
-    const ay = cy - size * 0.45;
-    const bx = cx;
-    const by = cy - size * 0.9;
+    g.circle(badge.x, badge.y, R + size * 0.04).stroke({ width: 1, color: 0x0b0f17, alpha: 0.5 });
+  } else if (look === "orbit") {
+    // Token ring (round 29): small tokens set round the glyph badge like a crown, on the side facing the tile.
+    const R = badge.h * 0.82;
+    const r = Math.max(3.6, size * 0.06);
+    const span = Math.min(Math.PI * 1.5, (r * 2.4 * Math.max(1, n - 1)) / R);
+    const mid = -Math.PI * 0.62; // up and a little left: clear of the unit's name and the corner badges
     for (let i = 0; i < n; i++) {
-      const t = 0.1 + (i * 0.48) / Math.max(1, Math.max(n, 4) - 1);
-      const x = ax + (bx - ax) * t + 0.5 * r * 2.2;
-      const y = ay + (by - ay) * t + 0.866 * r * 2.2;
-      const pts: number[] = [];
-      for (let k = 0; k < 6; k++) {
-        const a = (Math.PI / 3) * k - Math.PI / 2;
-        pts.push(x + r * Math.cos(a), y + r * Math.sin(a));
+      const a = mid + (n === 1 ? 0 : -span / 2 + (span * i) / (n - 1));
+      const x = badge.x + Math.cos(a) * R;
+      const y = badge.y + Math.sin(a) * R;
+      g.circle(x, y, r * 1.22).fill({ color: 0x0b0f17, alpha: 0.55 });
+      g.circle(x, y, r).fill({ color: col }).stroke({ width: 0.9, color: 0xffffff, alpha: 0.65 });
+      glyph(x, y, r * 1.25);
+    }
+  } else if (look === "pips") {
+    // Pip ring (round 29): a ring of pips round the glyph badge, one lit and glowing per energy.
+    const slots = Math.max(6, n);
+    const R = badge.h * 0.74;
+    const r = Math.max(2.2, size * 0.034);
+    for (let i = 0; i < slots; i++) {
+      const a = -Math.PI / 2 + (i / slots) * Math.PI * 2;
+      const x = badge.x + Math.cos(a) * R;
+      const y = badge.y + Math.sin(a) * R;
+      if (i < n) {
+        g.circle(x, y, r * 2.3).fill({ color: col, alpha: 0.28 });
+        g.circle(x, y, r).fill({ color: col }).stroke({ width: 0.8, color: 0xffffff, alpha: 0.8 });
+        g.circle(x - r * 0.3, y - r * 0.3, r * 0.4).fill({ color: 0xffffff, alpha: 0.8 });
+      } else g.circle(x, y, r * 0.8).fill({ color: 0x0b0f17, alpha: 0.6 }).stroke({ width: 0.8, color: col, alpha: 0.5 });
+    }
+  } else if (look === "honeycomb") {
+    // Honeycomb (round 29): hexagonal cells packed together at the tile's left side (clear of the next-tile
+    // badge in the lower left corner), from the middle out.
+    const rc = Math.max(4.2, size * (n > 7 ? 0.06 : 0.074));
+    const d = rc * Math.sqrt(3) * 1.06;
+    const ox = cx - size * 0.52;
+    const oy = cy + size * 0.04;
+    const spots: { x: number; y: number }[] = [{ x: ox, y: oy }];
+    // Ring 1 then ring 2 of a pointy-top hex grid, the cells nearest the tile's middle first.
+    for (let ring = 1; spots.length < n && ring <= 2; ring++) {
+      const ringSpots: { x: number; y: number }[] = [];
+      for (let k = 0; k < 6 * ring; k++) {
+        const side = Math.floor(k / ring);
+        const f = (k % ring) / ring;
+        const a0 = (Math.PI / 3) * side;
+        const a1 = (Math.PI / 3) * (side + 1);
+        ringSpots.push({ x: ox + ring * d * (Math.cos(a0) + (Math.cos(a1) - Math.cos(a0)) * f), y: oy + ring * d * (Math.sin(a0) + (Math.sin(a1) - Math.sin(a0)) * f) });
       }
-      g.poly(pts).fill({ color: col }).stroke({ width: 1, color: 0x0b0f17, alpha: 0.6 });
+      ringSpots.sort((p, q) => Math.hypot(p.x - cx, p.y - cy) - Math.hypot(q.x - cx, q.y - cy));
+      spots.push(...ringSpots);
+    }
+    spots.slice(0, n).forEach((q) => {
+      g.poly(hexAt(q.x, q.y, rc)).fill({ color: col }).stroke({ width: 1, color: 0x0b0f17, alpha: 0.7 });
+      g.poly(hexAt(q.x, q.y - rc * 0.12, rc * 0.52)).fill({ color: light, alpha: 0.55 });
+    });
+  } else if (look === "chain") {
+    // Cell chain (round 29): hexagonal cells linked by a thread, curving round the left edges.
+    const rc = Math.max(4, size * Math.min(0.068, 0.5 / Math.max(7, n)));
+    const at = along(rc * 1.6, n, rc * 2.5);
+    if (at.length > 1) g.poly(at.flatMap((q) => [q.x, q.y]), false).stroke({ width: Math.max(1.5, rc * 0.45), color: 0x0b0f17, alpha: 0.6 }).stroke({ width: Math.max(0.8, rc * 0.2), color: col, alpha: 0.9 });
+    for (const q of at) {
+      g.poly(hexAt(q.x, q.y, rc)).fill({ color: col }).stroke({ width: 1, color: 0x0b0f17, alpha: 0.7 });
+      g.poly(hexAt(q.x, q.y - rc * 0.12, rc * 0.5)).fill({ color: light, alpha: 0.55 });
     }
   } else {
-    // Watermark: the energy glyph faint and large in the tile, the number on it.
-    if (tex) {
-      const sp = new Sprite({ texture: tex, anchor: 0.5, x: cx, y: cy + size * 0.05 });
-      sp.scale.set((size * 0.95) / Math.max(tex.width, tex.height));
-      sp.alpha = 0.3;
-      sp.tint = col;
-      sp.eventMode = "none";
-      node.addChild(sp);
+    // Bead string (round 29): a thin thread of the energy's colour along the left edges, a glowing bead per energy.
+    const r = Math.max(2.6, size * Math.min(0.05, 0.4 / Math.max(7, n)));
+    const at = along(r * 2.2, n + 2, r * 3.4);
+    g.poly(at.flatMap((q) => [q.x, q.y]), false).stroke({ width: 2.2, color: 0x0b0f17, alpha: 0.45 }).stroke({ width: 1, color: col, alpha: 0.75 });
+    for (const q of at.slice(1, -1)) {
+      g.circle(q.x, q.y, r * 2.2).fill({ color: col, alpha: 0.25 });
+      g.circle(q.x, q.y, r).fill({ color: col }).stroke({ width: 0.8, color: 0xffffff, alpha: 0.7 });
+      g.circle(q.x - r * 0.3, q.y - r * 0.3, r * 0.38).fill({ color: 0xffffff, alpha: 0.85 });
     }
-    num(String(n), cx - size * 0.42, cy + size * 0.42, Math.max(12, size * 0.28), 0.5, 0.95);
-    g.circle(cx - size * 0.42, cy + size * 0.42, Math.max(9, size * 0.17)).fill({ color: col, alpha: 0.55 });
   }
 }
 
@@ -617,14 +655,43 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
   }
   // Round 28 (designer 2026-11-22): six more of each, kept light (a few dozen dots at most per tile).
   if (how === "comet") {
-    // One bright spark circles the edge, a tail of fading motes behind it.
-    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.28 });
-    const u = hash3(seed, 0, 40) + now / 3600;
-    for (let j = 13; j >= 0; j--) {
-      const pt = alongOutline(edge, u - j * 0.011);
-      const f = 1 - j / 14;
-      const wob = j ? (hash3(seed, j, Math.floor(now / 90)) - 0.5) * size * 0.012 * j * 0.3 : 0;
-      g.circle(pt.x + wob, pt.y + wob, size * (0.006 + 0.02 * f * f)).fill({ color: j < 2 ? 0xfff6dd : READY, alpha: 0.15 + 0.8 * f * f });
+    // Round 29 (designer: too like Fireflies' dot going round): now and then a comet streaks across the
+    // tile on a slanting line, a bright head and a wide tail that breaks up into sparks drifting off.
+    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.3 });
+    const P = 2600;
+    const cyc = (now + hash3(seed, 0, 40) * P) / P;
+    const n = Math.floor(cyc);
+    const t = cyc - n;
+    const run = 0.55;
+    const dir = hash3(seed, n, 41) < 0.5 ? 1 : -1;
+    const tilt = 0.35 + 0.35 * hash3(seed, n, 42);
+    const L = r * 1.5;
+    const from = { x: cx - dir * L, y: cy - L * tilt };
+    const to = { x: cx + dir * L, y: cy + L * tilt * 0.6 };
+    const pos = (q: number) => ({ x: from.x + (to.x - from.x) * q, y: from.y + (to.y - from.y) * q });
+    // Sparks shed along the way linger and drift after the head has gone.
+    for (let i = 0; i < 26; i++) {
+      const shed = hash3(seed, i, n + 43) * run;
+      const age = (t - shed) / 0.5;
+      if (age <= 0 || age >= 1) continue;
+      const at = pos(shed / run);
+      const ang = hash3(seed, i, n + 44) * Math.PI * 2;
+      const d = size * 0.14 * age * (0.4 + 0.6 * hash3(seed, i, 45));
+      g.circle(at.x + Math.cos(ang) * d, at.y + Math.sin(ang) * d + size * 0.05 * age, size * (0.006 + 0.008 * (1 - age))).fill({ color: i % 3 ? READY : 0xfff1c9, alpha: 0.75 * (1 - age) });
+    }
+    if (t < run) {
+      const q = t / run;
+      const head = pos(q);
+      for (let j = 10; j >= 1; j--) {
+        const at = pos(Math.max(0, q - j * 0.035));
+        const f = 1 - j / 11;
+        const spread = size * 0.012 * j;
+        g.circle(at.x + (hash3(seed, j, Math.floor(now / 70)) - 0.5) * spread, at.y + (hash3(seed, j + 9, Math.floor(now / 70)) - 0.5) * spread, size * (0.008 + 0.022 * f)).fill({ color: READY, alpha: 0.12 + 0.35 * f });
+      }
+      g.circle(head.x, head.y, size * 0.06).fill({ color: READY, alpha: 0.3 });
+      g.circle(head.x, head.y, size * 0.028).fill({ color: 0xfff6dd, alpha: 0.95 });
+      // A short glint across the head.
+      g.moveTo(head.x - size * 0.07, head.y).lineTo(head.x + size * 0.07, head.y).stroke({ width: 1, color: 0xfff6dd, alpha: 0.6 });
     }
     return;
   }
@@ -681,34 +748,55 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
     }
     return;
   }
-  if (how === "corona") {
-    // Short rays of light flicker round the edge like the rim of a small sun.
-    const k = breath(now, 3000);
-    g.poly(edge).stroke({ width: 1.3, color: READY, alpha: 0.4 + 0.3 * k });
-    const tick = Math.floor(now / 110);
-    for (let i = 0; i < 24; i++) {
-      const at = alongOutline(edge, i / 24);
-      const f = hash3(seed, i, tick) * (0.5 + 0.5 * Math.sin(now / 700 + i));
-      const len = size * 0.1 * f;
-      const ox = (at.x - cx) / r;
-      const oy = (at.y - cy) / r;
-      g.moveTo(at.x, at.y).lineTo(at.x + ox * len, at.y + oy * len).stroke({ width: 1.2, color: f > 0.6 ? 0xfff1c9 : READY, alpha: 0.2 + 0.6 * f });
+  if (how === "fountain") {
+    // Round 29: sparks spring up from the tile's top corner, arc over and fall down round its sides.
+    const k = breath(now, 2600);
+    g.poly(edge).stroke({ width: 1.1, color: READY, alpha: 0.3 + 0.25 * k });
+    const top = alongOutline(edge, 5 / 6);
+    let tx = top.x;
+    let ty = top.y;
+    // The topmost point of the outline (whatever the corners).
+    for (let i = 0; i < 48; i++) {
+      const q = alongOutline(edge, i / 48);
+      if (q.y < ty) (tx = q.x), (ty = q.y);
+    }
+    g.circle(tx, ty, size * 0.045).fill({ color: READY, alpha: 0.18 + 0.15 * k });
+    for (let i = 0; i < 26; i++) {
+      const P = 1500 + 700 * hash3(seed, i, 54);
+      const t = ((now / P + hash3(seed, i, 55)) % 1 + 1) % 1;
+      const side = hash3(seed, i, 56) < 0.5 ? -1 : 1;
+      const vx = side * size * (0.25 + 0.55 * hash3(seed, i, 57));
+      const vy = -size * (0.35 + 0.35 * hash3(seed, i, 58));
+      const gr = size * 2.1;
+      const x = tx + vx * t;
+      const y = ty + vy * t + 0.5 * gr * t * t;
+      const a = Math.sin(Math.PI * Math.min(1, t * 1.3)) * (1 - t * 0.6);
+      g.circle(x, y, size * (0.006 + 0.009 * (1 - t))).fill({ color: t < 0.25 ? 0xfff6dd : READY, alpha: 0.85 * a });
     }
     return;
   }
-  if (how === "chase") {
-    // The six corners light one after another round the tile.
-    const pts = hexPoints(cx, cy, r);
-    const n = pts.length / 2;
+  if (how === "gyroscope") {
+    // Round 29: two rings of fine particles turn round the tile, tilted like a gyroscope's rings; the
+    // part of each ring behind the tile is dimmer.
     g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.3 });
-    const head = (now / 260) % 6;
-    for (let i = 0; i < 6; i++) {
-      const d = (head - i + 6) % 6;
-      const k = Math.max(0, 1 - d / 2.2);
-      const at = alongOutline(pts, (Math.floor((i * n) / 6) + (n / 6) / 2) / n);
-      if (k <= 0) continue;
-      g.circle(at.x, at.y, size * (0.03 + 0.04 * k)).fill({ color: READY, alpha: 0.25 * k });
-      g.circle(at.x, at.y, size * (0.012 + 0.012 * k)).fill({ color: 0xfff6dd, alpha: 0.9 * k });
+    const rings = [
+      { tilt: 0.32, turn: now / 2600, spin: 0.6 },
+      { tilt: 0.32, turn: -now / 3400 + Math.PI / 2, spin: -0.9 },
+    ];
+    for (const [ri, ring] of rings.entries()) {
+      const ca = Math.cos(ring.turn * 0.25 + ri * 1.2);
+      const sa = Math.sin(ring.turn * 0.25 + ri * 1.2);
+      for (let i = 0; i < 26; i++) {
+        const a = (i / 26) * Math.PI * 2 + now / 1000 * ring.spin;
+        const ex = Math.cos(a) * r * 1.08;
+        const ey = Math.sin(a) * r * 1.08 * ring.tilt;
+        const x = cx + ex * ca - ey * sa;
+        const y = cy + ex * sa + ey * ca;
+        const front = Math.sin(a) > 0;
+        const head = ((((a - now / 1000 * ring.spin * 2.2) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2);
+        const glow = Math.exp(-((Math.min(head, 1 - head) / 0.12) ** 2));
+        g.circle(x, y, size * (0.006 + 0.012 * glow)).fill({ color: glow > 0.6 ? 0xfff6dd : READY, alpha: (front ? 0.75 : 0.25) * (0.35 + 0.65 * glow) });
+      }
     }
     return;
   }

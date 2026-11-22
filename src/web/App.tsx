@@ -5,6 +5,7 @@
  */
 
 import { AllyDrop, allyDropUnit } from "./AllyDrop.js";
+import { dropLive, retireLive, withLive } from "./briefing/stats/live.js";
 import { isWide } from "./wide.js";
 import { CrashGuard } from "./Crash.js";
 import { lookAskOf, StackPicker, stackAskOf } from "./StackPicker.js";
@@ -139,10 +140,11 @@ export function App() {
     void writeSave(toSave(g, p, autoAnswer));
   }
 
-  function update(g: Game): void {
+  function update(g: Game, base: Profile = profile): void {
     const ended = g.view.status === "stopped" && g.view.state.ending !== undefined;
-    const p = ended ? g.view.state.profile : profile;
-    if (ended) setProfile(p);
+    // Round 29: the statistics follow the game after every Mission End (stats/live.ts).
+    const p = ended ? dropLive(g.view.state.profile) : withLive(base, g);
+    if (p !== profile) setProfile(p);
     setGame(g);
     persist(g, p);
   }
@@ -151,7 +153,7 @@ export function App() {
     setError(f.note);
     setProfile(f.profile);
     if (f.game) {
-      update(replayGame(data, f.game.start, f.game.answers));
+      update(replayGame(data, f.game.start, f.game.answers), f.profile);
       setInMenu(false);
     } else persist(undefined, f.profile);
   }
@@ -191,7 +193,9 @@ export function App() {
         onLaunch={(l) => {
           // The compiled loadout answers the engine's setup questions (7.1); the Threat screen comes next (7.2 step 3).
           setError(undefined);
-          update(applyLoadout(data, startGame(data, { seed: l.seed, date: today(), developerMode: l.developerMode, autoAnswer, profile }), l));
+          // A game still under way is left for this one: its statistics join the history (stats/live.ts).
+          const p0 = retireLive(profile);
+          update(applyLoadout(data, startGame(data, { seed: l.seed, date: today(), developerMode: l.developerMode, autoAnswer, profile: p0 }), l), p0);
           setInMenu(false);
         }}
         onImport={async () => {

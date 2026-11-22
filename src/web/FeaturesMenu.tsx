@@ -17,6 +17,7 @@ const MENU_TITLE: Partial<Record<keyof Features, string>> = {
   next: "A sector's next tile, once you have looked at it",
   gyroEnergy: "Energy Gyros: the energy you gain by destroying one",
   exposure: "Overload End: Exposure damage (animation)",
+  endButton: "Overload End: the button's look",
 };
 
 export function FeaturesMenu() {
