@@ -15,6 +15,8 @@ const MENU_TITLE: Partial<Record<keyof Features, string>> = {
   names: "Unit names on the tiles",
   overload: "Overload: the Field's edge (animation)",
   next: "A sector's next tile, once you have looked at it",
+  gyroEnergy: "Energy Gyros: the energy you gain by destroying one",
+  exposure: "Overload End: Exposure damage (animation)",
 };
 
 export function FeaturesMenu() {

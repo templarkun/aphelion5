@@ -81,6 +81,8 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   ...Object.fromEntries(Object.entries(FX).map(([k, f]) => [k, (q: Question, g: Game) => /choose an action/i.test(q.prompt) && f(q, g) !== undefined])),
   // End the Overload offered (its button, designer 2026-11-09).
   endoverload: (q) => (q.shortcuts ?? []).some((o) => o.id === "endOverload"),
+  // Round 28: End the Overload with two or more units alone on their plates (Exposure, 9.3 step 2).
+  exposure: (q, g) => (q.shortcuts ?? []).some((o) => o.id === "endOverload") && eventsOf(g, "endOverload").filter((e) => e.kind === "hit" && e.rule === "9.3").length >= 2,
   // A Barrier and a Fuse token on the Field at once (drawn as pieces, designer 2026-11-09).
   tokens: (q, g) => {
     const s = g.view.state;
@@ -103,6 +105,11 @@ const WANTED: Record<string, (q: Question, g: Game) => boolean> = {
   gain: (q) => q.kind === "split" && q.pick === "reserve",
   // A sector holding a tile the player has looked at (round 24: the second hover bubble, the next-tile looks).
   seen: (q, g) => /choose an action/i.test(q.prompt) && seenSector(g) !== undefined,
+  // Round 28: an Energy Gyro (G_01-G_09) on the Field at an action menu (its reward Feature).
+  gyro: (q, g) => {
+    const s = g.view.state;
+    return /choose an action/i.test(q.prompt) && sectorKeys(s).some((k) => sectorState(s, k) === "occupied" && /^G_0[1-9]$/.test(s.tiles[topTileId(s, k)!]!.unitId ?? ""));
+  },
   // Ready Alerts on the Field (token at the bottom corner and a pulsing rim, designer 2026-11-09).
   alert: (q, g) => /choose an action/i.test(q.prompt) && alertsOnField(g) >= 2,
   // Removing damage from the Flagship (bubbles by the Bays, designer 2026-11-09).

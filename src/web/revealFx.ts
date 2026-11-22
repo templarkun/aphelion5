@@ -351,8 +351,9 @@ export function gyroBreak(g: Graphics, cx: number, cy: number, size: number, p: 
  * An Overload under way (designer 2026-11-09): beams of plasma race round the edge of the Field,
  * with sparks drifting in from it. `w`, `h`: the Field's size; `now` in ms (0 = still).
  */
-export function drawOverloadRing(g: Graphics, w: number, h: number, now: number, look: "original" | "inflow" = "original"): void {
+export function drawOverloadRing(g: Graphics, w: number, h: number, now: number, look: "original" | "inflow" | "storm" | "pulse" | "veil" = "original"): void {
   if (look === "inflow") return drawOverloadInflow(g, w, h, now);
+  if (look === "storm" || look === "pulse" || look === "veil") return drawOverloadMore(g, w, h, now, look);
   const inset = 6;
   const W = w - 2 * inset;
   const H = h - 2 * inset;
@@ -474,5 +475,124 @@ function drawOverloadInflow(g: Graphics, w: number, h: number, now: number): voi
     const e = edge(rnd(i + 950) + now / 90000);
     const d = 3 + u * 16;
     g.circle(e.x + e.nx * d, e.y + e.ny * d, 1 + 1.2 * (1 - u)).fill({ color: i % 3 ? 0xff8a3a : 0xb07cff, alpha: 0.6 * (1 - u) });
+  }
+}
+
+
+/**
+ * Round 28 (designer 2026-11-22): three more looks of the Field's edge in an Overload (the plasma wave
+ * stays under them). Storm: arcs of lightning crawl along the edge, flicker and crackle out with
+ * sparks. Pulse: pulses of light run from the four corners along the edges and burst into motes where
+ * they meet. Veil: a curtain of particles ripples along the whole edge, red shading to violet.
+ * Every mote worked out from the time alone (`now` 0 = still: only the edge glow); a few hundred
+ * dots at most.
+ */
+function drawOverloadMore(g: Graphics, w: number, h: number, now: number, look: "storm" | "pulse" | "veil"): void {
+  const inset = 6;
+  const W = w - 2 * inset;
+  const H = h - 2 * inset;
+  if (W <= 0 || H <= 0) return;
+  const per = 2 * (W + H);
+  const edge = (t: number): { x: number; y: number; nx: number; ny: number } => {
+    let s = (((t % 1) + 1) % 1) * per;
+    if (s < W) return { x: inset + s, y: inset, nx: 0, ny: 1 };
+    s -= W;
+    if (s < H) return { x: inset + W, y: inset + s, nx: -1, ny: 0 };
+    s -= H;
+    if (s < W) return { x: inset + W - s, y: inset + H, nx: 0, ny: -1 };
+    s -= W;
+    return { x: inset, y: inset + H - s, nx: 1, ny: 0 };
+  };
+  const pulse = 0.5 + 0.5 * Math.sin(now / 420);
+  g.rect(inset, inset, W, H).stroke({ width: 14, color: 0xff3b1a, alpha: 0.08 + 0.06 * pulse });
+  g.rect(inset, inset, W, H).stroke({ width: 2, color: 0xff7a3a, alpha: 0.3 + 0.2 * pulse });
+  if (!now) return;
+  if (look === "storm") {
+    const arcs = Math.round(Math.min(9, Math.max(4, per / 260)));
+    for (let a = 0; a < arcs; a++) {
+      const P = 900 + 700 * rnd(a + 1200);
+      const cyc = now / P + rnd(a + 1300);
+      const n = Math.floor(cyc);
+      const t = cyc - n;
+      if (t > 0.45) continue;
+      const life = 1 - t / 0.45;
+      const flick = Math.floor(now / 45);
+      const u0 = rnd(a * 17 + n * 5 + 1400);
+      const len = (60 + 120 * rnd(a + n + 1500)) / per;
+      const steps = 14;
+      const pts: number[] = [];
+      for (let j = 0; j <= steps; j++) {
+        const e = edge(u0 + (len * j) / steps);
+        const jit = j === 0 || j === steps ? 2 : 2 + (rnd(a * 31 + j * 7 + flick) - 0.3) * 18;
+        pts.push(e.x + e.nx * jit, e.y + e.ny * jit);
+      }
+      g.poly(pts, false).stroke({ width: 6, color: a % 3 ? 0xff6a2a : 0xb07cff, alpha: 0.22 * life });
+      g.poly(pts, false).stroke({ width: 1.6, color: 0xfff0d0, alpha: 0.9 * life });
+      // A fork now and then, and sparks thrown inwards.
+      if (rnd(a + n * 3 + 1600) > 0.4) {
+        const k = 2 * (3 + Math.floor(rnd(a + n + 1700) * (steps - 6)));
+        const x0 = pts[k]!;
+        const y0 = pts[k + 1]!;
+        const e = edge(u0 + (len * k) / 2 / steps);
+        const fx = x0 + e.nx * (14 + 16 * rnd(a + flick)) + (rnd(a + flick + 3) - 0.5) * 16;
+        const fy = y0 + e.ny * (14 + 16 * rnd(a + flick)) + (rnd(a + flick + 5) - 0.5) * 16;
+        g.moveTo(x0, y0).lineTo(fx, fy).stroke({ width: 1.1, color: 0xffe2b0, alpha: 0.7 * life });
+      }
+      for (let j = 0; j < 6; j++) {
+        const e = edge(u0 + len * rnd(a * 13 + j + n * 11));
+        const d = 4 + 26 * (1 - life) * (0.5 + rnd(j + a));
+        g.circle(e.x + e.nx * d, e.y + e.ny * d, 1.3).fill({ color: 0xffd0a0, alpha: life });
+      }
+    }
+  } else if (look === "pulse") {
+    // A pulse leaves each corner every 2.4 s, both ways; where two meet (mid-side) they burst.
+    const P = 2400;
+    const t = (now % P) / P;
+    const corners = [0, W / per, (W + H) / per, (2 * W + H) / per];
+    const sides = [W, H, W, H];
+    for (let c = 0; c < 4; c++) {
+      for (const dir of [1, -1]) {
+        const side = dir === 1 ? sides[c]! : sides[(c + 3) % 4]!;
+        const reach = (side / 2) / per;
+        if (t > 0.75) continue;
+        const q = t / 0.75;
+        const head = corners[c]! + dir * reach * q * q;
+        for (let k = 0; k < 10; k++) {
+          const e = edge(head - dir * k * 0.004);
+          const f = 1 - k / 10;
+          g.circle(e.x + e.nx * 3, e.y + e.ny * 3, (k ? 2.2 : 4.5) * f + 0.6).fill({ color: k < 2 ? 0xfff0d0 : c % 2 ? 0xb07cff : 0xff6a2a, alpha: 0.75 * f });
+        }
+      }
+    }
+    if (t > 0.72) {
+      const q = (t - 0.72) / 0.28;
+      for (let c = 0; c < 4; c++) {
+        const mid = corners[c]! + sides[c]! / 2 / per;
+        const e = edge(mid);
+        for (let j = 0; j < 18; j++) {
+          const ang = (rnd(c * 40 + j) - 0.5) * Math.PI * 0.95;
+          const ca = Math.cos(ang);
+          const sa = Math.sin(ang);
+          const dx = e.nx * ca - e.ny * sa;
+          const dy = e.ny * ca + e.nx * sa;
+          const d = 6 + 60 * q * (0.4 + 0.6 * rnd(c * 40 + j + 7));
+          g.circle(e.x + dx * d, e.y + dy * d, 1.6 * (1 - q) + 0.5).fill({ color: j % 3 ? 0xff9a4a : 0xfff0d0, alpha: 0.85 * (1 - q) });
+        }
+        g.circle(e.x, e.y, 6 + 18 * q).stroke({ width: 2 * (1 - q) + 0.5, color: 0xffb070, alpha: 0.6 * (1 - q) });
+      }
+    }
+  } else {
+    // Veil: motes in a band along the edge, each rising and sinking on a slow travelling wave.
+    const n = Math.round(Math.min(260, Math.max(90, per / 6)));
+    for (let i = 0; i < n; i++) {
+      const u = i / n + rnd(i + 1800) * 0.004;
+      const e = edge(u);
+      const wave = 0.5 + 0.5 * Math.sin(u * Math.PI * 2 * 7 - now / 700) * Math.sin(u * Math.PI * 2 * 3 + now / 1900);
+      const d = 3 + (8 + 34 * wave) * rnd(i + 1900) ** 1.5;
+      const tw = 0.4 + 0.6 * Math.max(0, Math.sin(now / (300 + 400 * rnd(i + 2000)) + i));
+      const mix = 0.5 + 0.5 * Math.sin(u * Math.PI * 2 * 2 + now / 2600);
+      const col = mix > 0.62 ? 0xb07cff : mix < 0.38 ? 0xff5a1f : 0xff9a5a;
+      g.circle(e.x + e.nx * d, e.y + e.ny * d, 1 + 1.4 * wave * (1 - d / 50)).fill({ color: col, alpha: (0.25 + 0.6 * wave) * tw });
+    }
   }
 }

@@ -29,12 +29,14 @@ import type { GameState, TileId } from "../engine/state.js";
 import { arrowSides, fromKey } from "../geometry/hex.js";
 import { type NodeLook, Player, type Step, easeInOut, easeOut, parallel } from "./anim.js";
 import { type ShotLook, type Source, type Target, UNIT_SHOT, edgeOf, fireGlow, shotStep, weaponStep } from "./weapons.js";
+import { endOverloadAt, exposureStep } from "./exposureFx.js";
+import { gyroReward } from "./gyroEnergy.js";
 import { BIG_REVEAL, chargeLook, drawOverloadRing, gyroBreak, gyroDrain, revealFxStep, sleeperActivate } from "./revealFx.js";
 import { addLevel, addUnitMarks } from "./unitMarks.js";
 import { BADGE_ASPECT, CLEARED_COLOUR, energyGlyphImage, glyphBadge, TYPE_COLOUR } from "./glyphs.js";
 import { drawAlert, drawEnergyBorder, flareEnergySpots } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
-import { dropStep, fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
+import { dropStep, fizzleStep, landingDust, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
 import { isStill, onMotion, speedFactor } from "./motion.js";
 import { alongOutline, hexOutline, onFeatures, features } from "./features.js";
 import { PlasmaWave } from "./plasmaFx.js";
@@ -156,6 +158,16 @@ function addNextTile(node: Container, unitId: string | undefined, cx: number, cy
     // Behind the words: right after the tile's own plate.
     const sp = put(size * (dark ? 0.62 : 0.72), cx, cy + size * 0.06, dark ? 0.2 : 0.16);
     node.addChildAt(sp, Math.min(1, node.children.length - 1));
+  } else if (look === "behind") {
+    // Round 28: its glyph badge tucked just behind the unit's own badge (upper right), like a card under
+    // a card; a Dark sector has no badge of its own, so it sits there by itself, a little dimmer.
+    const h = Math.max(15, size * 0.32);
+    const x = cx + size * (dark ? 0.6 : 0.47);
+    const y = cy - size * (dark ? 0.33 : 0.2);
+    const sp = put(h, x, y, dark ? 0.8 : 0.9);
+    // Before the unit's own badge, so that one stays on top.
+    const own = node.children.findIndex((ch) => ch.label === "glyph-badge");
+    if (own >= 0) node.addChildAt(sp, own);
   } else {
     // A small dark chip at the tile's foot: the word "next" and the glyph.
     const h = Math.max(13, size * 0.22);
@@ -171,6 +183,128 @@ function addNextTile(node: Container, unitId: string | undefined, cx: number, cy
     t.eventMode = "none";
     node.addChild(t);
     put(h * 1.05, cx + w / 2 - h * 0.6, y);
+  }
+}
+
+/**
+ * Feature (designer 2026-11-22, round 28): an Energy Gyro (G_01-G_09) shows the energy you gain by
+ * destroying it, in the chosen way. Drawn once with the board (nothing on it moves).
+ */
+function addGyroEnergy(node: Container, n: number, colour: "Yellow" | "Red" | "Blue", cx: number, cy: number, size: number): void {
+  const look = features().gyroEnergy;
+  const col = ENERGY_HEX[colour] ?? 0x888888;
+  const tex = energyTexture(colour);
+  const g = new Graphics();
+  g.eventMode = "none";
+  g.label = "gyro-energy";
+  node.addChild(g);
+  const glyph = (x: number, y: number, h: number, alpha = 1) => {
+    if (!tex) return;
+    const sp = new Sprite({ texture: tex, anchor: 0.5, x, y });
+    sp.scale.set(h / Math.max(tex.width, tex.height));
+    sp.alpha = alpha;
+    sp.eventMode = "none";
+    node.addChild(sp);
+  };
+  const num = (text: string, x: number, y: number, fs: number, anchorX = 0.5, alpha = 1) => {
+    const t = new Text({ text, style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(9, fs), fill: 0xffffff, fontWeight: "800", stroke: { color: 0x0b0f17, width: Math.max(2, fs * 0.22) } } });
+    t.anchor.set(anchorX, 0.5);
+    t.position.set(x, y);
+    t.alpha = alpha;
+    t.eventMode = "none";
+    node.addChild(t);
+  };
+  const edgeX = cx - size * 0.9 * 0.866;
+  if (look === "tokens") {
+    // One token per energy, placed one by one down the tile's left edge (two columns past 4).
+    const r = size * Math.min(0.085, 0.34 / Math.max(4, Math.min(n, 6)));
+    const per = Math.min(n, 4);
+    const gap = r * 2.25;
+    for (let i = 0; i < n; i++) {
+      const colI = Math.floor(i / per);
+      const row = i % per;
+      const x = edgeX + r * 1.35 + colI * gap;
+      const y = cy + (row - (per - 1) / 2) * gap;
+      g.circle(x, y, r * 1.18).fill({ color: 0x0b0f17, alpha: 0.5 });
+      g.circle(x, y, r).fill({ color: col }).stroke({ width: 1, color: 0xffffff, alpha: 0.6 });
+      glyph(x, y, r * 1.3);
+    }
+  } else if (look === "corner") {
+    // The number and the energy glyph in the upper left corner.
+    // Tucked between the tile's upper left edge and the Level badge, above the unit's name.
+    const h = Math.max(12, size * 0.2);
+    const x = cx - size * 0.38;
+    const y = cy - size * 0.5;
+    num(String(n), x, y, h * 0.95, 1);
+    g.circle(x + h * 0.55, y, h * 0.48).fill({ color: col }).stroke({ width: 1, color: 0xffffff, alpha: 0.6 });
+    glyph(x + h * 0.55, y, h * 0.62);
+  } else if (look === "bar") {
+    // A short bar of cells in the energy's colour just inside the left edge, bottom up.
+    const h = size * 0.8;
+    const w = Math.max(5, size * 0.09);
+    const x = edgeX + w * 0.9;
+    const top = cy - h / 2;
+    const cell = h / Math.max(n, 3);
+    g.roundRect(x - w / 2 - 1.5, top - 1.5, w + 3, cell * Math.max(n, 3) + 3, 3).fill({ color: 0x0b0f17, alpha: 0.6 });
+    for (let i = 0; i < n; i++) {
+      const y = top + (Math.max(n, 3) - 1 - i) * cell;
+      g.roundRect(x - w / 2, y + 1, w, cell - 2, 2).fill({ color: col }).stroke({ width: 0.8, color: 0xffffff, alpha: 0.45 });
+    }
+    glyph(x, top - w * 1.5, Math.max(9, w * 1.9));
+  } else if (look === "ring") {
+    // One lit segment per energy round the unit's glyph badge (upper right).
+    const h = Math.max(18, size * 0.38);
+    const x = cx + size * 0.6;
+    const y = cy - size * 0.33;
+    const R = h * 0.68;
+    const gapA = 0.18;
+    for (let i = 0; i < n; i++) {
+      const a0 = -Math.PI / 2 + (i / n) * Math.PI * 2 + gapA / 2;
+      const a1 = a0 + (Math.PI * 2) / n - gapA;
+      g.moveTo(x + Math.cos(a0) * R, y + Math.sin(a0) * R).arc(x, y, R, a0, a1).stroke({ width: Math.max(2.5, size * 0.045), color: col, cap: "round" });
+    }
+    g.circle(x, y, R + size * 0.04).stroke({ width: 1, color: 0x0b0f17, alpha: 0.5 });
+  } else if (look === "tag") {
+    // A small "+N" tag with the glyph in the tile's lower left, clear of the name and the tokens.
+    const h = Math.max(12, size * 0.19);
+    const w = h * 2.45;
+    const x = cx - size * 0.42;
+    const y = cy + size * 0.47;
+    g.roundRect(x - w / 2, y - h * 0.62, w, h * 1.24, h * 0.62).fill({ color: 0x0b0f17, alpha: 0.8 }).stroke({ width: 1.2, color: col, alpha: 0.95 });
+    num(`+${n}`, x - h * 0.42, y, h * 0.88);
+    g.circle(x + w / 2 - h * 0.62, y, h * 0.44).fill({ color: col });
+    glyph(x + w / 2 - h * 0.62, y, h * 0.6);
+  } else if (look === "cells") {
+    // Small hexagonal cells in the energy's colour along the upper left edge.
+    // Just inside the edge, from the left corner up towards the Level badge (six fit before it).
+    const r = Math.max(4, size * 0.06);
+    const ax = cx - size * 0.9 * 0.866;
+    const ay = cy - size * 0.45;
+    const bx = cx;
+    const by = cy - size * 0.9;
+    for (let i = 0; i < n; i++) {
+      const t = 0.1 + (i * 0.48) / Math.max(1, Math.max(n, 4) - 1);
+      const x = ax + (bx - ax) * t + 0.5 * r * 2.2;
+      const y = ay + (by - ay) * t + 0.866 * r * 2.2;
+      const pts: number[] = [];
+      for (let k = 0; k < 6; k++) {
+        const a = (Math.PI / 3) * k - Math.PI / 2;
+        pts.push(x + r * Math.cos(a), y + r * Math.sin(a));
+      }
+      g.poly(pts).fill({ color: col }).stroke({ width: 1, color: 0x0b0f17, alpha: 0.6 });
+    }
+  } else {
+    // Watermark: the energy glyph faint and large in the tile, the number on it.
+    if (tex) {
+      const sp = new Sprite({ texture: tex, anchor: 0.5, x: cx, y: cy + size * 0.05 });
+      sp.scale.set((size * 0.95) / Math.max(tex.width, tex.height));
+      sp.alpha = 0.3;
+      sp.tint = col;
+      sp.eventMode = "none";
+      node.addChild(sp);
+    }
+    num(String(n), cx - size * 0.42, cy + size * 0.42, Math.max(12, size * 0.28), 0.5, 0.95);
+    g.circle(cx - size * 0.42, cy + size * 0.42, Math.max(9, size * 0.17)).fill({ color: col, alpha: 0.55 });
   }
 }
 
@@ -214,6 +348,17 @@ function addDepth(node: Container, cx: number, cy: number, size: number, layers:
     for (let i = n; i >= 1; i--) {
       const pts = hexPoints(cx, cy + i * step, r);
       g.poly(pts).fill({ color: shade(fill, (fine ? 0.7 : 0.62) - 0.02 * i) }).stroke({ width: fine ? 0.6 : 0.8, color: 0x000000, alpha: fine ? 0.35 : 0.55 });
+    }
+  } else if (how === "glass") {
+    // Round 28: a thin line of cool light under the lower edges per tile, like stacked glass plates.
+    const step = size * 0.016;
+    const base = hexPoints(cx, cy, r);
+    for (let i = n; i >= 1; i--) {
+      const line: number[] = [];
+      for (let j = 0; j < base.length; j += 2) if (base[j + 1]! > cy - r * 0.05) line.push(base[j]!, base[j + 1]! + i * step);
+      if (line.length < 4) continue;
+      g.poly(line, false).stroke({ width: 1.6, color: 0x0a0d14, alpha: 0.5 });
+      g.poly(line, false).stroke({ width: 0.8, color: 0xbfe6ff, alpha: 0.55 - 0.03 * i });
     }
   } else {
     // "Hint": no solid edges, only a faint hairline under the tile's lower edges per tile.
@@ -467,6 +612,184 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
     const k = breath(now, 2900);
     for (let i = 6; i >= 1; i--) g.poly(hexPoints(cx, cy, r * (0.12 * i) * (0.85 + 0.15 * k))).fill({ color: 0xffd27a, alpha: (0.035 + 0.04 * k) });
     g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.35 + 0.4 * k });
+    return;
+  }
+  // Round 28 (designer 2026-11-22): six more of each, kept light (a few dozen dots at most per tile).
+  if (how === "comet") {
+    // One bright spark circles the edge, a tail of fading motes behind it.
+    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.28 });
+    const u = hash3(seed, 0, 40) + now / 3600;
+    for (let j = 13; j >= 0; j--) {
+      const pt = alongOutline(edge, u - j * 0.011);
+      const f = 1 - j / 14;
+      const wob = j ? (hash3(seed, j, Math.floor(now / 90)) - 0.5) * size * 0.012 * j * 0.3 : 0;
+      g.circle(pt.x + wob, pt.y + wob, size * (0.006 + 0.02 * f * f)).fill({ color: j < 2 ? 0xfff6dd : READY, alpha: 0.15 + 0.8 * f * f });
+    }
+    return;
+  }
+  if (how === "scan") {
+    // A thin line of light sweeps down the tile and fades at its foot; a few motes fall off it.
+    const P = 2600;
+    const t = (now % P) / P;
+    g.poly(edge).stroke({ width: 1.1, color: READY, alpha: 0.32 });
+    if (t < 0.8) {
+      const q = t / 0.8;
+      const y = cy - r + 2 * r * q;
+      const hw = Math.abs(y - cy) < r * 0.5 ? r * 0.866 : r * 0.866 * (r - Math.abs(y - cy)) / (r * 0.5);
+      const a = Math.sin(Math.PI * q);
+      g.moveTo(cx - hw, y).lineTo(cx + hw, y).stroke({ width: size * 0.035, color: READY, alpha: 0.18 * a });
+      g.moveTo(cx - hw, y).lineTo(cx + hw, y).stroke({ width: 1.2, color: 0xfff1c9, alpha: 0.85 * a });
+      for (let i = 0; i < 6; i++) {
+        const fx = (hash3(seed, i, 41) * 2 - 1) * hw * 0.9;
+        const lag = 0.04 + 0.12 * hash3(seed, i, 42);
+        const fy = y - size * lag;
+        g.circle(cx + fx, fy, size * 0.008).fill({ color: 0xffe2a0, alpha: 0.6 * a * (1 - lag * 5) });
+      }
+    }
+    return;
+  }
+  if (how === "brackets") {
+    // Six corner marks breathe in and out together, as a target held in the sights.
+    const k = breath(now, 2200);
+    const pts = hexPoints(cx, cy, r * (1.05 + 0.05 * (1 - k)));
+    const n = pts.length / 2;
+    const step = Math.max(1, Math.floor(n / 6));
+    g.poly(edge).stroke({ width: 0.8, color: READY, alpha: 0.2 + 0.15 * k });
+    for (let i = 0; i < 6; i++) {
+      const c = Math.floor((i * n) / 6 + step / 2) % n;
+      const a = alongOutline(pts, c / n - 0.035);
+      const m = alongOutline(pts, c / n);
+      const b = alongOutline(pts, c / n + 0.035);
+      g.moveTo(a.x, a.y).lineTo(m.x, m.y).lineTo(b.x, b.y).stroke({ width: 2, color: READY, alpha: 0.5 + 0.5 * k, cap: "round", join: "round" });
+    }
+    return;
+  }
+  if (how === "ripple") {
+    // Now and then a ring of fine particles leaves the edge and fades outwards.
+    const k = breath(now, 2400);
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.35 + 0.3 * k });
+    const P = 2400;
+    const t = ((now + hash3(seed, 0, 43) * P) % P) / P;
+    if (t < 0.7) {
+      const q = t / 0.7;
+      const out = 1 + 0.22 * (1 - (1 - q) ** 2);
+      for (let i = 0; i < 30; i++) {
+        const at = alongOutline(edge, i / 30 + hash3(seed, i, 44) * 0.02);
+        g.circle(cx + (at.x - cx) * out, cy + (at.y - cy) * out, size * 0.008 * (1 - 0.5 * q)).fill({ color: 0xffd27a, alpha: 0.8 * (1 - q) });
+      }
+    }
+    return;
+  }
+  if (how === "corona") {
+    // Short rays of light flicker round the edge like the rim of a small sun.
+    const k = breath(now, 3000);
+    g.poly(edge).stroke({ width: 1.3, color: READY, alpha: 0.4 + 0.3 * k });
+    const tick = Math.floor(now / 110);
+    for (let i = 0; i < 24; i++) {
+      const at = alongOutline(edge, i / 24);
+      const f = hash3(seed, i, tick) * (0.5 + 0.5 * Math.sin(now / 700 + i));
+      const len = size * 0.1 * f;
+      const ox = (at.x - cx) / r;
+      const oy = (at.y - cy) / r;
+      g.moveTo(at.x, at.y).lineTo(at.x + ox * len, at.y + oy * len).stroke({ width: 1.2, color: f > 0.6 ? 0xfff1c9 : READY, alpha: 0.2 + 0.6 * f });
+    }
+    return;
+  }
+  if (how === "chase") {
+    // The six corners light one after another round the tile.
+    const pts = hexPoints(cx, cy, r);
+    const n = pts.length / 2;
+    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.3 });
+    const head = (now / 260) % 6;
+    for (let i = 0; i < 6; i++) {
+      const d = (head - i + 6) % 6;
+      const k = Math.max(0, 1 - d / 2.2);
+      const at = alongOutline(pts, (Math.floor((i * n) / 6) + (n / 6) / 2) / n);
+      if (k <= 0) continue;
+      g.circle(at.x, at.y, size * (0.03 + 0.04 * k)).fill({ color: READY, alpha: 0.25 * k });
+      g.circle(at.x, at.y, size * (0.012 + 0.012 * k)).fill({ color: 0xfff6dd, alpha: 0.9 * k });
+    }
+    return;
+  }
+  if (how === "pond") {
+    // Slow rings of light spread from the middle of the plate, as on still water.
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.4 });
+    for (let i = 0; i < 3; i++) {
+      const t = ((now / 3600 + i / 3) % 1 + 1) % 1;
+      g.poly(hexPoints(cx, cy, r * (0.1 + 0.9 * t))).stroke({ width: 1.3, color: 0xffd27a, alpha: 0.45 * Math.sin(Math.PI * t) });
+    }
+    return;
+  }
+  if (how === "lattice") {
+    // A faint grid of points on the plate; a wave of light passes over it from left to right.
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
+    const head = ((now % 3200) / 3200) * 2.6 - 1.3;
+    const st = r * 0.28;
+    for (let iy = -3; iy <= 3; iy++)
+      for (let ix = -3; ix <= 3; ix++) {
+        const px = (ix + (iy % 2 ? 0.5 : 0)) * st;
+        const py = iy * st * 0.866;
+        if (Math.abs(px) * 0.866 + Math.abs(py) * 0.5 > r * 0.74 || Math.abs(py) > r * 0.74) continue;
+        const k = Math.exp(-(((px / r - head) / 0.25) ** 2));
+        g.circle(cx + px, cy + py, size * (0.009 + 0.012 * k)).fill({ color: k > 0.6 ? 0xfff1c9 : 0xffd27a, alpha: 0.12 + 0.75 * k });
+      }
+    return;
+  }
+  if (how === "rain") {
+    // Fine motes fall slowly through the plate and fade.
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
+    for (let i = 0; i < 14; i++) {
+      const P = 2200 + 1400 * hash3(seed, i, 45);
+      const t = ((now / P + hash3(seed, i, 46)) % 1 + 1) % 1;
+      const px = (hash3(seed, i, 47) - 0.5) * 1.3 * r;
+      const py = -r * 0.7 + t * r * 1.4;
+      if (Math.abs(px) * 0.866 + Math.abs(py) * 0.5 > r * 0.74) continue;
+      g.moveTo(cx + px, cy + py - size * 0.05).lineTo(cx + px, cy + py).stroke({ width: 1, color: 0xffd27a, alpha: 0.5 * Math.sin(Math.PI * t) });
+    }
+    return;
+  }
+  if (how === "vortex") {
+    // Specks swirl slowly in towards the middle of the plate.
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
+    for (let i = 0; i < 18; i++) {
+      const P = 3000 + 1500 * hash3(seed, i, 48);
+      const t = ((now / P + hash3(seed, i, 49)) % 1 + 1) % 1;
+      const ang = hash3(seed, i, 50) * Math.PI * 2 + t * 2.6;
+      const d = r * 0.72 * (1 - t);
+      g.circle(cx + Math.cos(ang) * d, cy + Math.sin(ang) * d, size * (0.006 + 0.01 * (1 - t))).fill({ color: t > 0.8 ? 0xfff1c9 : 0xffd27a, alpha: 0.65 * Math.sin(Math.PI * t) });
+    }
+    return;
+  }
+  if (how === "beacon") {
+    // A soft light in each corner in turn, as a slow beacon.
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
+    const pts = hexPoints(cx, cy, r * 0.78);
+    const n = pts.length / 2;
+    const head = (now / 700) % 6;
+    for (let i = 0; i < 6; i++) {
+      const d = Math.min(Math.abs(head - i), 6 - Math.abs(head - i));
+      const k = Math.exp(-((d / 0.7) ** 2));
+      if (k < 0.05) continue;
+      const at = alongOutline(pts, (Math.floor((i * n) / 6) + (n / 6) / 2) / n);
+      for (let j = 3; j >= 1; j--) g.circle(at.x, at.y, size * 0.06 * j).fill({ color: 0xffd27a, alpha: 0.07 * k });
+    }
+    return;
+  }
+  if (how === "aurora") {
+    // A soft curtain of light waves gently across the plate.
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
+    for (let i = 0; i < 22; i++) {
+      const px = (i / 21 - 0.5) * 1.5 * r;
+      const wave = Math.sin(px / r * 3 + now / 900) * r * 0.16 + Math.sin(px / r * 7 - now / 1300) * r * 0.05;
+      const k = 0.5 + 0.5 * Math.sin(px / r * 2 - now / 1600);
+      const top = cy + wave - r * 0.28;
+      const bot = cy + wave + r * 0.18;
+      const lim = r * 0.74 - Math.abs(px) * 0.577;
+      const a = Math.max(-lim, top - cy) + cy;
+      const b = Math.min(lim, bot - cy) + cy;
+      if (b <= a) continue;
+      g.moveTo(cx + px, a).lineTo(cx + px, b).stroke({ width: r * 0.07, color: 0xffd27a, alpha: 0.05 + 0.1 * k });
+    }
     return;
   }
   // Haze: fine particles seep out a short way from the whole edge and fade.
@@ -1484,6 +1807,12 @@ export function FieldView(p: FieldProps) {
       return { ms: 300, start: shake, frame: () => {}, end: () => {} };
     }
     const env = { fx, centre, size, keys: () => [...nodes.current.keys()], host: () => host.current };
+    /** A Mecha lands after moving (round 28): a small puff of dust that plays by itself. */
+    const dust = (unitId: string, k: string) => {
+      const a = app.current;
+      if (!a || stillRef.current || speedFactor() === 0 || typeOf(unitId) !== "Mecha") return;
+      landingDust(env, k, (f) => (a.ticker.add(f), () => a.ticker.remove(f)), speedFactor());
+    };
     for (let i = 0; i < events.length; i++) {
       const e = events[i]!;
       if (e.kind === "used") {
@@ -1507,6 +1836,22 @@ export function FieldView(p: FieldProps) {
             struck.add(n.tile);
           } else if (n.kind === "destroyed" && struck.has(n.tile)) gone.push(n);
           else break;
+        }
+        // Exposure (9.3 step 2, designer 2026-11-22, round 28): energy between End the Overload and every
+        // unit alone on its plate, in the look chosen (exposureFx.ts), then the hits as usual.
+        if (e.rule === "9.3") {
+          const look = features().exposure;
+          out.push(
+            holding(
+              exposureStep(
+                look,
+                () => (Number.isFinite(endOverloadAt.x) ? endOverloadAt : undefined),
+                () => hits.map((h) => onPage(h.sector)()).filter((t): t is Target => t !== undefined),
+                hits.length,
+              ),
+              hits,
+            ),
+          );
         }
         if (hits.length >= 2) {
           i = j - 1;
@@ -1634,7 +1979,7 @@ export function FieldView(p: FieldProps) {
                 L.z = 1000; // on top of every sector it passes (designer 2026-11-21)
               }
             },
-            end: () => g?.destroy({ children: true }),
+            end: () => (g?.destroy({ children: true }), dust(e.unitId, last)),
           });
           continue;
         }
@@ -1668,7 +2013,7 @@ export function FieldView(p: FieldProps) {
         if (dr && dr.tile === e.tile && dr.to === e.to) {
           // Dropped there by hand: just a small settle.
           dropped.current = undefined;
-          out.push({ ms: 180, frame: (p, look) => real && (look(e.to).scale = 1 + 0.06 * Math.sin(Math.PI * p)), end: () => {} });
+          out.push({ ms: 180, start: () => dust(e.unitId, e.to), frame: (p, look) => real && (look(e.to).scale = 1 + 0.06 * Math.sin(Math.PI * p)), end: () => {} });
           continue;
         }
         const g = real ? undefined : ghost(typeOf(e.unitId), e.unitId);
@@ -1700,7 +2045,7 @@ export function FieldView(p: FieldProps) {
               L.alpha = tele ? q : 1;
             }
           },
-          end: () => g?.destroy({ children: true }),
+          end: () => (g?.destroy({ children: true }), tele || dust(e.unitId, e.to)),
         });
       } else if (e.kind === "swapped") {
         out.push({
@@ -2170,6 +2515,9 @@ export function FieldView(p: FieldProps) {
         addLevel(node, lv, cx, cy, size);
         // The unit's glyph badge in the tile's upper right corner (designer 2026-11-10, glyphs.ts).
         addGlyphBadge(node, t.unitId ?? undefined, cx, cy, size);
+        // Feature (round 28): the energy an Energy Gyro gives when destroyed (not on a Wreck).
+        const reward = t.tokens.wreck ? undefined : gyroReward(unitDef(c, unit!));
+        if (reward) addGyroEnergy(node, reward.n, reward.colour, cx, cy, size);
         const b = badgeText(t.tokens);
         const marked = t.tokens.shield + t.tokens.bioShield + t.tokens.damage > 0;
         if (b.length) label(b.join(" "), t.tokens.wreck ? size * 0.02 : marked ? size * 0.47 : size * 0.27, size * 0.16, 0x9b1c1c, true);

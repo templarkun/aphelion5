@@ -8,6 +8,11 @@
 # T14_R27_02; CHANGED note on T13_ED_03), "trial looks" are now "Features" (T14_R27_03; CHANGED
 # note on T13_R20_06), the Features page on the Command Deck (T14_R27_04). Checked by
 # tests/unit/editor.test.ts, scripts/ui-looks.mjs and scripts/ui-pages.mjs.
+# Round 28, 2026-11-22: more Feature looks (T14_R28_01-05), the Energy Gyro reward (T14_R28_06),
+# the smaller "Looked at" bubble (T14_R28_07), the wrench on tablets (T14_R28_08), exhausted Modules
+# shrink (T14_R28_09), Exposure at Overload End (T14_R28_10), Mecha landing dust (T14_R28_11).
+# CHANGED notes on T14_R27_04 and batch 13's T13_R24_01, T13_R24_02, T13_R25_03, T13_R26_01.
+# Checked by tests/unit/round28.test.ts, scripts/ui-pages.mjs, ui-looks.mjs, ui-round24.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -70,3 +75,137 @@ note: every Feature is open for now. Later a Feature not yet earned shows a lock
       the achievement that gives it, and cannot be chosen.
 note: the in-game Menu keeps its short Features list, ending with "With previews: Command Deck ›
       Features".
+CHANGED (designer 2026-11-22, round 28): nine cards (two new: Energy Gyro reward, Overload End:
+      Exposure) and 63 choices in all (T14_R28_01-06, T14_R28_10).
+
+=== SECTION: ROUND 28 (designer 2026-11-22) ===
+################################################################################
+
+id: T14_R28_01
+title: Features: a fifth stack depth
+source: designer 2026-11-22 ("Stack Depth: 1 more variant")
+given: Features > Stack depth
+then: a new choice "Glass stack": under the tile's lower edges, one thin line of cool light per tile
+      beneath (up to 12), like stacked glass plates. The other four as before.
+
+id: T14_R28_02
+title: Features: six more ready-to-tap looks for units
+source: designer 2026-11-22 ("Ready to tap unit: 6 more variants. Be ambitious, but subtle")
+given: Features > Ready to tap: units; a unit you can use now
+then: six new choices, each kept light (a few dozen points of light at most):
+      Comet: one bright spark circles the edge with a tail of fading motes.
+      Scan: a thin line of light sweeps slowly down the tile, shedding a few motes.
+      Lock-on: six corner marks breathe in and out, like a target held.
+      Ripple: now and then a ring of fine particles leaves the edge and fades outwards.
+      Corona: short rays of light flicker round the edge like a small sun.
+      Chase: the six corners light one after another round the tile.
+
+id: T14_R28_03
+title: Features: six more ready-to-tap looks for Dark and Cleared sectors
+source: designer 2026-11-22 ("Ready to tap sectors: 6 more variants")
+given: Features > Ready to tap: sectors; a Dark or Cleared sector you can use now
+then: six new choices:
+      Pond: slow rings of light spread from the middle, as on still water.
+      Lattice: a faint grid of points on the plate, a wave of light passing over it.
+      Light rain: fine motes fall slowly through the plate and fade.
+      Vortex: specks swirl slowly in towards the middle.
+      Beacon: a soft light in each corner in turn.
+      Aurora: a soft curtain of light waves gently across the plate.
+
+id: T14_R28_04
+title: Features: three more Overload edges
+source: designer 2026-11-22 ("Overload edge: 3 more variants")
+given: Features > Overload edge; an Overload under way
+then: three new choices, each with the plasma wave drifting in as before:
+      Storm: arcs of lightning crawl along the edge, fork, and crackle out in sparks.
+      Pulse: pulses of light run from the four corners along the edges and burst into motes where
+      they meet, every 2.4 s.
+      Veil: a curtain of particles ripples along the whole edge, red shading to violet.
+
+id: T14_R28_05
+title: Features: a fourth next-tile look
+source: designer 2026-11-22 ("Next tile: 1 more variant")
+given: Features > Next tile; a sector whose next tile you have looked at
+then: a new choice "Behind": that tile's glyph badge tucked just behind the unit's own badge (upper
+      right), like a card under a card; on a Dark sector (no badge of its own) it sits there by
+      itself, a little dimmer.
+
+id: T14_R28_06
+title: Energy Gyros show the energy they give when destroyed
+source: designer 2026-11-22 ("The energy Gyro (G_01 to G_09) should have an indication of potential
+        energy that I can gain from destroying it")
+given: an Energy Gyro (G_01-G_09) face up on the Field, not a Wreck
+then: it shows its "destroyed" energy (unit list: G_01 2 Yellow, G_02 4 Yellow, G_03 5 Yellow, G_04
+      6 Yellow, G_05 2 Red, G_06 4 Red, G_07 1 Blue, G_08 2 Blue, G_09 3 Blue) in the look chosen
+      in Features > Energy Gyro reward (a new card):
+      Tokens (first choice): one energy token per energy, down the tile's left edge (a second column
+      past four).
+      Corner: the number and an energy token with its glyph in the upper left, above the name.
+      Charge bar: a short bar of cells in the energy's colour just inside the left edge.
+      Glyph ring: one lit arc per energy round the unit's glyph badge.
+      Tag: a small "+N" tag with the energy glyph in the tile's lower left.
+      Cells: small hexagonal cells in the energy's colour along the upper left edge.
+      Watermark: the energy glyph large and faint in the tile, the number on it.
+      Other Gyros (G_10-G_36) and other units: nothing new. Drawn once (nothing moves).
+note: screen only; the energy is gained as the card says, as before.
+
+id: T14_R28_07
+title: "Looked at in this sector": one small row under the card text
+source: designer 2026-11-22 ("Let's save space and reduce its size. Leave glyphs and an indication of
+        what goes after ... place it right under the information popup")
+given: a sector with tiles looked at; hover it (touch: hold 0.5 s)
+then: the card text bubble, and right under it a small rounded bubble in one row: an eye, "top"
+      (Dark sector) or "under" (a unit's sector), the tiles from the top down with an arrow "›"
+      between each ("?" for one not looked at), then a small hexagon with the sector's number of
+      tiles. On a Dark sector only this small bubble. Both inside the window at 390 px.
+
+id: T14_R28_08
+title: The Overhaul wrench on tablets
+source: designer 2026-11-22 ("on iPad it makes the Flagship bar scroll horizontally")
+given: a game in a window 900-1279 px wide (an iPad in landscape)
+then: "Flagship" on its own line, the slot cells and the wrench centred on the line under it; the
+      Flagship column does not scroll sideways. PCs (1280 px and wider) and phones as before.
+
+id: T14_R28_09
+title: Exhausted Modules shrink when the list does not fit
+source: designer 2026-11-22
+given: more Modules than fit in the Modules panel at full size (a phone: taller than the screen)
+then: every exhausted Module shows only its name, in a slim card; ready ones stay full size. A
+      Module a question wants (to choose, to take or place energy on, or one a selected action
+      would affect) is never shrunk.
+when: tap a shrunk Module
+then: it opens to its full size (energy bar and text).
+when: tap anywhere else
+then: it shrinks back to its name.
+given: the list fits at full size
+then: nothing shrinks.
+
+id: T14_R28_10
+title: Overload End: Exposure made plain to see
+source: designer 2026-11-22 (Core Rules 9.3 step 2: every unit alone on its sector plate takes 1
+        damage; "after I press the Overload End button, some energy comes from Overload button to
+        deal damage to those units. Or the opposite ... Do both ... another 3 variants")
+given: an Overload with no Alerts left; units alone on their sector plates (not Omega, Flares or
+       Wrecks)
+when: press End the Overload
+then: before their damage shows, the look chosen in Features > Overload End: Exposure (a new card)
+      plays between the button and those units:
+      Strike (first choice): bolts of energy fly from the button into each unit and burst.
+      Drain: energy is pulled out of each unit in curling streams into the button, which flares.
+      Chain: one bolt of lightning leaps from the button to the nearest unit, then on to the next.
+      Nova: a ring of energy particles rolls out from the button over the Field; each unit flares as
+      it passes.
+      Plate surge: threads of energy run to each unit's sector plate; the plate's edge flares and
+      sparks rise from it into the unit.
+      Then each takes its 1 damage as before (bursts for the ones destroyed). About 1-1.8 s; a tap
+      finishes it; speed setting; reduced motion: none.
+given: no unit alone on its plate
+then: nothing new plays.
+
+id: T14_R28_11
+title: Dust when a Mecha lands after moving
+source: designer 2026-11-22 ("Make a dust particle effect when a Mecha lands after moving")
+given: a Mecha moves (tapped, dragged and dropped, or M_01's walk at its last sector)
+then: as it lands, a small puff of fine dust from under its edges, mostly the lower ones, settling
+      in under a second. The game does not wait for it. Not for a teleport; none with reduced
+      motion or the speed Instant.

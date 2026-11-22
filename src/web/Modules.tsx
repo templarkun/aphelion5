@@ -42,6 +42,9 @@ export function ModuleCard(p: {
   selected: boolean;
   dim: boolean;
   extraClass: string;
+  /** Round 28: shrunk to its name (an exhausted Module while the list does not fit); `peek`: opened by a tap. */
+  folded?: boolean;
+  peek?: boolean;
   onClick?: (() => void) | undefined;
   /** Press and drag handlers (a Module dragged onto its target, designer 2026-11-08); they replace onClick. */
   press?: React.HTMLAttributes<HTMLElement> | undefined;
@@ -52,14 +55,14 @@ export function ModuleCard(p: {
   return (
     <Tag
       data-module={p.id}
-      className={`module rim-${d.colour.toLowerCase()} ${d.background === "red" ? "bg-overload" : ""} ${p.ready ? "" : "exhausted"} ${p.can ? "can" : ""} ${p.selected ? "selected" : ""} ${p.dim ? "dim" : ""} ${p.extraClass}`}
+      className={`module rim-${d.colour.toLowerCase()} ${d.background === "red" ? "bg-overload" : ""} ${p.ready ? "" : "exhausted"} ${p.can ? "can" : ""} ${p.selected ? "selected" : ""} ${p.dim ? "dim" : ""} ${p.folded ? "folded" : ""} ${p.peek ? "peek" : ""} ${p.extraClass}`}
       title={`${d.name}: cost ${d.cost} ${d.colour} · ${d.background === "red" ? "Overload" : "Command phase"}${p.ready ? "" : " · exhausted"}${p.extraClass.includes("x-zero") ? " · cannot be run: its X would be 0 (put energy on it first)" : ""}. ${d.effect}${d.extraPayment ? ` Extra: ${d.extraPayment}` : ""}`}
-      {...(p.press ?? { onClick: p.onClick })}
+      {...(p.folded ? { onClick: p.onClick } : (p.press ?? { onClick: p.onClick }))}
     >
       <span className="module-inner">
         <b className="module-name">{d.name}</b>
-        <EnergyBar slots={p.info.slots} x={d.cost === "X"} />
-        <span className="module-text">{d.effect}</span>
+        {!p.folded && <EnergyBar slots={p.info.slots} x={d.cost === "X"} />}
+        {!p.folded && <span className="module-text">{d.effect}</span>}
         {p.children}
       </span>
     </Tag>

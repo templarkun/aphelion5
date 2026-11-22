@@ -349,3 +349,66 @@ export function dropStep(e: GameEvent & { kind: "dropped" }, env: FxEnv): Step {
     end: () => g.destroy(),
   };
 }
+
+/**
+ * A Mecha lands after moving (designer 2026-11-22, round 28): a small puff of fine dust from under its
+ * edges, like the Allied Drop's (dropStep) but lighter: about 110 grains, 0.85 s. It plays by itself on
+ * the Field's own clock (`onFrame` gives a callback per drawn frame, and takes it back), so the game
+ * never waits for it. Drawn on the fx layer, which keeps the Field at full speed only while it lasts.
+ */
+export function landingDust(env: FxEnv, sector: string, onFrame: (f: () => void) => () => void, speed = 1): void {
+  const g = new Graphics();
+  g.eventMode = "none";
+  const rnd = (i: number, n: number) => {
+    const x = Math.sin((i + 1) * 12.9898 + n * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  const grains = Array.from({ length: 110 }, (_, i) => {
+    const haze = i >= 80;
+    return {
+      haze,
+      u: rnd(i, 11),
+      v: haze ? 0.03 + rnd(i, 12) * 0.07 : 0.04 + rnd(i, 12) ** 2 * 0.2,
+      up: rnd(i, 13) * (haze ? 0.05 : 0.03),
+      size: haze ? 0.004 + rnd(i, 14) * 0.004 : 0.002 + rnd(i, 14) * 0.0028,
+      tone: rnd(i, 15),
+      delay: rnd(i, 16) * 0.05,
+      life: haze ? 0.7 + rnd(i, 17) * 0.3 : 0.35 + rnd(i, 17) * 0.4,
+    };
+  });
+  const tones = [0xc9bda9, 0xa89c89, 0xddd3c2, 0x8f8576, 0xeee6d8];
+  const MS = 850 * speed;
+  const t0 = performance.now();
+  env.fx.addChild(g);
+  let stop = () => {};
+  const draw = () => {
+    const q = (performance.now() - t0) / MS;
+    if (q >= 1 || g.destroyed) {
+      stop();
+      if (!g.destroyed) g.destroy();
+      return;
+    }
+    const c = env.centre(sector);
+    const s = env.size();
+    g.clear();
+    const rim = hexOutline(c.x, c.y, s * 0.9);
+    for (const d of grains) {
+      const t = (q - d.delay) / d.life;
+      if (t <= 0 || t >= 1) continue;
+      const at = alongOutline(rim, d.u);
+      // Mostly from the lower edges: the weight comes down there.
+      const low = (at.y - c.y) / (s * 0.9);
+      if (low < -0.35 && !d.haze) continue;
+      const nx = (at.x - c.x) / (s * 0.9);
+      const ny = (at.y - c.y) / (s * 0.9);
+      const slow = 1 - Math.exp(-t * (d.haze ? 3 : 7));
+      const out = s * d.v * slow;
+      const x = at.x + nx * out;
+      const y = at.y + ny * out * 0.8 - s * d.up * slow;
+      const fade = d.haze ? Math.sin(Math.PI * t) * 0.22 : (1 - t) ** 1.4 * (t < 0.05 ? t / 0.05 : 1) * 0.6;
+      g.circle(x, y, Math.max(0.45, s * d.size * (d.haze ? 1 + 1.5 * t : 1))).fill({ color: tones[Math.floor(d.tone * tones.length)]!, alpha: fade });
+    }
+  };
+  stop = onFrame(draw);
+  draw();
+}

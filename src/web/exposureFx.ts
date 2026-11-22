@@ -1,0 +1,297 @@
+/**
+ * Exposure (Core Rules 9.3 step 2: at Overload End every unit alone on its sector plate takes 1 damage),
+ * made plain to see (designer 2026-11-22, round 28; screen only, no rule). Played once, right after End
+ * the Overload is pressed, before the hits themselves; the look is a Feature (features.ts `exposure`):
+ *
+ * - strike: bolts of energy fly from the End the Overload button into each unit, trailing motes, and burst.
+ * - drain: energy is pulled out of each unit in curling streams of motes into the button, which flares.
+ * - chain: one bolt of lightning leaps from the button to the nearest unit, then on to the next, crackling.
+ * - nova: a ring of energy particles rolls out from the button over the Field; each unit flares as it passes.
+ * - surge: thin threads of energy run from the button to each unit's sector plate; the plate's edge flares
+ *   and sparks rise from it into the unit (it is the plate that hurts them).
+ *
+ * Drawn on one page-wide 2D canvas (the button is a page element, the Field a canvas) that exists only
+ * while the step plays (about 1-1.8 s), at most 1.5 device pixels per CSS pixel, additive light, a few
+ * hundred dots at most: cheap on a tablet's battery.
+ */
+
+import type { Step } from "./anim.js";
+import type { Exposure } from "./features.js";
+
+export interface Pt {
+  x: number;
+  y: number;
+}
+export interface ExpTarget extends Pt {
+  /** The tile's radius in CSS px. */
+  size: number;
+}
+
+/** Where End the Overload was last seen on the page (EndOverload.tsx writes it): its centre and radius. */
+export const endOverloadAt: { x: number; y: number; r: number } = { x: NaN, y: NaN, r: 0 };
+
+const ENERGY = { hot: "255,122,42", core: "255,236,200", violet: "176,124,255" };
+
+const rnd = (n: number) => {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+const easeIn = (t: number) => t * t;
+const easeOut = (t: number) => 1 - (1 - t) ** 2;
+
+/** How long each look plays, in ms at Normal speed, for n units. */
+export function exposureMs(look: Exposure, n: number): number {
+  if (look === "chain") return Math.min(1900, 420 + 260 * n);
+  return { strike: 950, drain: 1350, nova: 1250, surge: 1350 }[look];
+}
+
+/** Units in the order the chain reaches them: nearest to the button first, then nearest to the last. */
+export function chainOrder(from: Pt, ts: Pt[]): number[] {
+  const left = ts.map((_, i) => i);
+  const out: number[] = [];
+  let at = from;
+  while (left.length) {
+    let best = 0;
+    for (let k = 1; k < left.length; k++) if (Math.hypot(ts[left[k]!]!.x - at.x, ts[left[k]!]!.y - at.y) < Math.hypot(ts[left[best]!]!.x - at.x, ts[left[best]!]!.y - at.y)) best = k;
+    const i = left.splice(best, 1)[0]!;
+    out.push(i);
+    at = ts[i]!;
+  }
+  return out;
+}
+
+/**
+ * The step. `from()` and `to()` are read when it starts (the Field's layout as it is then). `onImpact(i)`
+ * is called once as the energy reaches unit i (a small flash on the Field, optional).
+ */
+export function exposureStep(look: Exposure, from: () => (Pt & { r: number }) | undefined, to: () => ExpTarget[], n: number): Step {
+  let cv: HTMLCanvasElement | undefined;
+  let ctx: CanvasRenderingContext2D | null = null;
+  let a: Pt & { r: number } = { x: 0, y: 0, r: 30 };
+  let ts: ExpTarget[] = [];
+  let order: number[] = [];
+  let k = 1;
+  const dot = (x: number, y: number, r: number, rgb: string, alpha: number) => {
+    if (!ctx || alpha <= 0.01 || r <= 0) return;
+    ctx.fillStyle = `rgba(${rgb},${Math.min(1, alpha)})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  const line = (pts: Pt[], w: number, rgb: string, alpha: number) => {
+    if (!ctx || alpha <= 0.01 || pts.length < 2) return;
+    ctx.strokeStyle = `rgba(${rgb},${Math.min(1, alpha)})`;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(pts[0]!.x, pts[0]!.y);
+    for (const p of pts.slice(1)) ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  };
+  const hex = (c: ExpTarget, r: number, w: number, rgb: string, alpha: number) => {
+    const pts: Pt[] = [];
+    for (let i = 0; i <= 6; i++) {
+      const ang = (Math.PI / 3) * i - Math.PI / 2;
+      pts.push({ x: c.x + r * Math.cos(ang), y: c.y + r * Math.sin(ang) });
+    }
+    line(pts, w, rgb, alpha);
+  };
+  /** A burst at a unit: flash, ring and sparks, r in 0..1. */
+  const burst = (c: ExpTarget, r: number, seed: number) => {
+    if (r <= 0 || r >= 1) return;
+    dot(c.x, c.y, c.size * (0.3 + 0.4 * r), ENERGY.core, 0.55 * (1 - r) ** 2);
+    if (ctx) {
+      ctx.strokeStyle = `rgba(${ENERGY.hot},${0.8 * (1 - r)})`;
+      ctx.lineWidth = 3 * (1 - r) + 0.5;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.size * (0.3 + 0.8 * r), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    for (let j = 0; j < 14; j++) {
+      const ang = rnd(seed + j) * Math.PI * 2;
+      const d = c.size * (0.15 + 0.9 * easeOut(r) * (0.5 + 0.5 * rnd(seed + j + 50)));
+      dot(c.x + Math.cos(ang) * d, c.y + Math.sin(ang) * d - c.size * 0.2 * r, 1.6 * (1 - r) + 0.4, j % 3 ? ENERGY.hot : ENERGY.core, 1 - r);
+    }
+  };
+  /** A wavy path from p to q (bulging to one side by `bend`), as points. */
+  const curve = (p: Pt, q: Pt, bend: number, steps = 16): Pt[] => {
+    const dx = q.x - p.x;
+    const dy = q.y - p.y;
+    const L = Math.hypot(dx, dy) || 1;
+    const nx = -dy / L;
+    const ny = dx / L;
+    return Array.from({ length: steps + 1 }, (_, i) => {
+      const t = i / steps;
+      const b = Math.sin(Math.PI * t) * bend * L;
+      return { x: p.x + dx * t + nx * b, y: p.y + dy * t + ny * b };
+    });
+  };
+  const along = (pts: Pt[], t: number): Pt => {
+    const f = clamp01(t) * (pts.length - 1);
+    const i = Math.min(pts.length - 2, Math.floor(f));
+    const q = f - i;
+    return { x: pts[i]!.x + (pts[i + 1]!.x - pts[i]!.x) * q, y: pts[i]!.y + (pts[i + 1]!.y - pts[i]!.y) * q };
+  };
+  const jagged = (p: Pt, q: Pt, seed: number, amp: number, steps = 10): Pt[] => {
+    const dx = q.x - p.x;
+    const dy = q.y - p.y;
+    const L = Math.hypot(dx, dy) || 1;
+    const nx = -dy / L;
+    const ny = dx / L;
+    return Array.from({ length: steps + 1 }, (_, i) => {
+      const t = i / steps;
+      const j = i === 0 || i === steps ? 0 : (rnd(seed + i * 7) - 0.5) * amp * Math.min(L, 160);
+      return { x: p.x + dx * t + nx * j, y: p.y + dy * t + ny * j };
+    });
+  };
+
+  return {
+    ms: exposureMs(look, n),
+    start: () => {
+      ts = to();
+      const f = from();
+      if (!ts.length) return;
+      a = f ?? { x: window.innerWidth - 60, y: window.innerHeight - 60, r: 30 };
+      order = chainOrder(a, ts);
+      k = Math.min(1.5, window.devicePixelRatio || 1);
+      cv = document.createElement("canvas");
+      cv.className = "exposure-fx";
+      cv.setAttribute("aria-hidden", "true");
+      cv.width = Math.round(window.innerWidth * k);
+      cv.height = Math.round(window.innerHeight * k);
+      cv.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:40";
+      document.body.appendChild(cv);
+      ctx = cv.getContext("2d");
+    },
+    frame: (p) => {
+      if (!ctx || !cv) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.setTransform(k, 0, 0, k, 0, 0);
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      // The button gathers itself at the start (and, for Drain, flares as the energy arrives).
+      const gather = look === "drain" ? clamp01((p - 0.55) / 0.45) : clamp01(1 - p / 0.3);
+      dot(a.x, a.y, a.r * (0.6 + 0.5 * gather), ENERGY.hot, 0.25 * gather);
+      dot(a.x, a.y, a.r * 0.35 * (0.5 + gather), ENERGY.core, 0.35 * gather);
+
+      if (look === "strike") {
+        ts.forEach((t, i) => {
+          const t0 = 0.05 * (i % 4);
+          const q = clamp01((p - t0) / 0.62);
+          const path = curve(a, t, (rnd(i + 3) - 0.5) * 0.35);
+          if (q > 0 && q < 1) {
+            for (let j = 0; j < 12; j++) {
+              const at = along(path, easeIn(q) - j * 0.02);
+              dot(at.x + (rnd(i * 50 + j) - 0.5) * 3, at.y + (rnd(i * 50 + j + 9) - 0.5) * 3, (j ? 2.2 : 5) * (1 - j / 12) + 0.5, j < 2 ? ENERGY.core : i % 3 ? ENERGY.hot : ENERGY.violet, 0.9 * (1 - j / 12));
+            }
+          }
+          burst(t, (p - t0 - 0.62) / 0.33, i * 31);
+        });
+      } else if (look === "drain") {
+        ts.forEach((t, i) => {
+          const path = curve(t, a, (rnd(i + 5) - 0.5) * 0.5, 20);
+          // The unit glows as it is drained, then dims.
+          const g = Math.sin(Math.PI * clamp01(p / 0.8));
+          dot(t.x, t.y, t.size * 0.6, ENERGY.hot, 0.18 * g);
+          for (let j = 0; j < 26; j++) {
+            const t0 = 0.55 * rnd(i * 70 + j);
+            const q = clamp01((p - t0) / 0.42);
+            if (q <= 0 || q >= 1) continue;
+            const at = along(path, easeIn(q));
+            const swirl = (1 - q) * t.size * 0.5;
+            const ang = rnd(i * 70 + j + 3) * Math.PI * 2 + q * 5;
+            dot(at.x + Math.cos(ang) * swirl, at.y + Math.sin(ang) * swirl, 1.3 + 1.6 * (1 - q), j % 4 ? ENERGY.hot : ENERGY.violet, 0.85 * Math.sin(Math.PI * Math.min(1, q * 1.2)));
+          }
+        });
+        const fl = clamp01((p - 0.82) / 0.18);
+        if (fl > 0 && ctx) {
+          ctx.strokeStyle = `rgba(${ENERGY.core},${0.7 * (1 - fl)})`;
+          ctx.lineWidth = 3 * (1 - fl) + 0.5;
+          ctx.beginPath();
+          ctx.arc(a.x, a.y, a.r * (0.8 + 1.2 * fl), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else if (look === "chain") {
+        const hops = order.length;
+        const per = 1 / (hops + 0.6);
+        let prev: Pt = a;
+        order.forEach((i, h) => {
+          const t = ts[i]!;
+          const q = (p - h * per) / per;
+          if (q > 0) {
+            const flick = Math.floor(p * 40);
+            const reach = clamp01(q / 0.4);
+            const life = 1 - clamp01((q - 0.4) / 1.4);
+            const pts = jagged(prev, t, i * 97 + flick, 0.28);
+            const n2 = Math.max(2, Math.ceil(pts.length * reach));
+            line(pts.slice(0, n2), 7, ENERGY.violet, 0.25 * life);
+            line(pts.slice(0, n2), 1.8, ENERGY.core, 0.95 * life);
+            if (reach >= 1) burst(t, (q - 0.4) / 1.2, i * 13);
+          }
+          prev = t;
+        });
+      } else if (look === "nova") {
+        const far = Math.max(...ts.map((t) => Math.hypot(t.x - a.x, t.y - a.y) + t.size));
+        const R = a.r + far * easeOut(clamp01(p / 0.8));
+        const fade = 1 - clamp01((p - 0.7) / 0.3);
+        const motes = 140;
+        for (let j = 0; j < motes; j++) {
+          const ang = (j / motes) * Math.PI * 2 + rnd(j) * 0.05;
+          const d = R - rnd(j + 300) * 22 * (0.4 + p);
+          dot(a.x + Math.cos(ang) * d, a.y + Math.sin(ang) * d, 1 + 1.4 * rnd(j + 600), j % 5 ? ENERGY.hot : ENERGY.violet, 0.75 * fade * (0.5 + 0.5 * rnd(j + 900)));
+        }
+        if (ctx) {
+          ctx.strokeStyle = `rgba(${ENERGY.core},${0.35 * fade})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(a.x, a.y, Math.max(0, R), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        const speed = far / 0.8;
+        ts.forEach((t, i) => {
+          const at = (Math.hypot(t.x - a.x, t.y - a.y) - a.r) / speed;
+          burst(t, (p - at) / 0.3, i * 17);
+        });
+      } else {
+        // Plate surge: threads, then each plate's rim flares and sparks climb into the unit.
+        ts.forEach((t, i) => {
+          const q = clamp01(p / 0.42);
+          const path = curve(a, t, (rnd(i + 7) - 0.5) * 0.25);
+          if (q < 1) {
+            const end = Math.max(2, Math.ceil(path.length * easeOut(q)));
+            line(path.slice(0, end), 4, ENERGY.hot, 0.25);
+            line(path.slice(0, end), 1.1, ENERGY.core, 0.85);
+          }
+          const r = clamp01((p - 0.38) / 0.62);
+          if (r > 0) {
+            const g = Math.sin(Math.PI * r);
+            hex(t, t.size * 0.9, 6, ENERGY.hot, 0.35 * g);
+            hex(t, t.size * 0.9, 1.6, ENERGY.core, 0.9 * g);
+            for (let j = 0; j < 22; j++) {
+              const u = rnd(i * 40 + j);
+              const side = Math.floor(u * 6);
+              const f = u * 6 - side;
+              const a0 = (Math.PI / 3) * side - Math.PI / 2;
+              const a1 = a0 + Math.PI / 3;
+              const ex = t.x + t.size * 0.9 * (Math.cos(a0) + (Math.cos(a1) - Math.cos(a0)) * f);
+              const ey = t.y + t.size * 0.9 * (Math.sin(a0) + (Math.sin(a1) - Math.sin(a0)) * f);
+              const s0 = 0.4 * rnd(i * 40 + j + 9);
+              const s = clamp01((r - s0) / 0.6);
+              if (s <= 0 || s >= 1) continue;
+              const x = ex + (t.x - ex) * 0.55 * easeOut(s);
+              const y = ey + (t.y - ey) * 0.55 * easeOut(s) - t.size * 0.25 * s;
+              dot(x, y, 1.8 * (1 - s) + 0.5, j % 3 ? ENERGY.hot : ENERGY.core, 0.9 * (1 - s));
+            }
+          }
+        });
+      }
+    },
+    end: () => {
+      cv?.remove();
+      cv = undefined;
+      ctx = null;
+    },
+  };
+}

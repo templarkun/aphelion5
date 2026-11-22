@@ -2626,3 +2626,13 @@ given: nothing animating: no move, reveal, drag, Overload, celebration
 then: the Field draws itself 30 times a second while ready glows or Alerts breathe, 10 times a
       second when nothing on it changes (it was 60 times a second all the time); anything that
       starts moving (a tap, a drag, a new answer, an animation) is at full speed at once.
+CHANGED (designer 2026-11-22, round 28): the second bubble is one small row of glyphs, always
+      right under the card text (never beside it): an eye, "top" (Dark sector) or "under" (a unit's
+      sector), the tiles from the top down with an arrow between each ("?" for one not looked at), then
+      a small hexagon with the sector's number of tiles. No words for type and Level (T14_R28_07).
+CHANGED (designer 2026-11-22, round 28): a fourth choice, Behind (T14_R28_05).
+CHANGED (designer 2026-11-22, round 28): on a tablet (the narrow Flagship column, 900-1279 px)
+      the slots and the wrench sit on their own line under "Flagship"; the column no longer scrolls
+      sideways (T14_R28_08).
+CHANGED (designer 2026-11-22, round 28): the bubble is the small row of glyphs of T13_R24_01's
+      round 28 note; the total is a number beside a small hexagon (T14_R28_07).

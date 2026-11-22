@@ -376,5 +376,41 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
 @keyframes fp-inflow { from { transform: translateY(0); opacity: 1; } to { transform: translateY(var(--fp-in, 0)); opacity: 0; } }
 .fp-svg circle.fp-inflow:nth-child(-n + 5) { --fp-in: 24px; }
 .fp-svg circle.fp-inflow:nth-child(n + 6) { --fp-in: -24px; }
+/* Round 28 previews. */
+.fp-glass { fill: none; stroke: #bfe6ff; stroke-opacity: 0.7; }
+.fp-scanline { stroke: #fde68a; stroke-width: 1.4; animation: fp-scan 2.6s ease-in-out infinite; }
+.fp-outward { fill: none; stroke: #fbbf24; stroke-width: 1; animation: fp-outward 2.2s ease-out infinite; }
+.fp-pond { fill: none; stroke: #fbbf24; stroke-width: 1; animation: fp-pond 2.2s ease-out infinite; }
+.fp-ray { stroke: #fde68a; stroke-width: 1.2; animation: fp-twinkle 1.1s ease-in-out infinite; }
+.fp-svg circle.fp-chase { animation: fp-chase 1.56s ease-out infinite; }
+.fp-svg circle.fp-beacon { fill: #fbbf24; animation: fp-chase 4.2s ease-in-out infinite; }
+.fp-rain { stroke: #fde68a; stroke-width: 1; animation: fp-fall 1.8s linear infinite; }
+.fp-aurora { fill: none; stroke: #fbbf24; stroke-width: 9; stroke-opacity: 0.22; stroke-linecap: round; animation: fp-sway 3s ease-in-out infinite alternate; }
+.fp-gyro { fill: #2f5f3c; stroke: #55b36b; }
+.fp-gyrobadge { fill: #55b36b; stroke: #d1fae5; }
+.fp-svg circle.fp-energy { fill: #f2c230; stroke: #fff; stroke-width: 0.8; }
+.fp-svg circle.fp-faintfill { fill-opacity: 0.22; stroke-opacity: 0.3; }
+.fp-gyrotext { font: 800 13px/1 system-ui, sans-serif; fill: #fff; stroke: #0b0f17; stroke-width: 2; paint-order: stroke; }
+.fp-barbg { fill: #0b0f17; fill-opacity: 0.6; }
+.fp-energyrect { fill: #f2c230; }
+.fp-energyarc { fill: none; stroke: #f2c230; stroke-width: 2.4; stroke-linecap: round; }
+.fp-energyhex { fill: #f2c230; stroke: #0b0f17; stroke-width: 0.8; }
+.fp-tag { fill: #0b0f17; stroke: #f2c230; stroke-width: 1; }
+.fp-svg circle.fp-eo { fill: #f97316; fill-opacity: 0.55; stroke: #fed7aa; stroke-width: 1.2; }
+.fp-svg circle.fp-fly { fill: #fdba74; animation: fp-fly 1.4s ease-in infinite; }
+.fp-chain { fill: none; stroke: #e9d5ff; stroke-width: 1.6; stroke-linejoin: round; animation: fp-twinkle 0.5s steps(2) infinite; }
+.fp-svg circle.fp-nova { fill: none; stroke: #fdba74; stroke-width: 2; vector-effect: non-scaling-stroke; animation: fp-nova 1.8s ease-out infinite; }
+.fp-thread { stroke: #fed7aa; stroke-width: 0.9; stroke-dasharray: 4 120; animation: fp-thread 1.8s linear infinite; }
+.fp-surge { animation: fp-surge 1.8s ease-in-out infinite; }
+@keyframes fp-scan { from { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } to { transform: translateY(48px); opacity: 0; } }
+@keyframes fp-outward { from { transform: scale(1); opacity: 0.9; } to { transform: scale(1.35); opacity: 0; } }
+@keyframes fp-pond { from { transform: scale(0.15); opacity: 0.9; } to { transform: scale(1); opacity: 0; } }
+@keyframes fp-chase { 0% { opacity: 1; } 40%, 100% { opacity: 0.12; } }
+@keyframes fp-fall { from { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(40px); opacity: 0; } }
+@keyframes fp-sway { from { transform: translate(-4px, -5px); } to { transform: translate(4px, 6px); } }
+@keyframes fp-fly { from { transform: translate(0, 0); opacity: 1; } 85% { opacity: 1; } to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
+@keyframes fp-nova { from { transform: scale(0.6); opacity: 1; } to { transform: scale(9); opacity: 0; } }
+@keyframes fp-thread { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -124; } }
+@keyframes fp-surge { 0%, 40%, 100% { stroke: #5b6b86; } 60% { stroke: #fdba74; stroke-width: 2.4; } }
 html.still .fp-svg *, .fp-choice:disabled .fp-svg * { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .fp-svg * { animation: none !important; } }

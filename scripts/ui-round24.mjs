@@ -72,14 +72,17 @@ export async function round24Check(browser, url, out) {
       const boxes = await pg.locator(".info-pair .info-bubble").evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((r) => [r.left, r.right]));
       // Designer 2026-11-22: a Dark sector shows only the second bubble; every second bubble ends with "N tiles total".
       const inside = boxes.length === (plan.dark ? 1 : 2) && boxes.every(([l, r]) => l >= 0 && r <= w);
-      const total = await pg.locator(".seen-bubble .seen-total").textContent().catch(() => "");
-      const sideOk = plan.dark || w < 600 ? side === 0 : side === 1;
-      if (!(seen === want && rows === plan.rows.length && sideOk && inside && total === `${plan.total} tile${plan.total === 1 ? "" : "s"} total`)) fails.push(`seen at ${w} px: looked at ${seen}/${want}, rows ${rows}/${plan.rows.length}, side by side ${side}, inside ${inside}, dark ${plan.dark}, total "${total}"`);
+      // Round 28: one small row under the card text (never side by side); the total is a number with a hexagon.
+      const total = await pg.locator(".seen-bubble .seen-total").getAttribute("data-seen-total").catch(() => "");
+      const sideOk = side === 0;
+      // Under the card text: the second bubble's top below the first's bottom.
+      const under = boxes.length < 2 || (await pg.locator(".info-pair .info-bubble").evaluateAll((els) => els[1].getBoundingClientRect().top >= els[0].getBoundingClientRect().bottom - 1));
+      if (!(seen === want && rows === plan.rows.length && sideOk && under && inside && total === String(plan.total))) fails.push(`seen at ${w} px: looked at ${seen}/${want}, rows ${rows}/${plan.rows.length}, side by side ${side}, under ${under}, inside ${inside}, dark ${plan.dark}, total "${total}"`);
       await pg.close();
     }
     // 2. The "next tile" features (round 25: Corner, Ghost, Chip): each draws the Field differently.
     const shots = {};
-    for (const look of ["corner", "ghost", "chip"]) {
+    for (const look of ["corner", "ghost", "chip", "behind"]) {
       const pg = await open(browser, url, 1400, 900, JSON.stringify({ next: look }));
       watch(pg);
       await paste(pg, `${out}/seen-save.json`);
@@ -101,7 +104,7 @@ export async function round24Check(browser, url, out) {
       await pg.close();
     }
     const differ = [...new Set(Object.values(shots))];
-    if (differ.length < 3) fails.push(`next-tile looks drawn: ${differ.length} of 3 different`);
+    if (differ.length < 4) fails.push(`next-tile looks drawn: ${differ.length} of 4 different`);
   } else fails.push("no seen save");
 
   // 3. The designer's save: M_03 dropped on O_01, reached by two equal ways: it Attacks, nothing asked.

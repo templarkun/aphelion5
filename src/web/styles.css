@@ -1013,6 +1013,11 @@ html.still .ally-drop-unit { animation: none; }
 
 /* Overhaul as a small wrench mark beside the Flagship heading (designer 2026-11-21, round 25, I32). */
 .flagship-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* Round 28 (designer 2026-11-22): on tablets (layout B, a narrow column) the wrench and its slots did not
+   fit beside the word and the bar scrolled sideways: they go on their own line under "Flagship". */
+.layout-B .flagship-head { flex-direction: column; justify-content: center; gap: 4px; }
+.layout-B .flagship-head .oh-mark-wrap { flex-wrap: wrap; justify-content: center; max-width: 100%; }
+.layout-B .left { overflow-x: hidden; }
 .oh-mark-wrap { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; }
 .oh-mark-wrap .oh-slots { max-width: none; flex-wrap: nowrap; }
 .oh-mark-wrap .oh-slots i { width: 8px; height: 9px; }
@@ -1030,3 +1035,22 @@ html.still .module.pay-lit { animation: none; }
 .res-card .res-counts { margin: 6px 0; padding: 0; list-style: none; display: grid; gap: 2px; }
 .res-card .res-counts li { display: flex; justify-content: space-between; gap: 14px; }
 .res-card .glyph { vertical-align: -3px; }
+
+/* Round 28 (designer 2026-11-22): exhausted Modules shrink to their name while the list does not fit;
+   a tap opens one (peek), a tap elsewhere shrinks it again (App.tsx modTight / modPeek). */
+.module.folded { padding: 3px 8px; margin: 4px 0; cursor: pointer; }
+.module.folded .module-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.module.peek { opacity: 0.85; animation: mod-peek 0.18s ease-out; }
+@keyframes mod-peek { from { transform: scaleY(0.6); transform-origin: top; } to { transform: none; } }
+html.still .module.peek { animation: none; }
+
+/* Round 28 (designer 2026-11-22): "Looked at in this sector" as one small row of glyphs under the card text. */
+.info-pair.stacked { align-items: center; }
+.info-bubble.seen-bubble { width: auto; max-width: 100%; padding: 4px 9px; border-radius: 999px; }
+.seen-strip { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.seen-strip .seen-row { display: inline-flex; align-items: center; gap: 2px; }
+.seen-eye { color: #ffd27a; flex: none; }
+.seen-from { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; margin-right: 2px; }
+.seen-arrow { font-weight: 800; opacity: 0.65; font-size: 15px; line-height: 1; }
+.seen-strip .seen-total { display: inline-flex; align-items: center; gap: 2px; margin: 0 0 0 6px; padding: 0 0 0 7px; border-top: 0; border-left: 1px solid rgba(255, 255, 255, 0.22); font-weight: 700; }
+.seen-strip .seen-q { width: 18px; height: 22px; }

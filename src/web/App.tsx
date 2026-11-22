@@ -905,6 +905,39 @@ function GameScreen(p: GameProps) {
     return { can: false };
   };
   const modulesWanted = (q && (q.kind === "option" || q.kind === "order") && q.pick === "modules") || splitOn === "modules";
+  // Round 28 (designer 2026-11-22): when the Module list does not fit on one screen, exhausted Modules
+  // shrink to their name; a tap on one opens it to its full size, a tap anywhere else shrinks it again.
+  const modPanel = useRef<HTMLElement>(null);
+  const modFullH = useRef(new Map<number, number>());
+  const [modTight, setModTight] = useState(false);
+  const [modPeek, setModPeek] = useState<number | undefined>();
+  useLayoutEffect(() => {
+    const el = modPanel.current;
+    if (!el) return;
+    const work = () => {
+      let need = el.querySelector("h3")?.offsetHeight ?? 0;
+      for (const m of el.querySelectorAll<HTMLElement>("[data-module]")) {
+        const id = Number(m.dataset.module);
+        if (!m.classList.contains("folded")) modFullH.current.set(id, m.offsetHeight);
+        need += (modFullH.current.get(id) ?? m.offsetHeight) + 6;
+      }
+      const cs = getComputedStyle(el);
+      const room = layout === "C" ? window.innerHeight : el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const tight = need > room + 1;
+      setModTight((old) => (old === tight ? old : tight));
+    };
+    work();
+    window.addEventListener("resize", work);
+    return () => window.removeEventListener("resize", work);
+  });
+  useEffect(() => {
+    if (modPeek === undefined) return;
+    const off = (e: PointerEvent) => {
+      if (!(e.target as Element | null)?.closest?.(`[data-module="${modPeek}"]`)) setModPeek(undefined);
+    };
+    document.addEventListener("pointerdown", off, true);
+    return () => document.removeEventListener("pointerdown", off, true);
+  }, [modPeek]);
   const energyQ = !actors && q?.kind === "option" && q.energy ? q : undefined;
   const energyFor = (id: number) => energyQ?.energy?.[String(id)];
   const anomalyQ = q?.kind === "option" && q.options.some((o) => o.on?.kind === "anomaly");
@@ -1267,7 +1300,7 @@ function GameScreen(p: GameProps) {
         {layout === "C" && hasField && <FlagshipDock layout="C" company={co.id} bays={bayViews} orders={orderViews} commandTokens={s.player.commandTokens} q={q} inOverload={inOverload} onUse={useThing} onSelect={setThingSel} drag={dragApi} dockExtra={overhaulButton} />}
       </section>
 
-      <aside className="right panel">
+      <aside className="right panel" ref={modPanel} data-tight={modTight || undefined}>
         <h3>Modules</h3>
         {sortedModules(c, s.player.modules).map((m) => {
           const d = moduleDef(c, m.id);
@@ -1276,6 +1309,7 @@ function GameScreen(p: GameProps) {
           const dim = (modulesWanted && !st.can && !energyFor(m.id) && !taking) || (modSel !== undefined && modSel.id !== m.id);
           const sel = modSel?.id === m.id;
           const payLit = resCard !== undefined && payLitIds.includes(m.id);
+          const folded = modTight && !m.ready && !st.can && !energyFor(m.id) && !taking && !affectedNow.modules.includes(m.id) && modPeek !== m.id;
           return (
             <ModuleCard
               key={m.id}
@@ -1287,7 +1321,9 @@ function GameScreen(p: GameProps) {
               selected={sel}
               dim={dim}
               extraClass={`${m.ready && xWouldBeZero(c, m.id, false) ? "x-zero" : ""} ${affectedNow.modules.includes(m.id) ? "affected" : ""} ${energyFor(m.id) ? `energy-target ${energyFor(m.id)!.toLowerCase()}` : ""} ${taking ? "energy-source" : ""} ${payLit ? `pay-lit ${resCard!.col.toLowerCase()}` : ""}`}
-              onClick={st.onClick}
+              onClick={folded ? () => setModPeek(m.id) : st.onClick}
+              folded={folded}
+              peek={modTight && modPeek === m.id}
               press={actors?.modules.get(m.id) ? modulePress(`module:${m.id}`, [], [actors.modules.get(m.id)], actors.modules.get(m.id), d.effect) : undefined}
             >
               {st.count !== undefined && <SplitCount n={st.count} onMinus={() => subSplit(String(m.id))} />}
@@ -1737,23 +1773,37 @@ export function typeGlyph(type: string): string {
   return type === "Sleeper" ? "Z" : type[0]!.toUpperCase();
 }
 
-/** The second bubble: what the player has looked at in this sector (round 24). */
-function SeenInfo({ data, rows, total }: { data: GameData; rows: ReturnType<typeof seenInSector>; total: number }) {
+/**
+ * The second bubble: what the player has looked at in this sector (round 24). Round 28 (designer
+ * 2026-11-22): small and in one row, glyphs only: an eye, then the tiles from the top down with an
+ * arrow between each ("?" for one not looked at), then the sector's number of tiles.
+ */
+function SeenInfo({ data, rows, total, dark }: { data: GameData; rows: ReturnType<typeof seenInSector>; total: number; dark: boolean }) {
   return (
-    <span className="info-lines seen-lines">
-      <b>Looked at in this sector</b>
-      {rows.map((r) => {
+    <span className="seen-strip" aria-label={`Looked at in this sector, ${dark ? "from the top" : "beneath the unit"}, down`}>
+      <svg className="seen-eye" viewBox="0 0 24 16" width="20" height="14" aria-hidden="true">
+        <path d="M1 8c3-4.5 6.6-7 11-7s8 2.5 11 7c-3 4.5-6.6 7-11 7S4 12.5 1 8z" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        <circle cx="12" cy="8" r="3.2" fill="currentColor" />
+      </svg>
+      <span className="seen-from">{dark ? "top" : "under"}</span>
+      {rows.map((r, i) => {
         const u = r.unitId ? data.units.byId.get(r.unitId) : undefined;
         return (
-          <span key={r.tile} className="seen-row">
-            <span className="seen-at">{r.label}</span>
+          <span key={r.tile} className="seen-row" title={`${r.label}: ${u ? u.type : "not looked at"}`}>
+            {i > 0 && (
+              <span className="seen-arrow" aria-hidden="true">
+                ›
+              </span>
+            )}
             {r.unitId ? <UnitGlyph id={r.unitId} size={22} /> : <span className="seen-q">?</span>}
-            <span>{u ? `${u.type}${u.level !== undefined && u.type !== "Flare" ? `, Level ${u.level}` : ""}` : "not looked at"}</span>
           </span>
         );
       })}
-      <span className="seen-total" data-seen-total={total}>
-        {total} tile{total === 1 ? "" : "s"} total
+      <span className="seen-total" data-seen-total={total} title={`${total} tile${total === 1 ? "" : "s"} in this sector`}>
+        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+          <path d="M8 1l6 3.5v7L8 15l-6-3.5v-7z" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        </svg>
+        {total}
       </span>
     </span>
   );
@@ -1772,12 +1822,10 @@ function InfoBubble({ data, state, sector }: { data: GameData; state: GameState;
   // Designer 2026-11-22: a Dark sector with tiles looked at shows only the second bubble (no "Dark sector. N tiles.").
   const darkSeen = rows.length > 0 && !!stackHere.length && !state.tiles[stackHere.at(-1)!]!.faceUp;
   const bw = isWide() ? 406 : 280; // 1.45 times as wide on the big PC screen (styles.css)
-  // Round 24: a second bubble beside the first (under it when the Field is too narrow).
-  const side = rows.length > 0 && !darkSeen && w >= bw * 2 + 24;
-  // Two bubbles one above the other need more room above the tile (else they go below it).
-  const room = rows.length > 0 && !side ? (darkSeen ? 70 : 120) + rows.length * 26 : 90;
+  // Round 28 (designer 2026-11-22): the second bubble is one small row, always right under the first.
+  const room = rows.length > 0 ? (darkSeen ? 50 : 136) : 90;
   const above = at[1] - tileH / 2 > room;
-  const tw = side ? bw * 2 + 8 : bw;
+  const tw = darkSeen ? Math.min(bw, 96 + rows.length * 34) : bw;
   const style = { left: Math.max(8, Math.min(at[0] - tw / 2, w - tw - 8)), top: above ? at[1] - tileH / 2 - 6 : at[1] + tileH / 2 + 6 };
   const main = (
     <div className="info-bubble" key="main">
@@ -1786,12 +1834,12 @@ function InfoBubble({ data, state, sector }: { data: GameData; state: GameState;
   );
   const seen = rows.length > 0 && (
     <div className="info-bubble seen-bubble" key="seen" data-seen={rows.filter((r) => r.unitId).length}>
-      <SeenInfo data={data} rows={rows} total={stackHere.length} />
+      <SeenInfo data={data} rows={rows} total={stackHere.length} dark={darkSeen} />
     </div>
   );
   return (
-    <div className={`info-pair ${above ? "above" : "below"} ${side ? "side" : "stacked"}`} style={style}>
-      {darkSeen ? seen : above && !side ? [seen, main] : [main, seen]}
+    <div className={`info-pair ${above ? "above" : "below"} stacked`} style={style}>
+      {darkSeen ? seen : [main, seen]}
     </div>
   );
 }

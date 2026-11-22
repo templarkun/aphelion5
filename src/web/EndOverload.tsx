@@ -8,6 +8,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isStill, noFlying } from "./motion.js";
 import { CORONAL_REACH, drawCoronalWaves } from "./coronalFx.js";
+import { endOverloadAt } from "./exposureFx.js";
 
 const SPARKS = 26;
 
@@ -144,6 +145,15 @@ export function EndOverload(p: { onEnd: () => void }) {
   const self = useRef<HTMLButtonElement>(null);
   useCorona(plasma);
   const place = usePlace(self);
+  // Where the button is, for Exposure's look after it is pressed (exposureFx.ts; round 28).
+  const remember = () => {
+    const r = self.current?.getBoundingClientRect();
+    if (!r || r.width <= 0) return;
+    endOverloadAt.x = r.left + r.width / 2;
+    endOverloadAt.y = r.top + r.height / 2;
+    endOverloadAt.r = r.width / 2;
+  };
+  useLayoutEffect(remember, [place]);
   return (
     <button
       ref={self}
@@ -152,6 +162,7 @@ export function EndOverload(p: { onEnd: () => void }) {
       title="No Alert tokens remain (9.2)"
       disabled={burst}
       onClick={() => {
+        remember();
         if (still) return p.onEnd();
         setBurst(true);
         window.setTimeout(p.onEnd, 380);

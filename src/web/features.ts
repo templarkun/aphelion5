@@ -18,17 +18,25 @@
  * - next: where a sector's very next tile shows once the player has looked at it (designer
  *   2026-11-21, round 24): the tile under a unit, or a Dark sector's top tile. Corner (its glyph badge in
  *   the lower left corner; the default since round 25, when Original and Peek were removed), Ghost (its glyph faint and large in
- *   the tile), Chip (a small "next" chip with its glyph where the tile-count words are).
+ *   the tile), Chip (a small "next" chip with its glyph where the tile-count words are), Behind (round 28: its glyph
+ *   badge tucked just behind the unit's own badge, like a card under a card).
+ * - gyroEnergy (designer 2026-11-22, round 28): how an Energy Gyro (G_01-G_09) shows the energy you gain by
+ *   destroying it (its "destroyed" line in the unit list). Drawn once with the board (nothing moves).
+ * - exposure (designer 2026-11-22, round 28): the look of Exposure (9.3 step 2: every unit alone on its sector
+ *   plate takes 1 damage) after End the Overload is pressed: energy from the button to those units, or drawn
+ *   out of them into it, and three more (exposureFx.ts).
  */
 
 export type Corner = "original" | "soft" | "round" | "pebble" | "bevel";
-export type Depth = "original" | "stack" | "stackFine" | "stackHint";
-export type ReadyUnit = "original" | "embers" | "heartbeat" | "motes" | "sparkle" | "gather" | "aura" | "current" | "arcs";
-export type ReadySector = "fill" | "embers" | "inner" | "sparkle" | "converge" | "drift" | "tide" | "core" | "haze";
+export type Depth = "original" | "stack" | "stackFine" | "stackHint" | "glass";
+export type ReadyUnit = "original" | "embers" | "heartbeat" | "motes" | "sparkle" | "gather" | "aura" | "current" | "arcs" | "comet" | "scan" | "brackets" | "ripple" | "corona" | "chase";
+export type ReadySector = "fill" | "embers" | "inner" | "sparkle" | "converge" | "drift" | "tide" | "core" | "haze" | "pond" | "lattice" | "rain" | "vortex" | "beacon" | "aurora";
 export type Ready = ReadyUnit | ReadySector;
 export type Counts = "shown" | "hidden";
-export type OverloadLook = "original" | "inflow";
-export type NextLook = "corner" | "ghost" | "chip";
+export type OverloadLook = "original" | "inflow" | "storm" | "pulse" | "veil";
+export type NextLook = "corner" | "ghost" | "chip" | "behind";
+export type GyroEnergy = "tokens" | "corner" | "bar" | "ring" | "tag" | "cells" | "watermark";
+export type Exposure = "strike" | "drain" | "chain" | "nova" | "surge";
 
 export interface Features {
   corners: Corner;
@@ -39,6 +47,8 @@ export interface Features {
   names: Counts;
   overload: OverloadLook;
   next: NextLook;
+  gyroEnergy: GyroEnergy;
+  exposure: Exposure;
 }
 
 export const CORNERS: { id: Corner; label: string; note: string }[] = [
@@ -54,6 +64,7 @@ export const DEPTHS: { id: Depth; label: string; note: string }[] = [
   { id: "stack", label: "Stack", note: "thin tile edges under it, one per tile" },
   { id: "stackFine", label: "Stack, fine", note: "the same, closer together and softer" },
   { id: "stackHint", label: "Stack, hint", note: "only faint hairlines under the lower edges" },
+  { id: "glass", label: "Glass stack", note: "a thin line of cool light per tile, like stacked glass plates" },
 ];
 
 export const READY_UNITS: { id: ReadyUnit; label: string; note: string }[] = [
@@ -66,6 +77,12 @@ export const READY_UNITS: { id: ReadyUnit; label: string; note: string }[] = [
   { id: "aura", label: "Aura", note: "a slow swirl of fine particles just outside the edge" },
   { id: "current", label: "Current", note: "fine particles flow round the edge like a current" },
   { id: "arcs", label: "Arcs", note: "small sparks of electricity jump along the edge now and then" },
+  { id: "comet", label: "Comet", note: "one bright spark circles the edge with a tail of fading motes" },
+  { id: "scan", label: "Scan", note: "a thin line of light sweeps slowly down the tile, shedding a few motes" },
+  { id: "brackets", label: "Lock-on", note: "six corner marks breathe in and out, like a target held" },
+  { id: "ripple", label: "Ripple", note: "a ring of fine particles leaves the edge now and then and fades outwards" },
+  { id: "corona", label: "Corona", note: "short rays of light flicker round the edge like a small sun" },
+  { id: "chase", label: "Chase", note: "the six corners light one after another round the tile" },
 ];
 
 export const READY_SECTORS: { id: ReadySector; label: string; note: string }[] = [
@@ -78,6 +95,12 @@ export const READY_SECTORS: { id: ReadySector; label: string; note: string }[] =
   { id: "tide", label: "Tide", note: "a wave of light rolls slowly round the edge" },
   { id: "core", label: "Core", note: "a soft light breathes in the middle of the plate" },
   { id: "haze", label: "Haze", note: "fine particles seep out a little way from the edge" },
+  { id: "pond", label: "Pond", note: "slow rings of light spread from the middle, as on still water" },
+  { id: "lattice", label: "Lattice", note: "a faint grid of points on the plate, a wave of light passing over it" },
+  { id: "rain", label: "Light rain", note: "fine motes fall slowly through the plate and fade" },
+  { id: "vortex", label: "Vortex", note: "specks swirl slowly in towards the middle" },
+  { id: "beacon", label: "Beacon", note: "a soft light in each corner in turn, as a slow beacon" },
+  { id: "aurora", label: "Aurora", note: "a soft curtain of light waves gently across the plate" },
 ];
 
 export const COUNTS: { id: Counts; label: string; note: string }[] = [
@@ -93,12 +116,34 @@ export const NAMES: { id: Counts; label: string; note: string }[] = [
 export const OVERLOADS: { id: OverloadLook; label: string; note: string }[] = [
   { id: "original", label: "Original", note: "energy drifting in, and plasma beams racing round the edge" },
   { id: "inflow", label: "Inflow", note: "energy drifting in; streams of energy particles flow in from the edge (no racing beams)" },
+  { id: "storm", label: "Storm", note: "energy drifting in; arcs of lightning crawl along the edge and crackle out" },
+  { id: "pulse", label: "Pulse", note: "energy drifting in; pulses of light run from the corners and burst where they meet" },
+  { id: "veil", label: "Veil", note: "energy drifting in; a curtain of particles ripples along the edge, red to violet" },
 ];
 
 export const NEXTS: { id: NextLook; label: string; note: string }[] = [
   { id: "corner", label: "Corner", note: "its glyph badge in the lower left corner of the tile" },
   { id: "ghost", label: "Ghost", note: "its glyph faint and large inside the tile" },
   { id: "chip", label: "Chip", note: "a small “next” chip with its glyph at the foot of the tile" },
+  { id: "behind", label: "Behind", note: "its glyph badge tucked just behind the unit's own badge, like a card under a card" },
+];
+
+export const GYRO_ENERGY: { id: GyroEnergy; label: string; note: string }[] = [
+  { id: "tokens", label: "Tokens", note: "one energy token per energy, along the tile's left edge" },
+  { id: "corner", label: "Corner", note: "the number and the energy glyph in the upper left corner" },
+  { id: "bar", label: "Charge bar", note: "a short bar of cells in the energy's colour inside the left edge" },
+  { id: "ring", label: "Glyph ring", note: "one lit segment per energy round the unit's glyph badge" },
+  { id: "tag", label: "Tag", note: "a small “+N” tag with the energy glyph under the Level badge" },
+  { id: "cells", label: "Cells", note: "small hexagonal cells in the energy's colour along the upper left edge" },
+  { id: "watermark", label: "Watermark", note: "the energy glyph faint and large in the tile, the number on it" },
+];
+
+export const EXPOSURES: { id: Exposure; label: string; note: string }[] = [
+  { id: "strike", label: "Strike", note: "bolts of energy fly from End the Overload into each unit" },
+  { id: "drain", label: "Drain", note: "energy is pulled out of each unit and streams into End the Overload" },
+  { id: "chain", label: "Chain", note: "one bolt of lightning leaps from the button to the units, one after another" },
+  { id: "nova", label: "Nova", note: "a ring of energy rolls out from the button over the Field; each unit flares as it passes" },
+  { id: "surge", label: "Plate surge", note: "threads of energy run to each unit's sector plate, whose edge flares up into the unit" },
 ];
 
 const KEY = "aphelion5.features";
@@ -106,7 +151,7 @@ const KEY = "aphelion5.features";
 const OLD_KEY = "aphelion5.trialLooks";
 // Designer 2026-11-21 (round 25): Pebble corners and the Corner next tile are the defaults; the
 // tile-count words are hidden for good (their row left the Menu).
-const DEFAULT: Features = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "original", next: "corner" };
+const DEFAULT: Features = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "original", next: "corner", gyroEnergy: "tokens", exposure: "strike" };
 const subs = new Set<() => void>();
 
 function load(): Features {
@@ -123,6 +168,8 @@ function load(): Features {
       names: NAMES.some((x) => x.id === v.names) ? v.names! : DEFAULT.names,
       overload: OVERLOADS.some((x) => x.id === v.overload) ? v.overload! : DEFAULT.overload,
       next: NEXTS.some((x) => x.id === v.next) ? v.next! : DEFAULT.next,
+      gyroEnergy: GYRO_ENERGY.some((x) => x.id === v.gyroEnergy) ? v.gyroEnergy! : DEFAULT.gyroEnergy,
+      exposure: EXPOSURES.some((x) => x.id === v.exposure) ? v.exposure! : DEFAULT.exposure,
     };
   } catch {
     return DEFAULT;
@@ -241,4 +288,6 @@ export const FEATURE_ROWS: FeatureRow[] = [
   { key: "names", title: "Unit names", about: "The unit's name (B_03, S_12 ...) on its tile.", list: NAMES },
   { key: "overload", title: "Overload edge", about: "The energy round the Field's edge during an Overload.", list: OVERLOADS },
   { key: "next", title: "Next tile", about: "Where a sector's next tile shows once you have looked at it.", list: NEXTS },
+  { key: "gyroEnergy", title: "Energy Gyro reward", about: "How an Energy Gyro shows the energy you gain by destroying it.", list: GYRO_ENERGY },
+  { key: "exposure", title: "Overload End: Exposure", about: "When the Overload ends, every unit alone on its sector plate takes 1 damage (9.3). How that is shown.", list: EXPOSURES },
 ] as FeatureRow[];
