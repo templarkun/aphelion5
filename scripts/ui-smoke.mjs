@@ -13,6 +13,15 @@ const { chromium } = createRequire(import.meta.url)("playwright");
 const url = process.argv[2] ?? "http://localhost:4173";
 const out = process.argv[3] ?? ".";
 const browser = await chromium.launch();
+// Groups of checks (designer 2026-11-22: each round runs only the groups it touched, the full set now and then):
+// UI_ONLY=game,intro,outro,pages,celebrate,looks,round23,round24,round25,round26 (any of them, comma-separated).
+// Not set: every group runs. A group not run counts as passed.
+const GROUPS = ["game", "intro", "outro", "pages", "celebrate", "looks", "round23", "round24", "round25", "round26"];
+const ONLY = (process.env.UI_ONLY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+const unknown = ONLY.filter((g) => !GROUPS.includes(g));
+if (unknown.length) { console.error(`UI_ONLY: unknown group(s) ${unknown.join(", ")}; known: ${GROUPS.join(", ")}`); process.exit(2); }
+const runs = (group) => !ONLY.length || ONLY.includes(group);
+if (ONLY.length) console.log(`Browser check groups: ${ONLY.join(", ")}`);
 // The intro (command briefing, 2026-11-13) is switched off for these checks; it has its own check below.
 const plainPage = browser.newPage.bind(browser);
 browser.newPage = async (o) => {
@@ -122,107 +131,113 @@ async function untilAction(pg) {
   throw new Error("never reached the Command phase");
 }
 
-await page.goto(url);
-await start(page);
-await untilAction(page);
-const noMenu = (await panel.locator(".choices button, .ask-choices button").count()) === 0;
-await page.screenshot({ path: `${out}/ui-command.png` });
-// The Allied Drop's Mecha is on the Field: no Bay greyed out for want of a unit (C1_ORDER_1, "one Gyro or one Sleeper", rightly is: round 23).
-const greyAtStart = await page.locator(".no-units:not(.order-thing)").count();
-// A Dark sector opens a pop-up with Reveal; clicking outside closes it.
-const dark = JSON.parse((await page.locator(".field").getAttribute("data-choosable")) ?? "[]");
-await clickField(page, dark.length - 1);
-const popupTitle = await page.locator(".popup-title").textContent();
-// Bubbles (designer 2026-11-07): one standard width, the row centred on the sector clicked.
-await page.waitForTimeout(700);
-const target = dark[dark.length - 1];
-const fieldBox = await page.locator(".field").boundingBox();
-const bubbleBoxes = await page.locator(".popup .bubble").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { x: r.x, w: r.width, y: r.y, h: r.height }; }));
-const rowLeft = Math.min(...bubbleBoxes.map((b) => b.x));
-const rowRight = Math.max(...bubbleBoxes.map((b) => b.x + b.w));
-const bubbles = bubbleBoxes.length > 0 && bubbleBoxes.every((b) => Math.abs(b.w - bubbleBoxes[0].w) < 1) && Math.abs((rowLeft + rowRight) / 2 - (fieldBox.x + target.x)) < 12;
-// Raised: centred on the top point of the tile (designer 2026-11-08).
-const tileH = Number(await page.locator(".field").getAttribute("data-tile"));
-const popBox = await page.locator(".popup").boundingBox();
-// Centred on the pointy top end of the hexagon (designer 2026-11-08).
-const raised = Math.abs(popBox.y + popBox.height / 2 - (fieldBox.y + target.y - tileH / 2)) < 12 || popBox.y <= 9;
-// One tap on another Dark sector closes this pop-up and opens that one (designer 2026-11-08).
-let tapThrough = "only one Dark sector";
-if (dark.length > 1) {
-  const other = dark[0];
-  await page.mouse.click(fieldBox.x + other.x, fieldBox.y + other.y);
-  await page.waitForTimeout(400);
-  const t = await page.locator(".popup-title").allTextContents();
-  tapThrough = t.length === 1 && t[0].includes(`(${other.k})`) ? "ok" : `titles after tap: ${JSON.stringify(t)}`;
-}
-await page.mouse.click(5, 300);
-await page.waitForTimeout(350);
-const closedByOutside = (await page.locator(".popup").count()) === 0;
-// Ready things breathe instead of a thick border.
-const breathing = await page.evaluate(() => [...document.querySelectorAll(".can")].every((e) => getComputedStyle(e).animationName === "can-breathe"));
-await clickField(page, dark.length - 1);
-await page.screenshot({ path: `${out}/ui-popup.png` });
-await page.waitForTimeout(700);
-await page.locator(".popup").getByRole("menuitem", { name: "Reveal" }).click();
-await page.waitForTimeout(500);
-await page.screenshot({ path: `${out}/ui-after-reveal.png` });
-// Run a Module by clicking it, if one can run (it may then ask for targets).
-const afterReveal = await promptOf(page);
-const canModules = await page.locator(".module.can").count();
-// Overhaul asks to confirm while the Flagship is not Crippled.
-let overhaulConfirm = false;
-if (/^Choose an action/.test(afterReveal)) {
-  await page.locator("[data-overhaul]").first().click();
-  overhaulConfirm = (await page.getByRole("dialog", { name: "Overhaul now?" }).count()) === 1;
-  await page.getByRole("button", { name: "Cancel" }).click();
-}
-async function revealSomething(pg) {
-  const hits = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]");
-  for (let n = hits.length - 1; n >= 0; n--) {
-    await clickField(pg, n);
-    const rev = pg.locator(".popup [role=menuitem]", { hasText: "Reveal" });
-    if (await rev.count()) return rev.click();
-    await pg.keyboard.press("Escape");
-    await pg.waitForTimeout(250);
+// The opening checks of the game screen (group "game").
+let noMenu = true, greyAtStart = 0, popupTitle = "Dark sector (not run)", bubbles = true, raised = true, closedByOutside = true, breathing = true, afterReveal = "not run", canModules = 0, tapThrough = "ok", overhaulConfirm = true, rotateShown = true, facingKept = "not run";
+if (runs("game")) {
+  await page.goto(url);
+  await start(page);
+  await untilAction(page);
+  noMenu = (await panel.locator(".choices button, .ask-choices button").count()) === 0;
+  await page.screenshot({ path: `${out}/ui-command.png` });
+  // The Allied Drop's Mecha is on the Field: no Bay greyed out for want of a unit (C1_ORDER_1, "one Gyro or one Sleeper", rightly is: round 23).
+  greyAtStart = await page.locator(".no-units:not(.order-thing)").count();
+  // A Dark sector opens a pop-up with Reveal; clicking outside closes it.
+  const dark = JSON.parse((await page.locator(".field").getAttribute("data-choosable")) ?? "[]");
+  await clickField(page, dark.length - 1);
+  popupTitle = await page.locator(".popup-title").textContent();
+  // Bubbles (designer 2026-11-07): one standard width, the row centred on the sector clicked.
+  await page.waitForTimeout(700);
+  const target = dark[dark.length - 1];
+  const fieldBox = await page.locator(".field").boundingBox();
+  const bubbleBoxes = await page.locator(".popup .bubble").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { x: r.x, w: r.width, y: r.y, h: r.height }; }));
+  const rowLeft = Math.min(...bubbleBoxes.map((b) => b.x));
+  const rowRight = Math.max(...bubbleBoxes.map((b) => b.x + b.w));
+  bubbles = bubbleBoxes.length > 0 && bubbleBoxes.every((b) => Math.abs(b.w - bubbleBoxes[0].w) < 1) && Math.abs((rowLeft + rowRight) / 2 - (fieldBox.x + target.x)) < 12;
+  // Raised: centred on the top point of the tile (designer 2026-11-08).
+  const tileH = Number(await page.locator(".field").getAttribute("data-tile"));
+  const popBox = await page.locator(".popup").boundingBox();
+  // Centred on the pointy top end of the hexagon (designer 2026-11-08).
+  raised = Math.abs(popBox.y + popBox.height / 2 - (fieldBox.y + target.y - tileH / 2)) < 12 || popBox.y <= 9;
+  // One tap on another Dark sector closes this pop-up and opens that one (designer 2026-11-08).
+  tapThrough = "only one Dark sector";
+  if (dark.length > 1) {
+    const other = dark[0];
+    await page.mouse.click(fieldBox.x + other.x, fieldBox.y + other.y);
+    await page.waitForTimeout(400);
+    const t = await page.locator(".popup-title").allTextContents();
+    tapThrough = t.length === 1 && t[0].includes(`(${other.k})`) ? "ok" : `titles after tap: ${JSON.stringify(t)}`;
   }
-}
-// Facing (3.7): reveal on fresh games until a unit with arrows shows the rotate buttons.
-let rotateShown = false;
-let facingKept = "";
-for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
-  if (rotateShown) break;
-  const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
-  pg.on("pageerror", (e) => errors.push(e.message));
-  await pg.goto(url);
-  await start(pg, seed);
-  await untilAction(pg);
-  for (let i = 0; i < 4 && !rotateShown; i++) {
-    if (!/^Choose an action/.test(await promptOf(pg))) break;
-    await revealSomething(pg);
-    // Wait for the answer to land (the pop-up closes in 0.17 s first), not a fixed time.
-    await pg.waitForFunction(() => (document.querySelector(".field")?.getAttribute("data-rotate") ?? "[]") !== "[]" || !document.querySelector(".popup"), null, { timeout: 2000 }).catch(() => {});
-    await pg.waitForTimeout(250);
-    const rot = JSON.parse((await pg.locator(".field").getAttribute("data-rotate")) ?? "[]");
-    if (!rot.length) continue;
-    rotateShown = true;
-    const box = await pg.locator(".field").boundingBox();
-    await pg.mouse.click(box.x + rot[1].x, box.y + rot[1].y); // turn clockwise once
-    await pg.waitForTimeout(150);
-    await pg.screenshot({ path: `${out}/ui-facing.png` });
-    if (await pg.getByRole("button", { name: "Done" }).count()) await pg.getByRole("button", { name: "Done" }).click();
-    else await revealSomething(pg); // the next action keeps the facing
-    await pg.waitForFunction(() => !document.querySelector(".popup") && (document.querySelector(".field")?.getAttribute("data-rotate") ?? "[]") === "[]", null, { timeout: 2000 }).catch(() => {});
-    await pg.waitForTimeout(200);
-    await toggleLog(pg);
-    facingKept = (await pg.locator(".log li").allTextContents()).find((l) => / facing 1 /.test(l)) ?? "";
+  await page.mouse.click(5, 300);
+  await page.waitForTimeout(350);
+  closedByOutside = (await page.locator(".popup").count()) === 0;
+  // Ready things breathe instead of a thick border.
+  breathing = await page.evaluate(() => [...document.querySelectorAll(".can")].every((e) => getComputedStyle(e).animationName === "can-breathe"));
+  await clickField(page, dark.length - 1);
+  await page.screenshot({ path: `${out}/ui-popup.png` });
+  await page.waitForTimeout(700);
+  await page.locator(".popup").getByRole("menuitem", { name: "Reveal" }).click();
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `${out}/ui-after-reveal.png` });
+  // Run a Module by clicking it, if one can run (it may then ask for targets).
+  afterReveal = await promptOf(page);
+  canModules = await page.locator(".module.can").count();
+  // Overhaul asks to confirm while the Flagship is not Crippled.
+  overhaulConfirm = false;
+  if (/^Choose an action/.test(afterReveal)) {
+    await page.locator("[data-overhaul]").first().click();
+    overhaulConfirm = (await page.getByRole("dialog", { name: "Overhaul now?" }).count()) === 1;
+    await page.getByRole("button", { name: "Cancel" }).click();
   }
-  await pg.close();
+  async function revealSomething(pg) {
+    const hits = JSON.parse((await pg.locator(".field").getAttribute("data-choosable")) ?? "[]");
+    for (let n = hits.length - 1; n >= 0; n--) {
+      await clickField(pg, n);
+      const rev = pg.locator(".popup [role=menuitem]", { hasText: "Reveal" });
+      if (await rev.count()) return rev.click();
+      await pg.keyboard.press("Escape");
+      await pg.waitForTimeout(250);
+    }
+  }
+  // Facing (3.7): reveal on fresh games until a unit with arrows shows the rotate buttons.
+  rotateShown = false;
+  facingKept = "";
+  for (const seed of [11, 12, 13, 14, 15, 16, 17, 18]) {
+    if (rotateShown) break;
+    const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+    pg.on("pageerror", (e) => errors.push(e.message));
+    await pg.goto(url);
+    await start(pg, seed);
+    await untilAction(pg);
+    for (let i = 0; i < 4 && !rotateShown; i++) {
+      if (!/^Choose an action/.test(await promptOf(pg))) break;
+      await revealSomething(pg);
+      // Wait for the answer to land (the pop-up closes in 0.17 s first), not a fixed time.
+      await pg.waitForFunction(() => (document.querySelector(".field")?.getAttribute("data-rotate") ?? "[]") !== "[]" || !document.querySelector(".popup"), null, { timeout: 2000 }).catch(() => {});
+      await pg.waitForTimeout(250);
+      const rot = JSON.parse((await pg.locator(".field").getAttribute("data-rotate")) ?? "[]");
+      if (!rot.length) continue;
+      rotateShown = true;
+      const box = await pg.locator(".field").boundingBox();
+      await pg.mouse.click(box.x + rot[1].x, box.y + rot[1].y); // turn clockwise once
+      await pg.waitForTimeout(150);
+      await pg.screenshot({ path: `${out}/ui-facing.png` });
+      if (await pg.getByRole("button", { name: "Done" }).count()) await pg.getByRole("button", { name: "Done" }).click();
+      else await revealSomething(pg); // the next action keeps the facing
+      await pg.waitForFunction(() => !document.querySelector(".popup") && (document.querySelector(".field")?.getAttribute("data-rotate") ?? "[]") === "[]", null, { timeout: 2000 }).catch(() => {});
+      await pg.waitForTimeout(200);
+      await toggleLog(pg);
+      facingKept = (await pg.locator(".log li").allTextContents()).find((l) => / facing 1 /.test(l)) ?? "";
+    }
+    await pg.close();
+  }
 }
 // Rows (designer 2026-11-09): press a row's bubble to select it, press it again to confirm.
 let rowCheck = "skipped (no row save)";
 const rowSave = `${out}/row-save.json`;
 const { existsSync, readFileSync } = await import("node:fs");
-if (existsSync(rowSave)) {
+/** A game-screen check (group "game") runs when its save exists and the group is asked for. */
+const has = (file) => runs("game") && existsSync(file);
+if (has(rowSave)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.goto(url);
@@ -276,7 +291,7 @@ if (existsSync(rowSave)) {
 // Energy pop-ups (designer 2026-11-07): one beside each Module that can take the energy; a tap places one.
 let energyCheck = "skipped (no energy save)";
 const energySave = `${out}/energy-save.json`;
-if (existsSync(energySave)) {
+if (has(energySave)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.goto(url);
@@ -327,7 +342,7 @@ const logText = async (pg) => {
   return t;
 };
 let dragCheck = "skipped (no drag save)";
-if (existsSync(`${out}/drag-save.json`)) {
+if (has(`${out}/drag-save.json`)) {
   const plan = JSON.parse(readFileSync(`${out}/drag-save.json.plan.json`, "utf8"));
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
@@ -368,7 +383,7 @@ if (existsSync(`${out}/drag-save.json`)) {
   await pg.close();
 }
 let drag2Check = "skipped (no M_03/M_06 save)";
-if (existsSync(`${out}/drag2-save.json`)) {
+if (has(`${out}/drag2-save.json`)) {
   const plan = JSON.parse(readFileSync(`${out}/drag2-save.json.plan.json`, "utf8"));
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
@@ -391,7 +406,7 @@ if (existsSync(`${out}/drag2-save.json`)) {
 }
 // M_03 (designer 2026-11-08): dropped on a unit it reaches only by moving: it moves, then Attacks.
 let m03Check = "skipped (no M_03 save)";
-if (existsSync(`${out}/m03-save.json`)) {
+if (has(`${out}/m03-save.json`)) {
   const plan = JSON.parse(readFileSync(`${out}/m03-save.json.plan.json`, "utf8"));
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
@@ -413,7 +428,7 @@ if (existsSync(`${out}/m03-save.json`)) {
 // energy taken off Modules by pop-ups; Anomaly cards claimed on their bubbles.
 let bay3Check = "skipped (no save)";
 let bayDragCheck = "skipped (no save)";
-if (existsSync(`${out}/bay3-save.json`)) {
+if (has(`${out}/bay3-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/bay3-save.json`);
@@ -443,7 +458,7 @@ if (existsSync(`${out}/bay3-save.json`)) {
 // V1 Bay 3 (designer 2026-11-16): the three tiles rise out of the sector, a tap puts each back on top,
 // the last one goes by itself and is revealed; only then the engine's order question is answered.
 let stackCheck = "skipped (no save)";
-if (existsSync(`${out}/bay3-V1-save.json`)) {
+if (has(`${out}/bay3-V1-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/bay3-V1-save.json`);
@@ -491,7 +506,7 @@ async function bayDrag(pg) {
   bayDragCheck = done ? "ok" : "failed (no Bay drag was used)";
 }
 let takeCheck = "skipped (no save)";
-if (existsSync(`${out}/take-save.json`)) {
+if (has(`${out}/take-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/take-save.json`);
@@ -504,7 +519,7 @@ if (existsSync(`${out}/take-save.json`)) {
   await pg.close();
 }
 let anomalyCheck = "skipped (no save)";
-if (existsSync(`${out}/anomaly-save.json`)) {
+if (has(`${out}/anomaly-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 390, height: 844 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/anomaly-save.json`);
@@ -529,7 +544,7 @@ if (existsSync(`${out}/anomaly-save.json`)) {
 // Modules (designer 2026-11-08): tap selects (fire outline, bar filled from the Reserve, Overclock pop-up),
 // tap again runs it with the Overclock chosen. Checked at Galaxy S24 width, with the Heat bar in the top bar.
 let moduleCheck = "skipped (no save)";
-if (existsSync(`${out}/overclock-save.json`)) {
+if (has(`${out}/overclock-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 2 });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/overclock-save.json`);
@@ -575,7 +590,7 @@ if (existsSync(`${out}/overclock-save.json`)) {
 }
 // M_01 (designer 2026-11-08): tap = its pop-up; Attack lights units it can walk to; a tap on one walks, then Attacks.
 let m01Check = "skipped (no save)";
-if (existsSync(`${out}/m01-save.json`)) {
+if (has(`${out}/m01-save.json`)) {
   const plan = JSON.parse(readFileSync(`${out}/m01-save.json.plan.json`, "utf8"));
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
@@ -604,17 +619,20 @@ if (existsSync(`${out}/m01-save.json`)) {
   m01Check = hasAttack && allLit && acted ? "ok" : `failed (Attack bubble ${hasAttack}, targets lit ${allLit}: ${lit.join(" ")} / ${want.join(" ")}, walked and Attacked ${acted})`;
   await pg.close();
 }
-const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
-mobile.on("pageerror", (e) => errors.push(e.message));
-await mobile.goto(url);
-await start(mobile);
-await mobile.waitForTimeout(400);
-const scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
-await mobile.evaluate(() => window.scrollTo(0, 0));
-await mobile.screenshot({ path: `${out}/ui-phone.png` });
+let scrollW = 390;
+if (runs("game")) {
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, colorScheme: "dark" });
+  mobile.on("pageerror", (e) => errors.push(e.message));
+  await mobile.goto(url);
+  await start(mobile);
+  await mobile.waitForTimeout(400);
+  scrollW = await mobile.evaluate(() => document.documentElement.scrollWidth);
+  await mobile.evaluate(() => window.scrollTo(0, 0));
+  await mobile.screenshot({ path: `${out}/ui-phone.png` });
+}
 // Trial rule (designer 2026-11-08): a Power Node's Alert: two pop-ups on it, energy glyphs or 3 Heat.
 let nodeCheck = "skipped (no save)";
-if (existsSync(`${out}/node-save.json`)) {
+if (has(`${out}/node-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/node-save.json`);
@@ -641,7 +659,7 @@ if (existsSync(`${out}/node-save.json`)) {
 }
 // A Module choosing where energy goes (Salvage Siphon, Harvest Beacon...): energy pop-ups, not the Module itself.
 let fillCheck = "skipped (no save)";
-if (existsSync(`${out}/fill-save.json`)) {
+if (has(`${out}/fill-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/fill-save.json`);
@@ -658,7 +676,7 @@ if (existsSync(`${out}/fill-save.json`)) {
 // No unit on the Field (designer 2026-11-08): Bays and Orders that target units are greyed out and cannot be
 // used (V1 Bays 1-2, V2 Bays 1, 2, 4); Bay 3 (a sector) is not; the pop-up says why.
 let greyCheck = "skipped (no save)";
-if (existsSync(`${out}/nounits-save.json`)) {
+if (has(`${out}/nounits-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/nounits-save.json`);
@@ -675,7 +693,7 @@ if (existsSync(`${out}/nounits-save.json`)) {
 // Build step 3 (designer 2026-11-08): a Module, and an Order, dragged onto their one target: the
 // targets light up while dragging, the drop uses it there (no tap, no confirm).
 async function dragThing(file, handle, name) {
-  if (!existsSync(file)) return "skipped (no save)";
+  if (!has(file)) return "skipped (no save)";
   const plan = JSON.parse(readFileSync(`${file}.plan.json`, "utf8"));
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
@@ -697,7 +715,7 @@ const modDragCheck = await dragThing(`${out}/moddrag-save.json`, (p) => `[data-m
 const orderDragCheck = await dragThing(`${out}/orderdrag-save.json`, (p) => `[data-order="${p.id}"]`, "order");
 // A Flare's energy token dragged onto a Module of its colour (build step 3); a wrong drop floats it back.
 let flareChipCheck = "skipped (no save)";
-if (existsSync(`${out}/flarechip-save.json`)) {
+if (has(`${out}/flarechip-save.json`)) {
   const plan = JSON.parse(readFileSync(`${out}/flarechip-save.json.plan.json`, "utf8"));
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
@@ -729,7 +747,7 @@ if (existsSync(`${out}/flarechip-save.json`)) {
 }
 // Effects (designer 2026-11-09): an Omega reveal flashes over the Field; an Order on "all" units bombs them all at once.
 let fxCheck = "skipped (no save)";
-if (existsSync(`${out}/reveal-Omega-save.json`) && existsSync(`${out}/area-save.json`)) {
+if (has(`${out}/reveal-Omega-save.json`) && has(`${out}/area-save.json`)) {
   let pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   const plan = (f) => JSON.parse(readFileSync(`${out}/${f}.plan.json`, "utf8")).shortcut;
@@ -764,7 +782,7 @@ if (existsSync(`${out}/reveal-Omega-save.json`) && existsSync(`${out}/area-save.
 // Build step 5: a Reveal that starts an Overload plays its ripple; the Menu's animation settings
 // (Instant: nothing plays; Reduced motion On: the page goes still) are kept in this browser.
 let motionCheck = "skipped (no save)";
-if (existsSync(`${out}/overloadstart-save.json`)) {
+if (has(`${out}/overloadstart-save.json`)) {
   const k = JSON.parse(readFileSync(`${out}/overloadstart-save.json.plan.json`, "utf8")).shortcut.slice(7);
   const reveal = async (pg) => {
     const p = await sectorPoint(pg, k);
@@ -808,7 +826,7 @@ if (existsSync(`${out}/overloadstart-save.json`)) {
 }
 // Damage to the Flagship (designer 2026-11-09): a bubble in the Field, bubbles by the Bays; no card.
 let damageCheck = "skipped (no save)";
-if (existsSync(`${out}/flagship-save.json`)) {
+if (has(`${out}/flagship-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/flagship-save.json`);
@@ -835,7 +853,7 @@ if (existsSync(`${out}/flagship-save.json`)) {
 }
 // Units chosen on bubbles on the units (designer 2026-11-09): no banner; several units: select, then Confirm.
 let pickCheck = "skipped (no save)";
-if (existsSync(`${out}/pickmany-save.json`)) {
+if (has(`${out}/pickmany-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/pickmany-save.json`);
@@ -859,7 +877,7 @@ if (existsSync(`${out}/pickmany-save.json`)) {
 }
 // P_15 (designer 2026-11-16): pressing a "1 damage" bubble crashed the screen when the next question asked about other units.
 let damagePickCheck = "skipped (no save)";
-if (existsSync(`${out}/pickdamage-save.json`)) {
+if (has(`${out}/pickdamage-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   const before = errors.length;
   pg.on("pageerror", (e) => errors.push(e.message));
@@ -875,7 +893,7 @@ if (existsSync(`${out}/pickdamage-save.json`)) {
 }
 // Removing Flagship damage (designer 2026-11-09): green bubbles by the Bays, no card; and the FPS counter.
 let repairCheck = "skipped (no save)";
-if (existsSync(`${out}/repair-save.json`)) {
+if (has(`${out}/repair-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/repair-save.json`);
@@ -895,7 +913,7 @@ if (existsSync(`${out}/repair-save.json`)) {
 // The Upgrade sheet (designer 2026-11-09, step 4): fills the screen; tap and drag mark slots; a full
 // upgrade says "Upgrade online"; Undo takes back one point; Done asks, then the sheet closes. Phone: tabs.
 let upgradeCheck = "skipped (no save)";
-if (existsSync(`${out}/upgrade-save.json`)) {
+if (has(`${out}/upgrade-save.json`)) {
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pasteSave(pg, `${out}/upgrade-save.json`);
@@ -952,7 +970,7 @@ if (existsSync(`${out}/upgrade-save.json`)) {
 }
 // Questions inside the Field (designer 2026-11-10): Crippled points at Overhaul; Overhaul's Module is chosen on bubbles beside the Modules.
 let askCheck = "skipped (no save)";
-if (existsSync(`${out}/crippled-save.json`)) {
+if (has(`${out}/crippled-save.json`)) {
   const res = [];
   for (const [w, h] of [[1400, 900], [390, 844]]) {
     const pg = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
@@ -991,7 +1009,7 @@ if (existsSync(`${out}/crippled-save.json`)) {
 }
 // Command briefing (2026-11-13): the long intro on a first visit, two taps skip it; then the short one.
 let introCheck = "ok";
-{
+if (runs("intro")) {
   // First visit: the long approach; one tap arms the 1-second skip, a second tap inside it skips.
   const pg = await plainPage({ viewport: { width: 390, height: 800 } });
   pg.on("pageerror", (e) => errors.push(e.message));
@@ -1019,7 +1037,7 @@ let introCheck = "ok";
 // Styles (designer 2026-11-14): "intro1" and "intro2", each with its own long intro; frames of both
 // for the designer, and each ends by itself on the Campaign step in its own look.
 let styleCheck = "ok";
-for (const style of ["intro2", "intro1"]) {
+if (runs("intro")) for (const style of ["intro2", "intro1"]) {
   const pg = await plainPage({ viewport: { width: 1400, height: 900 } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.addInitScript((s) => localStorage.setItem("aphelion5.style", s), style);
@@ -1035,7 +1053,7 @@ for (const style of ["intro2", "intro1"]) {
   if (!ended && introCheck === "ok") introCheck = `failed (the long intro of ${style} did not end)`;
   if (look !== `${style},${style}` && styleCheck === "ok") styleCheck = `failed (${style}: the page is marked ${look})`;
 }
-{
+if (runs("intro")) {
   // The switch (System options > Style): the menu changes look at once and keeps its layout; the
   // choice is remembered; "Replay the full intro" plays the chosen style's film.
   const pg = await browser.newPage({ viewport: { width: 1400, height: 900 } });
@@ -1074,7 +1092,7 @@ for (const style of ["intro2", "intro1"]) {
     styleCheck = `failed (starts ${first}, ${picks} styles offered, after the switch ${second}, after a reload ${kept}, replay plays intro1 ${replay}, back ${back}, same layout ${lay1 === lay2})`;
 }
 // The whole briefing walked in both styles (the layout is the same; only the look differs).
-for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone", 390, 800, "intro2"], ["-intro1", 1400, 900, "intro1"], ["-intro1-phone", 390, 800, "intro1"]]) {
+if (runs("intro")) for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone", 390, 800, "intro2"], ["-intro1", 1400, 900, "intro1"], ["-intro1-phone", 390, 800, "intro1"]]) {
   const pg = await browser.newPage({ viewport: { width, height } });
   pg.on("pageerror", (e) => errors.push(e.message));
   await pg.addInitScript((s) => localStorage.setItem("aphelion5.style", s), style);
@@ -1203,7 +1221,7 @@ for (const [name, width, height, style] of [["", 1400, 900, "intro2"], ["-phone"
 // briefing with no game left to resume. System options lists both versions (1.0 kept to compare), each with sample
 // numbers; with reduced motion there is no film, only the Debrief.
 let outroCheck = "skipped (no save)";
-if (existsSync(`${out}/won-save.json`)) {
+if (runs("outro") && existsSync(`${out}/won-save.json`)) {
   const fails = [];
   for (const [w, h] of [[1400, 900], [390, 844]]) {
     const name = w < 600 ? "-phone" : "";
@@ -1480,16 +1498,21 @@ if (existsSync(`${out}/won-save.json`)) {
   outroCheck = fails.length ? `failed (${fails.join(" | ")})` : "ok";
 }
 // The statistics page and the Campaign editor (designer 2026-11-18): scripts/ui-pages.mjs.
-const pagesCheck = await runPagesCheck(browser, url, out);
+const pagesCheck = runs("pages") ? await runPagesCheck(browser, url, out) : "skipped (not asked for)";
 // The mission celebrations (designer 2026-11-20): scripts/ui-celebrate.mjs.
-const celebrateCheck = await runCelebrateCheck(browser, url, out);
+const celebrateCheck = runs("celebrate") ? await runCelebrateCheck(browser, url, out) : "skipped (not asked for)";
 // Big PC screen, Allied Drop, trial looks (designer 2026-11-20): scripts/ui-looks.mjs.
-const looksCheck = await runLooksCheck(browser, url, out);
-const round23Check = await runRound23Check(browser, url, out);
-const round24Check = await runRound24Check(browser, url, out);
-const round25Check = await runRound25Check(browser, url, out);
-const round26Check = await runRound26Check(browser, url, out);
+const looksCheck = runs("looks") ? await runLooksCheck(browser, url, out) : "skipped (not asked for)";
+const round23Check = runs("round23") ? await runRound23Check(browser, url, out) : "skipped (not asked for)";
+const round24Check = runs("round24") ? await runRound24Check(browser, url, out) : "skipped (not asked for)";
+const round25Check = runs("round25") ? await runRound25Check(browser, url, out) : "skipped (not asked for)";
+const round26Check = runs("round26") ? await runRound26Check(browser, url, out) : "skipped (not asked for)";
 console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
-if (errors.length || rowCheck !== "ok" || energyCheck !== "ok" || !noMenu || !rotateShown || !facingKept || !closedByOutside || !bubbles || dragCheck !== "ok" || drag2Check !== "ok" || m03Check !== "ok" || [bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check].some((x) => x !== "ok") || !raised || !breathing || (tapThrough !== "ok" && tapThrough !== "only one Dark sector") || !popupTitle?.startsWith("Dark sector") || scrollW > 390) process.exit(1);
+// A group not asked for passes; its checks keep their "skipped" value in the report above.
+const game = runs("game");
+const gameChecks = [rowCheck, energyCheck, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck];
+const gameOk = !game || (gameChecks.every((x) => x === "ok") && noMenu && rotateShown && !!facingKept && closedByOutside && bubbles && raised && breathing && (tapThrough === "ok" || tapThrough === "only one Dark sector") && !!popupTitle?.startsWith("Dark sector") && scrollW <= 390);
+const groupOk = [["intro", introCheck], ["intro", styleCheck], ["outro", outroCheck], ["pages", pagesCheck], ["celebrate", celebrateCheck], ["looks", looksCheck], ["round23", round23Check], ["round24", round24Check], ["round25", round25Check], ["round26", round26Check]].every(([g, x]) => !runs(g) || x === "ok");
+if (errors.length || !gameOk || !groupOk) process.exit(1);
