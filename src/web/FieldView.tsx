@@ -18,6 +18,7 @@
  */
 
 // PixiJS without eval(): the published page (and app wrappers) may forbid it.
+import { onResting, poke, startResting } from "./idle.js";
 import "pixi.js/unsafe-eval";
 import { Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
 import { useEffect, useRef, useState } from "react";
@@ -876,10 +877,16 @@ export function FieldView(p: FieldProps) {
    * while only slow breathing glows show; 10 a second when nothing on it changes over time.
    */
   const wakeUntil = useRef(0);
+  /** Something on the Field plays now (an animation, a drag, a celebration): the game must not rest (idle.ts). */
+  const playing = useRef(false);
   const wake = () => {
     wakeUntil.current = performance.now() + 400;
+    poke();
     const a = app.current;
-    if (a && ready.current) a.ticker.maxFPS = 0;
+    if (a && ready.current) {
+      a.ticker.maxFPS = 0;
+      if (!a.ticker.started) a.ticker.start();
+    }
   };
 
   useEffect(() => {
@@ -894,6 +901,8 @@ export function FieldView(p: FieldProps) {
     };
     applyMotion();
     const offMotion = onMotion(applyMotion);
+    let offRest = () => {};
+    const stopResting = startResting(() => playing.current);
     void a.init({ antialias: true, backgroundAlpha: 0, resizeTo: host.current!, autoDensity: true, resolution: window.devicePixelRatio || 1 }).then(() => {
       if (gone) return a.destroy(true);
       host.current!.appendChild(a.canvas);
@@ -926,6 +935,19 @@ export function FieldView(p: FieldProps) {
       ready.current = true;
       draw();
       a.ticker.add(frame);
+      // Resting (idle.ts): no touch for a while and nothing playing: draw the Field once more, then stop.
+      offRest = onResting((r) => {
+        if (!ready.current) return;
+        if (r) {
+          frame();
+          a.render();
+          a.ticker.stop();
+        } else if (!a.ticker.started) {
+          wakeUntil.current = performance.now() + 400;
+          a.ticker.maxFPS = 0;
+          a.ticker.start();
+        }
+      });
       new ResizeObserver(() => {
         wake();
         draw();
@@ -956,6 +978,8 @@ export function FieldView(p: FieldProps) {
     return () => {
       gone = true;
       offMotion();
+      offRest();
+      stopResting();
       document.removeEventListener("pointerdown", skip, true);
       window.removeEventListener("keydown", key);
       window.removeEventListener("pointermove", move);
@@ -2325,6 +2349,7 @@ export function FieldView(p: FieldProps) {
         L.celebrate.children.length > 0 ||
         L.under.children.length > 0 ||
         (st.phase === "overload" && !still);
+      playing.current = player.current.busy || !!d || shook || L.fx.children.length > 0 || L.celebrate.children.length > 0 || L.under.children.length > 0;
       const fps = fast ? 0 : ambient && !still ? 30 : 10;
       if (a.ticker.maxFPS !== fps) a.ticker.maxFPS = fps;
       host.current?.setAttribute("data-pace", String(fps));

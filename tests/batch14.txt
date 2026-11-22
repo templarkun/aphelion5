@@ -78,6 +78,19 @@ note: the in-game Menu keeps its short Features list, ending with "With previews
 CHANGED (designer 2026-11-22, round 28): nine cards (two new: Energy Gyro reward, Overload End:
       Exposure) and 63 choices in all (T14_R28_01-06, T14_R28_10).
 
+id: T14_REST_01
+title: The game rests when nobody touches it
+source: designer 2026-11-22 (iPad hot and draining with the game left open; screen only, no rule change)
+given: the game screen, nothing playing (no move, reveal, drag or celebration), only ready glows
+when: 20 s pass with no tap, mouse move, key or scroll
+then: the Field stops drawing (its glows hold still where they are), the FPS counter shows
+      "resting", the screen's other animations (Modules, Bays, bubbles) pause. The device's
+      graphics chip has nothing to do.
+when: the first tap, mouse move, key or scroll after that
+then: everything moves again at once; the tap itself works as usual (it opens its pop-up).
+given: an animation or celebration still playing after 20 s
+then: no rest until it ends.
+
 === SECTION: ROUND 28 (designer 2026-11-22) ===
 ################################################################################
 

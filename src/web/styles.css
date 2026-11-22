@@ -630,6 +630,8 @@ html.still .unit-pick, html.still .unit-pick rect, html.still .pick-foot .bubble
 /* Frames per second (designer 2026-11-09). */
 .fps { position: absolute; left: 8px; bottom: 8px; z-index: 13; padding: 2px 7px; border-radius: 8px; font: 700 11px/1.4 ui-monospace, monospace; color: #9dffb0; background: rgb(0 0 0 / 0.55); pointer-events: none; user-select: none; }
 .fps.ok { color: #ffd27a; }
+/* Resting (idle.ts, designer 2026-11-22: iPad heat): no touch for 20 s, nothing playing: the game screen's animations hold still. */
+html.resting .game *, html.resting .game *::before, html.resting .game *::after { animation-play-state: paused !important; }
 .fps.bad { color: #ff8a7a; }
 
 /* ------------------------------------------------------------------------------------------
