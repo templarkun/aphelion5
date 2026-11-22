@@ -1,0 +1,72 @@
+################################################################################
+# APHELION 5 - TEST SCENARIOS, BATCH 14: ROUND 27 ON (structured)
+# Written 2026-11-22 by Claude from the designer's requests of 2026-11-22. DRAFT, awaiting the
+# designer's agreement; then it goes into the Project as "claude/Test scenarios batch 14.txt".
+# Batch 13 (agreed 2026-11-22) is closed: new scenarios go here, changes to batch 13's are CHANGED
+# notes there.
+# Round 27, 2026-11-22: a bug fix (T14_R27_01), the Campaign's sum counts each route pair once (C8,
+# T14_R27_02; CHANGED note on T13_ED_03), "trial looks" are now "Features" (T14_R27_03; CHANGED
+# note on T13_R20_06), the Features page on the Command Deck (T14_R27_04). Checked by
+# tests/unit/editor.test.ts, scripts/ui-looks.mjs and scripts/ui-pages.mjs.
+################################################################################
+
+=== FORMAT SPEC ===
+Same layout as batches 8, 10, 12 and 13. Screen scenarios have no map.
+
+=== SECTION: ROUND 27 (designer 2026-11-22) ===
+################################################################################
+
+id: T14_R27_01
+title: Bug fix: the menu's sparks never draw with a negative size
+source: the full browser check of 2026-11-22 (a page error: a circle drawn with a negative radius)
+given: the Command Deck in the intro2 style (its soft sparks are plasma that swells as it cools)
+when: the page's spark layer starts, or comes back after a pause, and its first frame's time is a
+      little before the moment it started
+then: no page error; the sparks start at their smallest size and grow as before.
+note: checked by tests/unit/particles.test.ts.
+
+id: T14_R27_02
+title: Campaign editor: the whole Campaign's sum counts each route pair once
+source: designer 2026-11-22 (C8: "Count only the first, the X path")
+given: the Campaign editor with a Campaign whose Mission 2 has two routes (2x and 2y) and whose
+      Mission 4 has two routes (4x and 4y)
+then: the Campaign's sum reads "Whole Campaign (X path)" and adds up the mission rosters of 1, 2x,
+      3, 4x and the rest; 2y and 4y are not counted. Each mission's own "Mission roster" sum, 2y and
+      4y too, is shown as before.
+given: a route mission "y" whose number has no "x" mission (the editor's checks already warn)
+then: it is counted.
+note: Threat columns are still never in the Campaign's sum (T13_ED_03).
+
+id: T14_R27_03
+title: "Trial looks" are now "Features"
+source: designer 2026-11-22 ("Let's rebrand trial to feature")
+given: a game on the Field; Menu
+then: the entry is "Features" (no "Trial looks", no "temporary"); the same rows and choices as
+      before (tile corners, stack depth, ready to tap for units and for sectors, unit names, the
+      Overload's edge, a sector's next tile), with the same defaults.
+given: a browser that chose some looks before this change (for example Rounded corners)
+then: those choices are kept.
+note: later each feature is hidden and given to players one by one as they unlock achievements;
+      not built yet.
+
+id: T14_R27_04
+title: The Features page on the Command Deck
+source: designer 2026-11-22 (option A: "Features page on the Command Deck")
+given: the Command Deck (briefing)
+when: tap the sparkles button in the top bar, beside Statistics
+then: a page "Features" in the briefing's look, with Back to the Command Deck. One card per Feature
+      (tile corners, stack depth, ready to tap: units, ready to tap: sectors, unit names, Overload
+      edge, next tile): its name, one line on what it changes, the choice in use named at the top
+      right, and a tile per choice with a small moving preview and its name; the one in use is
+      lit. Under the tiles, one line on the choice in use.
+when: tap a choice
+then: it is lit, kept in this browser, and the Field uses it in the next game (and in the Menu's
+      Features list).
+given: a phone (390 px)
+then: the cards stack, no sideways scroll.
+given: reduced motion
+then: the previews stand still.
+note: every Feature is open for now. Later a Feature not yet earned shows a lock and the name of
+      the achievement that gives it, and cannot be chosen.
+note: the in-game Menu keeps its short Features list, ending with "With previews: Command Deck ›
+      Features".

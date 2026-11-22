@@ -20,6 +20,7 @@ import { ENERGY_PER_COLOUR } from "../engine/rules.js";
 import type { Answer, Option, Question } from "../engine/questions.js";
 import { Briefing } from "./briefing/Briefing.js";
 import { StatsPage } from "./briefing/stats/StatsPage.js";
+import { FeaturesPage } from "./briefing/FeaturesPage.js";
 import { CampaignEditor } from "./briefing/editor/CampaignEditor.js";
 import { IntroSequence } from "./briefing/IntroSequence.js";
 import { applyLoadout } from "./briefing/launch.js";
@@ -53,7 +54,7 @@ import { AskBubble, PointBubbles, askText } from "./FieldAsk.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, OverhaulButton, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 import { MotionSettings } from "./MotionSettings.js";
-import { TrialLooksMenu } from "./TrialLooksMenu.js";
+import { FeaturesMenu } from "./FeaturesMenu.js";
 import { type WinShow, winOf } from "./celebrate/detect.js";
 import { MissionWin, type Shake } from "./celebrate/MissionWin.js";
 import { CelebrationSkip } from "./celebrate/CelebrationSkip.js";
@@ -110,7 +111,7 @@ export function App() {
   const [intro, setIntro] = useState<IntroMode>(() => introMode(briefStyle().id));
   // An outro looked at from System options (made-up numbers; no game is touched).
   // A page over the briefing: statistics and achievements, or the Campaign editor (Developer tools).
-  const [page, setPage] = useState<"stats" | "editor" | undefined>();
+  const [page, setPage] = useState<"stats" | "features" | "editor" | undefined>();
   const [outroPreview, setOutroPreview] = useState<{ campaign: string; company: string; outro: string } | undefined>();
   // A mission celebration looked at from System options (a made-up Field; no game is touched).
   const [celebPreview, setCelebPreview] = useState<{ company: string; what: PreviewWhat } | undefined>();
@@ -162,6 +163,7 @@ export function App() {
       {box && <TextBox {...box} onClose={() => setBox(undefined)} />}
       {intro !== "off" && <IntroSequence key={intro} mode={intro} onDone={() => setIntro("off")} />}
       {page === "stats" && <StatsPage data={data} profile={profile} onBack={() => setPage(undefined)} />}
+      {page === "features" && <FeaturesPage onBack={() => setPage(undefined)} />}
       {page === "editor" && <CampaignEditor data={data} onBack={() => setPage(undefined)} />}
       {outroPreview && <OutroPreview data={data} campaign={outroPreview.campaign} company={outroPreview.company} outro={outroPreview.outro} onClose={() => setOutroPreview(undefined)} />}
       {celebPreview && <CelebrationPreview key={`${celebPreview.what.kind}:${celebPreview.what.omega}:${celebPreview.what.piece}:${celebPreview.company}`} data={data} company={celebPreview.company} what={celebPreview.what} onClose={() => setCelebPreview(undefined)} />}
@@ -184,6 +186,7 @@ export function App() {
         onPreviewOutro={(campaign, company, outro) => setOutroPreview({ campaign, company, outro })}
         onPreviewCelebration={(company, what) => setCelebPreview({ company, what })}
         onStats={() => setPage("stats")}
+        onFeatures={() => setPage("features")}
         onEditor={() => setPage("editor")}
         onLaunch={(l) => {
           // The compiled loadout answers the engine's setup questions (7.1); the Threat screen comes next (7.2 step 3).
@@ -1106,7 +1109,7 @@ function GameScreen(p: GameProps) {
               </p>
               <button onClick={() => setShowLog((x) => !x)}>{showLog ? "Hide the log" : "Log"}</button>
               <MotionSettings />
-              <TrialLooksMenu />
+              <FeaturesMenu />
               {s.settings.developerMode && q?.shortcuts?.some((o) => o.id === "devWin") && (
                 <button onClick={() => answer("devWin")} title="Developer tool: go straight to Mission End with 12 Upgrade points, to try the Upgrade sheet">
                   Developer: win this mission (+12 points)

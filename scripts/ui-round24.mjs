@@ -1,5 +1,5 @@
 // Browser check of round 24 (designer 2026-11-21): the second hover bubble (tiles looked at in a sector),
-// the "next tile" trial looks, M_03 dropped on a unit it reaches by several equal ways (no question).
+// the "next tile" features, M_03 dropped on a unit it reaches by several equal ways (no question).
 // Called by ui-smoke.mjs; can also run alone: node scripts/ui-round24.mjs [url] [outDir].
 import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
@@ -11,8 +11,8 @@ async function open(browser, url, w, h, trial) {
     try {
       localStorage.setItem("aphelion5.intro", "off");
       localStorage.setItem("aphelion5.intro.intro2", "seen");
-      if (t) localStorage.setItem("aphelion5.trialLooks", t);
-      else localStorage.removeItem("aphelion5.trialLooks");
+      if (t) localStorage.setItem("aphelion5.features", t);
+      else localStorage.removeItem("aphelion5.features");
     } catch {}
   }, trial ?? "");
   await pg.goto(url);
@@ -77,7 +77,7 @@ export async function round24Check(browser, url, out) {
       if (!(seen === want && rows === plan.rows.length && sideOk && inside && total === `${plan.total} tile${plan.total === 1 ? "" : "s"} total`)) fails.push(`seen at ${w} px: looked at ${seen}/${want}, rows ${rows}/${plan.rows.length}, side by side ${side}, inside ${inside}, dark ${plan.dark}, total "${total}"`);
       await pg.close();
     }
-    // 2. The "next tile" trial looks (round 25: Corner, Ghost, Chip): each draws the Field differently.
+    // 2. The "next tile" features (round 25: Corner, Ghost, Chip): each draws the Field differently.
     const shots = {};
     for (const look of ["corner", "ghost", "chip"]) {
       const pg = await open(browser, url, 1400, 900, JSON.stringify({ next: look }));
@@ -94,9 +94,9 @@ export async function round24Check(browser, url, out) {
       watch(pg);
       await paste(pg, `${out}/seen-save.json`);
       await pg.locator(".menu-wrap > button").click();
-      await pg.locator(".trial-looks summary").click();
-      await pg.locator('[data-trial="next:chip"]').click();
-      const kept = await pg.evaluate(() => localStorage.getItem("aphelion5.trialLooks"));
+      await pg.locator(".features-menu summary").click();
+      await pg.locator('[data-feature="next:chip"]').click();
+      const kept = await pg.evaluate(() => localStorage.getItem("aphelion5.features"));
       if (!/"next":"chip"/.test(kept ?? "")) fails.push(`next look not kept: ${kept}`);
       await pg.close();
     }

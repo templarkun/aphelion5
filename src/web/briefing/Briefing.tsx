@@ -8,7 +8,7 @@
 import { CELEBRATION_PREVIEWS, type PreviewWhat } from "../celebrate/previewBoards.js";
 import { DEFAULT_OUTRO, OUTROS } from "../outro/index.js";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { BarChart3, Check, ChevronLeft, ChevronRight, Hexagon, Play, Rocket, Settings, X } from "lucide-react";
+import { BarChart3, Check, Sparkles, ChevronLeft, ChevronRight, Hexagon, Play, Rocket, Settings, X } from "lucide-react";
 import type { GameData } from "../../data/index.js";
 import type { Profile } from "../../engine/state.js";
 import { CampaignSelect, loreOf } from "./CampaignSelect.js";
@@ -44,6 +44,8 @@ export interface BriefingProps {
   onPreviewCelebration?: ((company: string, what: PreviewWhat) => void) | undefined;
   /** Open the statistics and achievements page. */
   onStats?: (() => void) | undefined;
+  /** The Features page (designer 2026-11-22). */
+  onFeatures?: (() => void) | undefined;
   /** Open the Campaign editor (Developer tools). */
   onEditor?: (() => void) | undefined;
 }
@@ -149,6 +151,11 @@ export function Briefing(p: BriefingProps) {
           <button type="button" className="bf-btn !min-h-[42px] !px-4" style={{ "--acc": "252 211 77" } as React.CSSProperties} onClick={p.onContinue}>
             <Play size={16} /> <span className="hidden sm:inline">Resume game</span>
             <span className="sm:hidden">Resume</span>
+          </button>
+        )}
+        {p.onFeatures && (
+          <button type="button" className="grid h-11 w-11 place-items-center rounded-full text-white hover:bg-white/15" aria-label="Features" title="Features" data-action="open-features" onClick={() => (playSelect(), p.onFeatures?.())}>
+            <Sparkles size={22} />
           </button>
         )}
         {p.onStats && (

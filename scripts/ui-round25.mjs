@@ -14,7 +14,7 @@ async function open(browser, url, w, h) {
     try {
       localStorage.setItem("aphelion5.intro", "off");
       localStorage.setItem("aphelion5.intro.intro2", "seen");
-      localStorage.removeItem("aphelion5.trialLooks");
+      localStorage.removeItem("aphelion5.features");
     } catch {}
   });
   await pg.goto(url);

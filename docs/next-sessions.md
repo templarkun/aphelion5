@@ -130,21 +130,17 @@ is left for version 1 (spec "Scope", "Acceptance") and after:
    `Campaign1.txt` format). 2026-11-18 first version BUILT (System options > Developer mode >
    Campaign editor). Next: "Play this mission" (the game loads an edited Campaign) and programming
    the new mission events and the effects made from blocks; open C6-C8.
-12. **Mission celebrations: come back to the Gamma win** (designer 2026-11-20, I27). Gamma missions
-   (Mission 7) play Mission Complete after the Gamma kill for now, as Beta missions do (I22). The
-   designer asked to be reminded to come back to it: a win of its own for Gamma (and Beta). Since
-   2026-11-21 every mission won (Salvage too) plays one of three wins at random (Mission Complete,
-   Perimeter Sweep, Sector Flip); none is a Gamma win of its own yet. Gamma now has three kills (Event Horizon, Field Array,
-   Dimensional Shatter 2026-11-21); I28 answered (round 25): no Company colour.
-
-13. **Trial looks: the designer's choice** (designer 2026-11-20). Menu > "Trial looks (temporary)"
+13. **Features (were "trial looks")** (designer 2026-11-20; renamed 2026-11-22). 2026-11-22: they
+   are a permanent part of the game, not temporary: Menu > "Features" (`src/web/features.ts`,
+   `FeaturesMenu.tsx`). Later each is hidden and given to players one by one for each achievement
+   they unlock (not built yet; needs the real achievements, I16). Next: the designer picks one of
+   the proposed menu layouts for presenting them. History: Menu > "Trial looks (temporary)"
    offers tile corners, stack depth and the ready-to-tap animation in several versions each
-   (`src/web/trialLooks.ts`, `TrialLooksMenu.tsx`; batch 13 T13_R20_06/07). Once the designer has
-   chosen, make the winners the look, remove the menu and the losers, and write CHANGED notes.
+   (batch 13 T13_R20_06/07).
    2026-11-21: Notches made part of the game; second set of stack and ready choices and the
    tile-count words switch (T13_R21_01/02). Round 22: ready split into units and sectors, unit names switch. Round 23: the Overload's
    edge (Original / Inflow, T13_R23_06). Round 24: a sector's next tile (Original / Corner / Peek /
    Ghost / Chip, T13_R24_02). Round 25: the tile-count words left the Menu, hidden for good; Pebble
    corners and the Corner next tile are the defaults; Original and Peek next-tile looks removed
-   (T13_R25_01). Still to choose: corners (Pebble for now), stack depth, ready (units), ready
-   (sectors), names, Overload edge, next tile (Corner / Ghost / Chip).
+   (T13_R25_01). Defaults today: Pebble corners, Original stack depth, Original ready (units), Glow
+   breath ready (sectors), names shown, Original Overload edge, Corner next tile.

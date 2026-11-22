@@ -174,7 +174,7 @@ export function stepParticles(dt: number): void {
 export function drawParticles(g: CanvasRenderingContext2D): void {
   g.globalCompositeOperation = "lighter";
   for (const p of particles) {
-    const t = p.age / p.life;
+    const t = Math.min(1, Math.max(0, p.age / p.life));
     const a = t < 0.15 ? t / 0.15 : 1 - (t - 0.15) / 0.85;
     const c = `rgb(${p.rgb} / ${Math.max(0, a).toFixed(3)})`;
     if (p.shape === "ring") {

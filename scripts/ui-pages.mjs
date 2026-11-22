@@ -75,6 +75,25 @@ export async function pagesCheck(browser, url, out) {
     if (!(games === "2" && best === "24" && earned >= 2 && allAch >= 10 && listed === 3 && opened > 0 && backStats && sw1 <= w + 2))
       fails.push(`stats at ${w} px: games ${games}, best ${best}, earned ${earned}/${allAch}, listed ${listed}, opened ${opened}, back ${backStats}, width ${sw1}`);
 
+    // The Features page (designer 2026-11-22): a card per Feature with previews; a choice is kept and the Menu shows it too.
+    {
+      await pg.locator("[data-action=open-features]").click();
+      await pg.waitForSelector("[data-page=features]", { timeout: 4000 });
+      const cards = await pg.locator("[data-feature-card]").count();
+      const picks = await pg.locator("[data-feature-pick]").count();
+      const svgs = await pg.locator("[data-feature-pick] svg").count();
+      await pg.locator('[data-feature-pick="corners:round"]').click();
+      const pressed = await pg.locator('[data-feature-pick="corners:round"]').getAttribute("aria-pressed");
+      const kept = await pg.evaluate(() => JSON.parse(localStorage.getItem("aphelion5.features") ?? "{}").corners);
+      const sw = await pg.evaluate(() => document.documentElement.scrollWidth);
+      await pg.screenshot({ path: `${out}/ui-features${name}.png` });
+      await pg.locator('[data-feature-pick="corners:pebble"]').click();
+      await pg.locator("[data-action=page-back]").click();
+      const back = (await pg.locator("[data-page=features]").count()) === 0;
+      if (!(cards === 7 && picks === 34 && svgs === 34 && pressed === "true" && kept === "round" && back && sw <= w + 2))
+        fails.push(`features at ${w} px: cards ${cards}, picks ${picks}, previews ${svgs}, pressed ${pressed}, kept ${kept}, back ${back}, width ${sw}`);
+    }
+
     // The Campaign editor: only with Developer mode ticked.
     await pg.getByRole("button", { name: "System options" }).click();
     const hidden = (await pg.locator("[data-action=open-editor]").count()) === 0;

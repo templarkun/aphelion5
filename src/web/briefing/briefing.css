@@ -324,3 +324,57 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
 @media (min-width: 1600px) {
   .brief .z-10, .brief aside[role="dialog"], .bf-veil > .bf-card { zoom: 1.35; }
 }
+
+/* The Features page (designer 2026-11-22, FeaturesPage.tsx): small moving previews of each choice. */
+.fp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.fp-choice { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px 8px; border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 0.18); background: rgb(30 27 75 / 0.35); color: #e0f2fe; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s; }
+.fp-choice:hover:not(:disabled) { border-color: rgb(255 255 255 / 0.5); }
+.fp-choice[aria-pressed="true"] { border-color: rgb(var(--acc, 125 211 252)); background: rgb(var(--acc, 125 211 252) / 0.16);
+  box-shadow: 0 0 0 1px rgb(var(--acc, 125 211 252) / 0.6), 0 0 14px rgb(var(--acc, 125 211 252) / 0.35); }
+.fp-choice:disabled { cursor: not-allowed; }
+.fp-label { font-size: 13px; font-weight: 700; text-align: center; line-height: 1.15; }
+.fp-svg { width: 72px; height: 72px; overflow: visible; }
+.fp-tile { fill: #2a3346; stroke: #5b6b86; stroke-width: 1.2; }
+.fp-tile.fp-dark { fill: #121826; }
+.fp-edge { stroke: #fcd34d; stroke-width: 2; }
+.fp-layer { fill: #1b2232; stroke: #6b7c99; stroke-width: 1; }
+.fp-layer.fp-faint { fill: none; stroke-opacity: 0.35; }
+.fp-notch { stroke: #cbd5e1; stroke-width: 1.4; stroke-linecap: round; }
+.fp-ready { fill: none; stroke: #fbbf24; stroke-width: 1.4; }
+.fp-still { stroke-opacity: 0.35; }
+.fp-breath { animation: fp-breath 2.6s ease-in-out infinite; }
+.fp-beat { animation: fp-beat 1.6s ease-out infinite; }
+.fp-glow { fill: #fbbf24; animation: fp-glow 2.6s ease-in-out infinite; }
+.fp-svg circle { fill: #fde68a; }
+.fp-rise { animation: fp-rise 1.6s linear infinite; }
+.fp-twinkle { animation: fp-twinkle 1.4s ease-in-out infinite; }
+.fp-spin { animation: fp-spin 4s linear infinite; }
+.fp-spin.fp-slow { animation-duration: 7s; }
+.fp-inward { fill: none; stroke: #fbbf24; stroke-width: 1; animation: fp-inward 1.8s ease-in infinite; }
+.fp-arcs { fill: none; stroke: #bae6fd; stroke-width: 1.6; stroke-dasharray: 3 9; animation: fp-arcs 0.9s steps(4) infinite; }
+.fp-name { font: 700 11px/1 ui-monospace, monospace; fill: #e2e8f0; }
+.fp-badge { fill: #7c3aed; stroke: #ddd6fe; stroke-width: 1; }
+.fp-badge.fp-next { fill: #0e7490; stroke: #a5f3fc; }
+.fp-ghost { fill: #a5f3fc; fill-opacity: 0.18; stroke: #a5f3fc; stroke-opacity: 0.3; }
+.fp-chip { fill: #0e7490; stroke: #a5f3fc; stroke-width: 0.8; }
+.fp-chiptext { font: 700 7px/1 system-ui, sans-serif; fill: #ecfeff; }
+.fp-field { fill: #05070c; stroke: #334155; }
+.fp-plasma { fill: none; stroke: #f97316; stroke-width: 5; stroke-opacity: 0.35; animation: fp-breath 3s ease-in-out infinite; }
+.fp-beam { fill: none; stroke: #fff7ed; stroke-width: 2; stroke-dasharray: 14 300; animation: fp-beam 2.4s linear infinite; }
+.fp-svg circle.fp-inflow { fill: #fdba74; animation: fp-inflow 1.8s ease-in infinite; }
+@keyframes fp-breath { 0%, 100% { stroke-opacity: 0.25; } 50% { stroke-opacity: 1; } }
+@keyframes fp-beat { 0%, 30%, 100% { stroke-opacity: 0.25; } 10%, 40% { stroke-opacity: 1; } }
+@keyframes fp-glow { 0%, 100% { fill-opacity: 0.04; } 50% { fill-opacity: 0.3; } }
+@keyframes fp-rise { from { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(-46px); opacity: 0; } }
+@keyframes fp-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 1; } }
+@keyframes fp-spin { to { transform: rotate(360deg); } }
+@keyframes fp-inward { from { transform: scale(1.25); opacity: 0; } 40% { opacity: 0.8; } to { transform: scale(0.3); opacity: 0; } }
+@keyframes fp-arcs { 0% { stroke-dashoffset: 0; opacity: 1; } 50% { opacity: 0.2; } 100% { stroke-dashoffset: 48; opacity: 1; } }
+@keyframes fp-beam { to { stroke-dashoffset: -314; } }
+@keyframes fp-inflow { from { transform: translateY(0); opacity: 1; } to { transform: translateY(var(--fp-in, 0)); opacity: 0; } }
+.fp-svg circle.fp-inflow:nth-child(-n + 5) { --fp-in: 24px; }
+.fp-svg circle.fp-inflow:nth-child(n + 6) { --fp-in: -24px; }
+html.still .fp-svg *, .fp-choice:disabled .fp-svg * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .fp-svg * { animation: none !important; } }

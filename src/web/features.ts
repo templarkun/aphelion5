@@ -1,11 +1,12 @@
 /**
- * Trial looks of the Field (designer 2026-11-20): TEMPORARY switches in the Menu, so the designer can
- * try several looks and pick one. Each has "Original" (the look before). Kept in this browser only;
- * no rule, no save. Once the designer has chosen, the winner becomes the look and this goes away.
+ * Features of the Field (designer 2026-11-20, then called "trial looks"; renamed "Features" 2026-11-22):
+ * switches in the Menu with several versions each. They are a permanent part of the game: later each
+ * is hidden and given to players one by one as they unlock achievements (not built yet). Kept in this
+ * browser only; no rule, no save.
  *
  * - corners: how round the hexagons of the units and sector plates are.
  * - depth: how the number of tiles in a sector shows by sight (a few vs many, not the exact number).
- *   The notches along the bottom edge are no longer a trial: they are always drawn (designer 2026-11-21).
+ *   The notches along the bottom edge are no longer a choice: they are always drawn (designer 2026-11-21).
  * - readyUnit / readySector: the animation of units, and of Dark / Cleared sectors, ready to be tapped
  *   (one row each since 2026-11-21).
  * - counts: the "+N beneath" / "alone" and "N tiles" words on the tiles; always hidden since round 25
@@ -29,7 +30,7 @@ export type Counts = "shown" | "hidden";
 export type OverloadLook = "original" | "inflow";
 export type NextLook = "corner" | "ghost" | "chip";
 
-export interface TrialLooks {
+export interface Features {
   corners: Corner;
   depth: Depth;
   readyUnit: ReadyUnit;
@@ -100,17 +101,19 @@ export const NEXTS: { id: NextLook; label: string; note: string }[] = [
   { id: "chip", label: "Chip", note: "a small “next” chip with its glyph at the foot of the tile" },
 ];
 
-const KEY = "aphelion5.trialLooks";
+const KEY = "aphelion5.features";
+/** Where the choices were kept while they were called "trial looks" (until 2026-11-22); read once. */
+const OLD_KEY = "aphelion5.trialLooks";
 // Designer 2026-11-21 (round 25): Pebble corners and the Corner next tile are the defaults; the
 // tile-count words are hidden for good (their row left the Menu).
-const DEFAULT: TrialLooks = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "original", next: "corner" };
+const DEFAULT: Features = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "original", next: "corner" };
 const subs = new Set<() => void>();
 
-function load(): TrialLooks {
+function load(): Features {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(OLD_KEY);
     if (!raw) return DEFAULT;
-    const v = JSON.parse(raw) as Partial<TrialLooks>;
+    const v = JSON.parse(raw) as Partial<Features>;
     return {
       corners: CORNERS.some((x) => x.id === v.corners) ? v.corners! : DEFAULT.corners,
       depth: DEPTHS.some((x) => x.id === v.depth) ? v.depth! : DEFAULT.depth,
@@ -126,13 +129,13 @@ function load(): TrialLooks {
   }
 }
 
-let cur: TrialLooks = typeof window === "undefined" ? DEFAULT : load();
+let cur: Features = typeof window === "undefined" ? DEFAULT : load();
 
-export function trialLooks(): TrialLooks {
+export function features(): Features {
   return cur;
 }
 
-export function setTrialLooks(t: Partial<TrialLooks>): void {
+export function setFeatures(t: Partial<Features>): void {
   cur = { ...cur, ...t };
   try {
     localStorage.setItem(KEY, JSON.stringify(cur));
@@ -142,7 +145,7 @@ export function setTrialLooks(t: Partial<TrialLooks>): void {
   for (const f of subs) f();
 }
 
-export function onTrialLooks(f: () => void): () => void {
+export function onFeatures(f: () => void): () => void {
   subs.add(f);
   return () => subs.delete(f);
 }
@@ -217,3 +220,25 @@ export function alongOutline(pts: number[], u: number): { x: number; y: number }
   }
   return { x: pts[0]!, y: pts[1]! };
 }
+
+/**
+ * The Features in the order the Menu and the Features page show them (designer 2026-11-22). `unlock`
+ * will name the achievement that gives a Feature to the player (later; none yet: every Feature is open).
+ */
+export interface FeatureRow<K extends keyof Features = keyof Features> {
+  key: K;
+  title: string;
+  about: string;
+  list: { id: Features[K]; label: string; note: string }[];
+  unlock?: string;
+}
+
+export const FEATURE_ROWS: FeatureRow[] = [
+  { key: "corners", title: "Tile corners", about: "How round the hexagons of units and sectors are.", list: CORNERS },
+  { key: "depth", title: "Stack depth", about: "How deep a sector's stack looks: a few tiles or many, at a glance.", list: DEPTHS },
+  { key: "readyUnit", title: "Ready to tap: units", about: "The animation on a unit you can use now.", list: READY_UNITS },
+  { key: "readySector", title: "Ready to tap: sectors", about: "The animation on a Dark or Cleared sector you can use now.", list: READY_SECTORS },
+  { key: "names", title: "Unit names", about: "The unit's name (B_03, S_12 ...) on its tile.", list: NAMES },
+  { key: "overload", title: "Overload edge", about: "The energy round the Field's edge during an Overload.", list: OVERLOADS },
+  { key: "next", title: "Next tile", about: "Where a sector's next tile shows once you have looked at it.", list: NEXTS },
+] as FeatureRow[];

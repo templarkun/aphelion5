@@ -171,6 +171,9 @@ test("dev prices: per unit, summed per mission roster, per Threat column and for
   // The Campaign: every mission roster, never the Threat columns.
   d.missions.push({ ...structuredClone(m), number: 2 });
   expect(campaignPrice(data(), d).sum).toBeCloseTo(2 * roster.sum, 5);
+  // A route pair counts once, by its "X path" (C8, designer 2026-11-22).
+  d.missions.push({ ...structuredClone(m), number: 3, route: "x" }, { ...structuredClone(m), number: 3, route: "y", deck: { B_01: 9 } });
+  expect(campaignPrice(data(), d).sum).toBeCloseTo(3 * roster.sum, 5);
   for (const c of THREAT_COLUMNS) expect(rosterOf(m)[c]).toBeUndefined();
 });
 
