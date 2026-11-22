@@ -9,7 +9,7 @@ import { Graphics, Text } from "pixi.js";
 import type { GameEvent } from "../engine/events.js";
 import { type Step, easeOut, easeOutBack } from "./anim.js";
 import { type FxEnv, drawOverloadRing } from "./revealFx.js";
-import { alongOutline, hexOutline } from "./trialLooks.js";
+import { alongOutline, hexOutline } from "./features.js";
 
 type TokensEv = GameEvent & { kind: "tokens" };
 

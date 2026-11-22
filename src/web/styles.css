@@ -1006,9 +1006,9 @@ html.still .sp-tile { transition: none; animation: none; }
 @keyframes ally-hover { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(3px); } }
 html.still .ally-drop-unit { animation: none; }
 @media (min-width: 1600px) { .ally-drop-label { font-size: 15px; } .ally-drop-sub { font-size: 14px; } }
-/* TEMPORARY trial looks in the Menu (designer 2026-11-20, TrialLooksMenu.tsx). */
-.trial-looks { border: 1px dashed var(--line); border-radius: 8px; padding: 4px 8px 8px; }
-.trial-looks summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 4px 0; }
+/* Features in the Menu (designer 2026-11-20 as "trial looks"; renamed "Features" 2026-11-22, FeaturesMenu.tsx). */
+.features-menu { border: 1px dashed var(--line); border-radius: 8px; padding: 4px 8px 8px; }
+.features-menu summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 4px 0; }
 .menu.panel { max-height: calc(100vh - var(--bar-h, 52px) - 16px); overflow-y: auto; }
 
 /* Overhaul as a small wrench mark beside the Flagship heading (designer 2026-11-21, round 25, I32). */

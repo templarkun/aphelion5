@@ -314,10 +314,15 @@ export function threatRoster(m: MissionDraft, c: ThreatColumn): Record<string, n
   return out;
 }
 
-/** The whole Campaign: every mission roster added up (Threat columns not counted). */
+/**
+ * The whole Campaign: every mission roster added up (Threat columns not counted). A route pair
+ * (2x / 2y, 4x / 4y; 7.2 step 1) counts once, by its first mission, the "X path" (designer
+ * 2026-11-22, C8): a "y" mission is left out when its number also has an "x" one.
+ */
 export function campaignPrice(data: GameData, d: Draft): PriceSum {
   const all: Record<string, number> = {};
-  for (const m of d.missions) for (const [id, n] of Object.entries(rosterOf(m))) all[id] = (all[id] ?? 0) + n;
+  const counted = d.missions.filter((m) => m.route !== "y" || !d.missions.some((x) => x.number === m.number && x.route === "x"));
+  for (const m of counted) for (const [id, n] of Object.entries(rosterOf(m))) all[id] = (all[id] ?? 0) + n;
   return priceSum(data, d, all);
 }
 

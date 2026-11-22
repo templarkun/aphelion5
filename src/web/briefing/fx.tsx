@@ -41,7 +41,9 @@ function useFrames(ref: React.RefObject<HTMLCanvasElement | null>, draw: (g: Can
     let last = performance.now();
     let t = 0;
     const frame = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      // The first frame's time can be a little before the moment the loop started (bug fix 2026-11-22:
+      // a step back in time made young particles' age negative and a plasma particle's radius < 0).
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
       t += dt;
       const [w, h] = fit(cv, g);

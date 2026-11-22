@@ -412,7 +412,7 @@ export function drawOverloadRing(g: Graphics, w: number, h: number, now: number,
 
 
 /**
- * Trial look "Inflow" (designer 2026-11-21): instead of beams racing round the edge, streams of energy
+ * Feature "Inflow" (designer 2026-11-21): instead of beams racing round the edge, streams of energy
  * particles flow in from the edge towards the middle, like the plasma wave beside them: each stream is
  * born at a point of the edge, a short trail of bright motes curling a little as it goes, then fades.
  * Every mote worked out from the time alone (`now` in ms; 0 = still: only the edge glow).

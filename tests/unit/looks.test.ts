@@ -1,5 +1,5 @@
 /**
- * Round of 2026-11-20 (designer, screen only): the Allied Drop event and prompt, the trial looks'
+ * Round of 2026-11-20 (designer, screen only): the Allied Drop event and prompt, the features'
  * hexagon outlines. No rule changes.
  */
 import { describe, expect, it } from "vitest";
@@ -9,7 +9,7 @@ import { newRng } from "../../src/engine/rng.js";
 import { playAnswer, startGame } from "../../src/engine/save.js";
 import { emptyProfile } from "../../src/engine/state.js";
 import { allyDropUnit } from "../../src/web/AllyDrop.js";
-import { alongOutline, hexOutline } from "../../src/web/trialLooks.js";
+import { alongOutline, hexOutline } from "../../src/web/features.js";
 import { randomAnswer } from "./campaignFuzz.js";
 
 const data = loadGameData();
@@ -44,7 +44,7 @@ describe("Allied Drop (7.3): the Mecha shown, then dropped", () => {
   });
 });
 
-describe("Trial looks: tile corners", () => {
+describe("Features: tile corners", () => {
   const radius = (pts: number[]) => pts.reduce((m, v, i) => (i % 2 ? m : Math.max(m, Math.hypot(v, pts[i + 1]!))), 0);
   it("Original is the sharp hexagon; rounder corners stay inside it and get rounder", () => {
     const sharp = hexOutline(0, 0, 100, "original");

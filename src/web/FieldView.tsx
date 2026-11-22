@@ -36,7 +36,7 @@ import { drawAlert, drawEnergyBorder, flareEnergySpots } from "./alertFx.js";
 import { addFuseTokens, drawBarrier } from "./tokensFx.js";
 import { dropStep, fizzleStep, overhaulStep, overloadStep, tokenStep, turnStep, uncoverStep } from "./eventFx.js";
 import { isStill, onMotion, speedFactor } from "./motion.js";
-import { alongOutline, hexOutline, onTrialLooks, trialLooks } from "./trialLooks.js";
+import { alongOutline, hexOutline, onFeatures, features } from "./features.js";
 import { PlasmaWave } from "./plasmaFx.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 import { type SalvageMark, killOf, salvageMarkOf } from "./celebrate/detect.js";
@@ -114,11 +114,11 @@ function addGlyphBadge(node: Container, unitId: string | undefined, cx: number, 
 }
 
 /**
- * Trial look (designer 2026-11-21, round 24): a sector's very next tile, once the player has looked
+ * Feature (designer 2026-11-21, round 24): a sector's very next tile, once the player has looked
  * at it (the tile under a unit, or a Dark sector's top tile), drawn on the tile in the chosen way.
  */
 function addNextTile(node: Container, unitId: string | undefined, cx: number, cy: number, size: number, dark: boolean): void {
-  const look = trialLooks().next;
+  const look = features().next;
   if (!unitId) return;
   let tex = badgeTextures.get(unitId);
   if (!tex) {
@@ -185,7 +185,7 @@ function energyTexture(col: "Yellow" | "Red" | "Blue"): Texture | undefined {
   return tex;
 }
 
-/** A tile's hexagon; its corners follow the trial look chosen in the Menu (trialLooks.ts). */
+/** A tile's hexagon; its corners follow the feature chosen in the Menu (features.ts). */
 function hexPoints(cx: number, cy: number, size: number): number[] {
   return hexOutline(cx, cy, size);
 }
@@ -197,11 +197,11 @@ function shade(c: number, k: number): number {
 }
 
 /**
- * Trial look (designer 2026-11-20): how deep a sector's stack is, seen at a glance. `layers` = the
+ * Feature (designer 2026-11-20): how deep a sector's stack is, seen at a glance. `layers` = the
  * tiles under the top one (a Dark sector: all its tiles). Drawn under the tile, so it moves with it.
  */
 function addDepth(node: Container, cx: number, cy: number, size: number, layers: number, fill: number): void {
-  const how = trialLooks().depth;
+  const how = features().depth;
   if (how === "original" || layers <= 0) return;
   const g = new Graphics();
   g.eventMode = "none";
@@ -229,7 +229,7 @@ function addDepth(node: Container, cx: number, cy: number, size: number, layers:
 }
 
 /**
- * Notches (designer 2026-11-21, part of the game; was a trial look): one notch per tile under the top
+ * Notches (designer 2026-11-21, part of the game; was a feature to choose): one notch per tile under the top
  * one (a Dark sector: per tile), up to 12, along the tile's two lower edges from the bottom point out.
  */
 function addDepthNotches(node: Container, cx: number, cy: number, size: number, layers: number, light: boolean): void {
@@ -260,11 +260,11 @@ function hash3(a: number, b: number, c: number): number {
 
 /**
  * Units and sectors ready to be tapped. "Original" is the hairline amber edge that slowly brightens and
- * fades (designer 2026-11-08); the others are trial looks to choose from in the Menu (2026-11-20, the
+ * fades (designer 2026-11-08); the others are features to choose from in the Menu (2026-11-20, the
  * second set 2026-11-21). Everything is worked out from the time alone, so each sector keeps in step.
  */
 function drawReady(g: Graphics, cx: number, cy: number, size: number, now: number, unit: boolean): void {
-  const how = unit ? trialLooks().readyUnit : trialLooks().readySector;
+  const how = unit ? features().readyUnit : features().readySector;
   const r = size * 0.9;
   const edge = hexPoints(cx, cy, r);
   const seed = Math.round(cx * 7 + cy * 13);
@@ -522,9 +522,9 @@ export function FieldView(p: FieldProps) {
   const ready = useRef(false);
   const props = useRef(p);
   props.current = p;
-  // Trial looks chosen in the Menu (designer 2026-11-20): the board is drawn again at once.
-  const [, bumpTrial] = useState(0);
-  useEffect(() => onTrialLooks(() => bumpTrial((x) => x + 1)), []);
+  // Features chosen in the Menu (designer 2026-11-20): the board is drawn again at once.
+  const [, bumpFeatures] = useState(0);
+  useEffect(() => onFeatures(() => bumpFeatures((x) => x + 1)), []);
   const player = useRef(new Player());
   /** The empty slots under the sectors are hidden while a Gamma kill tilts the board (it draws its own). */
   const hideSlots = useRef(false);
@@ -658,7 +658,7 @@ export function FieldView(p: FieldProps) {
   // (play-test 2026-11-08: the first tap on a touch screen only showed the hover text).
   useEffect(() => {
     const P = props.current;
-    const sig = JSON.stringify([P.choosable, P.selected, P.tones, P.rotate && [P.rotate.tile, P.rotate.facing], P.dark, P.showHidden, trialLooks()]);
+    const sig = JSON.stringify([P.choosable, P.selected, P.tones, P.rotate && [P.rotate.tile, P.rotate.facing], P.dark, P.showHidden, features()]);
     if (P.state === drawn.current.state && sig === drawn.current.sig) return;
     drawn.current = { state: P.state, sig };
     draw();
@@ -1876,7 +1876,7 @@ export function FieldView(p: FieldProps) {
 
     // An Overload: a plasma beam swirls round the Field (designer 2026-11-09, instead of a tinted page).
     L.edge.clear();
-    if (props.current.state.phase === "overload" && host.current) drawOverloadRing(L.edge, host.current.clientWidth, host.current.clientHeight, stillRef.current ? 0 : now, trialLooks().overload);
+    if (props.current.state.phase === "overload" && host.current) drawOverloadRing(L.edge, host.current.clientWidth, host.current.clientHeight, stillRef.current ? 0 : now, features().overload);
     corona.current?.update(host.current?.clientWidth ?? 0, host.current?.clientHeight ?? 0, now, props.current.state.phase === "overload" && !stillRef.current);
 
     // Barriers: a force field round their unit, following the tile as it moves.
@@ -2151,13 +2151,13 @@ export function FieldView(p: FieldProps) {
       else if (st === "dark") {
         const known = showHidden || state.seen.includes(top!);
         label(known ? `? ${tile(state, top!).unitId ?? "?"}` : "?", -size * 0.1, size * 0.3, 0xffffff, true);
-        if (trialLooks().counts === "shown") label(`${height} tile${height === 1 ? "" : "s"}`, size * 0.3, size * 0.18, 0xdfe7f1);
+        if (features().counts === "shown") label(`${height} tile${height === 1 ? "" : "s"}`, size * 0.3, size * 0.18, 0xdfe7f1);
         if (known) addNextTile(node, tile(state, top!).unitId ?? undefined, cx, cy, size, true);
       } else {
         const t = tile(state, unit!);
         const str = strength(c, unit!);
         // A little left of centre, clear of the glyph badge in the upper right corner.
-        if (trialLooks().names === "shown") label(t.unitId ?? "?", -size * 0.28, size * 0.28, 0x1d1d1f, true, -size * 0.1);
+        if (features().names === "shown") label(t.unitId ?? "?", -size * 0.28, size * 0.28, 0x1d1d1f, true, -size * 0.1);
         // Strength pips, Shield and Damage tokens as pieces (designer 2026-11-09, unitMarks.ts).
         addUnitMarks(node, str, t.tokens, cx, cy, size);
         // Level (3.3): a hexagon badge and notches at the upper left (designer 2026-11-09).
@@ -2175,8 +2175,8 @@ export function FieldView(p: FieldProps) {
         if (b.length) label(b.join(" "), t.tokens.wreck ? size * 0.02 : marked ? size * 0.47 : size * 0.27, size * 0.16, 0x9b1c1c, true);
         addFuseTokens(node, t.tokens, cx, cy, size);
         // Above the Alert token's place at the bottom corner (designer 2026-11-09).
-        if (trialLooks().counts === "shown") label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.13);
-        // Trial look (round 24): the tile right under the unit, once looked at.
+        if (features().counts === "shown") label(height > 1 ? `+${height - 1} beneath` : "alone", size * 0.5, size * 0.13);
+        // Feature (round 24): the tile right under the unit, once looked at.
         const under = stack(state, p.k).at(-2);
         if (under && (showHidden || state.tiles[under]!.faceUp || state.seen.includes(under))) addNextTile(node, tile(state, under).unitId ?? undefined, cx, cy, size, false);
         // Trial rule (I2): the energy waiting on a Flare, as tokens on its tile (build step 3).

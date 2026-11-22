@@ -1,5 +1,5 @@
 // Browser check of the round of 2026-11-21 (designer): a unit with arrows revealed no longer blocks the
-// game (drag, pop-ups), the Reserve counts down and back up with a selected Module, the Overload trial
+// game (drag, pop-ups), the Reserve counts down and back up with a selected Module, the Overload feature
 // look "Inflow". Called by ui-smoke.mjs; can also run alone: node scripts/ui-round23.mjs [url] [outDir].
 import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
@@ -11,8 +11,8 @@ async function open(browser, url, w, h, trial) {
     try {
       localStorage.setItem("aphelion5.intro", "off");
       localStorage.setItem("aphelion5.intro.intro2", "seen");
-      if (t) localStorage.setItem("aphelion5.trialLooks", t);
-      else localStorage.removeItem("aphelion5.trialLooks");
+      if (t) localStorage.setItem("aphelion5.features", t);
+      else localStorage.removeItem("aphelion5.features");
     } catch {}
   }, trial ?? "");
   await pg.goto(url);
@@ -118,16 +118,16 @@ export async function round23Check(browser, url, out) {
     if (!(sum(r1) < sum(r0) && sum(r2) === sum(r0))) fails.push(`reserve: before ${r0}, selected ${r1} (seen ${seen.join(",")}), let go ${r2}`);
   }
 
-  // 3. The Overload trial look: Inflow pressed, kept; an Overload screenshot with it.
+  // 3. The Overload feature: Inflow pressed, kept; an Overload screenshot with it.
   if (existsSync(`${out}/overloadstart-save.json`)) {
     const k = JSON.parse(readFileSync(`${out}/overloadstart-save.json.plan.json`, "utf8")).shortcut.slice(7);
     const pg = await open(browser, url, 1400, 900);
     watch(pg);
     await paste(pg, `${out}/overloadstart-save.json`);
     await pg.getByRole("button", { name: "Menu" }).click();
-    await pg.locator(".trial-looks summary").click();
-    await pg.locator('[data-trial="overload:inflow"]').click();
-    const kept = await pg.evaluate(() => JSON.parse(localStorage.getItem("aphelion5.trialLooks") ?? "{}").overload);
+    await pg.locator(".features-menu summary").click();
+    await pg.locator('[data-feature="overload:inflow"]').click();
+    const kept = await pg.evaluate(() => JSON.parse(localStorage.getItem("aphelion5.features") ?? "{}").overload);
     await pg.locator(".menu-wrap > button").click();
     await pg.waitForTimeout(300);
     const orders = await pg.locator("[data-order]").count();

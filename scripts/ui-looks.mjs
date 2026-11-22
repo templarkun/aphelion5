@@ -1,5 +1,5 @@
 // Browser check of the round of 2026-11-20 (designer): the big PC screen sizes, the Allied Drop look,
-// no Ally line, and the trial looks in the Menu. Called by ui-smoke.mjs; can also run alone:
+// no Ally line, and the features in the Menu. Called by ui-smoke.mjs; can also run alone:
 // node scripts/ui-looks.mjs [url] [outDir]  (needs dist/ui-check/allieddrop-save.json and alert-save.json).
 import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
@@ -11,8 +11,8 @@ async function open(browser, url, w, h, init) {
     try {
       localStorage.setItem("aphelion5.intro", "off");
       localStorage.setItem("aphelion5.intro.intro2", "seen");
-      if (t) localStorage.setItem("aphelion5.trialLooks", t);
-      else localStorage.removeItem("aphelion5.trialLooks");
+      if (t) localStorage.setItem("aphelion5.features", t);
+      else localStorage.removeItem("aphelion5.features");
     } catch {}
   }, init ?? "");
   await pg.goto(url);
@@ -105,29 +105,29 @@ export async function looksCheck(browser, url, out) {
     if (!(shown && /^M_/.test(shown) && clear && gone && prompt1 !== prompt0)) fails.push(`Allied Drop: shown ${shown}, clear of sectors ${clear}, gone after ${gone}, prompt "${prompt0}" -> "${prompt1}"`);
   } else fails.push("no allied drop save");
 
-  // 4. Trial looks in the Menu: every choice is offered, kept in this browser, and the Field is drawn again.
+  // 4. Features in the Menu: every choice is offered, kept in this browser, and the Field is drawn again.
   if (existsSync(`${out}/alert-save.json`)) {
     const pg = await open(browser, url, 1400, 900);
     watch(pg);
     await paste(pg, `${out}/alert-save.json`);
     await pg.getByRole("button", { name: /Menu/ }).click();
-    await pg.locator(".trial-looks summary").click();
-    const offered = await pg.locator("[data-trial]").count();
+    await pg.locator(".features-menu summary").click();
+    const offered = await pg.locator("[data-feature]").count();
     const shot = async () => (await pg.locator(".field canvas").screenshot()).toString("base64");
     await pg.waitForTimeout(300);
     const before = await shot();
     for (const id of ["corners:round", "depth:stackFine", "readyUnit:arcs", "readySector:tide", "names:hidden"]) {
-      await pg.locator(`[data-trial="${id}"]`).click();
+      await pg.locator(`[data-feature="${id}"]`).click();
       await pg.waitForTimeout(150);
     }
-    const pressed = await pg.locator("[data-trial][aria-pressed=true]").evaluateAll((els) => els.map((e) => e.getAttribute("data-trial")).join());
+    const pressed = await pg.locator("[data-feature][aria-pressed=true]").evaluateAll((els) => els.map((e) => e.getAttribute("data-feature")).join());
     await pg.waitForTimeout(400);
     const after = await shot();
-    const kept = await pg.evaluate(() => localStorage.getItem("aphelion5.trialLooks"));
-    await pg.screenshot({ path: `${out}/ui-trial-looks.png` });
+    const kept = await pg.evaluate(() => localStorage.getItem("aphelion5.features"));
+    await pg.screenshot({ path: `${out}/ui-features-menu.png` });
     await pg.close();
     const okKept = /"corners":"round"/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /arcs/.test(kept ?? "") && /tide/.test(kept ?? "") && /"names":"hidden"/.test(kept ?? "");
-    if (!(offered === 34 && pressed === "corners:round,depth:stackFine,readyUnit:arcs,readySector:tide,names:hidden,overload:original,next:corner" && before !== after && okKept)) fails.push(`trial looks: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
+    if (!(offered === 34 && pressed === "corners:round,depth:stackFine,readyUnit:arcs,readySector:tide,names:hidden,overload:original,next:corner" && before !== after && okKept)) fails.push(`features: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
   }
 
   if (errors.length) fails.push(`page errors: ${errors.join(" | ")}`);

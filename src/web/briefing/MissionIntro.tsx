@@ -67,7 +67,7 @@ export function MissionIntro({ data, state, onDone }: { data: GameData; state: G
     let last = 0;
     const start = performance.now();
     const frame = (now: number) => {
-      const dt = Math.min(0.05, last ? (now - last) / 1000 : 0);
+      const dt = Math.max(0, Math.min(0.05, last ? (now - last) / 1000 : 0));
       last = now;
       const t = (now - start) / total;
       const r = canvas.getBoundingClientRect();

@@ -343,7 +343,7 @@ export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () =>
             <input className={`${INP} w-20 font-bold`} style={txt} value={d.prefix} aria-label="Campaign id" onChange={(e) => setD({ ...d, prefix: e.target.value.toUpperCase().replace(/[^C0-9]/g, "") })} />
           </label>
           <span className="flex-1" />
-          <Price p={total} label="Whole Campaign" id="campaign" />
+          <Price p={total} label="Whole Campaign (X path)" id="campaign" />
         </div>
         <p className="text-[12px] text-sky-200/80">The Campaign's sum adds up every mission roster (deck and Omega units placed), not the Threat columns.</p>
       </div>

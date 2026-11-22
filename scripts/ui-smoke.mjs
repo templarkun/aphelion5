@@ -1501,7 +1501,7 @@ if (runs("outro") && existsSync(`${out}/won-save.json`)) {
 const pagesCheck = runs("pages") ? await runPagesCheck(browser, url, out) : "skipped (not asked for)";
 // The mission celebrations (designer 2026-11-20): scripts/ui-celebrate.mjs.
 const celebrateCheck = runs("celebrate") ? await runCelebrateCheck(browser, url, out) : "skipped (not asked for)";
-// Big PC screen, Allied Drop, trial looks (designer 2026-11-20): scripts/ui-looks.mjs.
+// Big PC screen, Allied Drop, features (were "trial looks") (designer 2026-11-20): scripts/ui-looks.mjs.
 const looksCheck = runs("looks") ? await runLooksCheck(browser, url, out) : "skipped (not asked for)";
 const round23Check = runs("round23") ? await runRound23Check(browser, url, out) : "skipped (not asked for)";
 const round24Check = runs("round24") ? await runRound24Check(browser, url, out) : "skipped (not asked for)";
