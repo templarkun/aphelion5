@@ -1,0 +1,4 @@
+Last full browser check (npm run test:ui, every group)
+commit: 7b009a8
+date: 2026-11-22
+result: run after round 26 (about 51 minutes)
