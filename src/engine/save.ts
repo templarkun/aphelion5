@@ -66,6 +66,12 @@ export interface Game {
   start: GameStart;
   answers: Answer[];
   view: SessionView;
+  /**
+   * The hidden-information count just before the last answer (set by playAnswer and replayGame), so
+   * canUndo needs no replay. Replaying the whole game on every screen update made the game slower
+   * the longer it ran (designer's report 2026-11-22).
+   */
+  hiddenBefore?: number;
 }
 
 function initial(data: GameData, start: GameStart): GameState {
@@ -81,6 +87,7 @@ export function replayGame(data: GameData, start: GameStart, answers: readonly A
   let v = startSession(data, initial(data, start));
   const kept: Answer[] = [];
   let until: number | undefined;
+  let hiddenBefore: number | undefined;
   for (const [i, a] of answers.entries()) {
     // Saves from before 2026-11-07 answered energy on Modules with one split per colour;
     // energy is now placed one per answer (designer 2026-11-07): replay the split as those answers.
@@ -95,6 +102,7 @@ export function replayGame(data: GameData, start: GameStart, answers: readonly A
     // Format 4 saves answered "pay 1 Heat to avoid Meltdown?" (H7); it is no longer asked (2026-11-08).
     if (v.status === "question" && v.question.kind !== "yesno" && a.kind === "yesno") continue;
     for (const p of parts) {
+      hiddenBefore = v.state.hiddenInfo;
       const r = answerSession(data, v, p);
       if (r.status === "illegal" || r.status === "blocked") throw new Error(`saved answer ${i + 1} was refused: ${r.reason}`);
       v = r;
@@ -112,7 +120,7 @@ export function replayGame(data: GameData, start: GameStart, answers: readonly A
   }
   // Old answers replayed as several (energy splits): count the kept ones.
   const st = until !== undefined && until !== start.mechaAttacksMechaUntil ? { ...start, mechaAttacksMechaUntil: until } : start;
-  return { start: st, answers: kept, view: v };
+  return { start: st, answers: kept, view: v, ...(hiddenBefore !== undefined ? { hiddenBefore } : {}) };
 }
 
 /**
@@ -144,13 +152,14 @@ function newMechaRule(data: GameData, v: SessionView): SessionView {
 export function playAnswer(data: GameData, g: Game, a: Answer): { game: Game; result: AnswerResult } {
   const r = answerSession(data, g.view, a);
   if (r.status === "illegal" || r.status === "blocked") return { game: g, result: r };
-  return { game: { start: g.start, answers: [...g.answers, a], view: r }, result: r };
+  return { game: { start: g.start, answers: [...g.answers, a], view: r, hiddenBefore: g.view.state.hiddenInfo }, result: r };
 }
 
 /** Can the last answer be undone (no new hidden information since the answer before it)? */
 export function canUndo(data: GameData, g: Game): boolean {
   if (g.answers.length === 0) return false;
   if (g.start.developerMode) return true;
+  if (g.hiddenBefore !== undefined) return g.hiddenBefore === g.view.state.hiddenInfo;
   const before = replayGame(data, g.start, g.answers.slice(0, -1));
   return before.view.state.hiddenInfo === g.view.state.hiddenInfo;
 }

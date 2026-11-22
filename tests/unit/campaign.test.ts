@@ -367,6 +367,26 @@ describe("batch 7 - SAVING AND UNDO", () => {
     expect(canUndo(data(), rev2)).toBe(false);
     expect(canUndo(data(), { ...rev2, start: { ...start, developerMode: true } })).toBe(true);
   });
+
+  it("the quick Undo check (no replay) agrees with replaying the game (lag fix 2026-11-22)", () => {
+    const start = { seed: 11, date: "2026-11-22", developerMode: false, profile: emptyProfile() };
+    let g = startGame(data(), start);
+    const r = newRng(5);
+    let checked = 0;
+    for (let i = 0; i < 120 && g.view.status === "question"; i++) {
+      let a = randomAnswer(r, g.view.question);
+      for (let k = 0; k < 30 && a.kind === "option" && a.value === "concede"; k++) a = randomAnswer(r, g.view.question);
+      const res = playAnswer(data(), g, a);
+      if (res.result.status === "illegal" || res.result.status === "blocked") break;
+      g = res.game;
+      if (i % 6 !== 0 && i < 100) continue;
+      const slow = canUndo(data(), { start: g.start, answers: g.answers, view: g.view });
+      expect(canUndo(data(), g)).toBe(slow);
+      expect(canUndo(data(), replayGame(data(), g.start, g.answers))).toBe(slow);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(15);
+  }, 60000);
 });
 
 describe("batch 7 - HEAT MODULE", () => {

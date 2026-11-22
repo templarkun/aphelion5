@@ -2598,3 +2598,22 @@ source: designer 2026-11-22 (screen only)
 when: System options > Mission celebrations · Salvage
 then: four more buttons: "Grid Online (5th Power Node)", "Sector Lock (3rd Cleared sector)", and each
       of them then Mission Complete, on the made-up Mission 2 Field.
+
+id: T13_LAG_01
+title: The game stays as quick late in a mission as at its start
+source: designer 2026-11-22 (lag after a few minutes of play; screen only, no rule change)
+given: a game with 100 or more answers played (a few minutes of play)
+when: the mouse moves over the Field (or a long tap), a pop-up opens, a Mecha moves, a unit is
+      revealed
+then: as smooth as in a game just started. (Before, the Undo button worked out "can I undo?" by
+      playing the whole game again from its start on every screen update; it now remembers the
+      answer from the last move.)
+then: Undo is offered and refused exactly as before (back to the last new hidden information).
+
+id: T13_LAG_02
+title: The Field rests when nothing on it moves
+source: designer 2026-11-22 (iPad hot while idle; screen only)
+given: nothing animating: no move, reveal, drag, Overload, celebration
+then: the Field draws itself 30 times a second while ready glows or Alerts breathe, 10 times a
+      second when nothing on it changes (it was 60 times a second all the time); anything that
+      starts moving (a tap, a drag, a new answer, an animation) is at full speed at once.

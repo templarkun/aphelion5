@@ -546,6 +546,18 @@ export function FieldView(p: FieldProps) {
   const dropped = useRef<{ tile: TileId; to: string } | undefined>(undefined);
   /** When each ready Alert was first shown (its token pops in). */
   const alertBorn = useRef(new Map<string, number>());
+  /**
+   * Frame pacing (designer's report 2026-11-22: lag, and an iPad hot while nothing moves). The Field
+   * used to draw itself 60 times a second all the time. Now: full speed while something moves (an
+   * animation, a drag, an Overload, a celebration, a moment after any change or press); 30 a second
+   * while only slow breathing glows show; 10 a second when nothing on it changes over time.
+   */
+  const wakeUntil = useRef(0);
+  const wake = () => {
+    wakeUntil.current = performance.now() + 400;
+    const a = app.current;
+    if (a && ready.current) a.ticker.maxFPS = 0;
+  };
 
   useEffect(() => {
     const a = new Application();
@@ -591,10 +603,14 @@ export function FieldView(p: FieldProps) {
       ready.current = true;
       draw();
       a.ticker.add(frame);
-      new ResizeObserver(() => draw()).observe(host.current!);
+      new ResizeObserver(() => {
+        wake();
+        draw();
+      }).observe(host.current!);
     });
     // A tap anywhere finishes the animations at once (spec "Timing": Skip); a celebration needs two (designer 2026-11-20).
     const skip = () => {
+      wake();
       if (!player.current.busy) return;
       if (!player.current.tap()) return;
       // Put every tile back in place now, and render, before this same tap is matched to a tile.
@@ -606,7 +622,10 @@ export function FieldView(p: FieldProps) {
       if (e.key === "Escape" && drag.current && (drag.current.stage === "drag" || drag.current.stage === "carry")) startReturn(false);
     };
     window.addEventListener("keydown", key);
-    const move = (e: PointerEvent) => onMove(e);
+    const move = (e: PointerEvent) => {
+      if (drag.current) wake();
+      onMove(e);
+    };
     const up = (e: PointerEvent) => onUp(e);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -675,6 +694,7 @@ export function FieldView(p: FieldProps) {
   };
 
   function onDown(e: PointerEvent): void {
+    wake();
     if (e.pointerType === "mouse") e.preventDefault(); // no text selection from presses on the Field
     const { x, y } = local(e);
     const d = drag.current;
@@ -1815,10 +1835,12 @@ export function FieldView(p: FieldProps) {
     player.current.tick(now, look);
     // The win celebration's shock wave: the units shiver as it passes (designer 2026-11-20).
     const shake = props.current.shake;
+    let shook = false;
     if (shake)
       for (const k of nodes.current.keys()) {
         const o = shake(k, now);
         if (!o) continue;
+        shook = true;
         const v = look(k);
         v.dx += o.dx;
         v.dy += o.dy;
@@ -1860,12 +1882,15 @@ export function FieldView(p: FieldProps) {
     // Barriers: a force field round their unit, following the tile as it moves.
     const au = L.aura;
     au.clear();
+    // Something on the Field that changes over time (a breathing glow, a pulsing Alert): see pace below.
+    let ambient = false;
     const st = props.current.state;
     for (const [k, n] of nodes.current) {
       if (sectorState(st, k) !== "occupied") continue;
       const top = topTileId(st, k);
       if (!top || !tile(st, top).tokens.barrier) continue;
       const v = looks.get(k);
+      ambient = true;
       drawBarrier(au, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, v?.alpha ?? 1, v?.scale ?? 1);
     }
     // Ready Alerts: a token at the bottom corner and a pulsing rim (alertFx.ts).
@@ -1882,6 +1907,7 @@ export function FieldView(p: FieldProps) {
       if (born > now + 50000 && !player.current.busy) alertBorn.current.set(top, (born = now));
       if (born > now) continue; // placed by an animation still playing: shown when it ends
       const v = looks.get(k);
+      ambient = true;
       drawAlert(au, n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size, stillRef.current ? 0 : now, born, v?.alpha ?? 1, v?.scale ?? 1, tk.wreck);
     }
     for (const id of alertBorn.current.keys()) if (!seenNow.has(id)) alertBorn.current.delete(id);
@@ -1895,6 +1921,7 @@ export function FieldView(p: FieldProps) {
       if (!cols.length) continue;
       const v = looks.get(k);
       const spots = flareEnergySpots(n.cx + (v?.dx ?? 0), n.cy + (v?.dy ?? 0), size * (v?.scale ?? 1), cols.length, t.tokens.wreck);
+      ambient = true;
       cols.forEach((col, i) => drawEnergyBorder(au, spots.x[i]!, spots.y, spots.r, ENERGY_HEX[col] ?? 0x888888, stillRef.current ? 0 : now, i, v?.alpha ?? 1));
     }
 
@@ -1910,6 +1937,7 @@ export function FieldView(p: FieldProps) {
     } else if (!player.current.busy) {
       for (const [k, n] of nodes.current) {
         if (!n.node.label.startsWith("choice")) continue;
+        ambient = true;
         drawGlow(g, n.cx, n.cy, P.tones?.[k] ?? "ready", now, false, sectorState(P.state, k) === "occupied");
       }
     }
@@ -1918,6 +1946,7 @@ export function FieldView(p: FieldProps) {
       for (const k of P.affected ?? []) {
         const n = nodes.current.get(k);
         if (!n) continue;
+        ambient = true;
         const r = size * 0.97;
         const pts = hexPoints(n.cx, n.cy, r);
         g.poly(pts).stroke({ width: 2, color: AFFECT, alpha: 0.85 });
@@ -1937,6 +1966,24 @@ export function FieldView(p: FieldProps) {
         g.poly(hexPoints(n.cx, n.cy, size * 0.9)).fill({ color: AFFECT, alpha: 0.1 + 0.08 * breath(now, 1800) });
       }
     if (d) dragFrame(d, now, size);
+
+    // Frame pacing (see wakeUntil).
+    const a = app.current;
+    if (a) {
+      const still = stillRef.current;
+      const fast =
+        now < wakeUntil.current ||
+        player.current.busy ||
+        !!d ||
+        shook ||
+        L.fx.children.length > 0 ||
+        L.celebrate.children.length > 0 ||
+        L.under.children.length > 0 ||
+        (st.phase === "overload" && !still);
+      const fps = fast ? 0 : ambient && !still ? 30 : 10;
+      if (a.ticker.maxFPS !== fps) a.ticker.maxFPS = fps;
+      host.current?.setAttribute("data-pace", String(fps));
+    }
   }
 
   function dragFrame(d: DragState, now: number, size: number): void {
@@ -2030,6 +2077,7 @@ export function FieldView(p: FieldProps) {
     const L = layers.current;
     if (!a || !ready.current || !host.current || !L) return;
     const { data, state, choosable, selected, onPick, onHover, showHidden, rotate } = props.current;
+    wake();
     const c: Ctx = { data, state };
     L.root.removeChildren().forEach((x) => x.destroy({ children: true }));
     nodes.current = new Map();
