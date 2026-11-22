@@ -27,7 +27,7 @@ describe("round 28", () => {
     // Round 29: "Overload End button" added; Overload edge 8 looks, Energy Gyro reward 8.
     expect(keys).toEqual(["corners", "depth", "readyUnit", "readySector", "names", "overload", "next", "gyroEnergy", "exposure", "endButton"]);
     const n = Object.fromEntries(FEATURE_ROWS.map((r) => [r.key, r.list.length]));
-    expect(n).toEqual({ corners: 5, depth: 5, readyUnit: 15, readySector: 15, names: 2, overload: 8, next: 4, gyroEnergy: 8, exposure: 5, endButton: 7 });
+    expect(n).toEqual({ corners: 5, depth: 5, readyUnit: 15, readySector: 15, names: 2, overload: 10, next: 4, gyroEnergy: 8, exposure: 5, endButton: 7 }); // CHANGED round 30: overload 10
     for (const r of FEATURE_ROWS) expect(new Set(r.list.map((x) => x.id)).size).toBe(r.list.length);
     expect(features().gyroEnergy).toBe("tokens");
     expect(features().exposure).toBe("strike");

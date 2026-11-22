@@ -79,10 +79,11 @@ export async function round29Check(browser, url, out) {
         // Strike: still pouring 1.4 s after the press (it was a 0.95 s burst before round 29).
         await choose(pg, ["overload:original", "endButton:sun", "exposure:strike"]);
         await pg.locator(".end-overload").click();
-        await pg.waitForTimeout(1400);
+        // CHANGED round 30: the Sun's own end (1.25 s) plays first; the stream (now 1.8 s) after it.
+        await pg.waitForTimeout(2200);
         const streaming = await pg.locator("canvas.exposure-fx").count();
         await pg.screenshot({ path: `${out}/ui-exposure-strike-stream.png` });
-        if (streaming !== 1) bad.push(`strike not streaming at 1.4 s (${streaming})`);
+        if (streaming !== 1) bad.push(`strike not streaming at 2.2 s (${streaming})`);
       }
       await pg.close();
       if (bad.length) fails.push(`end button at ${w} px: ${bad.join(", ")}`);
@@ -98,7 +99,7 @@ export async function round29Check(browser, url, out) {
       await choose(pg, [`gyroEnergy:${look}`]);
       await pg.locator(".field").screenshot({ path: `${out}/ui-gyro-${look}.png` });
     }
-    for (const look of ["comet", "fountain", "gyroscope"]) {
+    for (const look of ["gyroscope"]) { // CHANGED round 30: Comet and Fountain removed
       await choose(pg, [`readyUnit:${look}`]);
       await pg.waitForTimeout(600);
       await pg.locator(".field").screenshot({ path: `${out}/ui-ready-${look}.png` });

@@ -27,15 +27,16 @@ describe("round 29", () => {
     expect(ids("gyroEnergy")).toEqual(["tokens", "corner", "ring", "orbit", "pips", "honeycomb", "chain", "string"]);
     expect(ids("readyUnit")).not.toContain("corona");
     expect(ids("readyUnit")).not.toContain("chase");
-    expect(ids("readyUnit")).toEqual(expect.arrayContaining(["comet", "fountain", "gyroscope"]));
-    expect(ids("overload")).toEqual(["original", "inflow", "loops", "tempest", "torrent", "breath", "embers", "rift"]);
+    // CHANGED round 30: Comet and Fountain removed again; Inflow first; Pulsar and Plasma swarm added.
+    expect(ids("readyUnit")).toEqual(expect.arrayContaining(["gyroscope"]));
+    expect(ids("overload")).toEqual(["inflow", "original", "loops", "tempest", "torrent", "breath", "embers", "rift", "pulsar", "swarm"]);
     expect(ids("endButton")).toEqual(["sun", "reactor", "singularity", "orb", "hazard", "forge", "gate"]);
     expect(features().endButton).toBe("sun");
   });
 
-  it("plays Strike and Drain as a long, steady stream (about 2.5 s), the others as before", () => {
-    expect(exposureMs("strike", 3)).toBeGreaterThanOrEqual(2200);
-    expect(exposureMs("drain", 3)).toBeGreaterThanOrEqual(2200);
+  it("plays Strike and Drain as a long, steady stream (CHANGED round 30: about 1.8 s), the others as before", () => {
+    expect(exposureMs("strike", 3)).toBe(1800);
+    expect(exposureMs("drain", 3)).toBe(1800);
     expect(exposureMs("nova", 3)).toBe(1250);
   });
 

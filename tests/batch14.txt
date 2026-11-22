@@ -19,6 +19,11 @@
 # notes on T14_R27_04, T14_R28_02, T14_R28_04, T14_R28_06, T14_R28_10, T14_R28_11 and batch 13's
 # T13_STAT_02, T13_R25_07. Checked by tests/unit/round29.test.ts, scripts/ui-round29.mjs, ui-pages.mjs,
 # ui-looks.mjs, ui-round25.mjs.
+# Round 30, 2026-11-22: an end animation for every End the Overload look (T14_R30_01), four new
+# ready looks for units (T14_R30_02) and two for sectors (T14_R30_03), Inflow the default Overload
+# edge and a new second part for every other edge (T14_R30_04), two new edges (T14_R30_05). CHANGED
+# notes on T14_R27_04, T14_R28_02, T14_R28_03, T14_R28_04, T14_R28_10, T14_R29_03. Checked by
+# tests/unit/round30.test.ts, scripts/ui-round30.mjs, ui-round29.mjs, ui-pages.mjs, ui-looks.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -85,6 +90,8 @@ CHANGED (designer 2026-11-22, round 28): nine cards (two new: Energy Gyro reward
       Exposure) and 63 choices in all (T14_R28_01-06, T14_R28_10).
 CHANGED (designer 2026-11-22, round 29): ten cards (new: Overload End button) and 74 choices in all
       (T14_R29_03; Energy Gyro reward and Overload edge now 8 choices each).
+CHANGED (designer 2026-11-22, round 30): 76 choices in all (Overload edge 10). Choosing an
+      Overload End button look on this page also plays its end animation over its tile (T14_R30_01).
 
 id: T14_REST_01
 title: The game rests when nobody touches it
@@ -125,6 +132,9 @@ CHANGED (designer 2026-11-22, round 29): Corona and Chase removed, replaced by
       Gyroscope: two tilted rings of fine particles turn round the tile, the part behind dimmer.
       Comet changed (too like Fireflies' dot going round): now and then a comet streaks across the
       tile on a slanting line, its tail breaking up into sparks that drift and fade.
+CHANGED (designer 2026-11-22, round 30): Comet and Fountain removed (and from round 21-22's set
+      Glitter edge and Fireflies, for units only); four new looks instead (T14_R30_02). Games with a
+      removed look chosen show Original.
 
 id: T14_R28_03
 title: Features: six more ready-to-tap looks for Dark and Cleared sectors
@@ -137,6 +147,8 @@ then: six new choices:
       Vortex: specks swirl slowly in towards the middle.
       Beacon: a soft light in each corner in turn.
       Aurora: a soft curtain of light waves gently across the plate.
+CHANGED (designer 2026-11-22, round 30): Light rain removed (and round 22's Embers, for sectors
+      only); Warp and Nebula instead (T14_R30_03). Games with a removed look show Glow breath.
 
 id: T14_R28_04
 title: Features: three more Overload edges
@@ -158,6 +170,8 @@ CHANGED (designer 2026-11-22, round 29: "change all particle effects to new ones
       Ember rise: embers well up from the bottom edge, drift up the sides, smoulder along the top.
       Void rift: violet tears open along the edges and pull motes out of the Field into them.
       Games with Storm, Pulse or Veil chosen show Original.
+CHANGED (designer 2026-11-22, round 30): the plasma wave is now Inflow's second part only; each of
+      these looks has its own second part instead (T14_R30_04).
 
 id: T14_R28_05
 title: Features: a fourth next-tile look
@@ -249,6 +263,8 @@ CHANGED (designer 2026-11-22, round 29: Strike and Drain "more prolonged, contin
       unit charging up brighter, then it bursts (about 2.4 s in all).
       Drain: energy is drawn out of each unit in steady curling streams, the units dimming and the
       button swelling, then it flares (about 2.6 s). Chain, Nova and Plate surge as before.
+CHANGED (designer 2026-11-22, round 30): Strike and Drain stream for about 1.8 s in all (the same
+      look, shorter). They start after the button's own end animation (T14_R30_01).
 
 id: T14_R28_11
 title: Dust when a Mecha lands after moving
@@ -304,6 +320,8 @@ then: seven choices:
 then: the button stays where it was (never over a sector), the same size, "End the Overload" on
       it; pressing it works as before (its burst in the look's colours). Nothing drawn past the
       Field's edge. It stands still while the game rests (20 s untouched) and with reduced motion.
+CHANGED (designer 2026-11-22, round 30): pressing it plays the look's own end animation instead of
+      the shared burst (T14_R30_01).
 
 id: T14_R29_04
 title: The route picked is selected in the road of missions
@@ -361,3 +379,97 @@ then: it opens with the same number per Campaign.
 when: tap a Vessel
 then: it opens with how many games it won per Campaign ("N won of M").
 
+=== SECTION: ROUND 30 (designer 2026-11-22) ===
+################################################################################
+
+id: T14_R30_01
+title: Every End the Overload look ends in its own way
+source: designer 2026-11-22 ("every Overload end button should have its own Overload end animation.
+        Create wild variants for every button style (time can be various too)")
+given: an Overload with End the Overload shown, the look chosen in Features > Overload End button
+when: press it
+then: the button goes and its look's own end plays over the page round where it was:
+      Sun, Supernova (about 1.25 s): the sun shrinks and brightens, its corona sucked in; then a
+      white flash, a shock ring, a storm of embers cooling from gold to red, tongues of plasma.
+      Reactor, Core vent (about 1 s): the rings spin up and close in, the rim flickers; a hexagonal
+      shock front and six jets of coolant from the corners; ice-blue mist hangs and fades.
+      Singularity, Collapse (about 1.5 s): the disc whirls faster and falls in, motes spiral in from
+      afar; it snaps shut in a flash and fires two twisting jets up and down; ripples run outwards.
+      Plasma orb, Shatter (about 0.95 s): tendrils whip, cracks run over the glass; it bursts into
+      tumbling violet shards with lightning between them and a cloud of plasma.
+      Hazard, Lockdown release (about 0.85 s): the beacon spins up, blinking red; the diamond folds
+      in; four chevrons shoot out with trails; a ring of hazard stripes and a diamond shock front.
+      Forge, Hammer strike (about 1.3 s): the block squashes, a white-hot flash; anvil sparks spray
+      up and fall back with weight; a molten splash ring runs out flat; embers drift up.
+      Star gate, Jump (about 1.1 s): the marks race round the rim, the iris closes to a point, a beam
+      fires straight up off the screen; ripples and star glints are left.
+then: the Overload ends as it finishes; then Exposure plays (T14_R28_10), then the damage.
+given: the speed setting Slow / Fast
+then: twice as long / half as long. Instant or reduced motion: nothing plays, the Overload ends at
+      once.
+given: Command Deck > Features > Overload End button
+when: tap a choice
+then: its end animation plays over its tile (a preview).
+
+id: T14_R30_02
+title: Ready to tap units: four new looks
+source: designer 2026-11-22 ("Remove and replace with something else: Comet, Fountain, Glitter
+        edge, Fireflies")
+given: Features > Ready to tap: units; a unit you can use now
+then: Comet, Fountain, Glitter edge and Fireflies are no longer offered; four new choices:
+      Helix: two strands of particles twist round the edge, crossing over and under each other.
+      Radar: a beam sweeps round inside the tile; the edge lights where it passes and fades behind
+      it; a blip lights as the beam passes it.
+      Field lines: particles flow out of the top corner and curve down both sides into the bottom
+      one, as round a magnet.
+      Constellation: the six corners are stars joined by faint lines; two sparks run from star to
+      star, each star flaring as one arrives.
+then: still 15 choices; each light (a few dozen points of light).
+note: Glitter edge stays a choice for sectors (only the units' one was named).
+
+id: T14_R30_03
+title: Ready to tap Dark sectors: two new looks
+source: designer 2026-11-22 ("Ready to tap Dark: remove and replace with something else: Embers,
+        Light rain")
+given: Features > Ready to tap: sectors; a Dark or Cleared sector you can use now
+then: Embers and Light rain are no longer offered; two new choices:
+      Warp: stars stream out from the middle of the plate towards its edge, faster as they go.
+      Nebula: soft clouds of glowing dust (amber, one violet) churn slowly inside the plate, a few
+      stars twinkling in them.
+note: Embers stays a choice for units (only the sectors' one was named).
+
+id: T14_R30_04
+title: Overload edge: Inflow the default; every other look gets its own second part
+source: designer 2026-11-22 ("make Inflow animation the default choice, and leave it as it is. For
+        every other animation, change the energy beam animation to your choosing ... Try to make
+        two components synergize with each other (for some options, add a third)")
+given: Features > Overload edge; an Overload under way
+then: Inflow is first and chosen for a new player, unchanged: the plasma wave and its streams.
+      (A player who had chosen another look keeps it.)
+then: every other look no longer has the plasma wave; its second part instead:
+      Original: the racing beams set the edge alight behind them (a burning wake shedding embers);
+      where a red and a violet beam cross, a flash and a spray of sparks (third part).
+      Solar loops: a boiling photosphere along the edge; plumes at the arches' feet; each snap sends
+      a shock ring inwards (third part).
+      Ion tempest: the clouds get soft bodies that light up where lightning strikes them; ion rain
+      falls from them into the Field (third part).
+      Plasma torrent: a glowing riverbed flows under the river; spray is flung off at each corner.
+      Shock breath: before each blow the edge breathes in, motes drawn out of the Field into it;
+      the blow has a bright shock front ahead of the wall (third part).
+      Ember rise: a molten bed along the bottom, heat plumes up the sides; now and then the bed
+      flares and spits sparks that arc up and fall back (third part).
+      Void rift: an arc of bent light shimmers round each tear; streaks of the Field are pulled in,
+      stretching as they go.
+then: it fades in with the Overload and out at its end; it stops while the game rests (20 s
+      untouched); none with reduced motion.
+
+id: T14_R30_05
+title: Overload edge: two new looks
+source: designer 2026-11-22 ("also, add two new animations to the options")
+given: Features > Overload edge; an Overload under way
+then: two new choices at the end of the list (10 in all):
+      Pulsar: bright nodes stand along the edge, joined by crackling threads; two charges run round
+      the edge, each node glowing and drawing in sparks as it charges, then firing a ring of
+      particles inwards with a flash.
+      Plasma swarm: five flocks of energy motes run round the edge at their own pace, each gathering
+      tight and scattering wide in turn, with glowing trails behind them.

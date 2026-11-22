@@ -9,15 +9,16 @@ import { round24Check as runRound24Check } from "./ui-round24.mjs";
 import { round25Check as runRound25Check } from "./ui-round25.mjs";
 import { round26Check as runRound26Check } from "./ui-round26.mjs";
 import { round29Check as runRound29Check } from "./ui-round29.mjs";
+import { round30Check as runRound30Check } from "./ui-round30.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const url = process.argv[2] ?? "http://localhost:4173";
 const out = process.argv[3] ?? ".";
 const browser = await chromium.launch();
 // Groups of checks (designer 2026-11-22: each round runs only the groups it touched, the full set now and then):
-// UI_ONLY=game,intro,outro,pages,celebrate,looks,round23,round24,round25,round26,round29 (any of them, comma-separated).
+// UI_ONLY=game,intro,outro,pages,celebrate,looks,round23,round24,round25,round26,round29,round30 (any of them, comma-separated).
 // Not set: every group runs. A group not run counts as passed.
-const GROUPS = ["game", "intro", "outro", "pages", "celebrate", "looks", "round23", "round24", "round25", "round26", "round29"];
+const GROUPS = ["game", "intro", "outro", "pages", "celebrate", "looks", "round23", "round24", "round25", "round26", "round29", "round30"];
 const ONLY = (process.env.UI_ONLY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 const unknown = ONLY.filter((g) => !GROUPS.includes(g));
 if (unknown.length) { console.error(`UI_ONLY: unknown group(s) ${unknown.join(", ")}; known: ${GROUPS.join(", ")}`); process.exit(2); }
@@ -1528,12 +1529,13 @@ const round24Check = runs("round24") ? await runRound24Check(browser, url, out) 
 const round25Check = runs("round25") ? await runRound25Check(browser, url, out) : "skipped (not asked for)";
 const round26Check = runs("round26") ? await runRound26Check(browser, url, out) : "skipped (not asked for)";
 const round29Check = runs("round29") ? await runRound29Check(browser, url, out) : "skipped (not asked for)";
-console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, round29Check, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck }));
+const round30Check = runs("round30") ? await runRound30Check(browser, url, out) : "skipped (not asked for)";
+console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, round29Check, round30Check, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
 // A group not asked for passes; its checks keep their "skipped" value in the report above.
 const game = runs("game");
 const gameChecks = [rowCheck, energyCheck, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck];
 const gameOk = !game || (gameChecks.every((x) => x === "ok") && noMenu && rotateShown && !!facingKept && closedByOutside && bubbles && raised && breathing && (tapThrough === "ok" || tapThrough === "only one Dark sector") && !!popupTitle?.startsWith("Dark sector") && scrollW <= 390);
-const groupOk = [["intro", introCheck], ["intro", styleCheck], ["outro", outroCheck], ["pages", pagesCheck], ["celebrate", celebrateCheck], ["looks", looksCheck], ["round23", round23Check], ["round24", round24Check], ["round25", round25Check], ["round26", round26Check], ["round29", round29Check]].every(([g, x]) => !runs(g) || x === "ok");
+const groupOk = [["intro", introCheck], ["intro", styleCheck], ["outro", outroCheck], ["pages", pagesCheck], ["celebrate", celebrateCheck], ["looks", looksCheck], ["round23", round23Check], ["round24", round24Check], ["round25", round25Check], ["round26", round26Check], ["round29", round29Check], ["round30", round30Check]].every(([g, x]) => !runs(g) || x === "ok");
 if (errors.length || !gameOk || !groupOk) process.exit(1);

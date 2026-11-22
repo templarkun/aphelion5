@@ -580,13 +580,10 @@ html.still .damage-bubble, html.still .damage-bubble rect, html.still .bay-hit-b
 /* Each tongue: a soft flame shape standing on the rim, pointing outwards, growing and sinking. */
 .end-overload:hover { filter: brightness(1.15); }
 .end-overload:active { transform: scale(0.95); }
-.end-overload.bursting { animation: eo-flash 0.38s ease-out forwards; }
+.end-overload.bursting { animation: eo-vanish 0.16s ease-out forwards; }
+@keyframes eo-vanish { 0% { filter: brightness(1.6); } 100% { filter: brightness(2.4); transform: scale(0.9); opacity: 0; } }
 @keyframes eo-flash { 0% { filter: brightness(1); } 30% { filter: brightness(2.2); transform: scale(1.08); } 100% { filter: brightness(1.5); transform: scale(0.6); opacity: 0; } }
-.end-overload .eo-burst { position: absolute; left: 50%; top: 50%; pointer-events: none; z-index: 3; }
-.end-overload .eo-burst i { position: absolute; width: 7px; height: 7px; margin: -3px; border-radius: 50%; background: #fff3c4; box-shadow: 0 0 8px 3px #ff8a1a; animation: spark 0.38s ease-out forwards; }
 @keyframes spark { to { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; } }
-.end-overload .eo-burst .ring { position: absolute; width: 20px; height: 20px; margin: -10px; border-radius: 50%; border: 3px solid #ffd27a; animation: eo-ring 0.38s ease-out forwards; }
-@keyframes eo-ring { to { transform: scale(9); opacity: 0; } }
 html.still .end-overload, html.still .end-overload .eo-core { animation: none; }
 .end-overload .eo-plasma { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 0; }
 /* Size by screen (designer 2026-11-10): tablets as before, a little bigger on PCs, much smaller on phones. */
@@ -1065,10 +1062,6 @@ html.still .module.peek { animation: none; }
    the button itself see-through, its whole body drawn on its canvas. */
 .end-overload.eo-look { border-color: transparent; background: none; backdrop-filter: none; box-shadow: none; animation: none; }
 .end-overload.eo-look .eo-core { display: none; }
-.end-overload.eo-look.bursting { animation: eo-flash 0.38s ease-out forwards; }
+.end-overload.eo-look.bursting { animation: eo-vanish 0.16s ease-out forwards; }
 .end-overload.eo-look .eo-label { text-shadow: 0 1px 3px rgb(0 0 0 / 0.9), 0 0 8px rgb(0 0 0 / 0.6); }
-.end-overload.eo-reactor .eo-burst i, .end-overload.eo-gate .eo-burst i { background: #e6fbff; box-shadow: 0 0 8px 3px #39c8ff; }
-.end-overload.eo-orb .eo-burst i { background: #f3e8ff; box-shadow: 0 0 8px 3px #a46bff; }
-.end-overload.eo-reactor .eo-burst .ring, .end-overload.eo-gate .eo-burst .ring { border-color: #8fe6ff; }
-.end-overload.eo-orb .eo-burst .ring { border-color: #cfa8ff; }
 .end-overload.eo-hazard .eo-label { color: #fff7e0; }

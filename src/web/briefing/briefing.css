@@ -445,5 +445,26 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
 @keyframes fp-chev { from { transform: translateY(6px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(-14px); opacity: 0; } }
 .fp-sweep { fill: #fbbf24; fill-opacity: 0.28; }
 .fp-svg circle.fp-stream { animation-duration: 1.8s; animation-timing-function: linear; }
+/* Round 30: new ready looks and the Overload edges' second parts. */
+.fp-helix { fill: none; stroke: #fbbf24; stroke-width: 2; stroke-dasharray: 3 5; animation: fp-dash 1.2s linear infinite; }
+.fp-helix.fp-rev { stroke: #fde68a; stroke-opacity: 0.6; animation-direction: reverse; }
+.fp-radarline { stroke: #fff7d6; stroke-width: 1.4; }
+.fp-field-line { fill: none; stroke: #fbbf24; stroke-width: 1.4; stroke-dasharray: 2 5; stroke-opacity: 0.8; animation: fp-dash 1.4s linear infinite; }
+.fp-constline { fill: none; stroke: #fbbf24; stroke-width: 0.8; stroke-opacity: 0.35; }
+.fp-warp { stroke: #fff7d6; stroke-width: 1.2; animation: fp-warp 1.2s ease-in infinite; }
+@keyframes fp-warp { from { transform: scale(0.3); opacity: 0; } 30% { opacity: 1; } to { transform: scale(2.6); opacity: 0; } }
+.fp-svg circle.fp-neb { fill: #fbbf24; fill-opacity: 0.18; filter: blur(3px); animation: fp-sway 3.4s ease-in-out infinite alternate; }
+.fp-svg circle.fp-neb-v { fill: #a78bfa; }
+.fp-partner { fill: none; stroke-width: 5; stroke-opacity: 0.4; stroke-dasharray: 6 8; animation: fp-dash 1.6s linear infinite; stroke: #f97316; }
+.fp-partner-original { stroke: #fb7185; stroke-dasharray: 30 12; }
+.fp-partner-loops { stroke: #fbbf24; stroke-dasharray: 3 3; }
+.fp-partner-tempest { stroke: #8b5cf6; stroke-dasharray: 10 6; }
+.fp-partner-torrent { stroke: #ea580c; stroke-width: 8; stroke-opacity: 0.3; }
+.fp-partner-breath { stroke: #fed7aa; animation: fp-breath 3.6s ease-in-out infinite; stroke-dasharray: none; }
+.fp-partner-embers { stroke: #ef4444; stroke-dasharray: 2 6; animation-direction: reverse; }
+.fp-partner-rift { stroke: #7c3aed; stroke-dasharray: 14 10; }
+.fp-partner-pulsar { stroke: #fdba74; stroke-dasharray: 1 9; stroke-width: 3; }
+.fp-partner-swarm { stroke: #fb923c; stroke-dasharray: 18 22; stroke-width: 3; animation-duration: 3s; }
+.fp-svg circle.fp-pulsering { fill: none; stroke: #fdba74; stroke-width: 1.2; animation: fp-outward 1.7s ease-out infinite; }
 html.still .fp-svg *, .fp-choice:disabled .fp-svg * { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .fp-svg * { animation: none !important; } }

@@ -1,8 +1,8 @@
 /**
  * End the Overload (9.2), designer 2026-11-09 / 2026-11-10: a round, see-through button like a
  * small sun, with the coronal waves effect round it (coronalFx.ts; designer 2026-11-10, swapped
- * with the Field edge's plasma wave). Pressed, it bursts into sparks and a shock ring, then the
- * Overload ends.
+ * with the Field edge's plasma wave). Pressed, it plays its look's own end (endBurstFx.ts, round 30),
+ * then the Overload ends.
  */
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -10,10 +10,9 @@ import { isStill, noFlying } from "./motion.js";
 import { CORONAL_REACH, drawCoronalWaves } from "./coronalFx.js";
 import { endOverloadAt } from "./exposureFx.js";
 import { drawEndButton } from "./endButtonFx.js";
+import { playEndBurst } from "./endBurstFx.js";
 import { features, onFeatures, type EndButton } from "./features.js";
 import { isResting, onResting } from "./idle.js";
-
-const SPARKS = 26;
 
 /**
  * The coronal waves round the button (coronalFx.ts), on a canvas big enough to hold all of them; or,
@@ -182,8 +181,12 @@ export function EndOverload(p: { onEnd: () => void }) {
       onClick={() => {
         remember();
         if (still) return p.onEnd();
+        // Round 30: each look ends in its own way, drawn on the page (endBurstFx.ts); the Overload ends as
+        // it finishes (its last moment overlaps the start of Exposure).
+        const ms = playEndBurst(look, endOverloadAt.x, endOverloadAt.y, endOverloadAt.r);
+        if (!ms) return p.onEnd();
         setBurst(true);
-        window.setTimeout(p.onEnd, 380);
+        window.setTimeout(p.onEnd, Math.max(200, ms - 180));
       }}
     >
       <canvas ref={plasma} className="eo-plasma" aria-hidden="true" style={{ width: `${CORONAL_REACH * 100}%`, height: `${CORONAL_REACH * 100}%` }} />
@@ -193,16 +196,6 @@ export function EndOverload(p: { onEnd: () => void }) {
         <br />
         Overload
       </span>
-      {burst && (
-        <span className="eo-burst" aria-hidden="true">
-          <b className="ring" />
-          {Array.from({ length: SPARKS }, (_, i) => {
-            const a = (i / SPARKS) * Math.PI * 2;
-            const d = 60 + ((i * 29) % 50);
-            return <i key={i} style={{ "--tx": `${Math.cos(a) * d}px`, "--ty": `${Math.sin(a) * d * 0.7}px` } as React.CSSProperties} />;
-          })}
-        </span>
-      )}
     </button>
   );
 }

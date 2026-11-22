@@ -22,7 +22,8 @@
  *   badge tucked just behind the unit's own badge, like a card under a card).
  * - gyroEnergy (designer 2026-11-22, round 28): how an Energy Gyro (G_01-G_09) shows the energy you gain by
  *   destroying it (its "destroyed" line in the unit list). Drawn once with the board (nothing moves).
- * - endButton (designer 2026-11-22, round 29): the End the Overload button itself (endButtonFx.ts).
+ * - endButton (designer 2026-11-22, round 29): the End the Overload button itself (endButtonFx.ts); round 30:
+ *   each look has its own end animation when pressed (endBurstFx.ts).
  * - exposure (designer 2026-11-22, round 28): the look of Exposure (9.3 step 2: every unit alone on its sector
  *   plate takes 1 damage) after End the Overload is pressed: energy from the button to those units, or drawn
  *   out of them into it, and three more (exposureFx.ts).
@@ -30,11 +31,11 @@
 
 export type Corner = "original" | "soft" | "round" | "pebble" | "bevel";
 export type Depth = "original" | "stack" | "stackFine" | "stackHint" | "glass";
-export type ReadyUnit = "original" | "embers" | "heartbeat" | "motes" | "sparkle" | "gather" | "aura" | "current" | "arcs" | "comet" | "scan" | "brackets" | "ripple" | "fountain" | "gyroscope";
-export type ReadySector = "fill" | "embers" | "inner" | "sparkle" | "converge" | "drift" | "tide" | "core" | "haze" | "pond" | "lattice" | "rain" | "vortex" | "beacon" | "aurora";
+export type ReadyUnit = "original" | "embers" | "heartbeat" | "gather" | "aura" | "current" | "arcs" | "scan" | "brackets" | "ripple" | "gyroscope" | "helix" | "radar" | "fieldlines" | "constellation";
+export type ReadySector = "fill" | "inner" | "sparkle" | "converge" | "drift" | "tide" | "core" | "haze" | "pond" | "lattice" | "vortex" | "beacon" | "aurora" | "warp" | "nebula";
 export type Ready = ReadyUnit | ReadySector;
 export type Counts = "shown" | "hidden";
-export type OverloadLook = "original" | "inflow" | "loops" | "tempest" | "torrent" | "breath" | "embers" | "rift";
+export type OverloadLook = "original" | "inflow" | "loops" | "tempest" | "torrent" | "breath" | "embers" | "rift" | "pulsar" | "swarm";
 export type NextLook = "corner" | "ghost" | "chip" | "behind";
 export type GyroEnergy = "tokens" | "corner" | "ring" | "orbit" | "pips" | "honeycomb" | "chain" | "string";
 export type Exposure = "strike" | "drain" | "chain" | "nova" | "surge";
@@ -70,27 +71,29 @@ export const DEPTHS: { id: Depth; label: string; note: string }[] = [
   { id: "glass", label: "Glass stack", note: "a thin line of cool light per tile, like stacked glass plates" },
 ];
 
+// Round 30 (designer 2026-11-22): Comet, Fountain, Glitter edge and Fireflies removed; Helix, Radar, Field
+// lines and Constellation added.
 export const READY_UNITS: { id: ReadyUnit; label: string; note: string }[] = [
   { id: "original", label: "Original", note: "hairline edge breathing" },
   { id: "embers", label: "Embers", note: "tiny sparks rise from the edge and fade" },
   { id: "heartbeat", label: "Heartbeat", note: "the edge beats twice, then rests" },
-  { id: "motes", label: "Fireflies", note: "a few motes of light drift slowly round the edge" },
-  { id: "sparkle", label: "Glitter edge", note: "the edge made of points of light that twinkle" },
   { id: "gather", label: "Gather", note: "specks of light are drawn in to the edge, which flares" },
   { id: "aura", label: "Aura", note: "a slow swirl of fine particles just outside the edge" },
   { id: "current", label: "Current", note: "fine particles flow round the edge like a current" },
   { id: "arcs", label: "Arcs", note: "small sparks of electricity jump along the edge now and then" },
-  { id: "comet", label: "Comet", note: "now and then a comet streaks across the tile, its tail breaking up into sparks" },
   { id: "scan", label: "Scan", note: "a thin line of light sweeps slowly down the tile, shedding a few motes" },
   { id: "brackets", label: "Lock-on", note: "six corner marks breathe in and out, like a target held" },
   { id: "ripple", label: "Ripple", note: "a ring of fine particles leaves the edge now and then and fades outwards" },
-  { id: "fountain", label: "Fountain", note: "sparks spring up from the top corner and fall down round the sides" },
   { id: "gyroscope", label: "Gyroscope", note: "two rings of fine particles turn round the tile, tilted like a gyroscope" },
+  { id: "helix", label: "Helix", note: "two strands of particles twist round the edge, crossing over and under each other" },
+  { id: "radar", label: "Radar", note: "a beam sweeps round inside the tile; the edge lights where it passes and slowly fades" },
+  { id: "fieldlines", label: "Field lines", note: "particles flow out of the top corner and curve down both sides into the bottom one, like a magnet's field" },
+  { id: "constellation", label: "Constellation", note: "the six corners are stars joined by faint lines; sparks run from star to star" },
 ];
 
+// Round 30 (designer 2026-11-22): Embers and Light rain removed; Warp and Nebula added.
 export const READY_SECTORS: { id: ReadySector; label: string; note: string }[] = [
   { id: "fill", label: "Glow breath", note: "the whole plate glows in and out" },
-  { id: "embers", label: "Embers", note: "tiny sparks rise from the edge and fade" },
   { id: "inner", label: "Inner glow", note: "a soft light breathes inside the edge" },
   { id: "sparkle", label: "Glitter edge", note: "the edge made of points of light that twinkle" },
   { id: "converge", label: "Draw in", note: "faint rings close in from the edge to the middle" },
@@ -100,10 +103,11 @@ export const READY_SECTORS: { id: ReadySector; label: string; note: string }[] =
   { id: "haze", label: "Haze", note: "fine particles seep out a little way from the edge" },
   { id: "pond", label: "Pond", note: "slow rings of light spread from the middle, as on still water" },
   { id: "lattice", label: "Lattice", note: "a faint grid of points on the plate, a wave of light passing over it" },
-  { id: "rain", label: "Light rain", note: "fine motes fall slowly through the plate and fade" },
   { id: "vortex", label: "Vortex", note: "specks swirl slowly in towards the middle" },
   { id: "beacon", label: "Beacon", note: "a soft light in each corner in turn, as a slow beacon" },
   { id: "aurora", label: "Aurora", note: "a soft curtain of light waves gently across the plate" },
+  { id: "warp", label: "Warp", note: "stars stream out from the middle of the plate towards the edge, as if flying through it" },
+  { id: "nebula", label: "Nebula", note: "soft clouds of glowing dust churn slowly inside the plate, a few stars in them" },
 ];
 
 export const COUNTS: { id: Counts; label: string; note: string }[] = [
@@ -116,16 +120,19 @@ export const NAMES: { id: Counts; label: string; note: string }[] = [
   { id: "hidden", label: "Hidden", note: "no unit names on the tiles" },
 ];
 
+// Round 30 (designer 2026-11-22): Inflow first and the default, as it was. Every other look has its own second
+// part instead of the plasma wave (overloadPartner.ts), made to work with it, some a third; two new looks.
 export const OVERLOADS: { id: OverloadLook; label: string; note: string }[] = [
-  { id: "original", label: "Original", note: "energy drifting in, and plasma beams racing round the edge" },
   { id: "inflow", label: "Inflow", note: "energy drifting in; streams of energy particles flow in from the edge (no racing beams)" },
-  // Round 29 (designer 2026-11-22): Storm, Pulse and Veil replaced by six new, bigger looks (revealFx.ts).
-  { id: "loops", label: "Solar loops", note: "arches of plasma stand on the edge, particles streaming along them, then snap and fling sparks in" },
-  { id: "tempest", label: "Ion tempest", note: "glowing ion clouds drift along the edge; lightning leaps between them and forks inwards" },
-  { id: "torrent", label: "Plasma torrent", note: "a thick river of particles churns round the whole edge, eddies curling off into the Field" },
-  { id: "breath", label: "Shock breath", note: "the edge gathers itself, then blows a wall of particles inwards across the Field, which falls back" },
-  { id: "embers", label: "Ember rise", note: "embers well up from the bottom edge and drift up the sides on hot air into a smouldering top" },
-  { id: "rift", label: "Void rift", note: "violet tears open along the edges and pull motes out of the Field into them" },
+  { id: "original", label: "Original", note: "plasma beams race round the edge, setting it alight behind them; where two beams cross, a flash" },
+  { id: "loops", label: "Solar loops", note: "arches of plasma stand on a boiling edge, particles streaming along them; each snaps with a shock ring" },
+  { id: "tempest", label: "Ion tempest", note: "glowing ion clouds drift along the edge; lightning leaps between them, lighting them up, and ion rain falls in" },
+  { id: "torrent", label: "Plasma torrent", note: "a thick river of particles churns round the whole edge over a glowing riverbed; spray at the corners" },
+  { id: "breath", label: "Shock breath", note: "the edge breathes in, drawing motes out of the Field, then blows a shock front of particles inwards" },
+  { id: "embers", label: "Ember rise", note: "embers well up from a molten bottom edge on rising heat; now and then the bed flares and spits" },
+  { id: "rift", label: "Void rift", note: "violet tears open along the edges; light bends round them and streaks of the Field are pulled in" },
+  { id: "pulsar", label: "Pulsar", note: "bright nodes along the edge charge, linked by crackling threads, and fire rings of particles inwards" },
+  { id: "swarm", label: "Plasma swarm", note: "a swarm of energy motes flocks round the edge, gathering and scattering, leaving glowing trails" },
 ];
 
 export const NEXTS: { id: NextLook; label: string; note: string }[] = [
@@ -173,7 +180,7 @@ const KEY = "aphelion5.features";
 const OLD_KEY = "aphelion5.trialLooks";
 // Designer 2026-11-21 (round 25): Pebble corners and the Corner next tile are the defaults; the
 // tile-count words are hidden for good (their row left the Menu).
-const DEFAULT: Features = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "original", next: "corner", gyroEnergy: "tokens", exposure: "strike", endButton: "sun" };
+const DEFAULT: Features = { corners: "pebble", depth: "original", readyUnit: "original", readySector: "fill", counts: "hidden", names: "shown", overload: "inflow", next: "corner", gyroEnergy: "tokens", exposure: "strike", endButton: "sun" };
 const subs = new Set<() => void>();
 
 function load(): Features {

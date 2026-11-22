@@ -107,7 +107,7 @@ export async function pagesCheck(browser, url, out) {
       await pg.locator('[data-feature-pick="corners:pebble"]').click();
       await pg.locator("[data-action=page-back]").click();
       const back = (await pg.locator("[data-page=features]").count()) === 0;
-      if (!(cards === 10 && picks === 74 && svgs === 74 && pressed === "true" && kept === "round" && back && sw <= w + 2))
+      if (!(cards === 10 && picks === 76 && svgs === 76 && pressed === "true" && kept === "round" && back && sw <= w + 2))
         fails.push(`features at ${w} px: cards ${cards}, picks ${picks}, previews ${svgs}, pressed ${pressed}, kept ${kept}, back ${back}, width ${sw}`);
     }
 

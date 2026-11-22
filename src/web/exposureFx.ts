@@ -3,7 +3,7 @@
  * made plain to see (designer 2026-11-22, round 28; screen only, no rule). Played once, right after End
  * the Overload is pressed, before the hits themselves; the look is a Feature (features.ts `exposure`):
  *
- * - strike: (round 29, designer: "more prolonged, continuous") a steady stream of energy pours from the End
+ * - strike: (round 29, designer: "more prolonged, continuous"; round 30: 1.8 s) a steady stream of energy pours from the End
  *   the Overload button into each unit for about 2 s; each unit charges up, brighter and brighter, then bursts.
  * - drain: (round 29, the same) energy is drawn out of each unit in steady curling streams for about 2 s, the
  *   units dimming as they empty and the button swelling as it fills, then it flares.
@@ -45,7 +45,7 @@ const easeOut = (t: number) => 1 - (1 - t) ** 2;
 /** How long each look plays, in ms at Normal speed, for n units. */
 export function exposureMs(look: Exposure, n: number): number {
   if (look === "chain") return Math.min(1900, 420 + 260 * n);
-  return { strike: 2400, drain: 2600, nova: 1250, surge: 1350 }[look];
+  return { strike: 1800, drain: 1800, nova: 1250, surge: 1350 }[look];
 }
 
 /** Units in the order the chain reaches them: nearest to the button first, then nearest to the last. */

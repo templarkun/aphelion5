@@ -11,6 +11,9 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { Lock } from "lucide-react";
 import { FEATURE_ROWS, features, hexOutline, onFeatures, setFeatures, type Corner, type Features } from "../features.js";
 import { PageShell } from "./PageShell.js";
+import { playEndBurst } from "../endBurstFx.js";
+import { isStill } from "../motion.js";
+import type { EndButton } from "../features.js";
 import { playSelect } from "./soundHooks.js";
 
 const S = 100; // preview box
@@ -25,12 +28,13 @@ function hexPath(cx: number, cy: number, r: number, corners: Corner): string {
 }
 
 /** Which moving pattern sketches each ready-to-tap look. */
-type Kind = "breath" | "rise" | "orbit" | "twinkle" | "beat" | "inward" | "glow" | "core" | "arcs" | "tide" | "comet" | "scan" | "brackets" | "outward" | "rays" | "chase" | "fountain" | "gyroscope" | "pond" | "lattice" | "rain" | "vortex" | "beacon" | "aurora";
+type Kind = "breath" | "rise" | "orbit" | "twinkle" | "beat" | "inward" | "glow" | "core" | "arcs" | "tide" | "scan" | "brackets" | "outward" | "rays" | "chase" | "gyroscope" | "pond" | "lattice" | "vortex" | "beacon" | "aurora" | "helix" | "radar" | "fieldlines" | "constellation" | "warp" | "nebula";
 const READY_KIND: Record<string, Kind> = {
-  original: "breath", embers: "rise", heartbeat: "beat", motes: "orbit", sparkle: "twinkle", gather: "inward", aura: "orbit", current: "orbit", arcs: "arcs",
+  original: "breath", embers: "rise", heartbeat: "beat", sparkle: "twinkle", gather: "inward", aura: "orbit", current: "orbit", arcs: "arcs",
   fill: "glow", inner: "glow", converge: "inward", drift: "rise", tide: "tide", core: "core", haze: "rise",
-  comet: "comet", scan: "scan", brackets: "brackets", ripple: "outward", fountain: "fountain", gyroscope: "gyroscope",
-  pond: "pond", lattice: "lattice", rain: "rain", vortex: "vortex", beacon: "beacon", aurora: "aurora",
+  scan: "scan", brackets: "brackets", ripple: "outward", gyroscope: "gyroscope",
+  pond: "pond", lattice: "lattice", vortex: "vortex", beacon: "beacon", aurora: "aurora",
+  helix: "helix", radar: "radar", fieldlines: "fieldlines", constellation: "constellation", warp: "warp", nebula: "nebula",
 };
 /** The six corners of the preview hexagon (pointy top), radius r. */
 const corners6 = (r: number) => [...Array(6).keys()].map((i) => ({ x: C + r * Math.cos((Math.PI / 3) * i - Math.PI / 2), y: C + r * Math.sin((Math.PI / 3) * i - Math.PI / 2) }));
@@ -74,23 +78,6 @@ function Dots({ kind, hex }: { kind: string; hex: string }) {
       </g>
     );
   if (kind === "arcs") return <path d={hex} className="fp-arcs" />;
-  if (kind === "comet")
-    // Round 29: a comet streaking across the tile, its tail breaking up into sparks.
-    return (
-      <g className="fp-comet">
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <circle key={i} cx={C - 30 + 10 - i * 4.2} cy={C - 16 - i * 1.8 + (i % 2 ? 1.5 : -1.5) * (i / 3)} r={Math.max(0.6, 3 - i * 0.38)} style={{ opacity: 1 - i * 0.12 }} />
-        ))}
-      </g>
-    );
-  if (kind === "fountain")
-    return (
-      <g>
-        {[...Array(10).keys()].map((i) => (
-          <circle key={i} cx={C} cy={C - R} r={1.6} className="fp-fount" style={{ "--fx": `${(i % 2 ? 1 : -1) * (10 + (i * 7) % 22)}px`, animationDelay: `${((i * 0.17) % 1.4).toFixed(2)}s` } as CSSProperties} />
-        ))}
-      </g>
-    );
   if (kind === "gyroscope")
     return (
       <g>
@@ -152,20 +139,65 @@ function Dots({ kind, hex }: { kind: string; hex: string }) {
         )}
       </g>
     );
-  if (kind === "rain")
-    return (
-      <g>
-        {dots.map((i) => (
-          <line key={i} x1={C - R * 0.6 + (i * R * 1.2) / (n - 1)} x2={C - R * 0.6 + (i * R * 1.2) / (n - 1)} y1={C - R * 0.6} y2={C - R * 0.6 + 4} className="fp-rain" style={{ animationDelay: `${((i * 0.41) % 1.8).toFixed(2)}s` }} />
-        ))}
-      </g>
-    );
   if (kind === "vortex")
     return (
       <g className="fp-spin" style={{ transformOrigin: `${C}px ${C}px`, animationDuration: "5s" }}>
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <circle key={i} cx={C + Math.cos(i * 1.05) * (R * (0.25 + 0.1 * i))} cy={C + Math.sin(i * 1.05) * (R * (0.25 + 0.1 * i))} r={2.2 - i * 0.2} className="fp-twinkle" style={{ animationDelay: `${i * 0.2}s` }} />
         ))}
+      </g>
+    );
+  // Round 30: Helix, Radar, Field lines, Constellation, Warp, Nebula.
+  if (kind === "helix")
+    return (
+      <g>
+        <path d={hex} className="fp-helix" />
+        <path d={hex} className="fp-helix fp-rev" style={{ transformOrigin: `${C}px ${C}px`, transform: "scale(1.1)" }} />
+      </g>
+    );
+  if (kind === "radar")
+    return (
+      <g>
+        <g className="fp-spin" style={{ transformOrigin: `${C}px ${C}px`, animationDuration: "1.7s" }}>
+          <path d={`M${C},${C} L${C},${C - R + 3} A${R - 3},${R - 3} 0 0 0 ${C - (R - 3) * Math.sin(0.5)},${C - (R - 3) * Math.cos(0.5)} Z`} className="fp-sweep" />
+          <line x1={C} y1={C} x2={C} y2={C - R + 3} className="fp-radarline" />
+        </g>
+        <circle cx={C} cy={C} r={1.8} className="fp-twinkle" />
+      </g>
+    );
+  if (kind === "fieldlines")
+    return (
+      <g>
+        {[0.55, 0.95, 1.35].flatMap((b, i) =>
+          [-1, 1].map((sd) => <path key={`${i}${sd}`} d={`M${C},${C - R} Q${C + sd * R * b * 1.3},${C} ${C},${C + R}`} className="fp-field-line" style={{ animationDelay: `${i * 0.25}s` }} />),
+        )}
+      </g>
+    );
+  if (kind === "constellation")
+    return (
+      <g>
+        <path d={hexPath(C, C, R, "original")} className="fp-constline" />
+        {corners6(R).map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r={2.4} className="fp-chase" style={{ animationDelay: `${(i * 0.22).toFixed(2)}s` }} />
+        ))}
+      </g>
+    );
+  if (kind === "warp")
+    return (
+      <g>
+        {[...Array(12).keys()].map((i) => {
+          const a = (i / 12) * Math.PI * 2 + 0.2;
+          return <line key={i} x1={C + Math.cos(a) * 4} y1={C + Math.sin(a) * 4} x2={C + Math.cos(a) * 12} y2={C + Math.sin(a) * 12} className="fp-warp" style={{ transformOrigin: `${C}px ${C}px`, animationDelay: `${((i * 0.29) % 1.2).toFixed(2)}s` }} />;
+        })}
+      </g>
+    );
+  if (kind === "nebula")
+    return (
+      <g>
+        {[0, 1, 2].map((i) => (
+          <circle key={i} cx={C - 8 + i * 8} cy={C - 4 + (i % 2) * 8} r={10} className={i === 2 ? "fp-neb fp-neb-v" : "fp-neb"} style={{ animationDelay: `${i * 0.9}s` }} />
+        ))}
+        {[0, 1, 2, 3].map((i) => <circle key={`s${i}`} cx={C - 14 + i * 9} cy={C + 10 - (i % 2) * 18} r={1.2} className="fp-twinkle" style={{ animationDelay: `${i * 0.35}s` }} />)}
       </g>
     );
   if (kind === "aurora")
@@ -391,8 +423,24 @@ function Preview({ k, id, corners }: { k: keyof Features; id: string; corners: C
     body = (
       <g>
         <rect x={8} y={14} width={84} height={72} rx={6} className="fp-field" />
-        <rect x={8} y={14} width={84} height={72} rx={6} className="fp-plasma" />
-        {id === "original" ? (
+        {/* Round 30: the plasma wave is Inflow's second part only; every other look has its own (overloadPartner.ts). */}
+        <rect x={8} y={14} width={84} height={72} rx={6} className={id === "inflow" ? "fp-plasma" : `fp-partner fp-partner-${id}`} />
+        {id === "pulsar" ? (
+          <g>
+            {[[8, 30], [8, 66], [50, 14], [92, 40], [92, 74], [50, 86]].map(([x, y], i) => (
+              <g key={i}>
+                <circle cx={x} cy={y} r={2.6} className="fp-chase" style={{ animationDelay: `${(i * 0.28).toFixed(2)}s` }} />
+                <circle cx={x} cy={y} r={6} className="fp-pulsering" style={{ transformOrigin: `${x}px ${y}px`, animationDelay: `${(i * 0.28).toFixed(2)}s` }} />
+              </g>
+            ))}
+          </g>
+        ) : id === "swarm" ? (
+          <g className="fp-spin fp-slow" style={{ transformOrigin: "50px 50px" }}>
+            {[...Array(14).keys()].map((i) => (
+              <circle key={i} cx={50 + Math.cos(i * 0.18) * 38} cy={50 + Math.sin(i * 0.18) * 32} r={1.6} className="fp-twinkle" style={{ animationDelay: `${(i * 0.1).toFixed(2)}s` }} />
+            ))}
+          </g>
+        ) : id === "original" ? (
           <rect x={8} y={14} width={84} height={72} rx={6} className="fp-beam" />
         ) : id === "loops" ? (
           [20, 58].map((x, i) => <path key={i} d={`M${x},86 Q${x + 11},${60 - i * 6} ${x + 22},86`} className="fp-loop" style={{ animationDelay: `${i * 0.8}s` }} />)
@@ -480,7 +528,15 @@ export function FeaturesPage({ onBack }: { onBack: () => void }) {
                     title={x.note}
                     className="fp-choice"
                     style={{ "--fp": t[r.key] === x.id ? "1" : "0" } as CSSProperties}
-                    onClick={() => (playSelect(), setFeatures({ [r.key]: x.id } as Partial<Features>))}
+                    onClick={(ev) => {
+                      playSelect();
+                      setFeatures({ [r.key]: x.id } as Partial<Features>);
+                      // Round 30: choosing a button look plays its end animation over the tile.
+                      if (r.key === "endButton" && !isStill()) {
+                        const b = ev.currentTarget.querySelector("svg")?.getBoundingClientRect();
+                        if (b) playEndBurst(x.id as EndButton, b.left + b.width / 2, b.top + b.height / 2, b.width * 0.22);
+                      }
+                    }}
                   >
                     <Preview k={r.key} id={x.id} corners={t.corners} />
                     <span className="fp-label">{x.label}</span>

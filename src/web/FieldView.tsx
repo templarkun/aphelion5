@@ -41,6 +41,7 @@ import { dropStep, fizzleStep, landingDust, overhaulStep, overloadStep, tokenSte
 import { isStill, onMotion, speedFactor } from "./motion.js";
 import { alongOutline, hexOutline, onFeatures, features } from "./features.js";
 import { PlasmaWave } from "./plasmaFx.js";
+import { EdgePartner } from "./overloadPartner.js";
 import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 import { type SalvageMark, killOf, salvageMarkOf } from "./celebrate/detect.js";
 import { SALVAGE_CLEARED, SALVAGE_NODES } from "../engine/command.js";
@@ -500,25 +501,6 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
     g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.45 + 0.4 * k });
     return;
   }
-  if (how === "motes") {
-    // A few motes of light drift slowly round the edge, each at its own pace, twinkling.
-    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.3 });
-    for (let i = 0; i < 5; i++) {
-      const lap = 5200 + hash3(seed, i, 4) * 3800;
-      const dir = i % 2 ? -1 : 1;
-      const u = hash3(seed, i, 5) + (dir * now) / lap;
-      const tw = 0.55 + 0.45 * Math.sin(now / (260 + 90 * i) + i * 2);
-      for (let j = 4; j >= 0; j--) {
-        const pt = alongOutline(edge, u - dir * j * 0.008);
-        const wob = 1 + 0.03 * Math.sin(now / 700 + i * 3);
-        const x = cx + (pt.x - cx) * wob;
-        const y = cy + (pt.y - cy) * wob;
-        const f = 1 - j / 5;
-        g.circle(x, y, size * (0.008 + 0.018 * f)).fill({ color: j === 0 ? 0xfff6dd : READY, alpha: tw * (0.15 + 0.8 * f * f) });
-      }
-    }
-    return;
-  }
   if (how === "sparkle") {
     // The edge made of points of light, each twinkling on its own beat.
     const k = breath(now, 3200);
@@ -654,47 +636,6 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
     return;
   }
   // Round 28 (designer 2026-11-22): six more of each, kept light (a few dozen dots at most per tile).
-  if (how === "comet") {
-    // Round 29 (designer: too like Fireflies' dot going round): now and then a comet streaks across the
-    // tile on a slanting line, a bright head and a wide tail that breaks up into sparks drifting off.
-    g.poly(edge).stroke({ width: 1, color: READY, alpha: 0.3 });
-    const P = 2600;
-    const cyc = (now + hash3(seed, 0, 40) * P) / P;
-    const n = Math.floor(cyc);
-    const t = cyc - n;
-    const run = 0.55;
-    const dir = hash3(seed, n, 41) < 0.5 ? 1 : -1;
-    const tilt = 0.35 + 0.35 * hash3(seed, n, 42);
-    const L = r * 1.5;
-    const from = { x: cx - dir * L, y: cy - L * tilt };
-    const to = { x: cx + dir * L, y: cy + L * tilt * 0.6 };
-    const pos = (q: number) => ({ x: from.x + (to.x - from.x) * q, y: from.y + (to.y - from.y) * q });
-    // Sparks shed along the way linger and drift after the head has gone.
-    for (let i = 0; i < 26; i++) {
-      const shed = hash3(seed, i, n + 43) * run;
-      const age = (t - shed) / 0.5;
-      if (age <= 0 || age >= 1) continue;
-      const at = pos(shed / run);
-      const ang = hash3(seed, i, n + 44) * Math.PI * 2;
-      const d = size * 0.14 * age * (0.4 + 0.6 * hash3(seed, i, 45));
-      g.circle(at.x + Math.cos(ang) * d, at.y + Math.sin(ang) * d + size * 0.05 * age, size * (0.006 + 0.008 * (1 - age))).fill({ color: i % 3 ? READY : 0xfff1c9, alpha: 0.75 * (1 - age) });
-    }
-    if (t < run) {
-      const q = t / run;
-      const head = pos(q);
-      for (let j = 10; j >= 1; j--) {
-        const at = pos(Math.max(0, q - j * 0.035));
-        const f = 1 - j / 11;
-        const spread = size * 0.012 * j;
-        g.circle(at.x + (hash3(seed, j, Math.floor(now / 70)) - 0.5) * spread, at.y + (hash3(seed, j + 9, Math.floor(now / 70)) - 0.5) * spread, size * (0.008 + 0.022 * f)).fill({ color: READY, alpha: 0.12 + 0.35 * f });
-      }
-      g.circle(head.x, head.y, size * 0.06).fill({ color: READY, alpha: 0.3 });
-      g.circle(head.x, head.y, size * 0.028).fill({ color: 0xfff6dd, alpha: 0.95 });
-      // A short glint across the head.
-      g.moveTo(head.x - size * 0.07, head.y).lineTo(head.x + size * 0.07, head.y).stroke({ width: 1, color: 0xfff6dd, alpha: 0.6 });
-    }
-    return;
-  }
   if (how === "scan") {
     // A thin line of light sweeps down the tile and fades at its foot; a few motes fall off it.
     const P = 2600;
@@ -748,33 +689,6 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
     }
     return;
   }
-  if (how === "fountain") {
-    // Round 29: sparks spring up from the tile's top corner, arc over and fall down round its sides.
-    const k = breath(now, 2600);
-    g.poly(edge).stroke({ width: 1.1, color: READY, alpha: 0.3 + 0.25 * k });
-    const top = alongOutline(edge, 5 / 6);
-    let tx = top.x;
-    let ty = top.y;
-    // The topmost point of the outline (whatever the corners).
-    for (let i = 0; i < 48; i++) {
-      const q = alongOutline(edge, i / 48);
-      if (q.y < ty) (tx = q.x), (ty = q.y);
-    }
-    g.circle(tx, ty, size * 0.045).fill({ color: READY, alpha: 0.18 + 0.15 * k });
-    for (let i = 0; i < 26; i++) {
-      const P = 1500 + 700 * hash3(seed, i, 54);
-      const t = ((now / P + hash3(seed, i, 55)) % 1 + 1) % 1;
-      const side = hash3(seed, i, 56) < 0.5 ? -1 : 1;
-      const vx = side * size * (0.25 + 0.55 * hash3(seed, i, 57));
-      const vy = -size * (0.35 + 0.35 * hash3(seed, i, 58));
-      const gr = size * 2.1;
-      const x = tx + vx * t;
-      const y = ty + vy * t + 0.5 * gr * t * t;
-      const a = Math.sin(Math.PI * Math.min(1, t * 1.3)) * (1 - t * 0.6);
-      g.circle(x, y, size * (0.006 + 0.009 * (1 - t))).fill({ color: t < 0.25 ? 0xfff6dd : READY, alpha: 0.85 * a });
-    }
-    return;
-  }
   if (how === "gyroscope") {
     // Round 29: two rings of fine particles turn round the tile, tilted like a gyroscope's rings; the
     // part of each ring behind the tile is dimmer.
@@ -824,19 +738,6 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
       }
     return;
   }
-  if (how === "rain") {
-    // Fine motes fall slowly through the plate and fade.
-    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
-    for (let i = 0; i < 14; i++) {
-      const P = 2200 + 1400 * hash3(seed, i, 45);
-      const t = ((now / P + hash3(seed, i, 46)) % 1 + 1) % 1;
-      const px = (hash3(seed, i, 47) - 0.5) * 1.3 * r;
-      const py = -r * 0.7 + t * r * 1.4;
-      if (Math.abs(px) * 0.866 + Math.abs(py) * 0.5 > r * 0.74) continue;
-      g.moveTo(cx + px, cy + py - size * 0.05).lineTo(cx + px, cy + py).stroke({ width: 1, color: 0xffd27a, alpha: 0.5 * Math.sin(Math.PI * t) });
-    }
-    return;
-  }
   if (how === "vortex") {
     // Specks swirl slowly in towards the middle of the plate.
     g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
@@ -876,6 +777,139 @@ function drawReady(g: Graphics, cx: number, cy: number, size: number, now: numbe
       const k = 0.5 + 0.5 * Math.sin(fx * 2 - now / 1600);
       const tw = 0.5 + 0.5 * Math.sin(now / (500 + 300 * hash3(seed, i, 53)) + i);
       g.circle(cx + px, cy + py, size * (0.007 + 0.009 * k)).fill({ color: k > 0.7 ? 0xfff1c9 : 0xffd27a, alpha: (0.15 + 0.45 * k) * tw });
+    }
+    return;
+  }
+  // Round 30 (designer 2026-11-22): Helix, Radar, Field lines, Constellation (units), Warp, Nebula (sectors).
+  if (how === "helix") {
+    // Two strands of particles twist round the edge, crossing over and under each other.
+    g.poly(edge).stroke({ width: 0.9, color: READY, alpha: 0.22 });
+    const n = 34;
+    for (let strand = 0; strand < 2; strand++)
+      for (let i = 0; i < n; i++) {
+        const u = i / n;
+        const ph = u * Math.PI * 2 * 5 + now / 520 + strand * Math.PI;
+        const out = 1 + 0.075 * Math.sin(ph);
+        const depth = Math.cos(ph);
+        const at = alongOutline(edge, u + now / 24000);
+        const x = cx + (at.x - cx) * out;
+        const y = cy + (at.y - cy) * out;
+        const front = depth > 0;
+        g.circle(x, y, size * (front ? 0.011 + 0.006 * depth : 0.007)).fill({ color: front && depth > 0.7 ? 0xfff1c9 : READY, alpha: front ? 0.45 + 0.5 * depth : 0.18 });
+      }
+    return;
+  }
+  if (how === "radar") {
+    // A beam sweeps round inside the tile; the edge lights where it passes and fades behind it.
+    const a = ((now / 1700) % 1) * Math.PI * 2 - Math.PI / 2;
+    g.poly(edge).stroke({ width: 0.9, color: READY, alpha: 0.2 });
+    for (let k = 0; k < 7; k++) {
+      const b = a - k * 0.07;
+      g.moveTo(cx, cy).lineTo(cx + Math.cos(b) * r * 0.86, cy + Math.sin(b) * r * 0.86).stroke({ width: k ? 2.2 : 1.3, color: k ? READY : 0xfff1c9, alpha: k ? 0.16 * (1 - k / 7) : 0.75 });
+    }
+    const n = 36;
+    for (let i = 0; i < n; i++) {
+      const pt = alongOutline(edge, i / n);
+      const th = Math.atan2(pt.y - cy, pt.x - cx);
+      const behind = (((a - th) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      const k = Math.exp(-behind / 1.1);
+      g.circle(pt.x, pt.y, size * (0.007 + 0.014 * k)).fill({ color: k > 0.7 ? 0xfff6dd : READY, alpha: 0.12 + 0.8 * k });
+    }
+    // A blip inside, lit as the beam passes it.
+    const bt = hash3(seed, Math.floor(now / 1700), 60) * Math.PI * 2;
+    const bd = r * (0.3 + 0.35 * hash3(seed, Math.floor(now / 1700), 61));
+    const behind = (((a - bt) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const kb = Math.exp(-behind / 1.6);
+    g.circle(cx + Math.cos(bt) * bd, cy + Math.sin(bt) * bd, size * 0.04 * kb + 0.5).fill({ color: READY, alpha: 0.3 * kb });
+    g.circle(cx + Math.cos(bt) * bd, cy + Math.sin(bt) * bd, size * 0.015).fill({ color: 0xfff6dd, alpha: 0.9 * kb });
+    g.circle(cx, cy, size * 0.02).fill({ color: 0xfff1c9, alpha: 0.6 });
+    return;
+  }
+  if (how === "fieldlines") {
+    // Particles flow out of the top corner and curve down both sides into the bottom one, as round a magnet.
+    g.poly(edge).stroke({ width: 0.9, color: READY, alpha: 0.22 });
+    const top = { x: cx, y: cy - r };
+    const bot = { x: cx, y: cy + r };
+    const k = breath(now, 2400);
+    g.circle(top.x, top.y, size * (0.05 + 0.02 * k)).fill({ color: READY, alpha: 0.22 });
+    g.circle(bot.x, bot.y, size * (0.05 + 0.02 * (1 - k))).fill({ color: READY, alpha: 0.22 });
+    for (let side = -1; side <= 1; side += 2)
+      for (let lane = 0; lane < 3; lane++) {
+        const bulge = r * (0.5 + 0.38 * lane);
+        for (let j = 0; j < 4; j++) {
+          const q = (((now / (2000 + 300 * lane) + j / 4 + lane * 0.13 + (side > 0 ? 0.5 : 0)) % 1) + 1) % 1;
+          const x = cx + side * bulge * Math.sin(Math.PI * q);
+          const y = top.y + (bot.y - top.y) * (0.5 - 0.5 * Math.cos(Math.PI * q));
+          const f = Math.sin(Math.PI * q);
+          g.circle(x, y, size * (0.007 + 0.009 * f)).fill({ color: f > 0.85 && lane === 0 ? 0xfff1c9 : READY, alpha: (0.25 + 0.6 * f) * (1 - lane * 0.22) });
+        }
+      }
+    return;
+  }
+  if (how === "constellation") {
+    // The six corners are stars joined by faint lines; two sparks run from star to star, each star flaring.
+    const stars = [...Array(6).keys()].map((i) => {
+      const ang = (Math.PI / 180) * (60 * i - 30);
+      return { x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) };
+    });
+    for (let i = 0; i < 6; i++) {
+      const a = stars[i]!;
+      const b = stars[(i + 1) % 6]!;
+      g.moveTo(a.x, a.y).lineTo(b.x, b.y).stroke({ width: 0.8, color: READY, alpha: 0.22 });
+    }
+    g.moveTo(stars[0]!.x, stars[0]!.y).lineTo(stars[3]!.x, stars[3]!.y).stroke({ width: 0.6, color: READY, alpha: 0.1 });
+    const flare = [0, 0, 0, 0, 0, 0];
+    for (let s2 = 0; s2 < 2; s2++) {
+      const pos = now / 520 + s2 * 3 + hash3(seed, s2, 62) * 6;
+      const i = Math.floor(pos) % 6;
+      const f = pos - Math.floor(pos);
+      const a = stars[i]!;
+      const b = stars[(i + 1) % 6]!;
+      flare[(i + 1) % 6] = Math.max(flare[(i + 1) % 6]!, Math.exp(-(((1 - f) / 0.12) ** 2)));
+      flare[i] = Math.max(flare[i]!, Math.exp(-((f / 0.2) ** 2)));
+      for (let j = 5; j >= 0; j--) {
+        const q = Math.max(0, f - j * 0.05);
+        g.circle(a.x + (b.x - a.x) * q, a.y + (b.y - a.y) * q, size * (0.008 + 0.012 * (1 - j / 6))).fill({ color: j ? READY : 0xfff6dd, alpha: 0.85 * (1 - j / 6) });
+      }
+    }
+    stars.forEach((p, i) => {
+      const tw = 0.55 + 0.45 * Math.sin(now / (330 + 70 * i) + i * 2);
+      g.circle(p.x, p.y, size * (0.03 + 0.07 * flare[i]!)).fill({ color: READY, alpha: 0.12 + 0.3 * flare[i]! });
+      g.circle(p.x, p.y, size * (0.014 + 0.01 * flare[i]!)).fill({ color: 0xfff6dd, alpha: 0.45 + 0.5 * Math.max(tw * 0.6, flare[i]!) });
+    });
+    return;
+  }
+  if (how === "warp") {
+    // Stars stream out from the middle of the plate towards its edge, faster as they go, as in a jump.
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
+    g.circle(cx, cy, size * 0.08).fill({ color: 0xffd27a, alpha: 0.12 });
+    for (let i = 0; i < 22; i++) {
+      const P = 1300 + 900 * hash3(seed, i, 63);
+      const t = ((now / P + hash3(seed, i, 64)) % 1 + 1) % 1;
+      const ang = hash3(seed, i, 65) * Math.PI * 2;
+      const d = r * 0.78 * t * t + r * 0.04;
+      const d0 = d * (0.75 - 0.25 * t);
+      const ca = Math.cos(ang);
+      const sa = Math.sin(ang);
+      g.moveTo(cx + ca * d0, cy + sa * d0).lineTo(cx + ca * d, cy + sa * d).stroke({ width: 0.8 + 1.2 * t, color: t > 0.6 ? 0xfff6dd : 0xffd27a, alpha: 0.75 * Math.sin(Math.PI * t) });
+    }
+    return;
+  }
+  if (how === "nebula") {
+    // Soft clouds of glowing dust churn slowly inside the plate, a few stars twinkling in them.
+    g.poly(edge).stroke({ width: 1.2, color: READY, alpha: 0.38 });
+    for (let i = 0; i < 5; i++) {
+      const px = Math.sin(now / (3100 + 700 * i) + hash3(seed, i, 66) * 6) * r * 0.32;
+      const py = Math.cos(now / (3700 + 500 * i) + hash3(seed, i, 67) * 6) * r * 0.3;
+      const col = i % 3 === 2 ? 0xb07cff : i % 2 ? 0xff9a4a : 0xffd27a;
+      const pr = r * (0.22 + 0.1 * Math.sin(now / 1900 + i));
+      for (let j = 3; j >= 1; j--) g.circle(cx + px, cy + py, pr * (j / 3) + size * 0.03).fill({ color: col, alpha: 0.05 });
+    }
+    for (let i = 0; i < 7; i++) {
+      const px = (hash3(seed, i, 68) - 0.5) * r * 1.1;
+      const py = (hash3(seed, i, 69) - 0.5) * r * 1.0;
+      const tw = Math.max(0, Math.sin(now / (420 + 160 * hash3(seed, i, 70)) + i * 2)) ** 2;
+      g.circle(cx + px, cy + py, size * (0.006 + 0.01 * tw)).fill({ color: 0xfff6dd, alpha: 0.2 + 0.7 * tw });
     }
     return;
   }
@@ -946,6 +980,7 @@ export function FieldView(p: FieldProps) {
   /** Reduced motion: the Barrier field is drawn still. */
   const stillRef = useRef(false);
   const corona = useRef<PlasmaWave | undefined>(undefined);
+  const partner = useRef<EdgePartner | undefined>(undefined);
   const lastState = useRef<GameState | undefined>(undefined);
   const drag = useRef<DragState | undefined>(undefined);
   const press = useRef<{ k: string | undefined; unit: TileId | undefined; x: number; y: number; touch: boolean; held: boolean } | undefined>(undefined);
@@ -1013,10 +1048,13 @@ export function FieldView(p: FieldProps) {
       // The plasma wave round the Field's edge during an Overload (plasmaFx.ts).
       const plasma = new PlasmaWave();
       corona.current = plasma;
+      // Round 30: every Overload edge look but Inflow has its own second part instead (overloadPartner.ts).
+      const partnerPart = new EdgePartner();
+      partner.current = partnerPart;
       // The mission celebrations draw on top of everything, in screen pixels (designer 2026-11-20).
       const celebrate = new Container();
       celebrate.eventMode = "none";
-      a.stage.addChild(under, root, aura, plasma.view, edge, glow, fx, dl, celebrate);
+      a.stage.addChild(under, root, aura, plasma.view, edge, partnerPart.view, glow, fx, dl, celebrate);
       layers.current = { under, root, aura, edge, glow, fx, drag: dl, tether, piece: undefined, hitText: undefined, celebrate };
       ready.current = true;
       draw();
@@ -2332,7 +2370,10 @@ export function FieldView(p: FieldProps) {
     // An Overload: a plasma beam swirls round the Field (designer 2026-11-09, instead of a tinted page).
     L.edge.clear();
     if (props.current.state.phase === "overload" && host.current) drawOverloadRing(L.edge, host.current.clientWidth, host.current.clientHeight, stillRef.current ? 0 : now, features().overload);
-    corona.current?.update(host.current?.clientWidth ?? 0, host.current?.clientHeight ?? 0, now, props.current.state.phase === "overload" && !stillRef.current);
+    const olOn = props.current.state.phase === "overload" && !stillRef.current;
+    const olLook = features().overload;
+    corona.current?.update(host.current?.clientWidth ?? 0, host.current?.clientHeight ?? 0, now, olOn && olLook === "inflow");
+    partner.current?.update(host.current?.clientWidth ?? 0, host.current?.clientHeight ?? 0, now, olOn && olLook !== "inflow", olLook);
 
     // Barriers: a force field round their unit, following the tile as it moves.
     const au = L.aura;

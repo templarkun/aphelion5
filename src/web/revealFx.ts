@@ -6,6 +6,7 @@
  */
 
 import { noise3 } from "./noise.js";
+import { edgeHot, pulsarNodes, swarmCount, swarmMote } from "./overloadPartner.js";
 import { type Container, Graphics } from "pixi.js";
 import type { NodeLook, Step } from "./anim.js";
 
@@ -353,6 +354,7 @@ export function gyroBreak(g: Graphics, cx: number, cy: number, size: number, p: 
  * with sparks drifting in from it. `w`, `h`: the Field's size; `now` in ms (0 = still).
  */
 export function drawOverloadRing(g: Graphics, w: number, h: number, now: number, look: "original" | "inflow" | MoreLook = "original"): void {
+  edgeHot.length = 0;
   if (look === "inflow") return drawOverloadInflow(g, w, h, now);
   if (look !== "original") return drawOverloadMore(g, w, h, now, look);
   const inset = 6;
@@ -499,7 +501,8 @@ function drawOverloadInflow(g: Graphics, w: number, h: number, now: number): voi
  * - rift: Void rift: violet tears open along the edges and close again; motes are pulled out of the Field
  *   into them, and sparks of white light spill from their lips.
  */
-type MoreLook = "loops" | "tempest" | "torrent" | "breath" | "embers" | "rift";
+type MoreLook = "loops" | "tempest" | "torrent" | "breath" | "embers" | "rift" | "pulsar" | "swarm";
+
 
 function drawOverloadMore(g: Graphics, w: number, h: number, now: number, look: MoreLook): void {
   const inset = 6;
@@ -565,8 +568,12 @@ function drawOverloadMore(g: Graphics, w: number, h: number, now: number, look: 
         // Foot points glowing where the arch stands on the edge.
         glowDot(a.x, a.y, 3, 0xff3b1a, 0xffd0a0, 0.7 * grow);
         glowDot(b.x, b.y, 3, 0xff3b1a, 0xffd0a0, 0.7 * grow);
+        edgeHot.push({ kind: "foot", x: a.x, y: a.y, nx: a.nx, ny: a.ny, k: grow, s: H0 });
+        edgeHot.push({ kind: "foot", x: b.x, y: b.y, nx: a.nx, ny: a.ny, k: grow, s: H0 });
       } else {
         // The arch snaps: its particles are flung in towards the Field and fade.
+        const top = at(0.5);
+        edgeHot.push({ kind: "snap", x: top.x, y: top.y, nx: a.nx, ny: a.ny, k: snap, s: Math.hypot(b.x - a.x, b.y - a.y) / 2 });
         for (let j = 0; j < 34; j++) {
           const q = j / 34;
           const p = at(q);
@@ -595,6 +602,7 @@ function drawOverloadMore(g: Graphics, w: number, h: number, now: number, look: 
       const y = e.y + e.ny * d;
       cs.push({ x, y, nx: e.nx, ny: e.ny });
       const br = 0.6 + 0.4 * Math.sin(T * 2.1 + c * 1.7);
+      edgeHot.push({ kind: "cloud", x, y, nx: e.nx, ny: e.ny, k: br, s: 22 });
       for (let j = 0; j < 10; j++) {
         const ang = rnd(c * 20 + j) * Math.PI * 2 + T * (0.4 + 0.3 * rnd(j));
         const rr = 6 + 16 * rnd(c * 20 + j + 5);
@@ -641,6 +649,8 @@ function drawOverloadMore(g: Graphics, w: number, h: number, now: number, look: 
       }
       // The flash where it strikes.
       g.circle(B.x, B.y, 18 * life).fill({ color: 0xc8b0ff, alpha: 0.12 * life });
+      edgeHot.push({ kind: "strike", x: A.x, y: A.y, nx: A.nx, ny: A.ny, k: life, s: 0 });
+      edgeHot.push({ kind: "strike", x: B.x, y: B.y, nx: B.nx, ny: B.ny, k: life, s: 0 });
     }
   } else if (look === "torrent") {
     // A thick river of particles round the whole edge, churned by noise; eddies curl off inwards.
@@ -736,6 +746,58 @@ function drawOverloadMore(g: Graphics, w: number, h: number, now: number, look: 
       g.circle(inset + u * W, inset + H - 2 - 6 * rnd(i + 4900), 1.5 + 2 * flick).fill({ color: flick > 0.7 ? 0xffd0a0 : 0xff5a1f, alpha: 0.45 * flick });
       g.circle(inset + rnd(i + 5000) * W, inset + 2 + 4 * rnd(i + 5100), 1.2 + flick).fill({ color: 0xff3b1a, alpha: 0.35 * flick });
     }
+  } else if (look === "pulsar") {
+    // Round 30, Pulsar: bright nodes stand along the edge, joined by crackling threads; each charges in turn
+    // (the charge running round the edge) and fires a ring of particles inwards. The nodes' glow, the charge
+    // spiralling in and the muzzle flash are its partner part (overloadPartner.ts).
+    const nodes = pulsarNodes(w, h, now);
+    const flick = Math.floor(now / 60);
+    for (let i = 0; i < nodes.length; i++) {
+      const A = nodes[i]!;
+      const B = nodes[(i + 1) % nodes.length]!;
+      // A thread to the next node along the edge (never across the Field), brighter while either charges.
+      if (Math.hypot(B.x - A.x, B.y - A.y) < 260) {
+        const live = 0.25 + 0.75 * Math.max(A.charge, B.charge);
+        let px = A.x;
+        let py = A.y;
+        for (let j = 1; j <= 12; j++) {
+          const q = j / 12;
+          const jit = (rnd(i * 31 + j * 7 + flick) - 0.5) * 9 * Math.sin(Math.PI * q) * live;
+          const x = A.x + (B.x - A.x) * q + A.nx * jit;
+          const y = A.y + (B.y - A.y) * q + A.ny * jit;
+          g.moveTo(px, py).lineTo(x, y).stroke({ width: 1.1, color: 0xffd0a0, alpha: 0.5 * live });
+          if (j % 3 === 0) g.circle(x, y, 1.1).fill({ color: 0xffffff, alpha: 0.7 * live });
+          px = x;
+          py = y;
+        }
+      }
+      // The node itself: a small bright stud, swelling as it charges.
+      glowDot(A.x, A.y, 2.2 + 2.4 * A.charge, 0xff5a1f, 0xfff0d0, 0.6 + 0.4 * A.charge);
+      // The ring it fired: particles on a half circle opening inwards from the node.
+      if (A.fired >= 0 && A.fired < 1) {
+        const q = A.fired;
+        const rad = 8 + reach * 1.25 * (1 - (1 - q) ** 2);
+        const tx = -A.ny;
+        const ty = A.nx;
+        for (let j = 0; j < 26; j++) {
+          const ang = (j / 25) * Math.PI;
+          const ca = Math.cos(ang);
+          const sa = Math.sin(ang);
+          const x = A.x + tx * ca * rad + A.nx * sa * rad;
+          const y = A.y + ty * ca * rad + A.ny * sa * rad;
+          g.circle(x, y, 1.6 * (1 - q) + 0.6).fill({ color: j % 4 ? 0xff8a3a : 0xfff0d0, alpha: 0.9 * (1 - q) });
+        }
+      }
+    }
+  } else if (look === "swarm") {
+    // Round 30, Plasma swarm: a few flocks of energy motes run round the edge at their own pace, each
+    // gathering tight and scattering wide in turn; the glowing trails behind them are the partner part.
+    const n = swarmCount(per);
+    for (let i = 0; i < n; i++) {
+      const m = swarmMote(i, now, w, h);
+      if (!m) continue;
+      glowDot(m.x, m.y, 1 + 0.9 * m.hot, m.hot > 0.7 ? 0xff8a3a : 0xff5a1f, m.hot > 0.7 ? 0xffffff : 0xffc080, 0.55 + 0.45 * m.hot);
+    }
   } else {
     // Void rift: violet tears open along the edges and close again, pulling motes out of the Field.
     const tears = Math.round(Math.min(7, Math.max(3, per / 420)));
@@ -755,6 +817,8 @@ function drawOverloadMore(g: Graphics, w: number, h: number, now: number, look: 
         const w2 = Math.sin(Math.PI * q) * (6 + 6 * noise3(q * 6, k, T * 0.7)) * open;
         lip.push({ ...e, w: w2 });
       }
+      const mid = lip[steps / 2]!;
+      edgeHot.push({ kind: "tear", x: mid.x, y: mid.y, nx: mid.nx, ny: mid.ny, k: open, s: (len * per) / 2 });
       // The tear: its two lips, a dark-violet glow between.
       for (let j = 0; j < steps; j++) {
         const p0 = lip[j]!;

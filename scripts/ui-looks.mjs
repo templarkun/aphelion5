@@ -135,7 +135,7 @@ export async function looksCheck(browser, url, out) {
     await pg.screenshot({ path: `${out}/ui-features-menu.png` });
     await pg.close();
     const okKept = /"corners":"round"/.test(kept ?? "") && /stackFine/.test(kept ?? "") && /arcs/.test(kept ?? "") && /tide/.test(kept ?? "") && /"names":"hidden"/.test(kept ?? "");
-    if (!(offered === 74 && pressed === "corners:round,depth:stackFine,readyUnit:arcs,readySector:tide,names:hidden,overload:original,next:corner,gyroEnergy:tokens,exposure:strike,endButton:sun" && before !== after && okKept)) fails.push(`features: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
+    if (!(offered === 76 && pressed === "corners:round,depth:stackFine,readyUnit:arcs,readySector:tide,names:hidden,overload:inflow,next:corner,gyroEnergy:tokens,exposure:strike,endButton:sun" && before !== after && okKept)) fails.push(`features: offered ${offered}, pressed ${pressed}, redrawn ${before !== after}, kept ${kept}`);
   }
 
   if (errors.length) fails.push(`page errors: ${errors.join(" | ")}`);
