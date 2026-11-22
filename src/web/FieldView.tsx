@@ -46,6 +46,7 @@ import type { DragKind, DragPlan, DragTarget } from "./drag.js";
 import { type SalvageMark, killOf, salvageMarkOf } from "./celebrate/detect.js";
 import { SALVAGE_CLEARED, SALVAGE_NODES } from "../engine/command.js";
 import { killStepFor } from "./celebrate/kills.js";
+import { sfx } from "./sound.js";
 
 export interface FieldProps {
   data: GameData;
@@ -960,6 +961,19 @@ interface DragState {
   send?: Answer[];
 }
 
+/** Plays a sound as a step starts (sound.ts; designer 2026-11-22). */
+function withSfx(st: Step, name: string, opts?: { delay?: number; volume?: number }): Step {
+  const s0 = st.start;
+  const play = () => sfx(name, opts);
+  const before = st.sound;
+  st.sound = before ? () => (before(), play()) : play;
+  st.start = () => {
+    play();
+    s0?.();
+  };
+  return st;
+}
+
 export function FieldView(p: FieldProps) {
   const host = useRef<HTMLDivElement>(null);
   const app = useRef<Application | null>(null);
@@ -1649,11 +1663,15 @@ export function FieldView(p: FieldProps) {
         },
       };
       const burst = revealFxStep(e.type, e.sector, { fx, centre, size, keys: () => [...nodes.current.keys()], host: () => host.current });
+      withSfx(flip, e.type === "Omega" ? "reveal-omega" : "reveal");
       return burst ? [flip, burst] : [flip];
     }
 
     /** A hit lands: the tile shakes, a flash and the damage number (a Barrier: its field shatters). */
     function hitStep(e: GameEvent & { kind: "hit" }, quick = false): Step {
+      return withSfx(hitLook(e, quick), e.stopped || (e.damage === 0 && e.shields > 0) ? "shield-block" : "hit");
+    }
+    function hitLook(e: GameEvent & { kind: "hit" }, quick: boolean): Step {
       const real = isTop(e.sector, e.tile);
       const kept = standIns.get(e.tile);
       const g = real ? undefined : (kept ?? ghost(e.type, e.unitId));
@@ -1748,6 +1766,9 @@ export function FieldView(p: FieldProps) {
 
     /** A unit is destroyed: it cracks and bursts (a Wreck: dimmed and stamped). */
     function destroyStep(e: GameEvent & { kind: "destroyed" }): Step {
+      return withSfx(destroyLook(e), "destroyed", e.wreck ? { volume: 0.6 } : {});
+    }
+    function destroyLook(e: GameEvent & { kind: "destroyed" }): Step {
       if (e.wreck) {
         const dim = new Graphics().poly(hexPoints(0, 0, size() * 0.9)).fill({ color: 0x1d1d1f });
         const stamp = new Text({ text: "WRECK", style: { fontFamily: "system-ui, sans-serif", fontSize: Math.max(12, size() * 0.3), fill: 0xffffff, fontWeight: "900", stroke: { color: 0x9b1c1c, width: 4 } } });
@@ -1900,7 +1921,7 @@ export function FieldView(p: FieldProps) {
     function oneShot(e: GameEvent & { kind: "hit" }): Step | undefined {
       const to = onPage(e.sector);
       const used = from(e.rule);
-      if (used) return weaponStep(used, "hit", to);
+      if (used) return withSfx(weaponStep(used, "hit", to), "laser");
       if (e.rule === "H5") {
         const ray = shotStep("heat", "#ff7a2f", heatBar, to);
         const chip = heatChip;
@@ -1924,7 +1945,7 @@ export function FieldView(p: FieldProps) {
       const used = from(e.rule);
       if (used) {
         const colour = BOMB[used.what === "module" ? (used.colour ?? "") : used.what] ?? "#ffffff";
-        return shotStep("bomb", used.rule === "V1_BAY1" ? "#ff5a5a" : colour, sky(k), to, k === 0 ? { onStart: () => fireGlow(used) } : {});
+        return withSfx(shotStep("bomb", used.rule === "V1_BAY1" ? "#ff5a5a" : colour, sky(k), to, k === 0 ? { onStart: () => fireGlow(used) } : {}), "laser");
       }
       if (e.rule === "H7") return shotStep("bomb", "#ff6a2a", sky(k), to);
       const u = unitOfRule(e.rule);
@@ -1940,6 +1961,7 @@ export function FieldView(p: FieldProps) {
         return r && r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2, size: Math.max(20, Math.min(r.width, r.height) / 3) } : undefined;
       };
       const shake = () => {
+        sfx("flagship-hit");
         const el = panel();
         if (!el) return;
         el.classList.remove("fx-shake");
@@ -1957,11 +1979,15 @@ export function FieldView(p: FieldProps) {
     const env = { fx, centre, size, keys: () => [...nodes.current.keys()], host: () => host.current };
     /** A Mecha lands after moving (round 28): a small puff of dust that plays by itself. */
     const dust = (unitId: string, k: string) => {
+      if (typeOf(unitId) === "Mecha") sfx("mecha-land");
       const a = app.current;
       if (!a || stillRef.current || speedFactor() === 0 || typeOf(unitId) !== "Mecha") return;
       landingDust(env, k, (f) => (a.ticker.add(f), () => a.ticker.remove(f)), speedFactor());
     };
+    let sfxNext: string | undefined;
     for (let i = 0; i < events.length; i++) {
+      if (sfxNext && out.length) withSfx(out[out.length - 1]!, sfxNext);
+      sfxNext = undefined;
       const e = events[i]!;
       if (e.kind === "used") {
         const used: Source = { what: e.what, rule: e.rule, bay: e.bay, module: e.module, colour: e.colour };
@@ -2047,6 +2073,7 @@ export function FieldView(p: FieldProps) {
         }
         i = j - 1;
         const steps = group.map((t) => tokenStep(t, env));
+        if (e.change === "shield" || e.change === "bioShield" || e.change === "repair") withSfx(steps[0]!, "shield-up");
         out.push(steps.length > 1 ? parallel(steps, 40) : steps[0]!);
         continue;
       }
@@ -2055,11 +2082,11 @@ export function FieldView(p: FieldProps) {
         continue;
       }
       if (e.kind === "dropped") {
-        out.push(dropStep(e, env));
+        out.push(withSfx(dropStep(e, env), "ally-drop"));
         continue;
       }
       if (e.kind === "overload") {
-        const step = overloadStep(e.how, env);
+        const step = withSfx(overloadStep(e.how, env), e.how === "start" ? "overload-start" : "overload-end");
         if (e.how === "start") {
           // Then the Alert tokens drop on one by one.
           const end = step.end;
@@ -2102,6 +2129,7 @@ export function FieldView(p: FieldProps) {
           const real = isTop(last, e.tile);
           const g = real ? undefined : ghost(typeOf(e.unitId), e.unitId);
           const legs = path.length - 1;
+          sfxNext = "move";
           out.push({
             ms: 330 * legs,
             hides: real ? [last] : [],
@@ -2139,7 +2167,7 @@ export function FieldView(p: FieldProps) {
         const dr = dropped.current;
         const fromDrop = dr !== undefined && dr.tile === e.tile && dr.to === e.to;
         if (fromDrop) dropped.current = undefined;
-        out.push(burstStep(e.from, e.to, e.unitId, "Mecha", fromDrop, stays));
+        out.push(withSfx(burstStep(e.from, e.to, e.unitId, "Mecha", fromDrop, stays), "mecha-attack"));
         continue;
       }
       if (e.kind === "heat") {
@@ -2169,6 +2197,7 @@ export function FieldView(p: FieldProps) {
         const b = centre(e.to);
         const sectors = Math.max(1, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / (Math.sqrt(3) * size())));
         const tele = e.how === "teleport";
+        if (!tele) sfxNext = "move";
         out.push({
           ms: tele ? 400 : 350 * sectors,
           hides: real ? [e.to] : [],
@@ -2196,6 +2225,7 @@ export function FieldView(p: FieldProps) {
           end: () => (g?.destroy({ children: true }), tele || dust(e.unitId, e.to)),
         });
       } else if (e.kind === "swapped") {
+        sfxNext = "move";
         out.push({
           ms: 500,
           hides: [e.from, e.to],
@@ -2227,6 +2257,7 @@ export function FieldView(p: FieldProps) {
         let dot: HTMLDivElement | undefined;
         let a = { x: 0, y: 0 };
         let b = { x: 0, y: 0 };
+        sfxNext = "energy";
         out.push({
           ms: e.auto ? 800 : 400,
           start: () => {
@@ -2263,6 +2294,7 @@ export function FieldView(p: FieldProps) {
         });
       }
     }
+    if (sfxNext && out.length) withSfx(out[out.length - 1]!, sfxNext);
     // Any stand-in left (its burst not played): gone once everything has played or been skipped.
     if (standIns.size) out.push({ ms: 1, frame: () => {}, end: () => [...standIns.keys()].forEach(dropStandIn) });
     return out;

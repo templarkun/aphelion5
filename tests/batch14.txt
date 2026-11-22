@@ -473,3 +473,37 @@ then: two new choices at the end of the list (10 in all):
       particles inwards with a flash.
       Plasma swarm: five flocks of energy motes run round the edge at their own pace, each gathering
       tight and scattering wide in turn, with glowing trails behind them.
+
+id: T14_SND_01
+title: Sound volumes
+source: designer 2026-11-22 ("Create sound sliders in the menu for sound: sound effects, ambient sound and music")
+given: the game's Menu, or System options on the Command Deck
+then: a "Sound" group with three sliders, 0 to 100: Sound effects (80 at first), Ambient sound (60),
+      Music (60). Moving one changes the volume at once; 0 is silent. Letting go of Sound effects plays
+      a tap at the new volume. The Menu stays open while you use them. The volumes are kept in this
+      browser (the same in the Menu and in System options, after a reload too), not in saves.
+
+id: T14_SND_02
+title: Sound effects of batch 1
+source: designer 2026-11-22 (docs/audio-hooks.md batch 1, files uploaded)
+given: Sound effects above 0, any game
+then: sound starts with the first tap or key (phones allow it only then). Each moment plays its sound
+      as its animation starts, one of its versions at random, not the same one twice in a row:
+      a tap on a button: tap; Back on the Command Deck: back; a pop-up or information card: popup;
+      a slide or swap: move (not a teleport); a Mecha landing: mecha-land; a Mecha's charge:
+      mecha-attack; a reveal: reveal (an Omega: reveal-omega); a shot of a Bay, Order or Module: laser;
+      a hit: hit (all of it taken by Shields, or a Barrier: shield-block); a unit destroyed: destroyed
+      (a Wreck: quieter); the Flagship panel shaking: flagship-hit; a Shield, Bio-shield or repair:
+      shield-up; Overload start and end: overload-start, overload-end; pressing End the Overload:
+      end-button; Allied Drop: ally-drop; the Mission Complete banner: mission-complete.
+      Many at once (an Order hitting every unit): at most three of one sound, a little quieter.
+      Undo plays nothing. Nothing plays while the page is hidden. Instant speed or reduced motion:
+      the sounds still play.
+
+id: T14_SND_03
+title: Sound files from the designer
+source: designer 2026-11-22
+given: new files uploaded to art/ (sfx-<name>.mp3, sfx-<name>-2.mp3 ..., ambient-*, music-*; MP3 or WAV)
+then: npm run build:audio makes small copies in art/audio/ (one channel, 96 kbps for effects,
+      silence cut from both ends); only those are packed into the game. A name with no file plays
+      nothing (sfx-energy until it is uploaded).

@@ -55,6 +55,8 @@ import { AskBubble, PointBubbles, askText } from "./FieldAsk.js";
 import { type BayView, type DragApi, type DropTarget, FlagshipDock, type Layout, OverhaulButton, type OrderView, orderWord, useAbilityPress } from "./Flagship.js";
 import { download, loadSave, pickFile, writeSave } from "./idbStore.js";
 import { MotionSettings } from "./MotionSettings.js";
+import { SoundSettings } from "./SoundSettings.js";
+import { sfx } from "./sound.js";
 import { FeaturesMenu } from "./FeaturesMenu.js";
 import { type WinShow, winOf } from "./celebrate/detect.js";
 import { MissionWin, type Shake } from "./celebrate/MissionWin.js";
@@ -411,6 +413,15 @@ interface Confirm {
 }
 
 function GameScreen(p: GameProps) {
+  // A tap on any button of the game screen clicks (sound.ts; the sliders and menus that play their own sound are left out).
+  useEffect(() => {
+    const onClick = (ev: MouseEvent) => {
+      const b = (ev.target as Element | null)?.closest?.("button, [role=button]");
+      if (b && b.closest(".game") && !b.closest(".sound-set")) sfx("tap");
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, []);
   const { data, game: realGame } = p;
   const real = realGame.view;
   const realQ = real.status === "question" ? real.question : undefined;
@@ -758,7 +769,7 @@ function GameScreen(p: GameProps) {
     }
     return best?.id;
   };
-  const openPopup = (title: string, options: Option[], note?: string, at?: string) => setPopup({ ...(at ? centreOf(at) : pointer.current), title, options, note, at });
+  const openPopup = (title: string, options: Option[], note?: string, at?: string) => (sfx("popup"), setPopup({ ...(at ? centreOf(at) : pointer.current), title, options, note, at }));
   /**
    * Bubble width (designer 2026-11-08): at least 120 px, and at least 2/3 of a tile's width on big
    * screens; on phones (under 600 px wide) 96 px (designer 2026-11-10: a bit smaller there).
@@ -1145,6 +1156,7 @@ function GameScreen(p: GameProps) {
                 {s.settings.heatModule ? ` · Heat ${s.player.heat}` : ""}
               </p>
               <button onClick={() => setShowLog((x) => !x)}>{showLog ? "Hide the log" : "Log"}</button>
+              <SoundSettings />
               <MotionSettings />
               <FeaturesMenu />
               {s.settings.developerMode && q?.shortcuts?.some((o) => o.id === "devWin") && (

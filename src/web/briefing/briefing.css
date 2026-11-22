@@ -468,3 +468,7 @@ html.still .bf-game-skin .bf-modslot .module.selected { animation: none; }
 .fp-svg circle.fp-pulsering { fill: none; stroke: #fdba74; stroke-width: 1.2; animation: fp-outward 1.7s ease-out infinite; }
 html.still .fp-svg *, .fp-choice:disabled .fp-svg * { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .fp-svg * { animation: none !important; } }
+/* Sound sliders in System options (designer 2026-11-22). */
+.bf-sound .ss-title { font-size: 13px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.85; }
+.bf-sound .ss-row { font-size: 14px; grid-template-columns: 8.5em 1fr 2.4em; }
+.bf-sound input[type="range"] { accent-color: #7dd3fc; }

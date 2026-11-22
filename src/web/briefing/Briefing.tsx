@@ -5,6 +5,7 @@
  * This shell holds the state, the frame and the transitions between steps.
  */
 
+import { SoundSettings } from "../SoundSettings.js";
 import { CELEBRATION_PREVIEWS, type PreviewWhat } from "../celebrate/previewBoards.js";
 import { DEFAULT_OUTRO, OUTROS } from "../outro/index.js";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -240,6 +241,7 @@ export function Briefing(p: BriefingProps) {
               </button>
             </div>
             <div className="flex flex-col gap-3 text-[15px] text-white">
+              <SoundSettings className="bf-sound" />
               <div className="bf-label">New game</div>
               <label className="flex items-start gap-2">
                 <input type="checkbox" className="mt-1 h-4 w-4 accent-sky-300" checked={p.autoAnswer} onChange={(e) => p.setAutoAnswer(e.target.checked)} /> Answer automatically when only one answer is legal

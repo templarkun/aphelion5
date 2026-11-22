@@ -29,6 +29,11 @@ export interface Step {
   /** Sectors kept hidden until this step starts (the board already shows the end result). */
   hides?: string[];
   start?: () => void;
+  /**
+   * Its sound (sound.ts, designer 2026-11-22): played by `start` as the step begins; also played when
+   * the speed is Instant or reduced motion is on (steps then end without starting).
+   */
+  sound?: () => void;
   /** p from 0 to 1. `look(key)` is the look of a sector for this frame, to change. */
   frame: (p: number, look: (key: string) => NodeLook) => void;
   /** Always called once, also when skipped: remove what the step drew. */
@@ -59,6 +64,7 @@ export class Player {
   add(steps: Step[]): void {
     // Celebrations keep a still picture of their own (designer 2026-11-20).
     const stills = steps.flatMap((s) => (s.still ? [s.still] : []));
+    if (this.speed === 0 || this.reduced) for (const s of steps) s.sound?.();
     if (this.speed === 0) {
       for (const s of steps) s.end();
       this.queue.push(...stills);
@@ -159,9 +165,11 @@ export function parallel(steps: Step[], stagger = 0): Step {
   const done = steps.map(() => false);
   const ms = Math.max(1, ...steps.map((s, i) => s.ms + i * stagger));
   const hides = [...new Set(steps.flatMap((s) => s.hides ?? []))];
+  const sounds = steps.filter((s) => s.sound);
   return {
     ms,
     hides,
+    ...(sounds.length ? { sound: () => sounds.forEach((s) => s.sound!()) } : {}),
     frame: (p, look) => {
       const t = p * ms;
       steps.forEach((s, i) => {

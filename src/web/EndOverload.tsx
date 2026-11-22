@@ -13,6 +13,7 @@ import { drawEndButton } from "./endButtonFx.js";
 import { playEndBurst } from "./endBurstFx.js";
 import { features, onFeatures, type EndButton } from "./features.js";
 import { isResting, onResting } from "./idle.js";
+import { sfx } from "./sound.js";
 
 /**
  * The coronal waves round the button (coronalFx.ts), on a canvas big enough to hold all of them; or,
@@ -180,6 +181,7 @@ export function EndOverload(p: { onEnd: () => void }) {
       disabled={burst}
       onClick={() => {
         remember();
+        sfx("end-button");
         if (still) return p.onEnd();
         // Round 30: each look ends in its own way, drawn on the page (endBurstFx.ts); the Overload ends as
         // it finishes (its last moment overlaps the start of Exposure).

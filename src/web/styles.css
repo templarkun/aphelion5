@@ -1065,3 +1065,9 @@ html.still .module.peek { animation: none; }
 .end-overload.eo-look.bursting { animation: eo-vanish 0.16s ease-out forwards; }
 .end-overload.eo-look .eo-label { text-shadow: 0 1px 3px rgb(0 0 0 / 0.9), 0 0 8px rgb(0 0 0 / 0.6); }
 .end-overload.eo-hazard .eo-label { color: #fff7e0; }
+/* Sound volumes (SoundSettings.tsx, designer 2026-11-22). */
+.sound-set { display: grid; gap: 4px; margin: 6px 0; }
+.sound-set .ss-title { font-size: 12px; opacity: 0.75; }
+.sound-set .ss-row { display: grid; grid-template-columns: 7.5em 1fr 2.2em; align-items: center; gap: 8px; font-size: 12px; min-height: 32px; }
+.sound-set input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 28px; }
+.sound-set .ss-val { text-align: right; font-variant-numeric: tabular-nums; opacity: 0.8; }

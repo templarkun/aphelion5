@@ -1,30 +1,40 @@
 /**
  * Sound hooks of the command briefing, the intro and the Threat screen.
  *
- * The screens are silent for now (designer 2026-11-14): every function here is an empty place
- * that is already called at the right moment (hover, select, confirm, step change, chips, Threat,
- * launch, the intro's engines). To add real sound later, put the audio files in the project and
- * fill the bodies in, for example:
+ * Designer 2026-11-22: the first sounds are in (sound.ts, docs/audio-hooks.md): select / confirm
+ * play "tap", back "back", an information card "popup", the win banners "mission-complete". The
+ * rest are still silent.
  *
- *   import selectUrl from "../../../art/audio/select.mp3";
- *   const select = new Audio(selectUrl);
- *   export function playSelect(): void { select.currentTime = 0; void select.play(); }
+ * Each function here is a place already called at the right moment (hover, select, confirm, step
+ * change, chips, Threat, launch, the intro's engines, the outros' and celebrations' acts). To give
+ * one a sound, put the file in art/ (docs/audio-hooks.md), run `npm run build:audio` and write
+ * `sfx("<name>")` in its body.
  *
  * Nothing else has to change: the buttons and transitions already call these.
  */
 
+import { sfx } from "../sound.js";
+
 /** The pointer moved onto a button or a card. */
 export function playHover(): void {}
 /** A card, unit, mission or tab was chosen. */
-export function playSelect(): void {}
+export function playSelect(): void {
+  sfx("tap");
+}
 /** A step was confirmed (Campaign, Vessel, Modules, Threat). */
-export function playConfirm(): void {}
+export function playConfirm(): void {
+  sfx("tap");
+}
 /** Back one step, or a pop-up closed. */
-export function playBack(): void {}
+export function playBack(): void {
+  sfx("back");
+}
 /** The screen changes from one step to the next. */
 export function playTransition(): void {}
 /** A unit's information card opened. */
-export function playOpenInfo(): void {}
+export function playOpenInfo(): void {
+  sfx("popup");
+}
 /** An expansion chip was plugged in / pulled out. */
 export function playChipIn(): void {}
 export function playChipOut(): void {}
@@ -125,7 +135,9 @@ export function playTrophyLand(): void {}
 /** Win, Act 2: the energy sweep crosses the Field. */
 export function playWinSweep(): void {}
 /** Win, Act 3: MISSION COMPLETE slams in. Also the still picture (reduced motion, Instant). */
-export function playMissionComplete(): void {}
+export function playMissionComplete(): void {
+  sfx("mission-complete");
+}
 
 /** Perimeter Sweep (win), Act 1: one of the Mission bar's cells ignites (index of count), a harmonic chime. */
 export function onTrophyCellIgnite(index: number, of: number): void {
@@ -137,7 +149,9 @@ export function onMissionBarBurst(): void {}
 /** Perimeter Sweep, Act 2: the ring of energy sweeps out over the Field. */
 export function onVictoryWave(): void {}
 /** Perimeter Sweep, Act 3: MISSION COMPLETE slams in. Also its still picture (reduced motion, Instant). */
-export function onVictoryBannerSlam(): void {}
+export function onVictoryBannerSlam(): void {
+  sfx("mission-complete");
+}
 /** Perimeter Sweep, Act 3: a stamped badge lands (index of count). */
 export function onBadgeDrop(index: number, of: number): void {
   void index;
@@ -158,7 +172,9 @@ export function onSectorSlam(index: number, of: number): void {
   void of;
 }
 /** Sector Flip, Act 3: the Debrief card enters. Also its still picture (reduced motion, Instant). */
-export function onAltWinDebrief(): void {}
+export function onAltWinDebrief(): void {
+  sfx("mission-complete");
+}
 
 /** Salvage: the fifth Power Node ignites (Grid Online). */
 export function playGridOnline(): void {}
