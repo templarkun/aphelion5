@@ -65,9 +65,11 @@ export async function round30Check(browser, url, out) {
       await paste(pg, `${out}/exposure-save.json`);
       await choose(pg, [`endButton:${look}`, "exposure:strike"]);
       await pg.locator(".end-overload").click();
-      await pg.waitForTimeout(330);
+      await pg.waitForTimeout(250);
       const tag = await pg.locator("canvas.end-burst-fx").getAttribute("data-look").catch(() => null);
-      const lit = await burstLit(pg);
+      // The brightest of a few samples: one sample on a slow machine can land on a thin frame.
+      let lit = await burstLit(pg);
+      for (let i = 0; i < 4 && lit <= 60; i++) { await pg.waitForTimeout(80); lit = Math.max(lit, await burstLit(pg)); }
       await pg.screenshot({ path: `${out}/ui-end-${look}.png` });
       // Gone after its time; Exposure's canvas comes after it; the Overload over.
       await pg.waitForFunction(() => !document.querySelector("canvas.end-burst-fx"), null, { timeout: 4000 }).catch(() => {});

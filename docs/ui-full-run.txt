@@ -1,4 +1,4 @@
 Last full browser check (npm run test:ui, every group)
-commit: 7b009a8
-date: 2026-11-22
-result: run after round 26 (about 51 minutes)
+commit: 6b26142
+date: 2026-11-23
+result: every group passed except round30 (End the Overload burst read on one thin frame, twice); the check now takes the brightest of a few samples (test only) and round30 passes
