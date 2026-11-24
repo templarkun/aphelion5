@@ -55,6 +55,8 @@ export interface MissionStat {
 
 /** Everything the Campaign Debrief shows. All of it is read from the finished game (stats.ts). */
 export interface CampaignStats {
+  /** How the game ended (10.3): a won Campaign gets a victory outro, a lost or conceded one a loss outro (designer 2026-11-24). */
+  result: "won" | "lost" | "conceded";
   campaignName: string;
   /** A second line under the name (the sector designation), if any. */
   campaignNote?: string | undefined;
@@ -86,7 +88,7 @@ export interface CampaignStats {
 /** What every outro is given. */
 export interface OutroProps {
   companyTheme: CompanyTheme;
-  /** The Company's ship: picks the hull's outline ("V1", "V2"; any other id gets a plain hull). */
+  /** The Company's ship: picks the hull's outline ("V1", "V2"; any other id gets a plain hull). The loss outros never use it (generic). */
   vesselId: string;
   campaignStats: CampaignStats;
   /** "RETURN TO COMMAND DECK" was pressed. */
@@ -100,4 +102,6 @@ export interface OutroDef {
   /** One line about it. */
   note: string;
   Component: (p: OutroProps) => ReactElement;
+  /** "loss": a loss outro, played for a lost or conceded game (designer 2026-11-24); none: a victory outro. */
+  kind?: "loss" | undefined;
 }

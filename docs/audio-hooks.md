@@ -86,14 +86,30 @@ Same rules as batch 1: names exactly as below, `-2`, `-3` for versions, trim sil
 | 15 | `sfx-overhaul` | Overhaul: repair sparks run over the Flagship panel | Fixed, 0.8 s | A quick starship repair sequence: ratcheting servo tools, a few welding sparks and a rising systems-online chime at the end. |
 | 16 | `sfx-gate` | The blast doors of the logo gate (confirm Campaign / Vessel, Launch, each preparation screen) | Fixed, 2.2 s | Heavy armoured blast doors slamming shut with a deep metal boom at the very start, a humming energy lock building in the middle, then the doors grinding open with a hydraulic hiss at the end. |
 | 17 | `sfx-upgrade` | An Upgrade point lands on a card of the Upgrade sheet | Free, about 0.5 s | A satisfying upgrade install: a solid mechanical click-lock with a short bright rising synth sparkle. |
-| 18 | `sfx-mission-lost` | The game is lost or conceded (the Game over card) | Free, about 2.5 s | A sombre sci-fi defeat sting: a low falling synth tone with a distant failing engine and fading radio static. Dignified, not cartoonish. |
+| 18 | `sfx-mission-lost` | The game is lost or conceded: the last chord of either loss outro (Act 4; also their still picture) | Free, about 2.5 s | A sombre sci-fi defeat sting: a low falling synth tone with a distant failing engine and fading radio static. Dignified, not cartoonish. |
 | 19 | `ambient-field` | Under the whole game, quietly, while the Field is shown (Ambient sound slider) | Loop, 30 to 60 s | A calm deep-space command bridge ambience: soft low engine hum, faint distant electronics and air vents, very subtle, no melody, seamless loop. |
 | 20 | `music-menu` | The Command Deck menus (Music slider) | Loop, 1 to 2 min | Atmospheric orchestral-electronic sci-fi menu music: slow and confident, warm synth pads, soft pulse, a distant heroic brass motif, seamless loop, no vocals. |
 
 Ambient and music must loop without a gap: ask the AI for a "seamless loop" and send one file each (versions are fine too). They play only once their files arrive; the sliders are already there.
 
+## Batch 3: the loss outros (designer 2026-11-24)
+
+A lost or conceded game plays one of two films at random, **Signal Lost** (the tactical display failing) or **Withdrawal** (the Flagship jumps away from the lost planet); both end on `sfx-mission-lost` (batch 2, #18). These are already hooked in (`briefing/soundHooks.ts`): each plays as soon as its file is uploaded. Same rules as batch 1 and 2; add the common style to each prompt. Look at them in System options > "Play Signal Lost" / "Play Withdrawal".
+
+| # | File name | When it plays | Length | Prompt |
+|---|---|---|---|---|
+| 1 | `sfx-hostile-surge` | Signal Lost, Act 1: crimson swarms start pouring over the tactical display | Free, about 2 s | A hostile alien swarm rising on a radar: a swelling insect-like electric chitter with a low ominous drone underneath, growing closer. |
+| 2 | `sfx-signal-glitch` | Signal Lost, Act 2: the command link fails, the display tears and crackles | Fixed, about 3.3 s (gets worse to the end) | A failing hologram transmission: digital glitch stutters, crackling static bursts and dropouts that grow harsher and more broken toward the end. |
+| 3 | `sfx-beacon-lost` | Signal Lost, Act 3: the last beacon flares white and goes dark | Fixed, 0.5 s | A last beacon dying: a short bright electric flare that snaps off into silence, with a faint falling tone. |
+| 4 | `sfx-screen-off` | Signal Lost, Act 3: the display collapses to a line, then a point | Fixed, 0.9 s | An old CRT monitor switching off: a quick high-pitched collapsing whine and a soft electric pop, then nothing. |
+| 5 | `sfx-overrun` | Withdrawal, Act 1: crimson veins spread over the planet's night side | Free, about 2.5 s | A planet being overrun, heard from orbit: a deep distant rumble, muffled far-off explosions and a low hostile hum swelling. |
+| 6 | `sfx-evac-launch` | Withdrawal, Act 2: twelve evacuation craft lift off | Free, about 1.5 s | Several small shuttles launching in quick succession: overlapping short thruster ignitions and whooshes fading upward. |
+| 7 | `sfx-craft-lost` | Withdrawal, Act 2: hostile fire hits one craft and it bursts | Fixed, 0.6 s | A small shuttle hit by an energy bolt: a sharp zap and a compact distant explosion, slightly muffled, sad. |
+| 8 | `sfx-jump-charge` | Withdrawal, Act 3: the jump drive gathers light at the prow | Fixed, 1.6 s (ends on the jump) | A starship jump drive charging: a rising, accelerating energy whine with a deep pulsing throb, building tension to a peak. |
+| 9 | `sfx-jump` | Withdrawal, Act 3: the white flash, the ship stretches away and is gone | Free, about 1.5 s | A hyperspace jump: a sudden bright boom-whoosh that stretches and fades into the distance, leaving a soft ringing tail. |
+
 ## Already in place for later
 
 The briefing, intro, outro films and mission celebrations already have empty sound places in `src/web/briefing/soundHooks.ts` (about 60 of them: hover, chips, Threat level, engine hum, every celebration act). They are the next batches. The Field sounds above get the same kind of place when the files arrive.
 
-Still to make after batch 2: a unit turning, hover, the intro's engines, the outros' and celebrations' acts, more music (in the game, the Overload).
+Still to make after batches 2 and 3: a unit turning, hover, the intro's engines, the outros' and celebrations' acts, more music (in the game, the Overload).

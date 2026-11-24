@@ -1079,6 +1079,8 @@ note: Checked by tests/unit/outro.test.ts and scripts/ui-smoke.mjs (find-save.ts
       Developer-mode game with every mission won by the Developer shortcut).
 note: CHANGED 2026-11-17 (designer): the film is now Terraformer 2.0, about 15 seconds
       (T13_OUT_08). 1.0 is kept only in System options (T13_OUT_11).
+note: CHANGED 2026-11-24 (designer): a lost or conceded game no longer keeps the plain card: it
+      plays a loss outro (batch 14 T14_LOSS_01).
 
 id: T13_OUT_02
 title: The Terraformer outro, act by act

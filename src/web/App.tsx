@@ -1282,7 +1282,7 @@ function GameScreen(p: GameProps) {
             </button>
           ) : null
         ) : !q ? (
-          // Game End (10.3). A won Campaign gets its Company's outro and the Debrief (below); a loss this card.
+          // Game End (10.3). A won Campaign gets its Company's outro and the Debrief (below); a loss or a concede a loss outro (designer 2026-11-24); this card only for a game with no score.
           hasOutro(s) ? null : (
             <QCard>
               <GameOver state={s} onLeave={p.onLeave} />
@@ -1351,7 +1351,7 @@ function GameScreen(p: GameProps) {
 
 
       {missionIntro === s.mission && !prepQ && <MissionIntro data={data} state={s} onDone={() => setMissionIntro(undefined)} />}
-      {/* The outro (designer 2026-11-16): the last mission is won and scored, the Upgrade sheet closed. */}
+      {/* The outro (designer 2026-11-16): the last mission is won and scored, the Upgrade sheet closed; or the game is lost or conceded (a loss outro, 2026-11-24). */}
       {!realQ && hasOutro(real.state) && !upOpen && !win && <VictoryOutro data={data} state={real.state} onLeave={p.onLeave} />}
       {win && (
         <MissionWin

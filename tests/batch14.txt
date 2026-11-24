@@ -24,6 +24,9 @@
 # edge and a new second part for every other edge (T14_R30_04), two new edges (T14_R30_05). CHANGED
 # notes on T14_R27_04, T14_R28_02, T14_R28_03, T14_R28_04, T14_R28_10, T14_R29_03. Checked by
 # tests/unit/round30.test.ts, scripts/ui-round30.mjs, ui-round29.mjs, ui-pages.mjs, ui-looks.mjs.
+# The loss outros, 2026-11-24: a lost or conceded game plays one of two loss outros at random
+# (T14_LOSS_01), Signal Lost (T14_LOSS_02), Withdrawal (T14_LOSS_03). CHANGED notes on batch 8
+# T8_END_01 and batch 13 T13_OUT_01. Checked by tests/unit/outro.test.ts and scripts/ui-loss.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -507,3 +510,59 @@ given: new files uploaded to art/ (sfx-<name>.mp3, sfx-<name>-2.mp3 ..., ambient
 then: npm run build:audio makes small copies in art/audio/ (one channel, 96 kbps for effects,
       silence cut from both ends); only those are packed into the game. A name with no file plays
       nothing (sfx-energy until it is uploaded).
+
+################################################################################
+=== SECTION: THE LOSS OUTROS (designer 2026-11-24, screen only, no rule change) ===
+
+id: T14_LOSS_01
+title: A lost or conceded game plays a loss outro, one of two at random
+source: designer 2026-11-24 ("Make two loss / conceded outros, which work for any company, any
+        campaign, and play for either loss or player conceded, and will be chosen at random");
+        Core Rules 10.3 (unchanged)
+given: any Campaign, any Company; the game is lost (5.2 Crippled with no empty Overhaul slot, 8.1
+       no legal action) or conceded from the Menu
+then: in place of the plain "Game over" card, one of the two loss outros covers the whole page:
+      Signal Lost or Withdrawal, picked at random each time one plays (so the same game can show
+      either). The game was already scored (and its high score written) before the film; the film
+      changes nothing. Then the Campaign Debrief card (as T13_OUT_04) with the game's own numbers;
+      under the Campaign's name it says "Campaign lost" or "Campaign conceded"; no "+5". "Return
+      to Command Deck" plays the logo gate and goes back to the briefing, no game left to resume.
+      "Tap twice to skip", the speed setting and reduced motion (one still picture, the card at
+      once) work as in the victory outros. A loss and a concede show the same film; only a few
+      caption words differ ("Hostile forces breaching the perimeter" / "Withdrawal ordered ·
+      sectors abandoned"; "The sector is overrun" / "Retreat ordered · the sector is abandoned").
+      The Company lends only its name and colours: no Company's ship outline, no Campaign's map.
+      The captions and the Debrief's accent are a muted crimson for every Company.
+note: Checked by tests/unit/outro.test.ts and scripts/ui-loss.mjs (browser group "outro": a game
+      conceded from the Menu).
+
+id: T14_LOSS_02
+title: Signal Lost
+source: designer 2026-11-24
+given: the loss outro Signal Lost plays (or System options > "Play Signal Lost")
+then: about 10.4 seconds on the Flagship's holographic tactical display, a tilted hexagonal sector
+      of 61 hexes held in the Company's colour. Act 1 "Perimeter collapse" (0-2.8 s): crimson
+      swarms of particles pour in from beyond the edge, the outer hexes fall to crimson one by one
+      with a spray of sparks, the outer ring first. Act 2 "Command link failing" (2.8-5.6 s): the
+      display tears (slices shift sideways, a ghost image, static, blackout frames), the telemetry
+      counts the sectors held and the uplink down. Act 3 "Signal lost" (5.6-8.0 s): the last
+      beacon in the middle flares white and goes dark at 6.3 s; the display collapses to a white
+      line, then a point (6.8-7.7 s). Act 4 "Silence": the dark, a few rising embers, a faint
+      flickering "NO SIGNAL"; the Debrief slides in at 8.6 s and the picture moves into the part
+      it leaves open. Sound hooks: hostile surge, signal glitch, beacon lost, screen off, and the
+      last chord (batch 2's mission-lost) at 8.0 s.
+
+id: T14_LOSS_03
+title: Withdrawal
+source: designer 2026-11-24
+given: the loss outro Withdrawal plays (or System options > "Play Withdrawal")
+then: about 11 seconds from high orbit. Act 1 "Sector overrun" (0-3 s): the planet's night side,
+      its rim burning; crimson veins (streams of particles) spread over it from three fires, and
+      the Company's lights on the ground flicker and go out as they are reached. Act 2
+      "Evacuation" (3-6 s): twelve craft climb from the surface to the Flagship (a plain long
+      hull in the Company's colours, damaged and burning), hostile flak climbs and misses, one
+      craft is hit and bursts; 11 craft aboard. Act 3 "Emergency jump" (6-8.6 s): the jump drive
+      gathers light at the prow (particles spiralling in), a flash at 7.7 s, the ship stretches
+      away to the right and is gone, a ring of particles behind it. Act 4 "Aftermath": the planet
+      glowing crimson, debris drifting by; the Debrief slides in at 9.2 s. Sound hooks: overrun,
+      evacuation launch, craft lost, jump charge, jump, and the last chord (mission-lost) at 8.6 s.

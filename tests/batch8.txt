@@ -156,6 +156,10 @@ note: CHANGED 2026-11-16 (designer, the outro): a WON game shows its Company's o
       the same score, its parts (Threat columns per mission as cells, the total, +5, -2 for
       Heat) and "New high score"; "Return to Command Deck" goes back to the menu. A lost or
       conceded game shows the plain card as written here.
+note: CHANGED 2026-11-24 (designer, the loss outros): a lost or conceded game now plays one of
+      the two loss outros at random and then the same Debrief card, which says "Campaign lost"
+      or "Campaign conceded" (batch 14 T14_LOSS_01-03). The plain card is left only for a game
+      with no score.
 
 id: T8_PHN_01
 title: Phones

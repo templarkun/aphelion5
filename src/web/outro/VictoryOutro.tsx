@@ -1,6 +1,7 @@
 /**
- * Game End after the last mission is won (Core Rules 10.3): the outro of the player's Company
- * (index.ts says which) with the numbers of the finished game, over the whole page. "RETURN TO
+ * Game End (Core Rules 10.3): after the last mission is won, the outro of the player's Company
+ * (index.ts says which); after a loss or a concede, one of the two loss outros at random (designer
+ * 2026-11-24, LossOutro.tsx); with the numbers of the finished game, over the whole page. "RETURN TO
  * COMMAND DECK" plays the logo gate (briefing/Gate.tsx) and goes back to the menu behind it.
  * Also the preview of an outro with made-up numbers (System options > Play the outro).
  * Screen only: the game is already over and scored when this shows.
@@ -11,19 +12,21 @@ import { createPortal } from "react-dom";
 import type { GameData } from "../../data/index.js";
 import type { GameState } from "../../engine/state.js";
 import { gateBusy, runGate } from "../briefing/Gate.js";
-import { outroFor } from "./index.js";
+import { lossOutroFor, LOSS_OUTROS, outroFor } from "./index.js";
 import { campaignStatsOf, sampleStats } from "./stats.js";
 import { companyTheme } from "./themes.js";
 import type { CampaignStats } from "./types.js";
 
-/** Does this finished game get an outro? Only a won Campaign; a loss or a concede keeps the plain Game over card. */
+/** Does this finished game get an outro? Every scored game: a won Campaign its victory outro, a loss or a concede a loss outro (designer 2026-11-24). */
 export function hasOutro(state: GameState): boolean {
-  return state.ending !== undefined && state.outcome?.result === "won";
+  return state.ending !== undefined && state.outcome !== undefined;
 }
 
 function Show({ company, stats, preview, outro, onLeave }: { company: string; stats: CampaignStats; preview?: boolean; outro?: string | undefined; onLeave: () => void }) {
   const theme = useMemo(() => companyTheme(company), [company]);
-  const { Component, name } = outroFor(company, outro);
+  // A loss: one of the two loss outros, picked once at random when the page opens (or the one previewed).
+  const pick = useMemo(() => (stats.result === "won" ? outroFor(company, outro) : lossOutroFor(outro)), [stats.result, company, outro]);
+  const { Component, name } = pick;
   if (typeof document === "undefined") return null;
   return createPortal(
     <>
@@ -51,6 +54,8 @@ export function VictoryOutro({ data, state, onLeave }: { data: GameData; state: 
 
 /** `outro`: which one to show (System options lists them all); none: the Company's own. */
 export function OutroPreview({ data, campaign, company, outro, onClose }: { data: GameData; campaign: string; company: string; outro?: string | undefined; onClose: () => void }) {
-  const stats = useMemo(() => sampleStats(data, campaign, company), [data, campaign, company]);
+  // A loss outro is previewed as a lost game (sample numbers: two missions done).
+  const loss = LOSS_OUTROS.some((o) => o.id === outro);
+  const stats = useMemo(() => sampleStats(data, campaign, company, loss ? "lost" : "won"), [data, campaign, company, loss]);
   return <Show company={company} stats={stats} preview outro={outro} onLeave={onClose} />;
 }

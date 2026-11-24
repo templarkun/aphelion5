@@ -10,6 +10,7 @@ import { round25Check as runRound25Check } from "./ui-round25.mjs";
 import { round26Check as runRound26Check } from "./ui-round26.mjs";
 import { round29Check as runRound29Check } from "./ui-round29.mjs";
 import { round30Check as runRound30Check } from "./ui-round30.mjs";
+import { lossCheck as runLossCheck } from "./ui-loss.mjs";
 import { soundCheck as runSoundCheck } from "./ui-sound.mjs";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
@@ -1320,7 +1321,7 @@ if (runs("outro") && existsSync(`${out}/won-save.json`)) {
     await pg.goto(url);
     await briefAt(pg, "campaign");
     await pg.getByRole("button", { name: "System options" }).click();
-    const listed = await pg.locator("[data-action=outro-preview]").count();
+    const listed = await pg.locator("[data-action=outro-preview]").count(); // 4 victory outros + 2 loss outros (2026-11-24)
     await pg.locator(`[data-action=outro-preview][data-outro-id=${version}]`).click();
     const shown = await pg.waitForSelector(`[data-outro=${version}]`, { timeout: 4000 }).then(() => true, () => false);
     const badge = await pg.locator(".ou-preview").count();
@@ -1343,7 +1344,7 @@ if (runs("outro") && existsSync(`${out}/won-save.json`)) {
     await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 6000 }).catch(() => {});
     const back = (await pg.locator("[data-outro]").count()) === 0 && (await pg.locator('.brief[data-step=campaign]').count()) === 1;
     await pg.close();
-    if (!(shown && listed === 4 && badge === 1 && act === "1" && debrief && back)) fails.push(`preview of ${version} in ${style}: shown ${shown}, listed ${listed}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
+    if (!(shown && listed === 6 && badge === 1 && act === "1" && debrief && back)) fails.push(`preview of ${version} in ${style}: shown ${shown}, listed ${listed}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
   }
   // Surface Terraform (designer 2026-11-19), from System options: at 1400 px the whole film untouched (four acts in order, three
   // spires firing, the Debrief by itself beside the valley at about 10.6 s); at 1100 px pictures of it on its way (nothing timed);
@@ -1520,6 +1521,7 @@ if (runs("outro") && existsSync(`${out}/won-save.json`)) {
   outroCheck = fails.length ? `failed (${fails.join(" | ")})` : "ok";
 }
 // The statistics page and the Campaign editor (designer 2026-11-18): scripts/ui-pages.mjs.
+const lossCheck = runs("outro") ? await runLossCheck(browser, url, out) : "skipped (not asked for)";
 const pagesCheck = runs("pages") ? await runPagesCheck(browser, url, out) : "skipped (not asked for)";
 // The mission celebrations (designer 2026-11-20): scripts/ui-celebrate.mjs.
 const celebrateCheck = runs("celebrate") ? await runCelebrateCheck(browser, url, out) : "skipped (not asked for)";
@@ -1532,12 +1534,12 @@ const round26Check = runs("round26") ? await runRound26Check(browser, url, out) 
 const round29Check = runs("round29") ? await runRound29Check(browser, url, out) : "skipped (not asked for)";
 const round30Check = runs("round30") ? await runRound30Check(browser, url, out) : "skipped (not asked for)";
 const soundCheck = runs("sound") ? await runSoundCheck(browser, url, out) : "skipped (not asked for)";
-console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, round29Check, round30Check, soundCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck }));
+console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, lossCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, round29Check, round30Check, soundCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
 // A group not asked for passes; its checks keep their "skipped" value in the report above.
 const game = runs("game");
 const gameChecks = [rowCheck, energyCheck, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck];
 const gameOk = !game || (gameChecks.every((x) => x === "ok") && noMenu && rotateShown && !!facingKept && closedByOutside && bubbles && raised && breathing && (tapThrough === "ok" || tapThrough === "only one Dark sector") && !!popupTitle?.startsWith("Dark sector") && scrollW <= 390);
-const groupOk = [["intro", introCheck], ["intro", styleCheck], ["outro", outroCheck], ["pages", pagesCheck], ["celebrate", celebrateCheck], ["looks", looksCheck], ["round23", round23Check], ["round24", round24Check], ["round25", round25Check], ["round26", round26Check], ["round29", round29Check], ["round30", round30Check], ["sound", soundCheck]].every(([g, x]) => !runs(g) || x === "ok");
+const groupOk = [["intro", introCheck], ["intro", styleCheck], ["outro", outroCheck], ["outro", lossCheck], ["pages", pagesCheck], ["celebrate", celebrateCheck], ["looks", looksCheck], ["round23", round23Check], ["round24", round24Check], ["round25", round25Check], ["round26", round26Check], ["round29", round29Check], ["round30", round30Check], ["sound", soundCheck]].every(([g, x]) => !runs(g) || x === "ok");
 if (errors.length || !gameOk || !groupOk) process.exit(1);

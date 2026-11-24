@@ -2,7 +2,8 @@
 
 What the player sees at Game End (Core Rules 10.3) after the last mission is won: a short film,
 then the Campaign Debrief card with the final score. Screen only: no rule lives here. A lost or
-conceded game still gets the plain "Game over" card.
+conceded game plays one of the two loss outros at random (designer 2026-11-24, below), then the
+same Debrief card ("Campaign lost" / "Campaign conceded").
 
 There will be several outros, one planned per Company. Which Company gets which is the designer's
 choice: `OUTRO_OF_COMPANY` in `index.ts` (empty for now, so every Company gets `DEFAULT_OUTRO`).
@@ -14,12 +15,26 @@ choice: `OUTRO_OF_COMPANY` in `index.ts` (empty for now, so every Company gets `
 | `orbital` | Orbital Claim (designer 2026-11-19), System options only for now. No terraforming: a corporate-military claim. From low orbit over the night side of the intro's planet a beacon beam in the Company's colour climbs from the liberated sector into space; the camera rises along it as the Company's Flagship (a lit solid in the Company's outline from the Vessel screen) glides in and locks its belly clamps on the beam with a flash; twelve relay satellites snap into a lattice and a hexagonal territory grid sweeps over the curve of the ground, "ASSET SECURED"; a slow orbital drift while the Debrief slides in. About 11.5 seconds. |
 | `terraformer` | Terraformer 1.0, kept as it was to compare (System options only). Bay doors, one pylon per mission won falls through the air, each hit sends a shock wave over the ground and turns it into a lit sector in the Company's colours; the sun rises. About 11.5 seconds. |
 
+## The loss outros (designer 2026-11-24)
+
+`LOSS_OUTROS` in `index.ts`; one is picked at random each time (`lossOutroFor`, `pickLossOutro` in
+`loss/timeline.ts`). Generic: the same for every Company and Campaign (the Company lends only its
+name and colours; a plain hull, no Company outline, no Campaign map), the same for a loss and a
+concede (a few caption words differ, `stats.result`). One page for both, `LossOutro.tsx` (captions,
+cues, "Tap twice to skip", the Debrief); captions and the card's accent a muted crimson
+(`LOSS_ACCENT`, `.ou-loss` in outro.css).
+
+| Outro | What it is |
+| --- | --- |
+| `signal` | Signal Lost, about 10.4 s (`loss/signal.ts`): the Flagship's tactical display, a tilted sector of 61 hexes in the Company's colour; crimson swarms pour in and the hexes fall, outer ring first; the link fails and the display tears (slices, ghost, static, blackouts); the last beacon dies and the display collapses to a line, then a point; "NO SIGNAL", embers. |
+| `withdrawal` | Withdrawal, about 11 s (`loss/withdrawal.ts`): high orbit over the planet's night side; crimson veins (particle streams) spread and the Company's lights go out; twelve craft climb to the Flagship under fire, one is lost; the jump drive gathers light, a flash, the ship is gone; debris over the burning world. |
+
 ## What every outro is given (`types.ts`)
 
 ```
 companyTheme    the Company's colours (themes.ts: placeholders the designer can change)
 vesselId        the Company's id: picks the ship's outline
-campaignStats   everything the Debrief shows, read from the finished game (stats.ts)
+campaignStats   everything the Debrief shows, read from the finished game (stats.ts); `result` won / lost / conceded
 onComplete      called when "RETURN TO COMMAND DECK" is pressed
 ```
 
@@ -55,6 +70,11 @@ surface/sky.ts               Surface: the cold sky, sun and moons, the dust-stor
 surface/scene.ts             Surface: the film: camera pan, layers far to near dissolved in the air, brutalist spires, ion plumes, vapour, water, dust, mist, rain, light shafts, lens flare, grain
 surface/telemetry.ts         Surface: the recon feed's readouts, worked out from the time alone
 OrbitalClaimOutro.tsx        Orbital Claim: the same page with the orbital film
+LossOutro.tsx                the two loss outros' page (Signal Lost, Withdrawal)
+loss/timeline.ts             both loss films' seconds, the random pick, the display's sectors, the craft
+loss/kit.ts                  light sprites, grain, vignette, where the picture's middle goes once the card is in
+loss/signal.ts               Signal Lost: the display, swarms, falls, the tear, the collapse
+loss/withdrawal.ts           Withdrawal: planet, veins, lights, the plain hull, craft, flak, jump, debris
 orbital/timeline.ts          Orbital: when things happen (seconds)
 orbital/globe.ts             Orbital: the intro's planet for a moving camera; the sector's place on it; points of the grid on the ground
 orbital/flagship.ts          Orbital: the Company's Flagship as a lit solid, in its outline from the Vessel screen; the clamps, the thrusters
@@ -87,7 +107,9 @@ at the right moments (`playBayDoorsOpen`, `playReentryStreak`, `playTerraformSho
 `playVictoryResolve`, for 2.0 `playRetroThrust`, for Surface Terraform `playSpireIgnition` (once
 per spire; the far beams are silent), `playAtmosphereClear`, `playWaterFlow` and `playVictoryResolve`,
 for Orbital Claim `playSkyBeamFire`, `playOrbitalLock`, `playGridSweep` and `playVictoryResolve`);
-fill them in when there are audio files.
+fill them in when there are audio files. The loss outros' hooks are already wired to audio batch 3
+names (`docs/audio-hooks.md`) and end with `playDefeatResolve` (`sfx-mission-lost`).
 
 To look at an outro without playing a Campaign: System options (the gear) > "Play Terraformer 2.0",
-"Play Surface Terraform", "Play Orbital Claim" or "Play Terraformer 1.0".
+"Play Surface Terraform", "Play Orbital Claim" or "Play Terraformer 1.0"; the loss outros "Play
+Signal Lost" and "Play Withdrawal" (sample numbers of a lost game).

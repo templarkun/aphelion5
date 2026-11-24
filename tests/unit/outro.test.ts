@@ -4,7 +4,9 @@ import { expect, test } from "vitest";
 import { newRng } from "../../src/engine/rng.js";
 import { playAnswer, startGame, type Game } from "../../src/engine/save.js";
 import { emptyProfile } from "../../src/engine/state.js";
-import { DEFAULT_OUTRO, OUTROS, outroFor } from "../../src/web/outro/index.js";
+import { DEFAULT_OUTRO, LOSS_OUTROS, lossOutroFor, OUTROS, outroFor } from "../../src/web/outro/index.js";
+import * as LS from "../../src/web/outro/loss/timeline.js";
+import { pickLossOutro } from "../../src/web/outro/loss/timeline.js";
 import { newEvents, type GameEvent } from "../../src/engine/events.js";
 import { campaignStatsOf, overloadsOf, sampleStats } from "../../src/web/outro/stats.js";
 import { ACT_AT, actAt, DEBRIEF_AT, DOORS_AT, DOORS_OPEN_AT, FILM_SECONDS, impactsBy, impactTimes, LAST_IMPACT, pylonCount, REENTRY_AT, releaseTimes, RESOLVE_AT, sitePlaces } from "../../src/web/outro/terraformer/timeline.js";
@@ -182,14 +184,99 @@ test("the game counts its own numbers from its events: Overloads, Module runs, u
   }
 });
 
-test("a conceded or lost game has no outro: it keeps the plain Game over card", () => {
+// CHANGED 2026-11-24 (designer): a lost or conceded game now plays a loss outro (was: the plain Game over card).
+test("a conceded or lost game gets a loss outro, with the Debrief saying how it ended", () => {
   const g = playToEnd(4, 2);
   const s = g.view.state;
   expect(s.outcome?.result).toBe("conceded");
   expect(s.ending).toBeDefined();
-  expect(hasOutro(s)).toBe(false);
-  // The numbers still read: two missions completed.
-  expect(campaignStatsOf(data(), s).missions.length).toBe(2);
+  expect(hasOutro(s)).toBe(true);
+  // The numbers still read: two missions completed, no "+5" for the whole campaign.
+  const st = campaignStatsOf(data(), s);
+  expect(st.result).toBe("conceded");
+  expect(st.missions.length).toBe(2);
+  expect(st.scoreParts.some((p) => /whole campaign/.test(p))).toBe(false);
+  expect(campaignStatsOf(data(), playToEnd(3).view.state).result).toBe("won");
+});
+
+test("the two loss outros: for any Company and any Campaign, one of the two at random", () => {
+  expect(LOSS_OUTROS.map((o) => o.id)).toEqual(["signal", "withdrawal"]);
+  expect(LOSS_OUTROS.every((o) => o.kind === "loss")).toBe(true);
+  // Random: both come up; r below a half Signal Lost, from a half Withdrawal.
+  expect(lossOutroFor(undefined, 0).id).toBe("signal");
+  expect(lossOutroFor(undefined, 0.49).id).toBe("signal");
+  expect(lossOutroFor(undefined, 0.5).id).toBe("withdrawal");
+  expect(lossOutroFor(undefined, 0.999).id).toBe("withdrawal");
+  const seen = new Set(Array.from({ length: 200 }, () => pickLossOutro()));
+  expect([...seen].sort()).toEqual(["signal", "withdrawal"]);
+  // Named (System options preview): that one, whatever the Company.
+  for (const c of ["V1", "V2", "V9"]) {
+    expect(lossOutroFor("withdrawal").id).toBe("withdrawal");
+    expect(outroFor(c, "signal").id).toBe("signal");
+    // A victory never picks a loss outro by itself.
+    expect(outroFor(c).kind).toBeUndefined();
+  }
+  // Their preview numbers are a lost game's.
+  const st = sampleStats(data(), "C1", "V1", "lost");
+  expect(st.result).toBe("lost");
+  expect(st.missions.length).toBe(2);
+  expect(st.score).toBe(st.threatLevelsConquered - 2);
+  expect(st.highScore).toBeUndefined();
+});
+
+test("Signal Lost: about 10 s in four acts; the outer sectors fall first, the middle beacon last; the link fails to 0", () => {
+  expect(LS.SIGNAL.FILM_SECONDS).toBeGreaterThanOrEqual(9);
+  expect(LS.SIGNAL.FILM_SECONDS).toBeLessThanOrEqual(12);
+  const at = LS.SIGNAL.ACT_AT;
+  expect(LS.actOf(at, LS.SIGNAL.BREACH_AT)).toBe(1);
+  expect(LS.actOf(at, LS.SIGNAL.GLITCH_AT)).toBe(2);
+  expect(LS.actOf(at, LS.SIGNAL.LAST_AT)).toBe(3);
+  expect(LS.actOf(at, LS.SIGNAL.COLLAPSE_AT)).toBe(3);
+  expect(LS.actOf(at, LS.SIGNAL.RESOLVE_AT)).toBe(4);
+  expect(LS.SIGNAL.DEBRIEF_AT).toBeGreaterThan(LS.SIGNAL.RESOLVE_AT);
+  expect(LS.SIGNAL.DEBRIEF_AT).toBeLessThan(LS.SIGNAL.FILM_SECONDS);
+  const sec = LS.displaySectors();
+  expect(sec.length).toBe(61);
+  const falls = LS.fallTimes();
+  for (let i = 0; i < sec.length; i++)
+    for (let j = 0; j < sec.length; j++) if (sec[i]!.ring > sec[j]!.ring) expect(falls[i]!).toBeLessThan(falls[j]!);
+  expect(Math.max(...falls)).toBe(LS.SIGNAL.LAST_AT);
+  expect(LS.heldAt(0)).toBe(61);
+  expect(LS.heldAt(LS.SIGNAL.LAST_AT)).toBe(0);
+  expect(LS.uplinkAt(0)).toBe(100);
+  expect(LS.uplinkAt(LS.SIGNAL.LAST_AT)).toBe(0);
+  for (let t = 0; t < 9; t += 0.1) expect(LS.uplinkAt(t + 0.1)).toBeLessThanOrEqual(LS.uplinkAt(t));
+  expect(LS.glitchAt(LS.SIGNAL.GLITCH_AT - 0.01)).toBe(0);
+  expect(LS.glitchAt(LS.SIGNAL.GLITCH_FULL)).toBe(1);
+});
+
+test("Withdrawal: about 11 s in four acts; the craft climb in Act 2 (one lost), the jump in Act 3, and the veins spread", () => {
+  const W = LS.WITHDRAW;
+  expect(W.FILM_SECONDS).toBeGreaterThanOrEqual(9);
+  expect(W.FILM_SECONDS).toBeLessThanOrEqual(12);
+  expect(LS.actOf(W.ACT_AT, W.OVERRUN_AT)).toBe(1);
+  expect(LS.actOf(W.ACT_AT, W.CRAFT_AT)).toBe(2);
+  for (let k = 0; k < W.CRAFTS; k++) {
+    expect(LS.actOf(W.ACT_AT, LS.craftLaunch(k))).toBe(2);
+    expect(LS.craftEnd(k)).toBeLessThan(W.JUMP_AT);
+  }
+  expect(LS.aboardBy(W.CRAFT_AT)).toBe(0);
+  expect(LS.aboardBy(W.JUMP_AT)).toBe(W.CRAFTS - 1);
+  expect(LS.actOf(W.ACT_AT, W.CHARGE_AT)).toBe(3);
+  expect(LS.actOf(W.ACT_AT, W.JUMP_AT)).toBe(3);
+  expect(LS.actOf(W.ACT_AT, W.RESOLVE_AT)).toBe(4);
+  expect(W.DEBRIEF_AT).toBeLessThan(W.FILM_SECONDS);
+  expect(LS.veinReach(0)).toBe(0);
+  expect(LS.veinReach(W.VEINS_FULL)).toBe(1);
+  for (let t = 0; t < 9; t += 0.25) expect(LS.veinReach(t + 0.25)).toBeGreaterThanOrEqual(LS.veinReach(t));
+});
+
+test("the loss outros call their own sound hooks; the last chord is batch 2's mission-lost", () => {
+  for (const f of [sound.playHostileSurge, sound.playSignalGlitch, sound.playBeaconLost, sound.playScreenCollapse, sound.playSectorOverrun, sound.playEvacLaunch, sound.playCraftLost, sound.playJumpCharge, sound.playJumpFlash, sound.playDefeatResolve]) {
+    expect(typeof f).toBe("function");
+    expect(() => f()).not.toThrow();
+  }
+  expect(sound.playDefeatResolve.toString()).toMatch(/mission-lost/);
 });
 
 test("every Company gets an outro (Terraformer 2.0 until the designer deals them out; Surface Terraform, Orbital Claim and 1.0 in System options) and colours", () => {

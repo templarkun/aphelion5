@@ -21,6 +21,8 @@ const typeRgb = (type: string) => {
   return `${(c >> 16) & 255} ${(c >> 8) & 255} ${c & 255}`;
 };
 const s = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+/** The line under the Campaign's name: how the game ended (10.3). */
+const RESULT_NOTE = { won: "Campaign complete", lost: "Campaign lost", conceded: "Campaign conceded" } as const;
 
 /** The number runs up to the score when the card comes in. */
 function useCountUp(to: number, on: boolean, still: boolean): number {
@@ -70,12 +72,12 @@ export function Debrief({ cardRef, stats, shown, still, back, onBack }: { cardRe
   const destroyed = DESTROYED_TYPES.reduce((n, k) => n + stats.destroyed[k], 0);
   const runs = stats.modules.reduce((n, m) => n + m.runs, 0);
   return (
-    <aside ref={cardRef} className={`ou-card ${shown ? "in" : ""}`} data-debrief={shown ? "1" : "0"} aria-hidden={!shown} aria-label="Campaign debrief">
+    <aside ref={cardRef} className={`ou-card ${shown ? "in" : ""}`} data-debrief={shown ? "1" : "0"} aria-hidden={!shown} aria-label="Campaign debrief" data-result={stats.result}>
       <div className="ou-card-body">
         <header className="ou-head">
           <div className="ou-label">Campaign debrief</div>
           <h2 className="ou-title">{stats.campaignName}</h2>
-          <div className="ou-note">{[stats.campaignNote, "Campaign complete"].filter(Boolean).join(" · ")}</div>
+          <div className="ou-note">{[stats.campaignNote, RESULT_NOTE[stats.result]].filter(Boolean).join(" · ")}</div>
         </header>
 
         <section className="ou-score" aria-label={`Final score ${stats.score}`}>

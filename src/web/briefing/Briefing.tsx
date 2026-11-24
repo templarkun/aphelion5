@@ -7,7 +7,7 @@
 
 import { SoundSettings } from "../SoundSettings.js";
 import { CELEBRATION_PREVIEWS, type PreviewWhat } from "../celebrate/previewBoards.js";
-import { DEFAULT_OUTRO, OUTROS } from "../outro/index.js";
+import { DEFAULT_OUTRO, LOSS_OUTROS, OUTROS } from "../outro/index.js";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { BarChart3, Check, Sparkles, ChevronLeft, ChevronRight, Hexagon, Play, Rocket, Settings, X } from "lucide-react";
 import type { GameData } from "../../data/index.js";
@@ -318,6 +318,13 @@ export function Briefing(p: BriefingProps) {
                     </button>
                   ))}
                   <p className="text-[14px] text-sky-100">A preview with sample numbers. It uses the Company chosen on the Vessel step. A won Campaign plays {OUTROS.find((o) => o.id === DEFAULT_OUTRO)?.name}.</p>
+                  <div className="bf-label mt-2">Outro · a lost or conceded game</div>
+                  {LOSS_OUTROS.map((o) => (
+                    <button key={o.id} type="button" className="bf-btn" data-action="outro-preview" data-outro-id={o.id} onClick={() => (setDrawer(false), p.onPreviewOutro?.(campaign, company, o.id))}>
+                      Play {o.name} ({co.name})
+                    </button>
+                  ))}
+                  <p className="text-[14px] text-sky-100">A lost or conceded game plays one of these two at random, for any Company and any Campaign.</p>
                 </>
               )}
               {p.onPreviewCelebration && (

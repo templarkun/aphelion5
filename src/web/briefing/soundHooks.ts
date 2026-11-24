@@ -87,6 +87,51 @@ export function playOrbitalLock(): void {}
 /** Act 3: the hexagonal territory grid sweeps out over the region. */
 export function playGridSweep(): void {}
 /**
+ * The loss outros (designer 2026-11-24; src/web/outro/LossOutro.tsx): a lost or conceded game, one of
+ * the two at random. Both end with playDefeatResolve. The names are audio batch 3 (docs/audio-hooks.md):
+ * each plays nothing until its file is uploaded.
+ */
+/** Signal Lost, Act 1: the hostile swarms start to pour in over the tactical display. */
+export function playHostileSurge(): void {
+  sfx("hostile-surge");
+}
+/** Signal Lost, Act 2: the command link starts to fail; the display tears and crackles with static. */
+export function playSignalGlitch(): void {
+  sfx("signal-glitch");
+}
+/** Signal Lost, Act 3: the last beacon in the middle of the display flares and goes dark. */
+export function playBeaconLost(): void {
+  sfx("beacon-lost");
+}
+/** Signal Lost, Act 3: the display collapses to a line, then a point, like an old screen switched off. */
+export function playScreenCollapse(): void {
+  sfx("screen-off");
+}
+/** Withdrawal, Act 1: the enemy's veins start to spread over the planet's night side (a low rumble). */
+export function playSectorOverrun(): void {
+  sfx("overrun");
+}
+/** Withdrawal, Act 2: the evacuation craft lift off from the surface. */
+export function playEvacLaunch(): void {
+  sfx("evac-launch");
+}
+/** Withdrawal, Act 2: hostile fire hits one evacuation craft on its way up. */
+export function playCraftLost(): void {
+  sfx("craft-lost");
+}
+/** Withdrawal, Act 3: the Flagship's jump drive starts to gather light at the prow. */
+export function playJumpCharge(): void {
+  sfx("jump-charge");
+}
+/** Withdrawal, Act 3: the jump: a white flash and the ship is gone. */
+export function playJumpFlash(): void {
+  sfx("jump");
+}
+/** Both loss outros, Act 4: the last sombre chord before the Debrief (batch 2's mission-lost). Also their still picture (reduced motion, Instant). */
+export function playDefeatResolve(): void {
+  sfx("mission-lost");
+}
+/**
  * Mission celebrations (designer 2026-11-20, src/web/celebrate/). The kill, Alpha Down: the last
  * required Omega unit is destroyed.
  */

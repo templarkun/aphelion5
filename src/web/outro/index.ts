@@ -11,6 +11,8 @@ import { TerraformerVictoryOutro } from "./TerraformerVictoryOutro.js";
 import { TerraformerVictoryOutro2 } from "./TerraformerVictoryOutro2.0.js";
 import { SurfaceTerraformOutro } from "./SurfaceTerraformOutro.js";
 import { OrbitalClaimOutro } from "./OrbitalClaimOutro.js";
+import { SignalLostOutro, WithdrawalOutro } from "./LossOutro.js";
+import { pickLossOutro } from "./loss/timeline.js";
 import type { OutroDef } from "./types.js";
 
 export type { CampaignStats, CompanyTheme, MissionStat, ModuleStat, OutroDef, OutroProps } from "./types.js";
@@ -51,7 +53,35 @@ export const DEFAULT_OUTRO = "terraformer2";
 /** Company id -> outro id. THE DESIGNER'S CHOICE, still open: empty until they say. */
 export const OUTRO_OF_COMPANY: Record<string, string> = {};
 
+/**
+ * The loss outros (designer 2026-11-24): a lost or conceded game plays one of these, picked at random
+ * each time (`lossOutroFor`). Generic: the same for every Company and every Campaign, for a loss and a
+ * concede alike.
+ */
+export const LOSS_OUTROS: OutroDef[] = [
+  {
+    id: "signal",
+    name: "Signal Lost",
+    note: "The Flagship's tactical display: hostile swarms pour in and the sectors fall to crimson one by one; the command link fails, the display tears; the last beacon goes dark and the screen collapses to a point.",
+    Component: SignalLostOutro,
+    kind: "loss",
+  },
+  {
+    id: "withdrawal",
+    name: "Withdrawal",
+    note: "High orbit over the lost planet: crimson veins spread over the night side, evacuation craft climb to the Flagship under fire, the jump drive gathers light and the ship is gone; debris drifts over the burning world.",
+    Component: WithdrawalOutro,
+    kind: "loss",
+  },
+];
+
 export function outroFor(companyId: string, outroId?: string): OutroDef {
   const byId = (id: string | undefined) => OUTROS.find((o) => o.id === id);
-  return byId(outroId) ?? byId(OUTRO_OF_COMPANY[companyId]) ?? byId(DEFAULT_OUTRO) ?? OUTROS[0]!;
+  const any = LOSS_OUTROS.find((o) => o.id === outroId);
+  return byId(outroId) ?? any ?? byId(OUTRO_OF_COMPANY[companyId]) ?? byId(DEFAULT_OUTRO) ?? OUTROS[0]!;
+}
+
+/** A lost or conceded game: the loss outro named (System options), else one of the two at random; `r` in 0..1. */
+export function lossOutroFor(outroId?: string, r?: number): OutroDef {
+  return LOSS_OUTROS.find((o) => o.id === outroId) ?? LOSS_OUTROS.find((o) => o.id === pickLossOutro(r))!;
 }

@@ -49,6 +49,7 @@ export function campaignStatsOf(data: GameData, state: GameState): CampaignStats
     .sort(moduleOrder);
   const st = state.stats;
   return {
+    result: state.outcome?.result ?? "lost",
     campaignName: lore.title || (n ? `Campaign ${n}` : state.campaign),
     campaignNote: lore.sector || undefined,
     vesselName: data.companies.byId.get(state.player.company)?.name ?? state.player.company,
@@ -75,8 +76,9 @@ function moduleOrder(a: ModuleStat, b: ModuleStat): number {
 /**
  * Made-up numbers for looking at an outro without playing a Campaign (System options > "Play the
  * outro"): a won Campaign 1 with the Company chosen in the briefing. Never shown as a real result.
+ * `result` "lost" or "conceded" (the loss outros' preview): the first two missions done, then the end.
  */
-export function sampleStats(data: GameData, campaign: string, company: string): CampaignStats {
+export function sampleStats(data: GameData, campaign: string, company: string, result: CampaignStats["result"] = "won"): CampaignStats {
   const camp = data.campaigns.find((c) => c.prefix === campaign) ?? data.campaigns[0]!;
   const lore = CAMPAIGN_LORE[camp.prefix] ?? FALLBACK_LORE;
   // One mission per number (the first route of each pair), Threat Levels 1-4 in turn.
@@ -88,12 +90,15 @@ export function sampleStats(data: GameData, campaign: string, company: string): 
     const label = missionLabel(m);
     missions.push({ id: m.id, label, tag: label.replace(/^Mission\s*/, "M"), threat: ["A", "B", "C", "D"].slice(0, 1 + (missions.length % 4)) });
   }
+  const won = result === "won";
+  if (!won) missions.splice(2);
   const modules: ModuleStat[] = data.modules.modules
     .filter((_, i) => i % 9 === 0 || i === 40)
     .map((d, i) => ({ id: d.id, name: d.name, colour: d.colour, runs: [6, 3, 11, 0, 4, 8, 2, 5, 1, 7][i % 10]!, held: d.id !== data.modules.modules[40]?.id }))
     .sort(moduleOrder);
   const threat = missions.reduce((sum, m) => sum + m.threat.length, 0);
   return {
+    result,
     campaignName: lore.title || camp.prefix,
     campaignNote: lore.sector || undefined,
     vesselName: data.companies.byId.get(company)?.name ?? company,
@@ -107,8 +112,8 @@ export function sampleStats(data: GameData, campaign: string, company: string): 
     triggered: { Omega: 9, Sentinel: 21, Flare: 34, Sleeper: 5 },
     drained: 14,
     // As the engine scores it (campaign.ts): playing with the Heat module costs 2.
-    score: threat + 5 - 2,
-    scoreParts: [...missions.map((m) => `${m.id}: ${m.threat.length} Threat column${m.threat.length === 1 ? "" : "s"} (+${m.threat.length})`), "the whole campaign completed (+5)", "Heat module (-2)"],
-    highScore: "fresh",
+    score: threat + (won ? 5 : 0) - 2,
+    scoreParts: [...missions.map((m) => `${m.id}: ${m.threat.length} Threat column${m.threat.length === 1 ? "" : "s"} (+${m.threat.length})`), ...(won ? ["the whole campaign completed (+5)"] : []), "Heat module (-2)"],
+    highScore: won ? "fresh" : undefined,
   };
 }
