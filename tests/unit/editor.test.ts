@@ -110,7 +110,7 @@ test("effects made from blocks read as card text", () => {
 test("Campaign 1 goes through the editor and back unchanged, within the copies that exist", () => {
   const c1 = data().campaigns[0]!;
   const d = draftFromCampaign(c1);
-  // C1: no mission uses more copies than exist; only the warnings that it is Campaign 1 and has no Omega prices.
+  // C1: no mission uses more copies than exist; only the warning that it is Campaign 1.
   const errs = checks(data(), d).filter((p) => p.level === "error");
   expect(errs).toEqual([]);
   for (const m of d.missions) for (const id of Object.keys(m.deck)) expect(freeCopies(data(), m, id)).toBeGreaterThanOrEqual(0);
@@ -199,4 +199,14 @@ test("the new mission events are written and read back", () => {
     { type: "allied_drop", level: 2 },
   ]);
   expect(checks(data(), d).filter((p) => p.level === "todo").length).toBe(4);
+});
+
+test("Campaign 1's Omega dev prices (designer 2026-11-27, C7)", () => {
+  const c1 = data().campaigns[0]!;
+  expect(c1.omega.map((o) => [o.id, o.devPrice])).toEqual([["O_01", -3.3], ["O_02", -14], ["O_03", -26]]);
+  const d = draftFromCampaign(c1);
+  expect(d.omega.map((o) => o.devPrice)).toEqual([-3.3, -14, -26]);
+  expect(checks(data(), d).some((p) => /has no dev price/.test(p.text))).toBe(false);
+  const back = parseCampaign(campaignFileText(d), "editor output");
+  expect(back.omega.map((o) => o.devPrice)).toEqual([-3.3, -14, -26]);
 });

@@ -973,3 +973,11 @@ given: a draft with an Order written as text the game does not know ("Summon a d
 when: that Order is issued in the playtest
 then: its Command tokens are paid and nothing else happens; the log says it was written as text and
       skipped.
+
+id: T14_ED_08
+title: Campaign 1's Omega dev prices
+source: designer 2026-11-27 (C7: "Campaign 1 Omega dev prices: Alpha: -3.3 Beta: -14 Gamma: -26")
+given: the Campaign editor, started from Campaign 1
+then: the Omega tiles show O_01 -3.3, O_02 -14, O_03 -26; each mission roster's sum counts the Omega
+      units placed at those prices; no "has no dev price" warning; no Omega under "no price".
+then: the exported Campaign file writes "dev_price: -3.3" (-14, -26) under each Omega unit.

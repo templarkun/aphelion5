@@ -10,8 +10,10 @@
         "id": "O_01",
         "role": "Alpha unit",
         "level": "3",
+        "dev_price": "-3.3",
         "destroyed": "Boost one adjacent non-Mecha unit."
       },
+      "devPrice": -3.3,
       "destroyed": "Boost one adjacent non-Mecha unit."
     },
     {
@@ -23,8 +25,10 @@
         "id": "O_02",
         "role": "Beta unit",
         "level": "13",
+        "dev_price": "-14",
         "at_overload": "Destroy one Alpha unit. Boost self once per point of the destroyed unit's Strength just before it was destroyed, plus one."
       },
+      "devPrice": -14,
       "atOverload": "Destroy one Alpha unit. Boost self once per point of the destroyed unit's Strength just before it was destroyed, plus one."
     },
     {
@@ -36,8 +40,10 @@
         "id": "O_03",
         "role": "Gamma unit",
         "level": "25",
+        "dev_price": "-26",
         "at_overload": "If adjacent to an Alpha unit, deal 1 damage to your Flagship."
       },
+      "devPrice": -26,
       "atOverload": "If adjacent to an Alpha unit, deal 1 damage to your Flagship."
     }
   ],

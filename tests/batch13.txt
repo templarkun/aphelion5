@@ -1635,6 +1635,9 @@ note: CHANGED 2026-11-22 (designer, C8): "Whole Campaign Σ" counts each route p
       (T14_R27_02).
 note: CHANGED 2026-11-27 (designer, C6): G_00 counts 0.7 per tile in every sum and its tile shows
       0.7; it is no longer listed under "no price" (T14_ED_01).
+note: CHANGED 2026-11-27 (designer, C7): Campaign 1's Omega units have prices: O_01 -3.3,
+      O_02 -14, O_03 -26 (data/Campaign1.txt); started from Campaign 1 they count in the sums and are
+      not listed under "no price" (T14_ED_08).
 
 id: T13_ED_04
 title: Copies are limited

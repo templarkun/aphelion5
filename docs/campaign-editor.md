@@ -18,7 +18,7 @@ every gold sector), not one unit per sector.
 **Not built yet:** "Play this mission" (the game loading an edited Campaign), and programming
 what the game does not know: the new mission events (gain set colours, take N Modules, take
 Anomaly cards, remove damage) and effects from blocks (one general program could play every block
-effect). Open: C6 (G_00 price), C7 (Campaign 1's Omega prices); C8 answered 2026-11-22 (a route pair counts once, by its X path),
+effect). C6 answered 2026-11-27 (G_00 0.7 per tile), C7 answered 2026-11-27 (Campaign 1: O_01 -3.3, O_02 -14, O_03 -26); C8 answered 2026-11-22 (a route pair counts once, by its X path),
 in `docs/open-questions.md`.
 
 **Round of 2026-11-27** (designer): the map tool starts at 3 rings round (0, 0) plus one (was 5);
