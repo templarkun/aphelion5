@@ -400,6 +400,45 @@ export const CASCADE = {
   back: [4.0, 4.9] as const,
 };
 
+/** Claim Markers (designer 2026-11-27: two more for the third Cleared sector; clearedFx.ts). About 4.8 s. */
+export const CLAIM = {
+  total: 4.8,
+  zoomIn: [0, 0.8] as const,
+  /** Act 1: a claim stake falls from above the page on a trail and strikes the sector (playClaimStake). */
+  drop: [0.45, 1.1] as const,
+  impact: 1.1,
+  wreckIn: [1.1, 1.4] as const,
+  /** It unfolds its three legs, its beacon blinks, a hologram of the claim builds over it. */
+  unfold: [1.15, 1.5] as const,
+  holo: [1.35, 2.0] as const,
+  /** Act 2: arches of particles reach the other Cleared sectors; their markers wake (playClaimLink). */
+  arcs: [2.0, 2.75] as const,
+  /** Act 3: the three claims lock together (playClaimLock). */
+  lock: 3.05,
+  glow: [3.05, 3.9] as const,
+  label: [2.6, 2.85] as const,
+  count: 3.05,
+  back: [3.9, 4.8] as const,
+};
+
+/** Terrain Survey (designer 2026-11-27; clearedFx.ts). About 4.8 s. */
+export const SURVEY = {
+  total: 4.8,
+  zoomIn: [0, 0.8] as const,
+  wreckIn: [0.2, 0.5] as const,
+  /** Act 1: a ping from the sector (playSurveyPing); range rings and a grid. */
+  ping: 0.6,
+  /** Act 2: a radar sweep turns twice round the whole Field; each Cleared sector it passes answers. */
+  sweep: [0.8, 3.0] as const,
+  /** Contour lines bloom over each Cleared sector (the new one first, the others on the sweep's second pass). */
+  contour: [1.0, 3.4] as const,
+  /** Act 3: the survey is stamped (playSurveyLock): brackets snap round the three sectors. */
+  lock: 3.05,
+  label: [2.5, 2.75] as const,
+  count: 3.05,
+  back: [3.9, 4.8] as const,
+};
+
 /** Each kill's length and pull-out (the win waits for the pull-out when both come in one answer). */
 export const KILL_TIMES: Record<string, { total: number; back: readonly [number, number] }> = {
   alphaDown: KILL,
@@ -416,6 +455,8 @@ export const KILL_TIMES: Record<string, { total: number; back: readonly [number,
   salvageCleared: CLEARED,
   salvageFusion: FUSION,
   salvageCascade: CASCADE,
+  salvageClaim: CLAIM,
+  salvageSurvey: SURVEY,
 };
 
 /** Mission Complete, the win: about 5 s (after the Trophies that came in with the answer have flown to the Mission bar). */

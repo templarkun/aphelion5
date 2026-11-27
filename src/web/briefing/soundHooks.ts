@@ -352,3 +352,19 @@ export function playCascadeCell(index: number): void {
 export function playCascadeLock(): void {}
 /** Charge Cascade: the cells discharge into the sector. */
 export function playCascadeDischarge(): void {}
+/** Claim Markers: the claim stake strikes the sector. */
+export function playClaimStake(): void {}
+/** Claim Markers: an arch reaches another Cleared sector and its marker wakes (index 0, 1). */
+export function playClaimLink(index: number): void {
+  void index;
+}
+/** Claim Markers: the three claims lock together. */
+export function playClaimLock(): void {}
+/** Terrain Survey: the ping. */
+export function playSurveyPing(): void {}
+/** Terrain Survey: the sweep passes a Cleared sector and it answers (index: which pass, 0 or 1). */
+export function playSurveyBlip(index: number): void {
+  void index;
+}
+/** Terrain Survey: brackets snap round the three Cleared sectors. */
+export function playSurveyLock(): void {}

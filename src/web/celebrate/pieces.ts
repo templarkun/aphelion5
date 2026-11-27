@@ -54,6 +54,9 @@ export const SALVAGE_PIECES: Piece[] = [
   // Designer 2026-11-27: two more for the fifth Power Node.
   { id: "salvageFusion", name: "Fusion Ignition", for: ["Power Nodes"] },
   { id: "salvageCascade", name: "Charge Cascade", for: ["Power Nodes"] },
+  // Designer 2026-11-27: two more for the third Cleared sector.
+  { id: "salvageClaim", name: "Claim Markers", for: ["Cleared"] },
+  { id: "salvageSurvey", name: "Terrain Survey", for: ["Cleared"] },
 ];
 
 const EVERY_MISSION = ["Alpha", "Beta", "Gamma", "Salvage"] as const;

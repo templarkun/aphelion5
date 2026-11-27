@@ -166,10 +166,14 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Salvage kill salvageCleared",
     "Salvage kill salvageFusion",
     "Salvage kill salvageCascade",
+    "Salvage kill salvageClaim",
+    "Salvage kill salvageSurvey",
     "Salvage both salvageNodes missionComplete",
     "Salvage both salvageFusion missionComplete",
     "Salvage both salvageCascade missionComplete",
     "Salvage both salvageCleared missionComplete",
+    "Salvage both salvageClaim missionComplete",
+    "Salvage both salvageSurvey missionComplete",
   ]);
 });
 
@@ -770,7 +774,8 @@ test("Salvage milestones (designer 2026-11-22): Grid Online at the fifth Power N
   // The third Cleared sector with five Power Nodes taken.
   const c = previewBoards(data(), "V1", "Salvage", "salvageCleared")!;
   const b = salvageMarkOf(data(), c.start, c.kill, PREVIEW_SEED)!;
-  expect([b.kind, b.piece.id, b.sector, b.others.length]).toEqual(["cleared", "salvageCleared", "0,1", 2]);
+  const CLEARED_IDS = ["salvageClaim", "salvageCleared", "salvageSurvey"];
+  expect([b.kind, CLEARED_IDS.includes(b.piece.id), b.sector, b.others.length]).toEqual(["cleared", true, "0,1", 2]);
   // Four Power Nodes only: no Sector Lock.
   const four = structuredClone(c.start);
   const four2 = structuredClone(c.kill);
@@ -780,11 +785,11 @@ test("Salvage milestones (designer 2026-11-22): Grid Online at the fifth Power N
   // Not on Eliminate missions; the win in the same answer waits for the piece.
   const e = previewBoards(data(), "V1")!;
   expect(salvageMarkOf(data(), e.start, e.won, PREVIEW_SEED)).toBeUndefined();
-  expect(winShowOf(data(), c.start, c.won, PREVIEW_SEED)!.kill).toBe("salvageCleared");
+  expect(CLEARED_IDS).toContain(winShowOf(data(), c.start, c.won, PREVIEW_SEED)!.kill);
   expect(NODE_IDS).toContain(winShowOf(data(), n.start, n.won, PREVIEW_SEED)!.kill);
   expect(KILL_STEPS.salvageNodes).toBeDefined();
   expect(KILL_TIMES.salvageCleared!.total).toBeGreaterThan(4);
-  expect(CELEBRATION_PREVIEWS.filter((w) => w.omega === "Salvage" && w.piece).length).toBe(8);
+  expect(CELEBRATION_PREVIEWS.filter((w) => w.omega === "Salvage" && w.piece).length).toBe(12);
 });
 
 test("two more for the fifth Power Node (designer 2026-11-27): Fusion Ignition and Charge Cascade, in the pool with Grid Online", async () => {
@@ -973,4 +978,40 @@ test("the two Beta kills (designer 2026-11-27): longer than any Alpha kill and B
   // The frost grows from the edges, staying inside the tile.
   expect(FROST_LINES.length).toBeGreaterThan(18);
   for (const fl of FROST_LINES) for (const [x, y] of fl.pts) expect(Math.hypot(x, y)).toBeLessThan(1.05);
+});
+
+test("two more for the third Cleared sector (designer 2026-11-27): Claim Markers and Terrain Survey, in the pool with Sector Lock", async () => {
+  const { salvageMarkOf } = await import("../../src/web/celebrate/detect.js");
+  const { claimArrive, passTimes, sweepAngle } = await import("../../src/web/celebrate/clearedFx.js");
+  const { CLAIM, SURVEY } = await import("../../src/web/celebrate/timeline.js");
+  const picked = new Set<string>();
+  for (let seed = 1; seed < 60; seed++) picked.add(pickPiece(SALVAGE_PIECES, "Cleared", seed, "C1_M2X", "kill")!.id);
+  expect([...picked].sort()).toEqual(["salvageClaim", "salvageCleared", "salvageSurvey"]);
+  for (const id of ["salvageClaim", "salvageSurvey"]) {
+    expect(SALVAGE_PIECES.find((p) => p.id === id)!.for).toEqual(["Cleared"]);
+    const b = previewBoards(data(), "V1", "Salvage", id)!;
+    const m = salvageMarkOf(data(), b.start, b.kill, PREVIEW_SEED, id)!;
+    expect([m.kind, m.piece.id, m.others.length]).toEqual(["cleared", id, 2]);
+    expect(KILL_STEPS[id]).toBeDefined();
+    expect(KILL_TIMES[id]!.total).toBeGreaterThan(4.5);
+    expect(winShowOf(data(), b.start, b.won, PREVIEW_SEED, id)!.kill).toBe(id);
+  }
+  // Claim: the stake lands, the hologram builds, the arches reach both others before the lock, the count with the lock.
+  expect(CLAIM.drop[1]).toBe(CLAIM.impact);
+  expect(CLAIM.holo[1]).toBeLessThanOrEqual(CLAIM.arcs[0]);
+  expect(claimArrive(1)).toBeGreaterThan(claimArrive(0));
+  expect(claimArrive(1) + 0.3).toBeLessThan(CLAIM.lock);
+  expect(CLAIM.count).toBe(CLAIM.lock);
+  // Survey: the sweep turns twice; any direction is passed twice, both before the stamp.
+  expect(sweepAngle(SURVEY.sweep[0])).toBeCloseTo(-Math.PI / 2);
+  expect(sweepAngle(SURVEY.sweep[1]) - sweepAngle(SURVEY.sweep[0])).toBeCloseTo(4 * Math.PI);
+  for (const phi of [-3, -1.5, 0, 1, 2.5, 3.1]) {
+    const [a, c] = passTimes(phi);
+    expect(c).toBeGreaterThan(a);
+    expect(c).toBeLessThanOrEqual(SURVEY.lock);
+    for (const at of [a, c]) {
+      const th = sweepAngle(at);
+      expect(Math.abs(Math.atan2(Math.sin(th - phi), Math.cos(th - phi)))).toBeLessThan(1e-6);
+    }
+  }
 });

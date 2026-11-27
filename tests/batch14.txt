@@ -42,6 +42,8 @@
 # one of three Beta kills at random per mission. Checked by the same files.
 # Two more fifth Power Node celebrations, 2026-11-27 (later): Fusion Ignition (T14_SALV_01) and Charge
 # Cascade (T14_SALV_02), one of three at random per Salvage mission. Checked by the same files.
+# Two more third Cleared sector celebrations, 2026-11-27 (later): Claim Markers (T14_SALV_03) and
+# Terrain Survey (T14_SALV_04), one of three at random per Salvage mission. Checked by the same files.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -859,3 +861,36 @@ then: about 4.9 seconds on the Field. Act 1 (0-1.0 s): the zoom, with room above
       flickering gold as it passes; the zoom eases back (4.0-4.9 s).
 note: As T14_SALV_01. System options lists Fusion Ignition and Charge Cascade, and each then Mission
       Complete (56 buttons).
+
+id: T14_SALV_03
+title: Claim Markers, when the third sector is Cleared
+source: designer 2026-11-27 ("And after that: additional 2 for "3rd cleared sector"")
+given: a Salvage mission (8.2) with five Power Nodes in the Trophy pile, the third sector becomes Cleared,
+       Claim Markers picked (or System options > Mission celebrations > Claim Markers (3rd Cleared
+       sector)), Normal speed
+then: about 4.8 seconds on the Field, zoomed less than for a kill so the other two Cleared sectors show.
+      Act 1 (0-2.0 s): a claim stake falls from above the page on a trail of particles and strikes the
+      new Cleared sector: a flash, a ring of dust, a jolt; the sector shows. The stake unfolds three
+      legs, its beacon blinks orange, a cone of light projects a turning hologram (a hexagon of
+      particles, an inner ring, three chevrons) over it. Act 2 (2.0-2.9 s): arches of particles reach
+      out high over the board to the other two Cleared sectors; as each arrives, that sector's marker
+      wakes with a blinking beacon and a smaller hologram. Act 3 (3.05 s): the three claims lock: the
+      holograms flash, the three sectors' edges light, rings go out, particles stream faster along the
+      arches; "CLEARED · 2 / 3" turns to "3 / 3". The zoom eases back (3.9-4.8 s).
+note: The same for every Company. Two taps skip; reduced motion or Instant: the still close-up (1.5 s).
+      The pick (I19): one of the three third Cleared sector pieces at random per mission (Sector Lock,
+      Claim Markers, Terrain Survey), the same again if the save is reloaded. The win waits for it.
+
+id: T14_SALV_04
+title: Terrain Survey, when the third sector is Cleared
+source: designer 2026-11-27 (as T14_SALV_03)
+given: as T14_SALV_03, Terrain Survey picked
+then: about 4.8 seconds on the Field, zoomed as T14_SALV_03. Act 1 (0.6 s): a ping from the new Cleared
+      sector: a ring of particles runs out, range rings and a faint cross of lines stay. Act 2
+      (0.8-3.0 s): a radar sweep (a line of particles with a fading wedge behind it) turns twice round
+      the whole Field, starting straight up; each other Cleared sector blips each time it is passed;
+      contour lines (wavy loops of particles) bloom over the new sector, then over the other two on the
+      second pass. Act 3 (3.05 s): brackets snap round the three sectors, their edges flash; "CLEARED ·
+      2 / 3" turns to "3 / 3". The zoom eases back (3.9-4.8 s).
+note: As T14_SALV_03. System options lists Claim Markers and Terrain Survey, and each then Mission
+      Complete (60 buttons).

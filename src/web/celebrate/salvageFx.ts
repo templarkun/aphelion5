@@ -150,7 +150,7 @@ export function gridOnlineStep(env: KillEnv, k: KillTarget): Step {
 }
 
 /** The other Cleared sectors' screen centres now (the board is zoomed round the sector). */
-function othersOnScreen(env: KillEnv, k: KillTarget, f: { Sx: number; Sy: number; z: number; cx: number; cy: number }): [number, number][] {
+export function othersOnScreen(env: KillEnv, k: KillTarget, f: { Sx: number; Sy: number; z: number; cx: number; cy: number }): [number, number][] {
   const all = env.centres?.() ?? [];
   const want = new Set(k.others ?? []);
   return all.filter(([key]) => want.has(key)).map(([, x, y]) => [f.Sx + (x - f.cx) * f.z, f.Sy + (y - f.cy) * f.z]);

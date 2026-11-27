@@ -95,6 +95,7 @@ eraseFx.ts             Alpha Erased (PixiJS)
 breachFx.ts            Beta Breach (PixiJS)
 barrageFx.ts           Barrage (PixiJS)
 cryoFx.ts              Cryo Shatter (PixiJS)
+clearedFx.ts           Claim Markers and Terrain Survey (Salvage, the third Cleared sector; PixiJS)
 nodesFx.ts             Fusion Ignition and Charge Cascade (Salvage, the fifth Power Node; PixiJS)
 tilt.ts                the board seen in 3D: tilt, perspective, lifted sectors (the Gamma kills)
 horizonFx.ts           Event Horizon (PixiJS)
@@ -131,3 +132,15 @@ three at random per mission (I19):
   and condenses into a turning crystal of the three colours, which rises on a trail into the fifth cell;
   it locks, the cells flare one by one with arcs leaping between them; they discharge (five bolts into
   the sector), a pulse of particles runs over the whole Field, each sector's edge flickering as it passes.
+
+Two more for the third Cleared sector (designer 2026-11-27, `clearedFx.ts`, times `CLAIM` / `SURVEY`), one
+of three at random per mission with Sector Lock (I19); zoomed less, so the other Cleared sectors show
+(`othersOnScreen` from salvageFx.ts):
+- **Claim Markers** (`salvageClaim`, 4.8 s): a claim stake falls from above the page on a trail and strikes
+  the sector (flash, dust, jolt), unfolds three legs, its beacon blinks and a cone of light projects a
+  turning hologram over it; arches of particles reach the other two Cleared sectors (`claimArrive`), whose
+  markers and holograms wake; at 3.05 s the three lock: flash, rings, streams along the arches.
+- **Terrain Survey** (`salvageSurvey`, 4.8 s): a ping with range rings and a grid; a radar sweep of particles
+  with a fading wedge turns twice round the whole Field (`sweepAngle`); each other Cleared sector blips
+  each time it is passed (`passTimes`); contour lines bloom over the new sector, then over the others on
+  the second pass; at 3.05 s brackets snap round the three sectors.

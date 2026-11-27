@@ -15,6 +15,7 @@ import { alphaPurgeStep } from "./purgeFx.js";
 import { alphaRailStep } from "./railFx.js";
 import { alphaEraseStep } from "./eraseFx.js";
 import { gammaShatterStep } from "./shatterFx.js";
+import { claimStep, surveyStep } from "./clearedFx.js";
 import { cascadeStep, fusionStep } from "./nodesFx.js";
 import { gridOnlineStep, sectorLockStep } from "./salvageFx.js";
 
@@ -33,6 +34,8 @@ export const KILL_STEPS: Record<string, (env: KillEnv, k: KillTarget) => Step> =
   salvageCleared: sectorLockStep,
   salvageFusion: fusionStep,
   salvageCascade: cascadeStep,
+  salvageClaim: claimStep,
+  salvageSurvey: surveyStep,
 };
 
 /** The step of a kill piece (Alpha Down if the id is unknown). */

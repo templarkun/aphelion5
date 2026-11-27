@@ -83,10 +83,14 @@ export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
   { kind: "kill", omega: "Salvage", piece: "salvageCleared", label: "Sector Lock (3rd Cleared sector)" },
   { kind: "kill", omega: "Salvage", piece: "salvageFusion", label: "Fusion Ignition (5th Power Node)" },
   { kind: "kill", omega: "Salvage", piece: "salvageCascade", label: "Charge Cascade (5th Power Node)" },
+  { kind: "kill", omega: "Salvage", piece: "salvageClaim", label: "Claim Markers (3rd Cleared sector)" },
+  { kind: "kill", omega: "Salvage", piece: "salvageSurvey", label: "Terrain Survey (3rd Cleared sector)" },
   { kind: "both", omega: "Salvage", piece: "salvageNodes", win: "missionComplete", label: "Grid Online, then Mission Complete" },
   { kind: "both", omega: "Salvage", piece: "salvageFusion", win: "missionComplete", label: "Fusion Ignition, then Mission Complete" },
   { kind: "both", omega: "Salvage", piece: "salvageCascade", win: "missionComplete", label: "Charge Cascade, then Mission Complete" },
   { kind: "both", omega: "Salvage", piece: "salvageCleared", win: "missionComplete", label: "Sector Lock, then Mission Complete" },
+  { kind: "both", omega: "Salvage", piece: "salvageClaim", win: "missionComplete", label: "Claim Markers, then Mission Complete" },
+  { kind: "both", omega: "Salvage", piece: "salvageSurvey", win: "missionComplete", label: "Terrain Survey, then Mission Complete" },
 ];
 /** The mission the preview's board stands for. */
 export const PREVIEW_MISSION: Record<PreviewOmega, { id: string; name: string }> = {
