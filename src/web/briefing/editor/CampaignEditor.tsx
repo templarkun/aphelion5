@@ -7,7 +7,9 @@
  */
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Copy, Download, FileText, Minus, Plus, Trash2, Upload, Wrench, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Copy, Download, FileText, Minus, Play, Plus, Trash2, Upload, Wrench, X } from "lucide-react";
+import type { Profile } from "../../../engine/state.js";
+import { playtestOf, type Playtest } from "./playtest.js";
 import { parseCampaign, THREAT_COLUMNS, type ThreatColumn } from "../../../data/campaign.js";
 import type { GameData } from "../../../data/index.js";
 import { UNIT_TYPES, type UnitDef } from "../../../data/units.js";
@@ -17,6 +19,7 @@ import { playSelect } from "../soundHooks.js";
 import { UnitTile } from "../UnitTile.js";
 import { EffectEditor, INP } from "./EffectEditor.js";
 import { MapTool } from "./MapTool.js";
+import { infoFor, WithInfo } from "./TileInfo.js";
 import {
   campaignFileText,
   campaignPrice,
@@ -115,14 +118,18 @@ function Tile({ data, d, id, size = 52, children, onClick, dim }: { data: GameDa
       {children}
     </>
   );
-  return onClick ? (
-    <button type="button" className="flex flex-col items-center rounded-lg p-1 hover:bg-white/10" onClick={onClick} data-tile={id}>
-      {body}
-    </button>
-  ) : (
-    <span className="flex flex-col items-center p-1" data-tile={id}>
-      {body}
-    </span>
+  return (
+    <WithInfo info={infoFor(data, d, id)} id={id}>
+      {onClick ? (
+        <button type="button" className="flex flex-col items-center rounded-lg p-1 hover:bg-white/10" onClick={onClick} data-tile={id}>
+          {body}
+        </button>
+      ) : (
+        <span className="flex flex-col items-center p-1" data-tile={id}>
+          {body}
+        </span>
+      )}
+    </WithInfo>
   );
 }
 
@@ -203,15 +210,28 @@ function Problems({ list }: { list: Problem[] }) {
   );
 }
 
-export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () => void }) {
+/** What the playtest panel chose (designer 2026-11-27): the Company, Veteran or Fresh, expansions, Upgrade points. */
+export interface PlaytestChoice {
+  company: string;
+  freshness: "fresh" | "veteran";
+  expansions: string[];
+  points: number;
+}
+
+/** The mission open last (kept while the page is open, so coming back from a playtest shows it again). */
+let lastSel = 0;
+
+export function CampaignEditor({ data, onBack, profile, onPlaytest }: { data: GameData; onBack: () => void; profile?: Profile; onPlaytest?: (pt: Playtest, choice: PlaytestChoice) => void }) {
   const [d, setD] = useState<Draft>(() => loadDraft() ?? newDraft());
-  const [sel, setSel] = useState(0);
+  const [sel, setSelState] = useState(lastSel);
+  const setSel = (i: number) => ((lastSel = i), setSelState(i));
+  const [choice, setChoice] = useState<PlaytestChoice>({ company: data.companies.companies[0]!.id, freshness: "fresh", expansions: [], points: 0 });
   const [pane, setPane] = useState<Pane>("mission");
   const [mtab, setMtab] = useState<MTab>("deck");
   const [picker, setPicker] = useState(false);
   const [filter, setFilter] = useState<string>("Sentinel");
   const [adding, setAdding] = useState<ThreatColumn | undefined>();
-  const [modal, setModal] = useState<"file" | "export" | undefined>();
+  const [modal, setModal] = useState<"file" | "export" | "play" | undefined>();
   const [paste, setPaste] = useState("");
   const [fileNote, setFileNote] = useState<string | undefined>();
   const [copied, setCopied] = useState<string | undefined>();
@@ -281,7 +301,7 @@ export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () =>
       {picker && (
         <div className="grid gap-2 rounded-lg border border-white/25 bg-indigo-950/40 p-2" data-picker>
           <div className="flex flex-wrap gap-1">
-            {UNIT_TYPES.filter((t) => t !== "Mecha" && t !== "Omega").map((t) => (
+            {UNIT_TYPES.filter((t) => t !== "Mecha" && t !== "Omega" && t !== "Bot").map((t) => (
               <button key={t} type="button" className={`rounded-full px-2.5 py-1 text-[13px] font-semibold ${filter === t ? "bg-white text-indigo-950" : "text-white hover:bg-white/10"}`} onClick={() => setFilter(t)}>
                 {t}
               </button>
@@ -307,7 +327,7 @@ export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () =>
           ))}
         </div>
       </div>
-      {UNIT_TYPES.filter((t) => d.palette.some((id) => data.units.byId.get(id)?.type === t)).map((t) => (
+      {UNIT_TYPES.filter((t) => t !== "Bot" && d.palette.some((id) => data.units.byId.get(id)?.type === t)).map((t) => (
         <div key={t}>
           <div className="text-[12px] font-bold uppercase tracking-[0.1em] text-sky-200">{t}</div>
           <div className="flex flex-wrap">
@@ -348,41 +368,7 @@ export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () =>
         <p className="text-[12px] text-sky-200/80">The Campaign's sum adds up every mission roster (deck and Omega units placed), not the Threat columns.</p>
       </div>
 
-      <div className="bf-panel grid gap-3 !p-3">
-        <div className="bf-label">Omega units</div>
-        {d.omega.map((o, i) => {
-          const set = (p: Partial<typeof o>) => setD({ ...d, omega: d.omega.map((x, j) => (j === i ? { ...x, ...p } : x)) });
-          return (
-            <div key={o.id} className="grid gap-2 rounded-lg border border-white/20 bg-indigo-950/30 p-2.5" data-omega={o.id}>
-              <div className="flex flex-wrap items-center gap-3">
-                <Tile data={data} d={d} id={o.id} size={40} />
-                <b className="text-[15px] text-white">{OMEGA_ROLES[o.id]}</b>
-                <span className="text-[13px] text-sky-100">Level</span>
-                <Stepper n={o.level} min={1} max={60} label={`${o.id} Level`} onChange={(level) => set({ level })} />
-                <label className="flex items-center gap-1.5 text-[13px] text-sky-100">
-                  Dev price
-                  <input className={`${INP} w-20`} style={txt} type="number" step="0.1" aria-label={`${o.id} dev price`} value={o.devPrice ?? ""} onChange={(e) => set({ devPrice: e.target.value === "" ? undefined : Number(e.target.value) })} />
-                </label>
-              </div>
-              <EffectEditor label="Destroyed" place="omega" value={o.destroyed} onChange={(destroyed) => set({ destroyed })} />
-              <EffectEditor label="At Overload" place="omega" value={o.atOverload} onChange={(atOverload) => set({ atOverload })} />
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="bf-panel grid gap-2 !p-3">
-        <div className="flex items-center gap-2">
-          <div className="bf-label flex-1">Campaign Orders · every mission</div>
-          <button type="button" className="bf-btn !min-h-[36px] !px-3 !text-[13px]" onClick={() => setD({ ...d, orders: [...d.orders, { tokens: 1, overloadOnly: false, effect: { mode: "blocks", steps: [] } }] })}>
-            <Plus size={15} /> Order
-          </button>
-        </div>
-        {d.orders.map((o, i) => (
-          <OrderEditor key={i} label={`Order ${i + 1}`} o={o} onChange={(n) => setD({ ...d, orders: d.orders.map((x, j) => (j === i ? n : x)) })} onRemove={() => setD({ ...d, orders: d.orders.filter((_, j) => j !== i) })} />
-        ))}
-      </div>
-
+      {/* Designer 2026-11-27: Campaign id, Missions, Campaign Orders, Omega units. */}
       <div className="bf-panel grid gap-2 !p-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="bf-label flex-1">Missions</div>
@@ -416,6 +402,41 @@ export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () =>
           })}
         </ul>
       </div>
+      <div className="bf-panel grid gap-2 !p-3">
+        <div className="flex items-center gap-2">
+          <div className="bf-label flex-1">Campaign Orders · every mission</div>
+          <button type="button" className="bf-btn !min-h-[36px] !px-3 !text-[13px]" onClick={() => setD({ ...d, orders: [...d.orders, { tokens: 1, overloadOnly: false, effect: { mode: "blocks", steps: [] } }] })}>
+            <Plus size={15} /> Order
+          </button>
+        </div>
+        {d.orders.map((o, i) => (
+          <OrderEditor key={i} label={`Order ${i + 1}`} o={o} onChange={(n) => setD({ ...d, orders: d.orders.map((x, j) => (j === i ? n : x)) })} onRemove={() => setD({ ...d, orders: d.orders.filter((_, j) => j !== i) })} />
+        ))}
+      </div>
+
+      <div className="bf-panel grid gap-3 !p-3">
+        <div className="bf-label">Omega units</div>
+        {d.omega.map((o, i) => {
+          const set = (p: Partial<typeof o>) => setD({ ...d, omega: d.omega.map((x, j) => (j === i ? { ...x, ...p } : x)) });
+          return (
+            <div key={o.id} className="grid gap-2 rounded-lg border border-white/20 bg-indigo-950/30 p-2.5" data-omega={o.id}>
+              <div className="flex flex-wrap items-center gap-3">
+                <Tile data={data} d={d} id={o.id} size={40} />
+                <b className="text-[15px] text-white">{OMEGA_ROLES[o.id]}</b>
+                <span className="text-[13px] text-sky-100">Level</span>
+                <Stepper n={o.level} min={1} max={60} label={`${o.id} Level`} onChange={(level) => set({ level })} />
+                <label className="flex items-center gap-1.5 text-[13px] text-sky-100">
+                  Dev price
+                  <input className={`${INP} w-20`} style={txt} type="number" step="0.1" aria-label={`${o.id} dev price`} value={o.devPrice ?? ""} onChange={(e) => set({ devPrice: e.target.value === "" ? undefined : Number(e.target.value) })} />
+                </label>
+              </div>
+              <EffectEditor label="Destroyed" place="omega" value={o.destroyed} onChange={(destroyed) => set({ destroyed })} />
+              <EffectEditor label="At Overload" place="omega" value={o.atOverload} onChange={(atOverload) => set({ atOverload })} />
+            </div>
+          );
+        })}
+      </div>
+
     </section>
   );
 
@@ -435,6 +456,11 @@ export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () =>
           <option value="y">Route y (alternative)</option>
         </select>
         <span className="flex-1" />
+        {onPlaytest && (
+          <button type="button" className="bf-btn !min-h-[36px] !px-3 !text-[13px]" data-action="playtest" onClick={() => (playSelect(), setModal("play"))}>
+            <Play size={15} /> Play this mission
+          </button>
+        )}
         <Price p={priceSum(data, d, rosterOf(m))} label="Mission roster" id="mission" />
         <button
           type="button"
@@ -678,6 +704,10 @@ export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () =>
         </Modal>
       )}
 
+      {modal === "play" && onPlaytest && (
+        <PlaytestPanel data={data} d={d} m={m} profile={profile} choice={choice} setChoice={setChoice} onClose={() => setModal(undefined)} onPlay={(pt) => (setModal(undefined), onPlaytest(pt, choice))} />
+      )}
+
       {modal === "export" && (
         <Modal title="Export" onClose={() => setModal(undefined)}>
           <div className="grid gap-3 text-[14px] text-sky-50">
@@ -714,5 +744,77 @@ export function CampaignEditor({ data, onBack }: { data: GameData; onBack: () =>
         </Modal>
       )}
     </PageShell>
+  );
+}
+
+/**
+ * "Play this mission" (designer 2026-11-27): Company, Veteran or Fresh, expansions and Upgrade points
+ * to spend first; lists the effects written as text that the game skips. Developer mode, never saved.
+ */
+function PlaytestPanel({ data, d, m, profile, choice, setChoice, onClose, onPlay }: { data: GameData; d: Draft; m: MissionDraft; profile: Profile | undefined; choice: PlaytestChoice; setChoice: (c: PlaytestChoice) => void; onClose: () => void; onPlay: (pt: Playtest) => void }) {
+  const built = useMemo(() => {
+    try {
+      return { pt: playtestOf(data, d, m) };
+    } catch (e) {
+      return { error: (e as Error).message };
+    }
+  }, [data, d, m]);
+  const marked = Object.values(profile?.sheets[choice.company] ?? {}).some((n) => n > 0);
+  const set = (p: Partial<PlaytestChoice>) => setChoice({ ...choice, ...p });
+  return (
+    <Modal title={`Play ${missionTag(m)}`} onClose={onClose}>
+      <div className="grid gap-3 text-[14px] text-sky-50" data-playtest-panel>
+        <p className="text-sky-100">A Developer-mode game of this mission only, on this draft. Nothing is saved or counted in Statistics; when the mission ends you come back here.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="w-36 font-semibold">Company</span>
+          {data.companies.companies.map((co) => (
+            <button key={co.id} type="button" className={`rounded-full border px-3 py-1.5 font-semibold ${choice.company === co.id ? "border-white bg-white text-indigo-950" : "border-white/40 text-white hover:bg-white/10"}`} data-playtest-company={co.id} onClick={() => set({ company: co.id })}>
+              {co.id}: {co.name}
+            </button>
+          ))}
+        </div>
+        {marked && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-36 font-semibold">Upgrade marks</span>
+            {(["veteran", "fresh"] as const).map((f) => (
+              <button key={f} type="button" className={`rounded-full border px-3 py-1.5 font-semibold ${choice.freshness === f ? "border-white bg-white text-indigo-950" : "border-white/40 text-white hover:bg-white/10"}`} onClick={() => set({ freshness: f })}>
+                {f === "veteran" ? "Veteran: keep the sheet's marks" : "Fresh: no marks"}
+              </button>
+            ))}
+          </div>
+        )}
+        <label className="flex items-center gap-2">
+          <span className="w-36 font-semibold">Heat module</span>
+          <input type="checkbox" checked={choice.expansions.includes("heat")} onChange={(e) => set({ expansions: e.target.checked ? ["heat"] : [] })} /> play with it
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="w-36 font-semibold">Upgrade points</span>
+          <Stepper n={choice.points} min={0} max={40} label="Upgrade points" onChange={(points) => set({ points })} />
+          <span className="text-[13px] text-sky-200/80">spent on the Upgrade sheet first, as if earlier missions were won</span>
+        </div>
+        {"error" in built ? (
+          <p className="rounded-md border border-rose-300/70 bg-rose-500/25 px-2 py-1.5 text-white" role="alert">
+            This draft cannot be played yet: {built.error}
+          </p>
+        ) : (
+          <>
+            {built.pt.skipped.length > 0 && (
+              <div className="rounded-md border border-amber-300/60 bg-amber-500/15 px-2 py-1.5" data-playtest-skipped={built.pt.skipped.length}>
+                <b className="text-amber-100">Written as text, so they do nothing in this playtest:</b>
+                <ul className="ml-4 list-disc">
+                  {built.pt.skipped.map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {built.pt.programmed.length > 0 && <p className="text-[13px] text-sky-200/80">Text effects already programmed (the same words as Campaign 1's) play as in the game: {built.pt.programmed.length}.</p>}
+            <button type="button" className="bf-btn justify-self-start" data-action="playtest-start" onClick={() => onPlay(built.pt)}>
+              <Play size={16} /> Play {missionTag(m)}
+            </button>
+          </>
+        )}
+      </div>
+    </Modal>
   );
 }

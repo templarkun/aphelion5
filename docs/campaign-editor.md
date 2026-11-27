@@ -21,6 +21,19 @@ Anomaly cards, remove damage) and effects from blocks (one general program could
 effect). Open: C6 (G_00 price), C7 (Campaign 1's Omega prices); C8 answered 2026-11-22 (a route pair counts once, by its X path),
 in `docs/open-questions.md`.
 
+**Round of 2026-11-27** (designer): the map tool starts at 3 rings round (0, 0) plus one (was 5);
+no Bots in the palette (every mission's deck holds all 30 already); the Campaign column is Campaign
+id, Missions, Campaign Orders, Omega units; G_00 counts 0.7 per tile (C6); hover or a 0.5 s hold on
+any unit tile shows its card text (`TileInfo.tsx`). **"Play this mission" built**
+(`editor/playtest.ts`, `src/effects/blocks.ts`): the panel picks the Company, Veteran or Fresh, the
+Heat module and Upgrade points (spent on the Upgrade sheet first); the draft is written as a
+Campaign file and read by the game's own reader, played as a Developer-mode game of that mission
+only (`settings.playtest`: no route question, Mission End ends the game, nothing saved or recorded),
+then a "Playtest" card and back to the editor. Orders and Omega effects play from their blocks (one
+general program), text with the same words as a Campaign 1 effect plays that effect, other text is
+skipped (listed on the panel). The new mission events (set colours, N Modules, N Anomaly cards,
+remove damage) are now built into the game.
+
 ## Where it lives
 
 System options > Developer mode on > "Campaign editor". A full page in the briefing's look (glass

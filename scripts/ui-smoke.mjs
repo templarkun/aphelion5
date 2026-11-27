@@ -2,6 +2,7 @@
 // take a few actions, screenshot. Usage: node scripts/ui-smoke.mjs [url] [outDir]
 import { createRequire } from "node:module";
 import { pagesCheck as runPagesCheck } from "./ui-pages.mjs";
+import { playtestCheck as runPlaytestCheck } from "./ui-playtest.mjs";
 import { celebrateCheck as runCelebrateCheck } from "./ui-celebrate.mjs";
 import { looksCheck as runLooksCheck } from "./ui-looks.mjs";
 import { round23Check as runRound23Check } from "./ui-round23.mjs";
@@ -1527,6 +1528,8 @@ if (runs("outro") && existsSync(`${out}/won-save.json`)) {
 const lossCheck = runs("outro") ? await runLossCheck(browser, url, out) : "skipped (not asked for)";
 const victoryCheck = runs("outro") ? await runVictoryCheck(browser, url, out) : "skipped (not asked for)";
 const pagesCheck = runs("pages") ? await runPagesCheck(browser, url, out) : "skipped (not asked for)";
+// The Campaign editor round and its mission playtest (designer 2026-11-27): scripts/ui-playtest.mjs.
+const playtestCheck = runs("pages") ? await runPlaytestCheck(browser, url, out) : "skipped (not asked for)";
 // The mission celebrations (designer 2026-11-20): scripts/ui-celebrate.mjs.
 const celebrateCheck = runs("celebrate") ? await runCelebrateCheck(browser, url, out) : "skipped (not asked for)";
 // Big PC screen, Allied Drop, features (were "trial looks") (designer 2026-11-20): scripts/ui-looks.mjs.
@@ -1538,12 +1541,12 @@ const round26Check = runs("round26") ? await runRound26Check(browser, url, out) 
 const round29Check = runs("round29") ? await runRound29Check(browser, url, out) : "skipped (not asked for)";
 const round30Check = runs("round30") ? await runRound30Check(browser, url, out) : "skipped (not asked for)";
 const soundCheck = runs("sound") ? await runSoundCheck(browser, url, out) : "skipped (not asked for)";
-console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, lossCheck, victoryCheck, pagesCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, round29Check, round30Check, soundCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck }));
+console.log(JSON.stringify({ introCheck, styleCheck, outroCheck, lossCheck, victoryCheck, pagesCheck, playtestCheck, celebrateCheck, looksCheck, round23Check, round24Check, round25Check, round26Check, round29Check, round30Check, soundCheck, phoneScrollWidth: scrollW, noMenu, popupTitle, closedByOutside, canModules, overhaulConfirm, afterReveal, rotateShown, facingKept, rowCheck, energyCheck, bubbles, raised, tapThrough, breathing, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck }));
 console.log(JSON.stringify({ errors }));
 await browser.close();
 // A group not asked for passes; its checks keep their "skipped" value in the report above.
 const game = runs("game");
 const gameChecks = [rowCheck, energyCheck, dragCheck, drag2Check, m03Check, bay3Check, stackCheck, damagePickCheck, bayDragCheck, takeCheck, anomalyCheck, moduleCheck, m01Check, nodeCheck, fillCheck, greyCheck, modDragCheck, orderDragCheck, flareChipCheck, fxCheck, damageCheck, pickCheck, repairCheck, upgradeCheck, motionCheck, askCheck, restCheck];
 const gameOk = !game || (gameChecks.every((x) => x === "ok") && noMenu && rotateShown && !!facingKept && closedByOutside && bubbles && raised && breathing && (tapThrough === "ok" || tapThrough === "only one Dark sector") && !!popupTitle?.startsWith("Dark sector") && scrollW <= 390);
-const groupOk = [["intro", introCheck], ["intro", styleCheck], ["outro", outroCheck], ["outro", lossCheck], ["outro", victoryCheck], ["pages", pagesCheck], ["celebrate", celebrateCheck], ["looks", looksCheck], ["round23", round23Check], ["round24", round24Check], ["round25", round25Check], ["round26", round26Check], ["round29", round29Check], ["round30", round30Check], ["sound", soundCheck]].every(([g, x]) => !runs(g) || x === "ok");
+const groupOk = [["intro", introCheck], ["intro", styleCheck], ["outro", outroCheck], ["outro", lossCheck], ["outro", victoryCheck], ["pages", pagesCheck], ["pages", playtestCheck], ["celebrate", celebrateCheck], ["looks", looksCheck], ["round23", round23Check], ["round24", round24Check], ["round25", round25Check], ["round26", round26Check], ["round29", round29Check], ["round30", round30Check], ["sound", soundCheck]].every(([g, x]) => !runs(g) || x === "ok");
 if (errors.length || !gameOk || !groupOk) process.exit(1);

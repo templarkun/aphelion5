@@ -27,7 +27,7 @@ import { newRng, shuffle } from "./rng.js";
 import { addTile } from "./scenario.js";
 import { newMissionState } from "./scenario.js";
 import { type GameState, type Profile, type SectorKey, type TileId, emptyProfile, noTokens } from "./state.js";
-import { gainEnergy, printedIntegrity, returnTokens } from "./tokens.js";
+import { gainEnergy, printedIntegrity, repairFlagship, returnTokens } from "./tokens.js";
 
 export const camp = (c: Ctx): CampaignDatabase => c.data.campaigns.find((x) => x.prefix === c.state.campaign)!;
 export const company = (c: Ctx): CompanyDef => c.data.companies.byId.get(c.state.player.company)!;
@@ -57,6 +57,8 @@ export interface NewGameOptions {
   darkLookOrder?: boolean;
   /** Answer questions with one legal answer automatically (spec "Player choices"); fixed for the whole game. */
   autoAnswer?: boolean;
+  /** A mission playtest from the Campaign editor (designer 2026-11-27): see `settings.playtest`. */
+  playtest?: { mission: string; points: number };
 }
 
 /** A game before setup: every tile of the game in the box (the Supply), awaiting the setup choices. */
@@ -75,6 +77,7 @@ export function newGame(data: GameData, o: NewGameOptions): GameState {
   if (o.powerNodeHeat3) s.settings.powerNodeHeat3 = true;
   if (o.oldCampaignOrders) s.settings.oldCampaignOrders = true;
   if (o.darkLookOrder) s.settings.darkLookOrder = true;
+  if (o.playtest) s.settings.playtest = { ...o.playtest };
   s.player.commandTokens = 0;
   // Every tile copy (unit file "copies"): Energy Gyros form the Energy deck, the rest wait in the box.
   for (const u of data.units.units) {
@@ -176,6 +179,13 @@ function* gameSetup(c: RunCtx): Effect {
   s.decks.modules = rest;
   s.hiddenInfo += 1;
   log(c, `starting Modules: ${keep.map((k) => moduleDef(c, k).name).join(", ")}`, "7.1");
+  // Mission playtest (designer 2026-11-27): Upgrade points to stand for earlier missions won, spent on the Upgrade sheet now.
+  const pt = s.settings.playtest;
+  if (pt && pt.points > 0) {
+    s.sheet.upgradePoints = pt.points;
+    log(c, `playtest: ${pt.points} Upgrade point${pt.points === 1 ? "" : "s"} to spend`, "10.2");
+    yield* spendUpgradePoints(c);
+  }
   s.phase = "preparation";
 }
 
@@ -213,8 +223,9 @@ const COLUMNS_LEVEL = ["", "Patrol", "Assault", "Siege", "Annihilation"];
 
 function* missionPreparation(c: RunCtx): Effect {
   const s = c.state;
-  // 1. Choose the mission.
-  const ms = nextMissions(c);
+  // 1. Choose the mission. A playtest plays its one mission (designer 2026-11-27).
+  const pt = s.settings.playtest ? camp(c).missionById.get(s.settings.playtest.mission) : undefined;
+  const ms = pt ? [pt] : nextMissions(c);
   if (ms.length === 0) throw new Error("no mission left to play");
   let m = ms[0]!;
   if (ms.length > 1) {
@@ -307,14 +318,35 @@ function* missionPreparation(c: RunCtx): Effect {
   // 9. The mission event.
   const ev = m.event;
   if (ev.type === "allied_drop") yield* alliedDrop(c, ev.level);
-  else if (ev.type === "gain_energy") yield* gainEnergy(c, ev.amount, undefined, "7.2");
-  else if (ev.type === "take_module_top") {
-    const id = s.decks.modules.shift();
-    if (id !== undefined) {
+  else if (ev.type === "gain_energy") {
+    // Set colours first (Campaign editor, C4), then the amount of your choice.
+    for (const col of ENERGY_COLOURS) if (ev.energy?.[col]) yield* gainEnergy(c, ev.energy[col]!, col, "7.2");
+    if (ev.amount > 0) yield* gainEnergy(c, ev.amount, undefined, "7.2");
+  } else if (ev.type === "take_module_top" || ev.type === "take_modules") {
+    // Campaign editor events (C4, built 2026-11-27): N Modules from the top of the Module deck.
+    const n = ev.type === "take_modules" ? ev.amount : 1;
+    for (let i = 0; i < n; i++) {
+      const id = s.decks.modules.shift();
+      if (id === undefined) {
+        log(c, "the Module deck is empty", "6.7");
+        break;
+      }
       s.player.modules.push({ id, ready: true, energy: { Yellow: 0, Red: 0, Blue: 0 } });
       log(c, `take ${moduleDef(c, id).name} from the top of the Module deck`, "7.2");
     }
-  } else if (ev.type !== "none") throw new Error(`the mission event "${ev.type}" (from the Campaign editor) is not built into the game yet`);
+    if (n > 0) s.hiddenInfo += 1;
+  } else if (ev.type === "take_anomaly") {
+    for (let i = 0; i < ev.amount; i++) {
+      const card = s.decks.anomalies.shift();
+      if (card === undefined) {
+        log(c, "the Anomaly deck is empty", "6.7");
+        break;
+      }
+      s.player.anomalies.push(card);
+      log(c, `take Anomaly card ${card}`, "7.2");
+    }
+    if (ev.amount > 0) s.hiddenInfo += 1;
+  } else if (ev.type === "remove_damage") yield* repairFlagship(c, ev.amount, "7.2");
   s.phase = "command";
   log(c, "the Command phase begins", "7.2");
 }
@@ -432,6 +464,14 @@ function* spendUpgradePoints(c: RunCtx): Effect {
 
 function* missionEnd(c: RunCtx): Effect {
   const s = c.state;
+  // A mission playtest ends here (designer 2026-11-27): no rewards, Upgrades or next mission; back to the editor.
+  if (s.settings.playtest) {
+    s.run.completed.push({ mission: s.mission, threat: [...s.run.threat] });
+    s.outcome = { result: "won", reason: "the playtest mission is complete" };
+    s.phase = "gameEnd";
+    log(c, "playtest: the mission is complete", "10.1");
+    return;
+  }
   const co = company(c);
   // Company Trait at Mission End (V1: remove 1 damage from each Bay).
   if (co.trait && /^At Mission End: Remove 1 damage from each Bay/.test(co.trait)) {
@@ -527,6 +567,8 @@ function* gameEnd(c: RunCtx): Effect {
   const { score: n, parts } = score(c);
   s.ending = { score: n, parts };
   log(c, `Game End: score ${n} (${parts.join("; ") || "nothing completed"})`, "10.3");
+  // A mission playtest records nothing (designer 2026-11-27): no high score, no history, the sheet as it was.
+  if (s.settings.playtest) return yield* noop();
   // High scores: the field matching Fresh or Veteran; equal or better writes it. Never in Developer mode.
   if (!s.settings.developerMode) {
     const hs = (s.profile.highScores[s.campaign] ??= {});

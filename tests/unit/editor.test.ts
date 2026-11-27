@@ -164,8 +164,9 @@ test("dev prices: per unit, summed per mission roster, per Threat column and for
   m.threat.B = ["S_12", "S_12"];
   const price = (id: string) => data().units.byId.get(id)!.devPrice as number;
   const roster = priceSum(data(), d, rosterOf(m));
-  expect(roster.sum).toBeCloseTo(2 * price("B_01") + price("S_12") + 2, 5);
-  expect(roster.unpriced).toEqual({ [G00]: 3 });
+  // G_00: 0.7 per tile (designer 2026-11-27, C6).
+  expect(roster.sum).toBeCloseTo(2 * price("B_01") + price("S_12") + 2 + 3 * 0.7, 5);
+  expect(roster.unpriced).toEqual({});
   expect(priceSum(data(), d, threatRoster(m, "B")).sum).toBeCloseTo(2 * price("S_12"), 5);
   expect(priceSum(data(), d, threatRoster(m, "A")).sum).toBe(0);
   // The Campaign: every mission roster, never the Threat columns.

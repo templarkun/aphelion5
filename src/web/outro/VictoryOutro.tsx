@@ -19,7 +19,8 @@ import type { CampaignStats } from "./types.js";
 
 /** Does this finished game get an outro? Every scored game: a won Campaign its victory outro, a loss or a concede a loss outro (designer 2026-11-24). */
 export function hasOutro(state: GameState): boolean {
-  return state.ending !== undefined && state.outcome !== undefined;
+  // A mission playtest (Campaign editor) ends with the plain result card, no outro (designer 2026-11-27).
+  return state.ending !== undefined && state.outcome !== undefined && !state.settings.playtest;
 }
 
 function Show({ company, stats, preview, outro, onLeave }: { company: string; stats: CampaignStats; preview?: boolean; outro?: string | undefined; onLeave: () => void }) {

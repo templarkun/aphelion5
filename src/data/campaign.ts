@@ -1,6 +1,7 @@
 /** Typed reader for a Campaign file (data/Campaign1.txt). */
 
 import type { Coord } from "../geometry/hex.js";
+import type { BlockEffect } from "./blocks.js";
 import { FieldMap } from "../geometry/fieldMap.js";
 import { type Fields, parseRecordFile, splitList } from "./records.js";
 
@@ -39,7 +40,7 @@ export type Objective =
  * The mission event (7.2 step 9). Campaign 1 uses allied_drop, gain_energy (colours of your
  * choice), take_module_top and none. The Campaign editor (designer 2026-11-18, C4) adds:
  * gain_energy with set colours (`event_energy`), take_modules (N from the top), take_anomaly (N),
- * remove_damage (N from the Flagship). The game plays only Campaign 1's kinds so far.
+ * remove_damage (N from the Flagship). The game plays them all (built 2026-11-27 for the mission playtest).
  */
 export type MissionEvent =
   | { type: "allied_drop"; level: number }
@@ -71,7 +72,22 @@ export interface MissionDef {
   fields: Fields;
 }
 
+/**
+ * How a Campaign made in the editor plays an Order or an Omega effect in a mission playtest
+ * (designer 2026-11-27): its blocks, an effect already programmed (by that id), or nothing
+ * (written as text, "needs programming": skipped).
+ */
+export type PlayFx = { kind: "blocks"; effect: BlockEffect } | { kind: "programmed"; id: string } | { kind: "skip"; text: string };
+export interface CampaignPlay {
+  /** Order id (C2_ORDER_1, C2_M3_ORDER) -> its program. */
+  orders: Record<string, PlayFx>;
+  /** O_01 ... -> its Destroyed and At Overload programs (absent: no effect). */
+  omega: Record<string, { destroyed?: PlayFx; atOverload?: PlayFx }>;
+}
+
 export interface CampaignDatabase {
+  /** Set only for a Campaign from the editor played as a playtest (never for the data files). */
+  play?: CampaignPlay;
   /** "C1" for Campaign1.txt. */
   prefix: string;
   omega: OmegaDef[];

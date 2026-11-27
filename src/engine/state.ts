@@ -231,6 +231,12 @@ export interface GameState {
     mechaAttacksMecha?: boolean;
     /** Developer mode: a game played with it never records a high score (spec "Developer mode"). */
     developerMode: boolean;
+    /**
+     * A mission playtest from the Campaign editor (designer 2026-11-27, a Developer tool, not a rule):
+     * this mission only, `points` Upgrade points spent right after setup; its Mission End ends the game
+     * (no Upgrades, no next mission), and Game End writes no high score and no history.
+     */
+    playtest?: { mission: string; points: number };
   };
   log: LogEntry[];
   /** Recent changes on the board, for the screen's animations (engine events; optional for older states). */

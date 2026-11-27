@@ -47,6 +47,8 @@ export interface GameStart {
   darkLookOrder?: boolean;
   /** Fixed for the whole game, so replays ask the same questions (default on). */
   autoAnswer?: boolean;
+  /** A mission playtest from the Campaign editor (designer 2026-11-27; never saved, played on the editor's Campaign). */
+  playtest?: { mission: string; points: number };
   /** The profile as it was when the game started. */
   profile: Profile;
 }
@@ -75,7 +77,7 @@ export interface Game {
 }
 
 function initial(data: GameData, start: GameStart): GameState {
-  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false, powerNodeAtReveal: start.powerNodeAtReveal ?? false, flareEnergyChoice: start.flareEnergyChoice ?? false, powerNodeHeat3: start.powerNodeHeat3 ?? false, oldCampaignOrders: start.oldCampaignOrders ?? false, darkLookOrder: start.darkLookOrder ?? false });
+  return newGame(data, { seed: start.seed, date: start.date, profile: start.profile, developerMode: start.developerMode, autoAnswer: start.autoAnswer ?? true, mechaAttacksMecha: start.mechaAttacksMecha ?? false, powerNodeAtReveal: start.powerNodeAtReveal ?? false, flareEnergyChoice: start.flareEnergyChoice ?? false, powerNodeHeat3: start.powerNodeHeat3 ?? false, oldCampaignOrders: start.oldCampaignOrders ?? false, darkLookOrder: start.darkLookOrder ?? false, ...(start.playtest ? { playtest: start.playtest } : {}) });
 }
 
 export function startGame(data: GameData, start: GameStart): Game {

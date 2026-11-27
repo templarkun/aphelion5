@@ -18,7 +18,8 @@ const at = (p: Coord) => ({ x: S3 * (p.r + p.q / 2), y: -1.5 * p.q });
 export function MapTool({ m, onChange, others }: { m: MissionDraft; onChange: (m: MissionDraft) => void; others: { tag: string; map: Coord[] }[] }) {
   const [mode, setMode] = useState<"sectors" | "omega">("sectors");
   const paint = useRef<"add" | "remove" | undefined>();
-  const R = Math.max(3, ...m.map.map(dist)) + 2;
+  // Designer 2026-11-27: 3 rings round (0, 0) at first (was 5); two more rings beyond the map as it grows.
+  const R = Math.max(1, ...m.map.map(dist)) + 2;
   const cells: Coord[] = [];
   for (let q = -R; q <= R; q++) for (let r = -R; r <= R; r++) if (dist({ q, r }) <= R) cells.push({ q, r });
   const on = (p: Coord) => m.map.some((x) => sameCoord(x, p));

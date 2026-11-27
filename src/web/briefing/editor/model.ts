@@ -18,8 +18,13 @@ import type { GameData } from "../../../data/index.js";
 import type { UnitDef } from "../../../data/units.js";
 import type { Coord } from "../../../geometry/hex.js";
 import { energyEventText } from "../missionText.js";
+import { KINDS, TOKENS, type BlockEffect, type Condition, type Count, type Kind, type Step, type Target, type Token, type Verb, type When, type Where } from "../../../data/blocks.js";
 
-export type Colour = "Yellow" | "Red" | "Blue";
+export { KINDS, TOKENS };
+export type { BlockEffect, Condition, Count, Kind, Step, Target, Token, Verb, When, Where };
+
+export type { Colour } from "../../../data/blocks.js";
+import type { Colour } from "../../../data/blocks.js";
 export const COLOURS: readonly Colour[] = ["Yellow", "Red", "Blue"];
 export const OMEGA_IDS = ["O_01", "O_02", "O_03"] as const;
 export const OMEGA_ROLES: Record<string, string> = { O_01: "Alpha unit", O_02: "Beta unit", O_03: "Gamma unit" };
@@ -29,7 +34,6 @@ export const G00 = "G_00";
 // ---------------------------------------------------------------------------
 // Effects: blocks (C3, way 2) or text (way 3, needs programming).
 
-export type Verb = "damage" | "destroy" | "boost" | "place" | "swap" | "teleport" | "flagshipDamage" | "flagshipRepair" | "gainEnergy" | "loseEnergy" | "gainCommand" | "loseCommand";
 export const VERBS: { id: Verb; label: string; target: boolean; n: boolean }[] = [
   { id: "damage", label: "Deal damage to", target: true, n: true },
   { id: "destroy", label: "Destroy", target: true, n: false },
@@ -44,41 +48,8 @@ export const VERBS: { id: Verb; label: string; target: boolean; n: boolean }[] =
   { id: "gainCommand", label: "Gain Command tokens", target: false, n: true },
   { id: "loseCommand", label: "Lose Command tokens", target: false, n: true },
 ];
-export const TOKENS = ["Shield", "Bio-shield", "Barrier", "Tick", "Mortar", "Feedback"] as const;
-export type Token = (typeof TOKENS)[number];
 
-/** Which units: this unit, one, every, or N different ones. */
-export type Count = "this" | "one" | "all" | 2 | 3 | 4 | 5;
-export const KINDS = ["unit", "non-Mecha unit", "non-Bot unit", "Bot", "Mecha", "Sentinel", "Sleeper", "Gyro", "Omega unit", "Alpha unit", "Beta unit", "Gamma unit"] as const;
-export type Kind = (typeof KINDS)[number];
-export type Where = "" | "adjacent" | "rowThrough" | "rowChoice";
-export type Condition = "" | "damaged" | "undamaged";
-
-export interface Target {
-  count: Count;
-  kind: Kind;
-  /** "other": not this unit. */
-  other: boolean;
-  /** Only units of this Level (0 = any). */
-  level: number;
-  state: Condition;
-  where: Where;
-}
-
-export interface Step {
-  verb: Verb;
-  n: number;
-  target: Target;
-  token?: Token;
-  colour?: Colour | "";
-}
-
-/** "If adjacent to a Gamma unit, ..." (Omega effects only). */
-export interface When {
-  adjacentTo: Kind | "";
-}
-
-export type EffectDraft = { mode: "blocks"; steps: Step[]; when?: When } | { mode: "text"; text: string };
+export type EffectDraft = ({ mode: "blocks" } & BlockEffect) | { mode: "text"; text: string };
 
 /** Where an effect is written: on an Omega unit (it has "this unit") or an Order (it does not). */
 export type EffectPlace = "omega" | "order";
@@ -239,9 +210,13 @@ export function newDraft(prefix = "C2"): Draft {
 // ---------------------------------------------------------------------------
 // Copies (C1) and dev prices.
 
-/** Every unit that can go into a Campaign: not Mecha (they come with the Company), not the Omega tiles (always there). */
+/**
+ * Every unit that can go into a Campaign: not Mecha (they come with the Company), not the Omega
+ * tiles (always there), not Bots (every mission's deck already holds all 30, 7.2 step 5;
+ * designer 2026-11-27: no Bots in the palette).
+ */
 export function placeableUnits(data: GameData): UnitDef[] {
-  return data.units.units.filter((u) => u.type !== "Mecha" && u.type !== "Omega");
+  return data.units.units.filter((u) => u.type !== "Mecha" && u.type !== "Omega" && u.type !== "Bot");
 }
 
 /** Copies a mission uses: its deck, its Omega units placed and all four Threat columns. */
@@ -276,8 +251,12 @@ export function freeCopies(data: GameData, m: MissionDraft, id: string): number 
   return copiesOf(data, id) - (used[id] ?? 0);
 }
 
-/** A unit's dev price in this draft (Omega: the Campaign's own; G_00: none). */
+/** G_00's dev price per tile (designer 2026-11-27, C6). */
+export const G00_PRICE = 0.7;
+
+/** A unit's dev price in this draft (Omega: the Campaign's own; G_00: 0.7 per tile, C6). */
 export function priceOf(data: GameData, d: Draft, id: string): number | undefined {
+  if (id === G00) return G00_PRICE;
   if (id.startsWith("O_")) return d.omega.find((o) => o.id === id)?.devPrice;
   const p = data.units.byId.get(id)?.devPrice;
   return typeof p === "number" ? p : undefined;

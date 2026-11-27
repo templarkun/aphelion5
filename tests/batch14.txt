@@ -44,6 +44,10 @@
 # Cascade (T14_SALV_02), one of three at random per Salvage mission. Checked by the same files.
 # Two more third Cleared sector celebrations, 2026-11-27 (later): Claim Markers (T14_SALV_03) and
 # Terrain Survey (T14_SALV_04), one of three at random per Salvage mission. Checked by the same files.
+# Campaign editor round, 2026-11-27: G_00 priced 0.7 (C6, T14_ED_01), the unit card on hover
+# (T14_ED_02), map 3+1 rings, no Bots in the palette, the Campaign column's order (T14_ED_03), and
+# the mission playtest (T14_ED_04-07). CHANGED notes on T13_ED_01, 02, 03, 06. Checked by
+# tests/unit/editor.test.ts, tests/unit/playtest.test.ts and scripts/ui-playtest.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -894,3 +898,78 @@ then: about 4.8 seconds on the Field, zoomed as T14_SALV_03. Act 1 (0.6 s): a pi
       2 / 3" turns to "3 / 3". The zoom eases back (3.9-4.8 s).
 note: As T14_SALV_03. System options lists Claim Markers and Terrain Survey, and each then Mission
       Complete (60 buttons).
+
+id: T14_ED_01
+title: G_00's dev price
+source: designer 2026-11-27 ("G_00: one tile is worth Dev price 0.7"; C6)
+given: the Campaign editor, a mission whose deck holds 6× G_00
+then: the G_00 tile shows 0.7; the mission roster's sum, and the whole Campaign's, count 6 × 0.7 =
+      4.2 for them; G_00 is not listed under "no price".
+
+id: T14_ED_02
+title: A unit's card in the editor
+source: designer 2026-11-27 ("When I long-tap or hover over a unit, I want to see a pop-up with the unit
+        description (similar to the one in gameplay)")
+given: any unit tile in the Campaign editor (palette, Add units, deck, Threat columns, Omega units)
+when: the mouse rests on it, or a finger holds it for 0.5 s
+then: the game's card-text bubble shows beside it: bold "Type. Level N.", then one line per effect
+      (Alert, ability, Drain, Destroyed). Omega units show this Campaign's Level and its At Overload
+      and Destroyed effects (or "No effects written yet"); G_00 says it is a tile from the top of the
+      Energy deck. The bubble goes when the mouse leaves or the finger lifts; a hold does not also
+      add or remove the tile.
+
+id: T14_ED_03
+title: The map, the palette and the Campaign column
+source: designer 2026-11-27
+given: a new draft in the Campaign editor
+then: MAP: the grid shows 3 rings round (0, 0) plus one more ring (37 hexagons); adding sectors near
+      the edge grows it, two rings beyond the farthest sector. PALETTE: "Add units" offers Sentinel,
+      Flare, Sleeper and Gyro, never Bot. CAMPAIGN column, top to bottom: Campaign id (and the whole
+      Campaign's sum), Missions, Campaign Orders, Omega units.
+
+id: T14_ED_04
+title: Play this mission: the panel
+source: designer 2026-11-27 ("I would like the ability to play a specific mission that I will be building
+        inside the Campaign editor. With events and orders that were made with blocks (not with
+        text)."); choices: pick the Company plus Upgrade points, back to the editor at the end, text
+        effects skipped with a note
+given: the open mission in the Campaign editor
+when: press "Play this mission"
+then: a panel: Company (V1 / V2), Veteran or Fresh (only when that Company's sheet has marks),
+      Heat module, Upgrade points (0-40). It lists every effect written as text that the game does
+      not know (Campaign Orders, this mission's Order, Omega effects): they do nothing in the
+      playtest. Text with the same words as one of Campaign 1's programmed effects plays as that
+      effect (counted on the panel). A draft the game cannot read says why, with no Play button.
+
+id: T14_ED_05
+title: Play this mission: the game
+given: T14_ED_04, Play pressed
+then: a Developer-mode game of this mission only, on the draft as the game reads its Campaign file:
+      setup with the chosen Company; with Upgrade points, the Upgrade sheet first (one point per
+      answer, as at Mission End); then this mission's Preparation (no route screen, even for 2x / 2y;
+      the Threat screen, the Module draw, the mission event, the mission intro) and the Field.
+then: Orders and Omega effects made from blocks play as their words say: damage (one hit each),
+      destroy, Boost, place a Shield / Bio-shield / Barrier / Tick / Mortar / Feedback, swap, teleport
+      to a Dark sector, Flagship damage and repair, gain / lose energy and Command tokens; "one", "N
+      different" and rows are chosen on the Field; "If adjacent to ..." checks first. A block Order
+      whose targets fit no unit is greyed out (I9).
+then: the mission events made in the editor play: gain energy (set colours, then any colours of your
+      choice), take N Modules from the top, take N Anomaly cards, remove N damage from the Flagship,
+      Allied Drop, none.
+
+id: T14_ED_06
+title: Play this mission: the end
+given: T14_ED_05
+when: the mission is won (or lost, or conceded)
+then: the mission's win plays as usual (a win), then a card "Playtest: mission won" (lost / conceded)
+      with "Back to the editor"; no Upgrade sheet, no next mission, no outro. Back in the editor the
+      draft and the open mission are as they were. Menu > Leave also goes back to the editor.
+then: nothing is saved: no game to continue on the Command Deck, no Statistics, no high score, the
+      Company sheets unchanged.
+
+id: T14_ED_07
+title: Play this mission: text effects
+given: a draft with an Order written as text the game does not know ("Summon a dragon.")
+when: that Order is issued in the playtest
+then: its Command tokens are paid and nothing else happens; the log says it was written as text and
+      skipped.

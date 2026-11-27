@@ -7,7 +7,8 @@
  */
 
 import "../effects/index.js";
-import { ability, noUnitFits, unitEffect } from "../effects/registry.js";
+import { ability, unitEffect } from "../effects/registry.js";
+import { orderAbility, orderHasNoUnit } from "../effects/blocks.js";
 import { ENERGY_COLOURS } from "../data/units.js";
 import { type Effect, type RunCtx, ask, asEffect, log, registerRoot } from "./effect.js";
 import { alertShortcuts, alertedUnits, chooseAlert, discardUnit, resolveAlert, splitAlertId } from "./alerts.js";
@@ -56,7 +57,8 @@ export function bayAbilities(c: Ctx): BayAbility[] {
  * a rule of this program only, not in the Core Rules.
  */
 export function noUnitToTarget(c: Ctx, id: string): boolean {
-  return noUnitFits(c, id);
+  // Orders of a playtest Campaign made from blocks: whether a unit fits their targets (effects/blocks.ts).
+  return orderHasNoUnit(c, id);
 }
 
 /** Bay abilities you can use now: Bay at 1+ Integrity, timing tag matches the phase, a unit to target if it targets units. */
@@ -110,7 +112,8 @@ export function* issueOrder(c: RunCtx, o: OrderOption): Effect {
   c.state.supply.command += o.tokens;
   log(c, `issue an Order (${o.tokens} Command token${o.tokens === 1 ? "" : "s"}): ${o.effect}`, "5.6");
   emit(c, { kind: "used", what: "order", rule: o.id, text: o.effect });
-  yield* ability(o.id)(c, undefined);
+  // A playtest Campaign's Order may be made from blocks (designer 2026-11-27, effects/blocks.ts).
+  yield* orderAbility(c, o.id)(c, undefined);
 }
 
 // ---------------------------------------------------------------------------

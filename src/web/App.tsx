@@ -118,6 +118,9 @@ export function App() {
   const [outroPreview, setOutroPreview] = useState<{ campaign: string; company: string; outro: string } | undefined>();
   // A mission celebration looked at from System options (a made-up Field; no game is touched).
   const [celebPreview, setCelebPreview] = useState<{ company: string; what: PreviewWhat } | undefined>();
+  // A mission playtest from the Campaign editor (designer 2026-11-27): its own data and game, never saved.
+  const [playtest, setPlaytest] = useState<{ data: GameData; game: Game } | undefined>();
+  const [ptNotice, setPtNotice] = useState<string | undefined>();
 
   useEffect(() => {
     void loadSave().then((f) => {
@@ -168,7 +171,20 @@ export function App() {
       {intro !== "off" && <IntroSequence key={intro} mode={intro} onDone={() => setIntro("off")} />}
       {page === "stats" && <StatsPage data={data} profile={profile} onBack={() => setPage(undefined)} />}
       {page === "features" && <FeaturesPage onBack={() => setPage(undefined)} />}
-      {page === "editor" && <CampaignEditor data={data} onBack={() => setPage(undefined)} />}
+      {page === "editor" && !playtest && (
+        <CampaignEditor
+          data={data}
+          profile={profile}
+          onBack={() => setPage(undefined)}
+          onPlaytest={(pt, ch) => {
+            const seed = Math.floor(Math.random() * 1e9);
+            const g0 = startGame(pt.data, { seed, date: today(), developerMode: true, autoAnswer, profile: structuredClone(profile), playtest: { mission: pt.mission, points: ch.points } });
+            const g = applyLoadout(pt.data, g0, { campaign: pt.campaign.prefix, company: ch.company, freshness: ch.freshness, expansions: ch.expansions, developerMode: true, seed });
+            setPtNotice(undefined);
+            setPlaytest({ data: pt.data, game: g });
+          }}
+        />
+      )}
       {outroPreview && <OutroPreview data={data} campaign={outroPreview.campaign} company={outroPreview.company} outro={outroPreview.outro} onClose={() => setOutroPreview(undefined)} />}
       {celebPreview && <CelebrationPreview key={`${celebPreview.what.kind}:${celebPreview.what.omega}:${celebPreview.what.piece}:${celebPreview.company}`} data={data} company={celebPreview.company} what={celebPreview.what} onClose={() => setCelebPreview(undefined)} />}
       <GateHost />
@@ -176,6 +192,50 @@ export function App() {
   );
 
   function screen() {
+  if (playtest) {
+    const pd = playtest.data;
+    const pg = playtest.game;
+    const set = (g: Game) => setPlaytest({ data: pd, game: g });
+    return (
+      <CrashGuard>
+        <GameScreen
+          data={pd}
+          game={pg}
+          notice={ptNotice}
+          onAnswer={(answers) => {
+            let g = pg;
+            for (const a of answers) {
+              const r = playAnswer(pd, g, a);
+              if (r.result.status === "illegal" || r.result.status === "blocked") {
+                if (g !== pg) set(g);
+                return setPtNotice(`${r.result.status === "illegal" ? "Not allowed" : "Not available"}: ${r.result.reason}`);
+              }
+              g = r.game;
+            }
+            setPtNotice(undefined);
+            set(g);
+          }}
+          onUndo={() => {
+            const g = undo(pd, pg);
+            if (g) set(g);
+          }}
+          canUndo={() => canUndo(pd, pg)}
+          onExport={() => setPtNotice("A playtest is not saved.")}
+          onExportLog={() =>
+            setBox({
+              title: "Export log",
+              hint: "Everything that happened in this playtest, with rule sections.",
+              text: pg.view.state.log.map((e) => `${e.text}${e.rule ? `  [${e.rule}]` : ""}`).join("\n"),
+              fileName: `aphelion5-playtest-log-${today()}.txt`,
+              type: "text/plain",
+            })
+          }
+          // Back to the editor, its draft and mission as they were (designer 2026-11-27).
+          onLeave={() => setPlaytest(undefined)}
+        />
+      </CrashGuard>
+    );
+  }
   const resumable = game !== undefined && game.view.state.ending === undefined;
   if (!game || inMenu)
     return (
@@ -1918,6 +1978,17 @@ export function HoverInfo({ data, state, sector, tileId }: { data: GameData; sta
 
 function GameOver({ state, onLeave }: { state: GameState; onLeave: () => void }) {
   const e = state.ending;
+  const pt = state.settings.playtest;
+  if (pt)
+    return (
+      <div data-playtest-end={state.outcome?.result ?? "lost"}>
+        <h3>Playtest: {state.outcome?.result === "won" ? "mission won" : state.outcome?.result === "conceded" ? "mission conceded" : "mission lost"}</h3>
+        <p>{state.outcome?.reason}</p>
+        <button className="primary" onClick={onLeave}>
+          Back to the editor
+        </button>
+      </div>
+    );
   return (
     <div>
       <h3>Game over</h3>

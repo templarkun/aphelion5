@@ -4,6 +4,7 @@
  */
 
 import { unitEffect } from "../effects/registry.js";
+import { omegaEffect } from "../effects/blocks.js";
 import { ENERGY_COLOURS } from "../data/units.js";
 import { type Effect, type RunCtx, ask, asEffect, log } from "./effect.js";
 import { gainHeat, powerNodeHeat } from "./heat.js";
@@ -95,7 +96,7 @@ function* orFizzle(c: RunCtx, id: TileId, unitId: string, run: Effect): Effect {
 function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" | "heat"): Effect {
   // A Wreck: its Destroyed effect, then it leaves (4.8).
   if (isWreck(c, id)) {
-    yield* orFizzle(c, id, unitId, unitEffect(unitId, "destroyed")(c, id));
+    yield* orFizzle(c, id, unitId, (unitType(c, id) === "Omega" ? omegaEffect(c, unitId, "destroyed") : unitEffect(unitId, "destroyed"))(c, id));
     if (isUnit(c.state, id)) removeWreck(c, id);
     return;
   }
@@ -143,7 +144,8 @@ function* alertEffect(c: RunCtx, id: TileId, unitId: string, choice?: "energy" |
       yield* orFizzle(c, id, unitId, flareAlert(c, id, unitId));
       return;
     case "Omega":
-      yield* unitEffect(unitId, "atOverload")(c, id);
+      // A playtest Campaign's Omega effects may be made from blocks (designer 2026-11-27).
+      yield* omegaEffect(c, unitId, "atOverload")(c, id);
       return;
     case "Bot":
       throw new Error(`${id}: a Bot has no effect to resolve`);

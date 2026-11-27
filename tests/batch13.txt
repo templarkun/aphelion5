@@ -3,7 +3,7 @@
 # Written 2026-11-08 by Claude from the designer's requests of 2026-11-08. AGREED by the designer
 # 2026-11-22 (everything up to round 26); it goes into the Project as
 # "claude/Test scenarios batch 13.txt". New scenarios from round 27 on are in batch 14; changes to
-# the ones here are CHANGED notes (round 27: T13_ED_03, T13_R20_06). One rules ruling (I8, Core Rules 5.3 rev 141); the
+# the ones here are CHANGED notes (round 27: T13_ED_03, T13_R20_06; 2026-11-27 editor round: T13_ED_01, T13_ED_02, T13_ED_03, T13_ED_06). One rules ruling (I8, Core Rules 5.3 rev 141); the
 # rest is screen only (Interaction and animation, build step 3). Checked by
 # tests/unit/modules.test.ts, tests/unit/command.test.ts, tests/unit/events.test.ts and
 # scripts/ui-smoke.mjs. The outro (section THE OUTRO, T13_OUT_01-07) was added 2026-11-16;
@@ -1601,6 +1601,10 @@ then: a page with three parts side by side on a wide screen (Palette, Campaign, 
       tabs for them on a tablet or phone. The draft is kept in this browser: leaving and coming
       back finds it as it was. "New / Import": New campaign, Start from C1 (a copy named C2),
       a file chosen or pasted (a Campaign file, or an editor file).
+note: CHANGED 2026-11-27 (designer): the Campaign column is in this order: Campaign id, Missions,
+      Campaign Orders, Omega units. Hovering a unit tile with the mouse, or holding it 0.5 s, shows
+      its card text in the game's bubble (T14_ED_02). The open mission has "Play this mission"
+      (T14_ED_04).
 
 id: T13_ED_02
 title: The palette
@@ -1609,6 +1613,8 @@ then: every unit of that type not yet chosen is shown as its tile with its id an
       adds it ("Add every <type>" adds them all). Mecha are never offered (they come with the
       Company). O_01, O_02, O_03 are always in the palette (C2). A unit used in a mission cannot
       be taken out of the palette until it is taken out there.
+note: CHANGED 2026-11-27 (designer): Bots are never offered either (every mission's deck already
+      holds all 30, 7.1 step 5); the types are Sentinel, Flare, Sleeper, Gyro.
 
 id: T13_ED_03
 title: dev_price on every unit, and the sums
@@ -1627,6 +1633,8 @@ note: dev_price is never shown to players (only in Developer tools). Open: C6 (G
 note: CHANGED 2026-11-22 (designer, C8): "Whole Campaign Σ" counts each route pair (2x / 2y,
       4x / 4y) once, by its first mission, the "X path"; the label reads "Whole Campaign (X path)"
       (T14_R27_02).
+note: CHANGED 2026-11-27 (designer, C6): G_00 counts 0.7 per tile in every sum and its tile shows
+      0.7; it is no longer listed under "no price" (T14_ED_01).
 
 id: T13_ED_04
 title: Copies are limited
@@ -1655,6 +1663,8 @@ then: a hex grid laid out as the Field (Core Rules 3.8). SECTORS: tap or drag ov
       stand there, as the Campaign file's format has it. Mirror (left-right), Clear, Copy a map
       from another mission. Under it: the sector count and how the deck is dealt (7.2 step 5:
       tiles over the sectors without an Omega unit, how many each, how many get one more).
+note: CHANGED 2026-11-27 (designer): the grid shows 3 rings round (0, 0) plus one more ring at
+      first (was 5); it still grows two rings beyond the map as sectors are added (T14_ED_03).
 
 id: T13_ED_07
 title: Objective, event and Order
