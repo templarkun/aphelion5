@@ -132,6 +132,63 @@ export const BREACH = {
 };
 
 /**
+ * Barrage, the second kill for Beta (designer 2026-11-27: "Make 2 animations for Beta unit elimination ...
+ * more spectacular than Alpha"): about 6.8 s. A kill box locks on the Beta and the sectors round it; a
+ * barrage of shells walks in on it and breaks its shield; a lance of light from orbit ends it.
+ */
+export const BARRAGE = {
+  total: 6.8,
+  /** Act 1, kill box: the zoom (wider than Beta Breach); the box's edge drawn round the seven sectors, pins at the six, lock (playTargetLock). */
+  zoomIn: [0, 1.0] as const,
+  box: [0.15, 0.95] as const,
+  lock: 0.98,
+  /** Act 2, barrage: eight shells walk in on it (playBarrageShell, each), its shield of particles flickers, cracks and breaks. */
+  shells: [1.25, 1.5, 1.72, 1.92, 2.1, 2.26, 2.4, 2.52] as const,
+  fall: 0.22,
+  shieldUp: 1.15,
+  shieldBreak: 2.78,
+  /** Act 3, lance: a target ring shrinks on it, the Field dims; the lance falls from orbit (playOrbitalLance) and strikes. */
+  mark: [2.6, 3.1] as const,
+  lance: [3.1, 3.3] as const,
+  strike: 3.3,
+  /** The firestorm ring, rising debris, a shock front off the screen; the units round it knocked back; the crater cools. */
+  ring: [3.3, 4.1] as const,
+  cool: [3.6, 5.8] as const,
+  wreckIn: [4.2, 4.8] as const,
+  /** Act 4, confirmed: the label; "2 / 3" becomes "3 / 3". */
+  label: [4.4, 4.7] as const,
+  count: 5.0,
+  /** Act 5, back. */
+  back: [5.9, 6.8] as const,
+};
+
+/**
+ * Cryo Shatter, the third kill for Beta (designer 2026-11-27, as Barrage): about 6.6 s. Six cryo emitters
+ * freeze the Beta solid, frost creeping over the sectors round it; a held silence and two cracks; it
+ * shatters into ice, a frost wave and mist roll out over the Field, ice dust drifts down.
+ */
+export const CRYO = {
+  total: 6.6,
+  /** Act 1, emitters: the zoom; six emitters gather at the corners round it, cold beams, lock (playTargetLock). */
+  zoomIn: [0, 1.0] as const,
+  emitters: [0.2, 0.9] as const,
+  lock: 0.98,
+  /** Act 2, freeze: frost grows over the tile from its edges (playCryoFreeze), it struggles, slower and slower; frost on the sectors round it. */
+  freeze: [1.05, 2.6] as const,
+  /** Frozen: still; two cracks (playIceCrack, each). */
+  cracks: [2.85, 3.05] as const,
+  /** Act 3, shatter (playIceShatter): ice shards, a frost wave and mist off the screen, the units round it knocked back. */
+  shatter: 3.25,
+  dust: [3.4, 5.6] as const,
+  wreckIn: [4.0, 4.6] as const,
+  /** Act 4, confirmed: the label; "2 / 3" becomes "3 / 3". */
+  label: [4.2, 4.5] as const,
+  count: 4.8,
+  /** Act 5, back. */
+  back: [5.7, 6.6] as const,
+};
+
+/**
  * Event Horizon, the first kill for Gamma (designer 2026-11-20, I26: both plans built): about 8 s. The
  * camera tilts the Field into 3D; the Gamma collapses into a singularity that pulls the sectors round it
  * off the board; it snaps, a jet of light fires up and a shock wave flips the sectors; they fall back.
@@ -305,6 +362,8 @@ export const KILL_TIMES: Record<string, { total: number; back: readonly [number,
   alphaRail: RAIL,
   alphaErase: ERASE,
   betaBreach: BREACH,
+  betaBarrage: BARRAGE,
+  betaCryo: CRYO,
   gammaHorizon: HORIZON,
   gammaArray: ARRAY,
   gammaShatter: SHATTER,

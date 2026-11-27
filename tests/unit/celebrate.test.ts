@@ -14,12 +14,14 @@ import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winS
 import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
 import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
-import { BEACON, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
+import { BARRAGE, BEACON, CRYO, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
 import { leapGrow, packetSpan, surgeCellAt, surgeLook, surgeTree } from "../../src/web/celebrate/chainSurgeFx.js";
 import { beaconLook, beaconMiddle, spiralOrder } from "../../src/web/celebrate/beaconFx.js";
 import { beatTimes, latticeOf, resonanceCellAt, resonanceLook, rippleAt, ringAt as resRingAt, ripplesOf } from "../../src/web/celebrate/resonanceFx.js";
 import { flightOf, headAt, murmurLook, pace, swarmCellAt } from "../../src/web/celebrate/murmurationFx.js";
 import { slugDistance, slugPasses } from "../../src/web/celebrate/railFx.js";
+import { shellSpot } from "../../src/web/celebrate/barrageFx.js";
+import { FROST_LINES, struggle } from "../../src/web/celebrate/cryoFx.js";
 import { barAt, hexHalfHeight, LATTICE, latticeAt } from "../../src/web/celebrate/eraseFx.js";
 
 const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral", "resonance", "murmuration"];
@@ -77,6 +79,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     ["alphaRail", ["Alpha"]],
     ["alphaErase", ["Alpha"]],
     ["betaBreach", ["Beta"]],
+    ["betaBarrage", ["Beta"]],
+    ["betaCryo", ["Beta"]],
     ["gammaHorizon", ["Gamma"]],
     ["gammaArray", ["Gamma"]],
     ["gammaShatter", ["Gamma"]],
@@ -99,7 +103,9 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   const alphas = new Set<string>();
   for (let seed = 1; seed < 80; seed++) alphas.add(pickPiece(KILL_PIECES, "Alpha", seed, "C1_M1", "kill")!.id);
   expect([...alphas].sort()).toEqual(["alphaDown", "alphaErase", "alphaPurge", "alphaRail"]);
-  expect(pickPiece(KILL_PIECES, "Beta", 7, "C1_M3", "kill")?.id).toBe("betaBreach");
+  const betas = new Set<string>();
+  for (let seed = 1; seed < 60; seed++) betas.add(pickPiece(KILL_PIECES, "Beta", seed, "C1_M3", "kill")!.id);
+  expect([...betas].sort()).toEqual(["betaBarrage", "betaBreach", "betaCryo"]);
   expect(WIN_IDS).toContain(pickPiece(WIN_PIECES, "Beta", 7, "C1_M3", "win")?.id);
   const gammas = new Set<string>();
   for (let seed = 1; seed < 40; seed++) gammas.add(pickPiece(KILL_PIECES, "Gamma", seed, "C1_M7", "kill")!.id);
@@ -124,6 +130,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Alpha both alphaRail missionComplete",
     "Alpha both alphaErase missionComplete",
     "Beta kill betaBreach",
+    "Beta kill betaBarrage",
+    "Beta kill betaCryo",
     "Beta win missionComplete",
     "Beta win perimeterSweep",
     "Beta win sectorFlip",
@@ -132,6 +140,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Beta win resonance",
     "Beta win murmuration",
     "Beta both betaBreach missionComplete",
+    "Beta both betaBarrage missionComplete",
+    "Beta both betaCryo missionComplete",
     "Gamma kill gammaHorizon",
     "Gamma kill gammaArray",
     "Gamma kill gammaShatter",
@@ -246,10 +256,12 @@ test("Beta (Mission 3, Eliminate 3 Betas): the third Beta destroyed is the decid
   const ev = newEvents(b.start.events, b.wonJoined.events);
   const d = ev.findIndex((e) => e.kind === "destroyed");
   expect(ev[d]).toEqual(expect.objectContaining({ unitId: "O_02", wreck: false }));
-  expect(killOf(data(), b.start, ev, PREVIEW_SEED)).toEqual(expect.objectContaining({ index: d, name: "Beta", count: 3, piece: expect.objectContaining({ id: "betaBreach" }) }));
+  const bk = killOf(data(), b.start, ev, PREVIEW_SEED)!;
+  expect(bk).toEqual(expect.objectContaining({ index: d, name: "Beta", count: 3 }));
+  expect(["betaBreach", "betaBarrage", "betaCryo"]).toContain(bk.piece.id);
   const j = winShowOf(data(), b.start, b.wonJoined, PREVIEW_SEED)!;
   expect(WIN_IDS).toContain(j.piece.id);
-  expect([j.name, j.target, j.count, j.have, j.from, j.joined, j.kill, j.fresh]).toEqual(["Beta", "O_02", 3, 3, "0,1", true, "betaBreach", 1]);
+  expect([j.name, j.target, j.count, j.have, j.from, j.joined, j.kill, j.fresh]).toEqual(["Beta", "O_02", 3, 3, "0,1", true, bk.piece.id, 1]);
   // The win alone (after the kill): from the same sector, nothing left to fly in.
   const w = winShowOf(data(), b.kill, b.won, PREVIEW_SEED)!;
   expect([w.from, w.joined, w.flights]).toEqual(["0,1", false, false]);
@@ -877,4 +889,34 @@ test("Alpha Erased (designer 2026-11-27): the bar sweeps the tile, the lattice h
   expect(left.leave).toBeLessThan(p.leave);
   for (const q of LATTICE) expect(q.leave + q.life).toBeLessThan(ERASE.back[0]);
   expect(Math.min(...LATTICE.map((q) => q.leave))).toBeGreaterThanOrEqual(ERASE.hold[1] - 0.07);
+});
+
+test("the two Beta kills (designer 2026-11-27): longer than any Alpha kill and Beta Breach's equal or more; Barrage walks in, Cryo freezes still", () => {
+  const alphaLongest = Math.max(...["alphaDown", "alphaPurge", "alphaRail", "alphaErase"].map((id) => KILL_TIMES[id]!.total));
+  for (const id of ["betaBarrage", "betaCryo"]) {
+    expect(KILL_TIMES[id]!.total).toBeGreaterThan(alphaLongest + 1.5);
+    expect(KILL_TIMES[id]!.total).toBeGreaterThanOrEqual(KILL_TIMES.betaBreach!.total);
+  }
+  // Barrage: the shells come one after another, each landing nearer the Beta; the shield breaks before the lance strikes.
+  for (let i = 1; i < BARRAGE.shells.length; i++) {
+    expect(BARRAGE.shells[i]!).toBeGreaterThan(BARRAGE.shells[i - 1]!);
+    expect(shellSpot(i).r).toBeLessThan(shellSpot(i - 1).r);
+  }
+  expect(shellSpot(BARRAGE.shells.length - 1).r).toBeGreaterThan(1);
+  expect(BARRAGE.shells.at(-1)! < BARRAGE.shieldBreak && BARRAGE.shieldBreak < BARRAGE.strike && BARRAGE.lance[1] === BARRAGE.strike).toBe(true);
+  expect(BARRAGE.strike < BARRAGE.wreckIn[0] && BARRAGE.count < BARRAGE.back[0]).toBe(true);
+  // Cryo: it struggles while freezing, weaker as it goes, and is still once frozen; the cracks come in the silence before the shatter.
+  let early = 0;
+  let late = 0;
+  const mid = (CRYO.freeze[0] + CRYO.freeze[1]) / 2;
+  for (let t = CRYO.freeze[0]; t < CRYO.freeze[1]; t += 0.01) {
+    if (t < mid) early = Math.max(early, struggle(t));
+    else late = Math.max(late, struggle(t));
+  }
+  expect(early).toBeGreaterThan(late);
+  expect(struggle(CRYO.freeze[1] + 0.01)).toBe(0);
+  expect(CRYO.freeze[1] < CRYO.cracks[0] && CRYO.cracks[1] < CRYO.shatter).toBe(true);
+  // The frost grows from the edges, staying inside the tile.
+  expect(FROST_LINES.length).toBeGreaterThan(18);
+  for (const fl of FROST_LINES) for (const [x, y] of fl.pts) expect(Math.hypot(x, y)).toBeLessThan(1.05);
 });

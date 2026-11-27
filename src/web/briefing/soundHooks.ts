@@ -201,6 +201,23 @@ export function playBetaSurge(index: number): void {
 }
 /** Beta Breach, Act 3: the core breaches, white-out and fireball. */
 export function playBetaDetonation(): void {}
+/** Barrage (Beta): one shell of the barrage lands (index of count). */
+export function playBarrageShell(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Barrage: the Beta's shield breaks under the shells. */
+export function playShieldBreak(): void {}
+/** Barrage: the lance of light falls from orbit and strikes. */
+export function playOrbitalLance(): void {}
+/** Cryo Shatter (Beta): the emitters fire and frost grows over the Beta. */
+export function playCryoFreeze(): void {}
+/** Cryo Shatter: the frozen Beta cracks (index 0, 1). */
+export function playIceCrack(index: number): void {
+  void index;
+}
+/** Cryo Shatter: the ice shatters, the frost wave and mist roll out. */
+export function playIceShatter(): void {}
 /** Event Horizon (Gamma), Act 2: the Gamma collapses into a black sphere and starts to pull. */
 export function playGammaCollapse(): void {}
 /** Event Horizon, Act 3: the singularity snaps to a point, then a jet of light fires up and a shock wave flips the sectors. */

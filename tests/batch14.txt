@@ -38,6 +38,8 @@
 # one of seven wins at random per mission. Checked by tests/unit/celebrate.test.ts, scripts/ui-celebrate.mjs.
 # Two more Alpha kills, 2026-11-27 (later): Rail Strike (T14_KILL_01) and Alpha Erased (T14_KILL_02),
 # one of four Alpha kills at random per mission. Checked by the same files.
+# Two more Beta kills, 2026-11-27 (later): Barrage (T14_KILL_03) and Cryo Shatter (T14_KILL_04),
+# one of three Beta kills at random per mission. Checked by the same files.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -781,3 +783,43 @@ then: about 4.6 seconds on the Field. Act 1 (0-0.85 s): the zoom; four corner br
       zoom eases back.
 note: As T14_KILL_01. System options lists Rail Strike and Alpha Erased, and each then Mission Complete
       (48 buttons).
+
+id: T14_KILL_03
+title: Barrage
+source: designer 2026-11-27 ("Make 2 animations for Beta unit elimination. (Don't forget that Beta unit
+        destruction should be more spectacular than Alpha unit destruction animation)")
+given: an Eliminate Beta mission, the deciding Beta destroyed, Barrage picked (or System options >
+       Mission celebrations > Barrage), Normal speed
+then: about 6.8 seconds on the Field (longer than any Alpha kill, at least 1.5 s), the zoom wider than for
+      an Alpha so the six sectors round the Beta are in it. Act 1 (0-1.0 s): a kill box of red
+      particles draws itself round the Beta and the six sectors round it, a pin drops on each of the
+      six; it locks. Act 2 (1.0-3.1 s): eight shells fall from above the page and land one after
+      another, each nearer the Beta (a falling streak, a flash, a ring of particles, sparks, embers left
+      glowing), the nearest unit jolted; the Beta's shield, a hex bubble of particles, flares at each
+      hit, cracks and breaks into flying cells; a red target ring shrinks onto it and the Field dims.
+      Act 3 (3.1-4.2 s): a lance of light falls from above the page and strikes: white-out, a
+      fireball, a ring of fire running out over the kill box, debris thrown up at the camera, a shock
+      front off the screen, the units round it knocked back, a heavy shake. A Beta leaves no Wreck: a
+      crater with radial scorch and a rim cooling from white to red, smoke; what lies beneath shows
+      again. Act 4: a bigger label "BETA DESTROYED · 2 / 3" turns to "3 / 3". Act 5 (5.9-6.8 s): the
+      zoom eases back.
+note: The same for every Company. Two taps skip; reduced motion or Instant: the still close-up (1.5 s).
+      The pick (I19): one of the three Beta kills at random per mission (Beta Breach, Barrage, Cryo
+      Shatter), the same again if the save is reloaded.
+
+id: T14_KILL_04
+title: Cryo Shatter
+source: designer 2026-11-27 (as T14_KILL_03)
+given: as T14_KILL_03, Cryo Shatter picked
+then: about 6.6 seconds on the Field, as wide as Barrage. Act 1 (0-1.0 s): six cryo emitters gather out of
+      particles at the corners round the Beta and lock; cold beams of particles stream into it. Act 2
+      (1.0-3.25 s): frost lines grow over the tile from its edges inwards, it turns to ice; it struggles
+      in pulses, each weaker and slower, until it is still; frost creeps along the edges of the sectors
+      round it; mist rolls off it; frozen, silence, then two cracks of light run across it. Act 3
+      (3.25-4.2 s): it shatters: a cold flash, ice shards tumbling outwards (some at the camera), a
+      spray of glinting ice particles, a frost wave running off the screen, the units round it knocked
+      back with frost on their edges, mist billowing out, a heavy shake. No Wreck: the sector is left
+      frosted, ice dust drifting down; what lies beneath shows again. Act 4: "BETA SHATTERED · 2 / 3"
+      turns to "3 / 3". Act 5 (5.7-6.6 s): the zoom eases back.
+note: As T14_KILL_03. System options lists Barrage and Cryo Shatter, and each then Mission Complete
+      (52 buttons).

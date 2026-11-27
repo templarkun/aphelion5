@@ -75,21 +75,22 @@ export async function celebrateCheck(browser, url, out) {
     const l = await log(pg);
     const ms = killMs(l);
     await pg.close();
-    if (!(listed === 48 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
+    if (!(listed === 52 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
   }
 
   // 1b. Alpha Purge (1100 px), the second Alpha kill (I21), Rail Strike (1400 px) and Alpha Erased (390 px), the third and
-  //     fourth (designer 2026-11-27): about 4.5 s each, then the preview closes.
-  for (const [w, h, piece, name] of [[1100, 760, "alphaPurge", "purge"], [1400, 900, "alphaRail", "rail"], [390, 844, "alphaErase", "erase"]]) {
+  //     fourth (designer 2026-11-27): about 4.5 s each, then the preview closes; Barrage (1400 px) and Cryo Shatter (390 px), the
+  //     second and third Beta kills (designer 2026-11-27): about 6.7 s each.
+  for (const [w, h, piece, name, omega = "Alpha"] of [[1100, 760, "alphaPurge", "purge"], [1400, 900, "alphaRail", "rail"], [390, 844, "alphaErase", "erase"], [1400, 900, "betaBarrage", "barrage", "Beta"], [390, 844, "betaCryo", "cryo", "Beta"]]) {
     const pg = await open(w, h);
-    await preview(pg, "kill", "Alpha", piece);
+    await preview(pg, "kill", omega, piece);
     const shown = await pg.waitForSelector("[data-celebration]", { timeout: 10000 }).then(() => true, () => false);
     await pg.waitForTimeout(1500);
     await pg.screenshot({ path: `${out}/ui-celebrate-${name}.png` });
     const closed = await pg.waitForSelector("[data-celebration-preview]", { state: "detached", timeout: 14000 }).then(() => true, () => false);
     const ms = killMs(await log(pg));
     await pg.close();
-    if (!(shown && closed && ms > 3500 && ms < 9000)) fails.push(`${piece}: shown ${shown}, closed ${closed}, ${ms} ms`);
+    if (!(shown && closed && ms > (omega === "Beta" ? 5500 : 3500) && ms < (omega === "Beta" ? 11000 : 9000))) fails.push(`${piece}: shown ${shown}, closed ${closed}, ${ms} ms`);
   }
 
   // 1c. Beta Breach, then Mission Complete (1400 px): the longer kill (about 6.2 s), then the win for Beta (I22): "BETA ELIMINATED · 3 / 3", three badges.

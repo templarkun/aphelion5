@@ -6,6 +6,8 @@
 import type { Step } from "../anim.js";
 import { gammaArrayStep } from "./arrayFx.js";
 import { betaBreachStep } from "./breachFx.js";
+import { betaBarrageStep } from "./barrageFx.js";
+import { betaCryoStep } from "./cryoFx.js";
 import type { KillEnv, KillTarget } from "./closeup.js";
 import { gammaHorizonStep } from "./horizonFx.js";
 import { alphaDownStep } from "./killFx.js";
@@ -21,6 +23,8 @@ export const KILL_STEPS: Record<string, (env: KillEnv, k: KillTarget) => Step> =
   alphaRail: alphaRailStep,
   alphaErase: alphaEraseStep,
   betaBreach: betaBreachStep,
+  betaBarrage: betaBarrageStep,
+  betaCryo: betaCryoStep,
   gammaHorizon: gammaHorizonStep,
   gammaArray: gammaArrayStep,
   gammaShatter: gammaShatterStep,
