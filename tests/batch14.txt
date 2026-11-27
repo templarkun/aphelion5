@@ -28,7 +28,7 @@
 # (T14_LOSS_01), Signal Lost (T14_LOSS_02), Withdrawal (T14_LOSS_03). CHANGED notes on batch 8
 # T8_END_01 and batch 13 T13_OUT_01. Checked by tests/unit/outro.test.ts and scripts/ui-loss.mjs.
 # Two more victory outros, 2026-11-27: Homecoming and Star Chart in System options (T14_WIN_01),
-# Homecoming (T14_WIN_02), Star Chart (T14_WIN_03). CHANGED note on batch 13 T13_OUT_07. Checked by
+# Homecoming (T14_WIN_02), Star Chart (T14_WIN_03; CHANGED the same day: longer and bigger). CHANGED note on batch 13 T13_OUT_07. Checked by
 # tests/unit/outro.test.ts and scripts/ui-victory.mjs.
 ################################################################################
 
@@ -621,3 +621,31 @@ then: about 11.2 seconds in deep space with soft nebulae. Act 1 "Campaign record
       "Legacy": a slow turn of the galaxy, the constellation marked by turning brackets and the
       Campaign's name; the Debrief slides in at 9.2 s. Sound hooks (audio batch 4): one star
       ignition per mission, constellation link, ascension, and the last chord (playVictoryResolve).
+      CHANGED 2026-11-27 (designer: "not as spectacular as every other campaign victory animation
+      ... Add something that would wow players. Make it longer"): about 21 seconds, the longest
+      victory film; the Debrief slides in at 18.0 s. Act 1 "Campaign record" (0-5.0 s): a black
+      fade-in; a comet of the Company's light comes in from the dark and runs the Campaign's road,
+      one star igniting exactly as the comet reaches it (1.0-4.4 s), tags and companions as before;
+      the comet flies out before act 2. Act 2 "Constellation" (5.0-9.4 s): the streams bow a
+      little as they run and settle straight (6 links by 7.4 s), a thin filament under each; the
+      camera eases back a little and a star chart unfolds round the constellation (7.5-8.9 s):
+      an inner ring drawn round with degree ticks, a dashed turning ring with degree numbers, an
+      outer ring with four turning brackets, faint spokes, the Campaign's name engraved letter by
+      letter along the top. Act 3 "Ascension" (9.4-14.4 s): the chart folds away and every star
+      pours a stream of light into the middle (9.5 s); a new star is born there at 10.4 s (white
+      flash, 14 turning rays, a long lens streak, three rings in the Company's colours, a shock
+      spray); the camera flies far back from 10.9 to 14.2 s, near stars streaking past, swings
+      round and tilts down onto a whole spiral galaxy seen in depth (three arms, bulge, soft arm
+      clouds), the new star marked on an arm by turning brackets and a label with the Campaign's
+      name and every mission tag. Act 4 "Legacy" (14.4 s on): a ring of the Company's light runs
+      out across the galaxy's plane from the new star (14.6-17.6 s), stars flashing as it passes
+      and about half of them keeping the Company's colours; when it reaches the core (about
+      15.2 s) the core answers with a flare and a streak; the galaxy keeps turning slowly under
+      the Debrief. Captions: "Tracing the Campaign's road", "Campaign record · N of 7 missions",
+      "Charting the constellation", "16 Threat Levels conquered", "<Campaign> · entered in the
+      star chart", "Every victory gathers its light", "A new star is born", "The Campaign joins
+      the galaxy", "Its light crosses the galaxy", "The core answers", "<Campaign> · charted".
+      Sound hooks: also star chart unfolds (sfx-chart-unfold), new star (sfx-star-nova), and the
+      wave across the galaxy (sfx-galaxy-wave); sfx-chart-ascend now plays as the camera flies
+      back (10.9 s). Reduced motion / Instant: the still picture at 20.2 s (the galaxy) and the
+      card. Checked by tests/unit/outro.test.ts and scripts/ui-victory.mjs.

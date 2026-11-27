@@ -157,8 +157,21 @@ export function playStarIgnite(_index: number, _of: number): void {
 export function playConstellationLink(): void {
   sfx("constellation-link");
 }
+/** Star Chart, Act 3: the camera flies far back through the stars to the galaxy. */
 export function playStarChartAscend(): void {
   sfx("chart-ascend");
+}
+/** Star Chart, Act 2: the star chart's rings unfold round the constellation (designer 2026-11-27, the longer Star Chart). */
+export function playStarChartUnfold(): void {
+  sfx("chart-unfold");
+}
+/** Star Chart, Act 3: the new star is born in the constellation's middle (flash, rays, shock ring). */
+export function playStarChartNova(): void {
+  sfx("star-nova");
+}
+/** Star Chart, Act 4: the wave of the Company's light crosses the galaxy; the core answers with a flare. */
+export function playStarChartWave(): void {
+  sfx("galaxy-wave");
 }
 /**
  * Mission celebrations (designer 2026-11-20, src/web/celebrate/). The kill, Alpha Down: the last
