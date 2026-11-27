@@ -684,6 +684,65 @@ export const MURMUR = {
   out: [5.2, 6.0] as const,
 };
 
+/**
+ * Singularity, a win (designer 2026-11-27, "be ambitious"; singularityFx.ts): the Mission bar feeds a
+ * point of light in the Field's middle that becomes a black well; the whole board is drawn in, turning,
+ * then it goes nova and every tile is flung back to its place.
+ */
+export const SINGULAR = {
+  total: 6.0,
+  /** Act 1 (0-1.2): the Field dims; each cell sends a thread of light into the Field's middle (onSingularityFeed); the core forms, its disc spins up. */
+  dim: [0, 0.45] as const,
+  dimTo: 0.45,
+  cellsAt: 0.12,
+  cellsIn: 0.45,
+  cellStep: 0.1,
+  feed: 0.55,
+  core: [0.5, 1.2] as const,
+  /** Act 2 (1.2-3.0): the pull (onSingularityPull): the tiles slide in and turn round the well, the far ones last; streaks of light are torn off them into the disc. */
+  pull: [1.2, 2.95] as const,
+  /** How much of the way to the middle a tile goes, and how far it turns (radians), at most. */
+  squeeze: 0.62,
+  turn: 0.85,
+  /** Act 3 (3.0-4.6): the nova (onSingularityNova): a flash, the tiles flung back past their places and settling, a shock ring off the Field, the bar turns gold; the banner. */
+  nova: 3.0,
+  slam: [3.4, 3.62] as const,
+  sub: [3.7, 3.94] as const,
+  badgesAt: 3.9,
+  badgeStep: 0.08,
+  badgeFall: 0.26,
+  /** Act 4 (4.6-6.0): a halo stays round the banner; embers drift outwards; the cross-fade. */
+  embers: 4.6,
+  out: [5.2, 6.0] as const,
+};
+
+/**
+ * Armillary, a win (designer 2026-11-27, "be ambitious"; armillaryFx.ts): three great rings of particles
+ * are drawn round the Field like an armillary sphere, spin through the board lighting every sector they
+ * cross, then fall into one plane and lock as a triple halo round the banner.
+ */
+export const ARMILLARY = {
+  total: 5.8,
+  /** Act 1 (0-1.1): the Field dims; three orbs leave the Mission bar and each draws a ring as it runs round (onArmillaryLaunch). */
+  dim: [0, 0.45] as const,
+  dimTo: 0.42,
+  launch: [0.1, 0.2, 0.3] as const,
+  draw: 0.45,
+  /** Act 2 (1.1-3.1): the rings spin through the Field in three tilts (onArmillarySpin); every sector a ring's near side crosses lights and lifts. */
+  spin: [1.1, 3.1] as const,
+  /** Act 3 (3.1-4.5): the rings fall into one plane and nest round the middle; they lock in a flash (onArmillaryLock) and the bar turns gold; the banner. */
+  align: [3.1, 3.7] as const,
+  lock: 3.7,
+  slam: [3.78, 4.0] as const,
+  sub: [4.08, 4.32] as const,
+  badgesAt: 4.28,
+  badgeStep: 0.08,
+  badgeFall: 0.26,
+  /** Act 4 (4.5-5.8): the halo widens and breaks into motes; the cross-fade. */
+  release: 4.5,
+  out: [5.0, 5.8] as const,
+};
+
 /** The still picture of either piece (reduced motion, Instant), seconds. */
 export const STILL = 1.5;
 

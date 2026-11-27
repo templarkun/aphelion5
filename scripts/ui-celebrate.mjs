@@ -75,7 +75,7 @@ export async function celebrateCheck(browser, url, out) {
     const l = await log(pg);
     const ms = killMs(l);
     await pg.close();
-    if (!(listed === 60 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
+    if (!(listed === 68 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
   }
 
   // 1b. Alpha Purge (1100 px), the second Alpha kill (I21), Rail Strike (1400 px) and Alpha Erased (390 px), the third and
@@ -223,7 +223,7 @@ export async function celebrateCheck(browser, url, out) {
 
   // 4c. The other wins (designer 2026-11-21, 2026-11-27): Perimeter Sweep for Gamma (1400 px), Sector Flip for Salvage (390 px),
   //     Chain Surge for Alpha (1400 px), Beacon Spiral for Beta (390 px),
-  //     Resonance for Gamma (1400 px), Murmuration for Salvage (390 px):
+  //     Resonance for Gamma (1400 px), Murmuration for Salvage (390 px), Singularity for Alpha (1400 px), Armillary for Beta (390 px):
   //     four acts, the banner, the line under it, the badges (Salvage: five Power Nodes and three Cleared sectors), the bar gold.
   for (const [w, h, omega, win, want, imgs, all] of [
     [1400, 900, "Gamma", "perimeterSweep", /gamma eliminated · 2 \/ 2/, 2, 2],
@@ -232,6 +232,8 @@ export async function celebrateCheck(browser, url, out) {
     [390, 844, "Beta", "beaconSpiral", /beta eliminated · 3 \/ 3/, 3, 3],
     [1400, 900, "Gamma", "resonance", /gamma eliminated · 2 \/ 2/, 2, 2],
     [390, 844, "Salvage", "murmuration", /power nodes 5 \/ 5 · cleared 3 \/ 3/, 5, 8],
+    [1400, 900, "Alpha", "singularity", /alpha eliminated · 6 \/ 6/, 6, 6],
+    [390, 844, "Beta", "armillary", /beta eliminated · 3 \/ 3/, 3, 3],
   ]) {
     const pg = await open(w, h);
     await preview(pg, "win", omega, "", win);

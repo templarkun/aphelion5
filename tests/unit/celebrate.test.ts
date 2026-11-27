@@ -14,17 +14,19 @@ import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winS
 import { KILL_PIECES, pickPiece, SALVAGE_PIECES, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
 import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
-import { BARRAGE, BEACON, CRYO, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
+import { ARMILLARY, BARRAGE, BEACON, CRYO, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SINGULAR, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
 import { leapGrow, packetSpan, surgeCellAt, surgeLook, surgeTree } from "../../src/web/celebrate/chainSurgeFx.js";
 import { beaconLook, beaconMiddle, spiralOrder } from "../../src/web/celebrate/beaconFx.js";
 import { beatTimes, latticeOf, resonanceCellAt, resonanceLook, rippleAt, ringAt as resRingAt, ripplesOf } from "../../src/web/celebrate/resonanceFx.js";
+import { coreSize, feedCellAt, singularityLook, wellPlace, wellPull } from "../../src/web/celebrate/singularityFx.js";
+import { armillaryLook, armillaryPlan, armillaryTouch, ringAngles, ringDrawn, ringFrame } from "../../src/web/celebrate/armillaryFx.js";
 import { flightOf, headAt, murmurLook, pace, swarmCellAt } from "../../src/web/celebrate/murmurationFx.js";
 import { slugDistance, slugPasses } from "../../src/web/celebrate/railFx.js";
 import { shellSpot } from "../../src/web/celebrate/barrageFx.js";
 import { FROST_LINES, struggle } from "../../src/web/celebrate/cryoFx.js";
 import { barAt, hexHalfHeight, LATTICE, latticeAt } from "../../src/web/celebrate/eraseFx.js";
 
-const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral", "resonance", "murmuration"];
+const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral", "resonance", "murmuration", "singularity", "armillary"];
 import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
 import { betaFlows, crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
@@ -95,6 +97,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     ["beaconSpiral", every],
     ["resonance", every],
     ["murmuration", every],
+    ["singularity", every],
+    ["armillary", every],
   ]);
   for (const p of KILL_PIECES) {
     expect(KILL_STEPS[p.id]).toBeTypeOf("function");
@@ -125,6 +129,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Alpha win beaconSpiral",
     "Alpha win resonance",
     "Alpha win murmuration",
+    "Alpha win singularity",
+    "Alpha win armillary",
     "Alpha both alphaDown missionComplete",
     "Alpha both alphaPurge missionComplete",
     "Alpha both alphaRail missionComplete",
@@ -139,6 +145,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Beta win beaconSpiral",
     "Beta win resonance",
     "Beta win murmuration",
+    "Beta win singularity",
+    "Beta win armillary",
     "Beta both betaBreach missionComplete",
     "Beta both betaBarrage missionComplete",
     "Beta both betaCryo missionComplete",
@@ -152,6 +160,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Gamma win beaconSpiral",
     "Gamma win resonance",
     "Gamma win murmuration",
+    "Gamma win singularity",
+    "Gamma win armillary",
     "Gamma both gammaHorizon missionComplete",
     "Gamma both gammaArray missionComplete",
     "Gamma both gammaShatter missionComplete",
@@ -162,6 +172,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Salvage win beaconSpiral",
     "Salvage win resonance",
     "Salvage win murmuration",
+    "Salvage win singularity",
+    "Salvage win armillary",
     "Salvage kill salvageNodes",
     "Salvage kill salvageCleared",
     "Salvage kill salvageFusion",
@@ -1014,4 +1026,63 @@ test("two more for the third Cleared sector (designer 2026-11-27): Claim Markers
       expect(Math.abs(Math.atan2(Math.sin(th - phi), Math.cos(th - phi)))).toBeLessThan(1e-6);
     }
   }
+});
+
+test("Singularity (designer 2026-11-27): the board falls into a well round the middle, turning, and is flung back at the nova; worked out from the time alone", () => {
+  expect(SINGULAR.total).toBe(6.0);
+  for (const n of [1, 4, 8]) expect(feedCellAt(n - 1, n)).toBeLessThanOrEqual(SINGULAR.cellsAt + SINGULAR.cellsIn + 1e-9);
+  // Nothing moves before the pull; the near tiles go first; at the nova every tile is in as far as it goes.
+  expect(wellPull(0.5, SINGULAR.pull[0] - 0.01)).toBe(0);
+  expect(wellPull(0, SINGULAR.pull[0] + 0.4)).toBeGreaterThan(wellPull(1, SINGULAR.pull[0] + 0.4));
+  for (const u of [0, 0.5, 1]) expect(wellPull(u, SINGULAR.nova - 1e-6)).toBeCloseTo(SINGULAR.squeeze, 4);
+  // After the nova: flung out past its place (below 0), then at rest.
+  let least = 1;
+  for (let t = SINGULAR.nova; t < SINGULAR.nova + 0.5; t += 0.01) least = Math.min(least, wellPull(0.5, t));
+  expect(least).toBeLessThan(-0.1);
+  expect(Math.abs(wellPull(0.5, SINGULAR.nova + 1.29))).toBeLessThan(0.01);
+  expect(singularityLook(400, 300, 600, 300, 300, SINGULAR.nova + 1.4, 80)).toBeUndefined();
+  expect(singularityLook(400, 300, 600, 300, 300, 0.5, 80)).toBeUndefined();
+  // Pulled in: nearer the middle, turned, smaller.
+  const [px, py, sc] = wellPlace(400, 300, 600, 300, 300, SINGULAR.nova - 0.01);
+  expect(Math.hypot(px - 400, py - 300)).toBeLessThan(200 * 0.5);
+  expect(Math.abs(py - 300)).toBeGreaterThan(5);
+  expect(sc).toBeLessThan(0.6);
+  // The core forms, grows, and is gone at the nova.
+  expect(coreSize(SINGULAR.core[0] - 0.01)).toBe(0);
+  expect(coreSize(SINGULAR.nova - 0.01)).toBeGreaterThan(coreSize(SINGULAR.core[1]));
+  expect(coreSize(SINGULAR.nova)).toBe(0);
+  expect(sound.onSingularityNova).toBeTypeOf("function");
+});
+
+test("Armillary (designer 2026-11-27): three rings drawn, tumbling through the Field lighting sectors, locked in one plane; worked out from the time alone", () => {
+  expect(ARMILLARY.total).toBe(5.8);
+  for (let i = 0; i < 3; i++) {
+    expect(ringDrawn(i, ARMILLARY.launch[i]!)).toBe(0);
+    expect(ringDrawn(i, ARMILLARY.spin[0])).toBe(1);
+  }
+  // Tumbling: the tilts change; locked: all three in the same plane, nested.
+  expect(ringAngles(0, 1.5)).not.toEqual(ringAngles(0, 2.0));
+  const lock = [0, 1, 2].map((i) => ringFrame(i, ARMILLARY.lock + 0.2, 800, 600));
+  for (const f of lock) {
+    expect(Math.hypot(...f.u)).toBeCloseTo(1, 6);
+    expect(Math.hypot(...f.v)).toBeCloseTo(1, 6);
+    const n0 = [lock[0]!.u[1] * lock[0]!.v[2] - lock[0]!.u[2] * lock[0]!.v[1], lock[0]!.u[2] * lock[0]!.v[0] - lock[0]!.u[0] * lock[0]!.v[2], lock[0]!.u[0] * lock[0]!.v[1] - lock[0]!.u[1] * lock[0]!.v[0]];
+    const n = [f.u[1] * f.v[2] - f.u[2] * f.v[1], f.u[2] * f.v[0] - f.u[0] * f.v[2], f.u[0] * f.v[1] - f.u[1] * f.v[0]];
+    expect(Math.abs(n0[0]! * n[0]! + n0[1]! * n[1]! + n0[2]! * n[2]!)).toBeCloseTo(1, 6);
+  }
+  expect(lock[0]!.r).toBeGreaterThan(lock[1]!.r);
+  expect(lock[1]!.r).toBeGreaterThan(lock[2]!.r);
+  // The rings cross the board: on a hex board most sectors are touched, and each tile lifts as one passes.
+  const sectors: [string, number, number][] = [];
+  for (let q = -2; q <= 2; q++) for (let r = -2; r <= 2; r++) if (Math.abs(q + r) <= 2) sectors.push([`${q},${r}`, 400 + 70 * (r + q / 2), 300 - 60 * q]);
+  const first = armillaryPlan(sectors, 800, 600, 70);
+  expect(first.size).toBeGreaterThan(sectors.length / 2);
+  for (const at of first.values()) expect(at >= ARMILLARY.spin[0] - 0.3 && at <= ARMILLARY.align[1]).toBe(true);
+  const [k, x, y] = sectors.find(([key]) => first.has(key))!;
+  expect(armillaryTouch(800, 600, 70, x, y, first.get(k)!)).toBeGreaterThan(0.45);
+  expect(armillaryLook(800, 600, x, y, first.get(k)!, 70)!.dy).toBeLessThan(0);
+  expect(armillaryTouch(800, 600, 70, x, y, ARMILLARY.lock + 0.1)).toBe(0);
+  expect(armillaryLook(800, 600, x, y, 0.5, 70)).toBeUndefined();
+  expect(armillaryLook(800, 600, x, y, ARMILLARY.lock + 0.8, 70)).toBeUndefined();
+  expect(sound.onArmillaryLock).toBeTypeOf("function");
 });

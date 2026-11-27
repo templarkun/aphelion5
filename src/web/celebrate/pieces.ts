@@ -70,6 +70,8 @@ export const WIN_PIECES: Piece[] = [
   { id: "beaconSpiral", name: "Beacon Spiral", for: EVERY_MISSION },
   { id: "resonance", name: "Resonance", for: EVERY_MISSION },
   { id: "murmuration", name: "Murmuration", for: EVERY_MISSION },
+  { id: "singularity", name: "Singularity", for: EVERY_MISSION },
+  { id: "armillary", name: "Armillary", for: EVERY_MISSION },
 ];
 
 /** A small fixed hash (FNV-1a) of a text. */

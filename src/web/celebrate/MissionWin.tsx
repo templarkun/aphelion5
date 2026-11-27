@@ -20,7 +20,7 @@
  *
  * This component also plays the other wins (designer 2026-11-21), on the same page and the same props:
  * Perimeter Sweep (sweepFx.ts), Sector Flip (flipFx.ts), Chain Surge (chainSurgeFx.ts), Beacon Spiral (beaconFx.ts),
- * Resonance (resonanceFx.ts) and Murmuration (murmurationFx.ts) (the last four designer 2026-11-27). It waits for the Field and the Trophies'
+ * Resonance (resonanceFx.ts), Murmuration (murmurationFx.ts), Singularity (singularityFx.ts) and Armillary (armillaryFx.ts) (the last six designer 2026-11-27). It waits for the Field and the Trophies'
  * flight, then plays the piece picked for the mission (`show.piece`), and every mission won has one:
  * Eliminate Alpha, Beta, Gamma, and Salvage.
  */
@@ -33,10 +33,16 @@ import {
   onAltWinTrophyLock,
   onBeaconPillar,
   onBeaconStrike,
+  onArmillaryLaunch,
+  onArmillaryLock,
+  onArmillarySpin,
   onResonanceDrop,
   onResonanceLock,
   onResonancePulse,
   onResonanceSplash,
+  onSingularityFeed,
+  onSingularityNova,
+  onSingularityPull,
   onBadgeDrop,
   onMissionBarBurst,
   onSectorLift,
@@ -67,7 +73,9 @@ import { type Ripples, beatTimes, latticeOf, paintResonance, resonanceLook, ripp
 import { boardJolt, flipLook, flipStarts, paintFlip } from "./flipFx.js";
 import { arrival, shineAt } from "./shine.js";
 import { burstAt, cellAt, paintSweep, recoil } from "./sweepFx.js";
-import { BEACON, FLIP, FLY, KILL_TIMES, MURMUR, RESONANCE, STILL, SURGE, SWEEP, WIN, span } from "./timeline.js";
+import { ARMILLARY, BEACON, FLIP, FLY, KILL_TIMES, MURMUR, RESONANCE, SINGULAR, STILL, SURGE, SWEEP, WIN, span } from "./timeline.js";
+import { armillaryLook, armillaryPlan, paintArmillary } from "./armillaryFx.js";
+import { paintSingularity, singularityLook } from "./singularityFx.js";
 import { type Geo, dot, keepUp, measure, rgba, seq } from "./winKit.js";
 
 /** How a sector's tile is moved for a frame of a win: shaken, lifted (scale), squashed top to bottom (sy, a flip), hidden, drawn in front. */
@@ -402,6 +410,8 @@ const PIECE_TIMES: Record<string, { total: number; out: readonly [number, number
   beaconSpiral: { total: BEACON.total, out: BEACON.out, act: (t) => (t < BEACON.strikes[0] ? 1 : t < BEACON.gather[0] ? 2 : t < BEACON.fade ? 3 : 4) },
   resonance: { total: RESONANCE.total, out: RESONANCE.out, act: (t) => (t < RESONANCE.splash ? 1 : t < RESONANCE.ring[0] ? 2 : t < RESONANCE.fade ? 3 : 4) },
   murmuration: { total: MURMUR.total, out: MURMUR.out, act: (t) => (t < MURMUR.gather ? 1 : t < MURMUR.form[0] ? 2 : t < MURMUR.burst ? 3 : 4) },
+  singularity: { total: SINGULAR.total, out: SINGULAR.out, act: (t) => (t < SINGULAR.pull[0] ? 1 : t < SINGULAR.nova ? 2 : t < SINGULAR.embers ? 3 : 4) },
+  armillary: { total: ARMILLARY.total, out: ARMILLARY.out, act: (t) => (t < ARMILLARY.spin[0] ? 1 : t < ARMILLARY.align[0] ? 2 : t < ARMILLARY.release ? 3 : 4) },
 };
 
 export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWinProps) {
@@ -450,6 +460,8 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
     let ripples: Ripples | undefined;
     let lattice: [number, number, number, number][] = [];
     let flight: Flight | undefined;
+    // Armillary: when each sector is first touched by a ring.
+    let touched = new Map<string, number>();
     const flat = new Set(Object.entries(show.state.field).filter(([, st]) => st.length === 0).map(([k]) => k));
     cbs.current.onHold(still ? 0 : show.fresh);
     // The Mission bar glows gold once the win has gone through it (on <html>: React rewrites the bar's own classes).
@@ -472,7 +484,11 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
                 ? [RESONANCE.dim, RESONANCE.dimTo]
                 : id === "murmuration"
                   ? [MURMUR.dim, MURMUR.dimTo]
-                  : [WIN.dim, 0.34];
+                  : id === "singularity"
+                    ? [SINGULAR.dim, SINGULAR.dimTo]
+                    : id === "armillary"
+                      ? [ARMILLARY.dim, ARMILLARY.dimTo]
+                      : [WIN.dim, 0.34];
     const dimAt = (t: number) => {
       if (still) return dimTo * Math.max(0, Math.min(1, t / 0.15, (STILL - t) / 0.15));
       return dimTo * easeOut(span(t, dimSpan)) * (1 - span(t, T.out));
@@ -498,6 +514,8 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         const fl = flightOf(r.sectors, r.ox, r.oy);
         flight = fl;
         const stopOf = new Map(fl.stops.map(([k], i) => [k, i]));
+        if (id === "armillary") touched = armillaryPlan(r.sectors, r.fw, r.fh, r.tile);
+        const reach = Math.max(r.tile, ...r.sectors.map(([, x, y]) => Math.hypot(x - r.fw / 2, y - r.fh / 2)));
         // The units move as the win passes (nothing moves in the still picture).
         const tau = new Map(r.sectors.map(([k, x, y]) => [k, arrival(r.shine, x, y)]));
         const move = (key: string, t: number): ReturnType<Shake> => {
@@ -513,6 +531,14 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
           if (id === "murmuration") {
             const i = stopOf.get(key);
             return i === undefined ? undefined : murmurLook(fl, i, t, r.tile);
+          }
+          if (id === "singularity") {
+            const p = at.get(key);
+            return p ? singularityLook(r.fw / 2, r.fh / 2, p[0], p[1], reach, t, r.tile) : undefined;
+          }
+          if (id === "armillary") {
+            const p = at.get(key);
+            return p ? armillaryLook(r.fw, r.fh, p[0], p[1], t, r.tile) : undefined;
           }
           if (id === "chainSurge") return surgeLook(t - (leapAt.get(key) ?? Infinity), r.tile);
           if (id === "beaconSpiral") return beaconLook(t - (beamAt.get(key) ?? Infinity), t, r.tile);
@@ -557,7 +583,11 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
                 ? { slam: RESONANCE.slam, sub: RESONANCE.sub, badgesAt: RESONANCE.badgesAt, badgeStep: RESONANCE.badgeStep, badgeFall: RESONANCE.badgeFall }
                 : id === "murmuration"
                   ? { slam: MURMUR.slam, sub: MURMUR.sub, badgesAt: MURMUR.badgesAt, badgeStep: MURMUR.badgeStep, badgeFall: MURMUR.badgeFall }
-                  : { slam: WIN.slam, sub: WIN.sub, badgesAt: WIN.badgesAt, badgeStep: WIN.badgeStep, badgeFall: WIN.badgeFall };
+                  : id === "singularity"
+                    ? { slam: SINGULAR.slam, sub: SINGULAR.sub, badgesAt: SINGULAR.badgesAt, badgeStep: SINGULAR.badgeStep, badgeFall: SINGULAR.badgeFall }
+                    : id === "armillary"
+                      ? { slam: ARMILLARY.slam, sub: ARMILLARY.sub, badgesAt: ARMILLARY.badgesAt, badgeStep: ARMILLARY.badgeStep, badgeFall: ARMILLARY.badgeFall }
+                      : { slam: WIN.slam, sub: WIN.sub, badgesAt: WIN.badgesAt, badgeStep: WIN.badgeStep, badgeFall: WIN.badgeFall };
     const styleBanner = (t: number) => {
       const s = still ? 1 : span(t, B.slam);
       if (band.current) {
@@ -636,6 +666,18 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         if (crossed(MURMUR.slam[1])) playMissionComplete();
         if (crossed(MURMUR.burst)) onSwarmBurst();
         if (crossed(MURMUR.out[0])) onUpgradeSheetOpen();
+      } else if (id === "singularity") {
+        for (let i = 0; i < n; i++) if (crossed(SINGULAR.cellsAt + i * (n > 1 ? Math.min(SINGULAR.cellStep, SINGULAR.cellsIn / (n - 1)) : 0))) onSingularityFeed(i, n);
+        if (crossed(SINGULAR.pull[0])) onSingularityPull();
+        if (crossed(SINGULAR.nova)) (onSingularityNova(), won(true));
+        if (crossed(SINGULAR.slam[1])) playMissionComplete();
+        if (crossed(SINGULAR.out[0])) onUpgradeSheetOpen();
+      } else if (id === "armillary") {
+        ARMILLARY.launch.forEach((a, i) => crossed(a) && onArmillaryLaunch(i, 3));
+        if (crossed(ARMILLARY.spin[0])) onArmillarySpin();
+        if (crossed(ARMILLARY.lock)) (onArmillaryLock(), won(true));
+        if (crossed(ARMILLARY.slam[1])) playMissionComplete();
+        if (crossed(ARMILLARY.out[0])) onUpgradeSheetOpen();
       } else {
         if (crossed(WIN.wave[0])) playWinSweep();
         if (crossed(WIN.slam[1])) playMissionComplete();
@@ -702,6 +744,8 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
           else if (id === "beaconSpiral") paintBeacon(g, geo, t, still, all, q, beams);
           else if (id === "resonance" && ripples) paintResonance(g, geo, t, still, all, q, ripples, lattice);
           else if (id === "murmuration" && flight) paintMurmuration(g, geo, t, still, all, q, flight);
+          else if (id === "singularity") paintSingularity(g, geo, t, still, all, q);
+          else if (id === "armillary") paintArmillary(g, geo, t, still, all, q, touched);
           else paint(g, geo, t, still, fade, badges, band.current?.getBoundingClientRect());
         }
         style(t, fade);

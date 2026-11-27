@@ -368,3 +368,22 @@ export function playSurveyBlip(index: number): void {
 }
 /** Terrain Survey: brackets snap round the three Cleared sectors. */
 export function playSurveyLock(): void {}
+
+/** Singularity (win), Act 1: a cell of the Mission bar sends its thread of light into the Field (index of count). */
+export function onSingularityFeed(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Singularity, Act 2: the board starts to fall into the well. */
+export function onSingularityPull(): void {}
+/** Singularity, Act 3: the nova; the tiles are flung back and the bar turns gold. */
+export function onSingularityNova(): void {}
+/** Armillary (win), Act 1: an orb leaves the Mission bar to draw its ring (index of count). */
+export function onArmillaryLaunch(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Armillary, Act 2: the three rings start to tumble through the Field. */
+export function onArmillarySpin(): void {}
+/** Armillary, Act 3: the rings lock as one halo and the bar turns gold. */
+export function onArmillaryLock(): void {}
