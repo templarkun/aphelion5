@@ -14,6 +14,7 @@ import { type Game, playAnswer, startGame } from "../../engine/save.js";
 import { type GameState, type TileId, emptyProfile, noTokens } from "../../engine/state.js";
 import { key } from "../../geometry/hex.js";
 import { applyLoadout } from "../briefing/launch.js";
+import { SALVAGE_PIECES } from "./pieces.js";
 
 export const PREVIEW_SEED = 20261120;
 
@@ -80,7 +81,11 @@ export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
   { kind: "win", omega: "Salvage", win: "murmuration", label: "Murmuration" },
   { kind: "kill", omega: "Salvage", piece: "salvageNodes", label: "Grid Online (5th Power Node)" },
   { kind: "kill", omega: "Salvage", piece: "salvageCleared", label: "Sector Lock (3rd Cleared sector)" },
+  { kind: "kill", omega: "Salvage", piece: "salvageFusion", label: "Fusion Ignition (5th Power Node)" },
+  { kind: "kill", omega: "Salvage", piece: "salvageCascade", label: "Charge Cascade (5th Power Node)" },
   { kind: "both", omega: "Salvage", piece: "salvageNodes", win: "missionComplete", label: "Grid Online, then Mission Complete" },
+  { kind: "both", omega: "Salvage", piece: "salvageFusion", win: "missionComplete", label: "Fusion Ignition, then Mission Complete" },
+  { kind: "both", omega: "Salvage", piece: "salvageCascade", win: "missionComplete", label: "Charge Cascade, then Mission Complete" },
   { kind: "both", omega: "Salvage", piece: "salvageCleared", win: "missionComplete", label: "Sector Lock, then Mission Complete" },
 ];
 /** The mission the preview's board stands for. */
@@ -161,7 +166,7 @@ export function previewBoards(data: GameData, company: string, omega: PreviewOme
     s.field[k]!.push(t);
     return t;
   };
-  if (omega === "Salvage") return salvageBoards(s, take, piece === "salvageCleared");
+  if (omega === "Salvage") return salvageBoards(s, take, !!SALVAGE_PIECES.find((p) => p.id === piece)?.for.includes("Cleared"));
   // Alpha: five Alphas already destroyed this mission. Beta: two Betas. Gamma: one Gamma.
   // Betas and Gammas have no Destroyed effect: no Wreck (4.8).
   const beta = omega !== "Alpha";

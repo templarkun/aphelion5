@@ -40,6 +40,8 @@
 # one of four Alpha kills at random per mission. Checked by the same files.
 # Two more Beta kills, 2026-11-27 (later): Barrage (T14_KILL_03) and Cryo Shatter (T14_KILL_04),
 # one of three Beta kills at random per mission. Checked by the same files.
+# Two more fifth Power Node celebrations, 2026-11-27 (later): Fusion Ignition (T14_SALV_01) and Charge
+# Cascade (T14_SALV_02), one of three at random per Salvage mission. Checked by the same files.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -823,3 +825,37 @@ then: about 6.6 seconds on the Field, as wide as Barrage. Act 1 (0-1.0 s): six c
       turns to "3 / 3". Act 5 (5.7-6.6 s): the zoom eases back.
 note: As T14_KILL_03. System options lists Barrage and Cryo Shatter, and each then Mission Complete
       (52 buttons).
+
+id: T14_SALV_01
+title: Fusion Ignition, when the fifth Power Node is taken
+source: designer 2026-11-27 ("Now do additional 2 salvage mission celebration for "5th power node"")
+given: a Salvage mission (8.2), the fifth Power Node reaches the Trophy pile, Fusion Ignition picked (or
+       System options > Mission celebrations > Fusion Ignition (5th Power Node)), Normal speed
+then: about 4.8 seconds on the Field. Act 1 (0-1.85 s): the zoom on the sector the Power Node left; three
+      rings of particles (Yellow, Red, Blue) gather round it one after another, tilting like a gyroscope,
+      spinning faster and tighter. Act 2 (1.15-1.9 s): plasma filaments pinch in from the rings to the
+      core, which brightens; the tile trembles. Act 3 (1.9 s): ignition: a white flash, the rings blown
+      away in a blast of particles, a small sun over the sector with a corona of particles looping off
+      its rim and rays streaming off it; what lies beneath shows; four stars light round it, the fifth
+      flies out of the sun on a trail and closes a pentagon, streams of particles running along its
+      edges; "POWER NODES · 4 / 5" turns to "5 / 5" as it closes. Act 4: the sun sinks into the sector,
+      the stars fade, the zoom eases back.
+note: The same for every Company. Two taps skip; reduced motion or Instant: the still close-up (1.5 s).
+      The pick (I19): one of the three fifth Power Node pieces at random per mission (Grid Online,
+      Fusion Ignition, Charge Cascade), the same again if the save is reloaded. The win waits for it.
+
+id: T14_SALV_02
+title: Charge Cascade, when the fifth Power Node is taken
+source: designer 2026-11-27 (as T14_SALV_01)
+given: as T14_SALV_01, Charge Cascade picked
+then: about 4.9 seconds on the Field. Act 1 (0-1.0 s): the zoom, with room above the sector; five charge
+      cells (hexagons on dark plates, particles running round their edges) open in an arc over it; four
+      light one by one in the energy colours, the fifth stays empty and pulses. Act 2 (0.95-2.3 s): the
+      node's energy streams in from all round and condenses into a turning crystal of the three colours
+      over the tile, which rises on a trail into the fifth cell; what lies beneath shows. Act 3 (2.3 s):
+      the fifth cell locks, "POWER NODES · 4 / 5" turns to "5 / 5"; the cells flare one by one, arcs of
+      lightning leaping from cell to cell. Act 4 (3.1 s): they discharge: five bolts into the sector, a
+      flash, a jolt, a pulse of particles running out over the whole Field and every sector's edge
+      flickering gold as it passes; the zoom eases back (4.0-4.9 s).
+note: As T14_SALV_01. System options lists Fusion Ignition and Charge Cascade, and each then Mission
+      Complete (56 buttons).

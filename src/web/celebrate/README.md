@@ -95,6 +95,7 @@ eraseFx.ts             Alpha Erased (PixiJS)
 breachFx.ts            Beta Breach (PixiJS)
 barrageFx.ts           Barrage (PixiJS)
 cryoFx.ts              Cryo Shatter (PixiJS)
+nodesFx.ts             Fusion Ignition and Charge Cascade (Salvage, the fifth Power Node; PixiJS)
 tilt.ts                the board seen in 3D: tilt, perspective, lifted sectors (the Gamma kills)
 horizonFx.ts           Event Horizon (PixiJS)
 arrayFx.ts             Field Array (PixiJS)
@@ -118,3 +119,15 @@ Salvage milestones (designer 2026-11-22): `salvageFx.ts` holds Grid Online (the 
 and Sector Lock (the third Cleared sector, five Power Nodes taken), close-up Field steps like the kills,
 found by `salvageMarkOf` (detect.ts) from the board before and after an answer (no event needed);
 `SALVAGE_PIECES` in pieces.ts, times `NODES` / `CLEARED` in timeline.ts, played by `salvageStep` in FieldView.tsx.
+Two more for the fifth Power Node (designer 2026-11-27, `nodesFx.ts`, times `FUSION` / `CASCADE`), one of
+three at random per mission (I19):
+- **Fusion Ignition** (`salvageFusion`, 4.8 s): three confinement rings of particles (Yellow, Red, Blue)
+  gather round the node one by one and spin up like a gyroscope (`ringPhase`: closed form), plasma
+  filaments pinch into the core; ignition: a white flash, the rings blown away, a small sun with a corona of
+  looping particles and rays; four stars light round it, the fifth flies out of the sun and closes a
+  pentagon (`fusionStar`) with streams of particles along its edges; the sun sinks into the sector.
+- **Charge Cascade** (`salvageCascade`, 4.9 s): five charge cells open in an arc over the node
+  (`cascadeCell`), four light one by one, the fifth stays empty and pulses; the node's energy streams in
+  and condenses into a turning crystal of the three colours, which rises on a trail into the fifth cell;
+  it locks, the cells flare one by one with arcs leaping between them; they discharge (five bolts into
+  the sector), a pulse of particles runs over the whole Field, each sector's edge flickering as it passes.

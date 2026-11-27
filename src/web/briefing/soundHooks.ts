@@ -336,3 +336,19 @@ export function playGridOnline(): void {}
 export function playClearedLink(): void {}
 /** Salvage: the three Cleared sectors lock (Sector Lock). */
 export function playSectorLock(): void {}
+/** Fusion Ignition: a confinement ring gathers round the Power Node (index 0-2). */
+export function playFusionRing(index: number): void {
+  void index;
+}
+/** Fusion Ignition: the node ignites into a small sun. */
+export function playFusionIgnite(): void {}
+/** Fusion Ignition: the fifth star closes the ring. */
+export function playFusionStar(): void {}
+/** Charge Cascade: a charge cell lights (index 0-3: the Power Nodes already taken). */
+export function playCascadeCell(index: number): void {
+  void index;
+}
+/** Charge Cascade: the fifth cell locks and the cells flare one by one. */
+export function playCascadeLock(): void {}
+/** Charge Cascade: the cells discharge into the sector. */
+export function playCascadeDischarge(): void {}

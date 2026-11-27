@@ -11,7 +11,7 @@ import { playAnswer, startGame, type Game } from "../../src/engine/save.js";
 import { emptyProfile } from "../../src/engine/state.js";
 import { Player, type Step } from "../../src/web/anim.js";
 import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winShowOf, wonStateOf } from "../../src/web/celebrate/detect.js";
-import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
+import { KILL_PIECES, pickPiece, SALVAGE_PIECES, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
 import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
 import { BARRAGE, BEACON, CRYO, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
@@ -164,7 +164,11 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Salvage win murmuration",
     "Salvage kill salvageNodes",
     "Salvage kill salvageCleared",
+    "Salvage kill salvageFusion",
+    "Salvage kill salvageCascade",
     "Salvage both salvageNodes missionComplete",
+    "Salvage both salvageFusion missionComplete",
+    "Salvage both salvageCascade missionComplete",
     "Salvage both salvageCleared missionComplete",
   ]);
 });
@@ -751,7 +755,8 @@ test("Salvage milestones (designer 2026-11-22): Grid Online at the fifth Power N
   // The fifth Power Node, with three sectors already Cleared.
   const n = previewBoards(data(), "V1", "Salvage", "salvageNodes")!;
   const a = salvageMarkOf(data(), n.start, n.kill, PREVIEW_SEED)!;
-  expect([a.kind, a.piece.id, a.sector]).toEqual(["nodes", "salvageNodes", "0,1"]);
+  const NODE_IDS = ["salvageCascade", "salvageFusion", "salvageNodes"];
+  expect([a.kind, NODE_IDS.includes(a.piece.id), a.sector]).toEqual(["nodes", true, "0,1"]);
   expect(salvageMarkOf(data(), n.kill, n.won, PREVIEW_SEED)).toBeUndefined();
   // ...and with fewer than three Cleared: still Grid Online.
   const few = structuredClone(n.start);
@@ -776,10 +781,59 @@ test("Salvage milestones (designer 2026-11-22): Grid Online at the fifth Power N
   const e = previewBoards(data(), "V1")!;
   expect(salvageMarkOf(data(), e.start, e.won, PREVIEW_SEED)).toBeUndefined();
   expect(winShowOf(data(), c.start, c.won, PREVIEW_SEED)!.kill).toBe("salvageCleared");
-  expect(winShowOf(data(), n.start, n.won, PREVIEW_SEED)!.kill).toBe("salvageNodes");
+  expect(NODE_IDS).toContain(winShowOf(data(), n.start, n.won, PREVIEW_SEED)!.kill);
   expect(KILL_STEPS.salvageNodes).toBeDefined();
   expect(KILL_TIMES.salvageCleared!.total).toBeGreaterThan(4);
-  expect(CELEBRATION_PREVIEWS.filter((w) => w.omega === "Salvage" && w.piece).length).toBe(4);
+  expect(CELEBRATION_PREVIEWS.filter((w) => w.omega === "Salvage" && w.piece).length).toBe(8);
+});
+
+test("two more for the fifth Power Node (designer 2026-11-27): Fusion Ignition and Charge Cascade, in the pool with Grid Online", async () => {
+  const { salvageMarkOf } = await import("../../src/web/celebrate/detect.js");
+  const { fusionStar, ringPhase, cascadeCell, cellLit, cellFlare } = await import("../../src/web/celebrate/nodesFx.js");
+  const { FUSION, CASCADE } = await import("../../src/web/celebrate/timeline.js");
+  // One of three at random per mission (I19), the same on reload; the Cleared moment is not theirs.
+  const picked = new Set<string>();
+  for (let seed = 1; seed < 60; seed++) {
+    const p = pickPiece(SALVAGE_PIECES, "Power Nodes", seed, "C1_M2X", "kill")!;
+    expect(pickPiece(SALVAGE_PIECES, "Power Nodes", seed, "C1_M2X", "kill")!.id).toBe(p.id);
+    picked.add(p.id);
+  }
+  expect([...picked].sort()).toEqual(["salvageCascade", "salvageFusion", "salvageNodes"]);
+  expect(SALVAGE_PIECES.filter((p) => p.for.includes("Cleared")).map((p) => p.id)).not.toContain("salvageFusion");
+  // Each plays on the preview's board of the fifth Power Node, and the win waits for it.
+  for (const id of ["salvageFusion", "salvageCascade"]) {
+    const b = previewBoards(data(), "V1", "Salvage", id)!;
+    const m = salvageMarkOf(data(), b.start, b.kill, PREVIEW_SEED, id)!;
+    expect([m.kind, m.piece.id]).toEqual(["nodes", id]);
+    expect(KILL_STEPS[id]).toBeDefined();
+    expect(KILL_TIMES[id]!.total).toBeGreaterThan(4.5);
+    expect(winShowOf(data(), b.start, b.won, PREVIEW_SEED, id)!.kill).toBe(id);
+  }
+  // Fusion: the rings spin up (faster and faster), ignition after they all gather, the fifth star last.
+  for (let i = 0; i < 3; i++) {
+    const d1 = ringPhase(i, FUSION.ringAt[i]! + 0.5) - ringPhase(i, FUSION.ringAt[i]! + 0.4);
+    const d2 = ringPhase(i, FUSION.ignite) - ringPhase(i, FUSION.ignite - 0.1);
+    expect(d2).toBeGreaterThan(d1);
+    expect(ringPhase(i, FUSION.ringAt[i]! - 0.1)).toBe(0);
+  }
+  expect(FUSION.ringAt[2]).toBeLessThan(FUSION.pinch[0]);
+  expect(FUSION.fifth[1]).toBe(FUSION.count);
+  // Five stars round the sector, evenly, clear of the label to its right (wide) and below (narrow).
+  const stars = [0, 1, 2, 3, 4].map((i) => fusionStar(i, 500, 400, 100, true));
+  for (const [x, y] of stars) expect(Math.hypot(x - 500, y - 400)).toBeCloseTo(160, 0);
+  for (const [x, y] of stars) expect(x > 500 + 132 && Math.abs(y - 400) < 40).toBe(false);
+  for (const [, y] of [0, 1, 2, 3, 4].map((i) => fusionStar(i, 200, 300, 60, false))) expect(y).toBeLessThan(300 + 60 * 1.3);
+  // Cascade: five cells in an arc over the sector, left to right; four light before the fifth locks, then the cascade runs 1 to 5.
+  const cells = [0, 1, 2, 3, 4].map((i) => cascadeCell(i, 500, 400, 100));
+  for (let i = 0; i < 5; i++) {
+    expect(cells[i]![1]).toBeLessThan(400 - 110);
+    if (i) expect(cells[i]![0]).toBeGreaterThan(cells[i - 1]![0]);
+    if (i) expect(cellFlare(i)).toBeGreaterThan(cellFlare(i - 1));
+  }
+  for (let i = 0; i < 4; i++) expect(cellLit(i)).toBeLessThan(CASCADE.condense[0] + 0.1);
+  expect(cellLit(4)).toBe(CASCADE.lock);
+  expect(CASCADE.rise[1]).toBe(CASCADE.lock);
+  expect(cellFlare(4) + 0.3).toBeLessThan(CASCADE.dump);
 });
 
 // A Field of hexes for the two wins below.

@@ -355,6 +355,51 @@ export const CLEARED = {
   back: [3.7, 4.6] as const,
 };
 
+/**
+ * Fusion Ignition (designer 2026-11-27: two more for the fifth Power Node; nodesFx.ts). About 4.8 s.
+ */
+export const FUSION = {
+  total: 4.8,
+  zoomIn: [0, 0.8] as const,
+  /** Act 1: three confinement rings (Yellow, Red, Blue) gather round the node one by one and spin up, tilting like a gyroscope. */
+  rings: [0.15, 1.85] as const,
+  ringAt: [0.15, 0.4, 0.65] as const,
+  /** Act 2: plasma filaments pinch in from the rings to the core; it brightens. */
+  pinch: [1.15, 1.85] as const,
+  /** Act 3: ignition (playFusionIgnite): a small sun with a corona of looping particles. */
+  ignite: 1.9,
+  sun: [1.9, 3.7] as const,
+  /** The four Power Nodes already taken show as stars round it; the fifth flies out of the sun to close the ring. */
+  stars: [2.15, 2.75] as const,
+  fifth: [2.75, 3.05] as const,
+  wreckIn: [2.2, 2.6] as const,
+  label: [2.3, 2.55] as const,
+  count: 3.05,
+  back: [3.85, 4.8] as const,
+};
+
+/** Charge Cascade (designer 2026-11-27; nodesFx.ts). About 4.9 s. */
+export const CASCADE = {
+  total: 4.9,
+  zoomIn: [0, 0.8] as const,
+  /** Act 1: five charge cells open in an arc over the node; four light up one by one (playCascadeCell), the fifth stays empty. */
+  cells: [0.2, 1.0] as const,
+  /** Act 2: the node's energy condenses into a crystal of the three colours over the tile. */
+  condense: [0.95, 1.8] as const,
+  /** It rises into the fifth cell (the tile is gone; what lies beneath shows). */
+  rise: [1.8, 2.3] as const,
+  /** Act 3: the fifth cell locks (playCascadeLock); the cells flare one by one, arcs leap between them. */
+  lock: 2.3,
+  cascade: [2.3, 2.95] as const,
+  /** Act 4: they discharge into the sector (playCascadeDischarge): five bolts, a pulse over the Field. */
+  dump: 3.1,
+  pulse: [3.1, 4.0] as const,
+  wreckIn: [1.85, 2.3] as const,
+  label: [2.35, 2.6] as const,
+  count: 2.45,
+  back: [4.0, 4.9] as const,
+};
+
 /** Each kill's length and pull-out (the win waits for the pull-out when both come in one answer). */
 export const KILL_TIMES: Record<string, { total: number; back: readonly [number, number] }> = {
   alphaDown: KILL,
@@ -369,6 +414,8 @@ export const KILL_TIMES: Record<string, { total: number; back: readonly [number,
   gammaShatter: SHATTER,
   salvageNodes: NODES,
   salvageCleared: CLEARED,
+  salvageFusion: FUSION,
+  salvageCascade: CASCADE,
 };
 
 /** Mission Complete, the win: about 5 s (after the Trophies that came in with the answer have flown to the Mission bar). */

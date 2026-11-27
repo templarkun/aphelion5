@@ -75,13 +75,14 @@ export async function celebrateCheck(browser, url, out) {
     const l = await log(pg);
     const ms = killMs(l);
     await pg.close();
-    if (!(listed === 52 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
+    if (!(listed === 56 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
   }
 
   // 1b. Alpha Purge (1100 px), the second Alpha kill (I21), Rail Strike (1400 px) and Alpha Erased (390 px), the third and
   //     fourth (designer 2026-11-27): about 4.5 s each, then the preview closes; Barrage (1400 px) and Cryo Shatter (390 px), the
-  //     second and third Beta kills (designer 2026-11-27): about 6.7 s each.
-  for (const [w, h, piece, name, omega = "Alpha"] of [[1100, 760, "alphaPurge", "purge"], [1400, 900, "alphaRail", "rail"], [390, 844, "alphaErase", "erase"], [1400, 900, "betaBarrage", "barrage", "Beta"], [390, 844, "betaCryo", "cryo", "Beta"]]) {
+  //     second and third Beta kills (designer 2026-11-27): about 6.7 s each; Fusion Ignition (1400 px) and Charge Cascade
+  //     (390 px), the fifth Power Node's second and third (designer 2026-11-27): about 4.8 s each.
+  for (const [w, h, piece, name, omega = "Alpha"] of [[1100, 760, "alphaPurge", "purge"], [1400, 900, "alphaRail", "rail"], [390, 844, "alphaErase", "erase"], [1400, 900, "betaBarrage", "barrage", "Beta"], [390, 844, "betaCryo", "cryo", "Beta"], [1400, 900, "salvageFusion", "fusion", "Salvage"], [390, 844, "salvageCascade", "cascade", "Salvage"]]) {
     const pg = await open(w, h);
     await preview(pg, "kill", omega, piece);
     const shown = await pg.waitForSelector("[data-celebration]", { timeout: 10000 }).then(() => true, () => false);

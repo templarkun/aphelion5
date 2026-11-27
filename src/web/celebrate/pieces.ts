@@ -51,6 +51,9 @@ export const KILL_PIECES: Piece[] = [
 export const SALVAGE_PIECES: Piece[] = [
   { id: "salvageNodes", name: "Grid Online", for: ["Power Nodes"] },
   { id: "salvageCleared", name: "Sector Lock", for: ["Cleared"] },
+  // Designer 2026-11-27: two more for the fifth Power Node.
+  { id: "salvageFusion", name: "Fusion Ignition", for: ["Power Nodes"] },
+  { id: "salvageCascade", name: "Charge Cascade", for: ["Power Nodes"] },
 ];
 
 const EVERY_MISSION = ["Alpha", "Beta", "Gamma", "Salvage"] as const;
