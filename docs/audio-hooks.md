@@ -108,6 +108,20 @@ A lost or conceded game plays one of two films at random, **Signal Lost** (the t
 | 8 | `sfx-jump-charge` | Withdrawal, Act 3: the jump drive gathers light at the prow | Fixed, 1.6 s (ends on the jump) | A starship jump drive charging: a rising, accelerating energy whine with a deep pulsing throb, building tension to a peak. |
 | 9 | `sfx-jump` | Withdrawal, Act 3: the white flash, the ship stretches away and is gone | Free, about 1.5 s | A hyperspace jump: a sudden bright boom-whoosh that stretches and fades into the distance, leaving a soft ringing tail. |
 
+## Batch 4: two more victory outros (designer 2026-11-27)
+
+**Homecoming** (the Flagship comes home: jump, honour guard, salute, docking) and **Star Chart** (the Campaign's missions become a constellation in a galaxy). Already hooked in (`briefing/soundHooks.ts`): each plays as soon as its file is uploaded. Both end on `playVictoryResolve`, the victory outros' shared last chord (no file yet). Same rules as the batches before; add the common style to each prompt. Look at them in System options > "Play Homecoming" / "Play Star Chart".
+
+| # | File name | When it plays | Length | Prompt |
+|---|---|---|---|---|
+| 1 | `sfx-jump-arrival` | Homecoming, Act 1: the Flagship drops out of its jump with a flash | Free, about 1.5 s | A starship arriving from hyperspace: a reversed rushing whoosh that snaps into a deep bright boom, then a low engine rumble settling. |
+| 2 | `sfx-escort-flyby` | Homecoming, Act 2: fourteen escort craft peel in round the Flagship | Free, about 2.5 s | A squadron of small fighters flying past in formation: overlapping engine whooshes panning by, light and fast, confident. |
+| 3 | `sfx-salute-burst` | Homecoming, Act 3: one salute burst per mission won (several in a row) | Free, about 1.2 s | A sci-fi victory firework: a short rising whistle, a soft energy pop and a crackling shimmer of sparks fading out. Festive, not explosive. |
+| 4 | `sfx-dock-clamp` | Homecoming, Act 4: the Flagship's clamps lock onto the docking arm | Fixed, 0.8 s | Heavy docking clamps locking: a deep metal clunk, a hydraulic hiss and a short confirming chime. |
+| 5 | `sfx-star-ignite` | Star Chart, Act 1: one star ignites per mission won (several in a row) | Free, about 0.8 s | A star igniting in space: a soft rising shimmer that blooms into a clear bell-like chime with a gentle glow tail. |
+| 6 | `sfx-constellation-link` | Star Chart, Act 2: streams of light draw the constellation star to star | Free, about 2.5 s | Threads of light connecting stars: a flowing, sparkling energy stream with soft rising harp-like tones, calm and wondrous. |
+| 7 | `sfx-chart-ascend` | Star Chart, Act 3: the constellation flares and the camera pulls back to a whole galaxy | Free, about 2.5 s | A vast cosmic reveal: a swelling airy choir-like synth pad with a deep soft boom at the start and a wide shimmering tail. |
+
 ## Already in place for later
 
 The briefing, intro, outro films and mission celebrations already have empty sound places in `src/web/briefing/soundHooks.ts` (about 60 of them: hover, chips, Threat level, engine hum, every celebration act). They are the next batches. The Field sounds above get the same kind of place when the files arrive.

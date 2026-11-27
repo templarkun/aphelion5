@@ -1211,6 +1211,9 @@ note: CHANGED 2026-11-19 (designer): System options lists three: "Play Terraform
 note: CHANGED 2026-11-19 (designer, later the same day): System options lists four: "Play
       Terraformer 2.0 (<Company>)", "Play Surface Terraform (<Company>)", "Play Orbital Claim
       (<Company>)" and "Play Terraformer 1.0 (<Company>)" (T13_OUT_18). A won game still plays 2.0.
+note: CHANGED 2026-11-27 (designer): System options lists six victory outros: Terraformer 2.0,
+      Surface Terraform, Orbital Claim, Homecoming, Star Chart and Terraformer 1.0 (batch 14
+      T14_WIN_01-03), then the two loss outros. A won game still plays 2.0.
 
 id: T13_OUT_08
 title: Terraformer 2.0, act by act

@@ -6,6 +6,7 @@ import { playAnswer, startGame, type Game } from "../../src/engine/save.js";
 import { emptyProfile } from "../../src/engine/state.js";
 import { DEFAULT_OUTRO, LOSS_OUTROS, lossOutroFor, OUTROS, outroFor } from "../../src/web/outro/index.js";
 import * as LS from "../../src/web/outro/loss/timeline.js";
+import * as VT from "../../src/web/outro/victory/timeline.js";
 import { pickLossOutro } from "../../src/web/outro/loss/timeline.js";
 import { newEvents, type GameEvent } from "../../src/engine/events.js";
 import { campaignStatsOf, overloadsOf, sampleStats } from "../../src/web/outro/stats.js";
@@ -279,8 +280,11 @@ test("the loss outros call their own sound hooks; the last chord is batch 2's mi
   expect(sound.playDefeatResolve.toString()).toMatch(/mission-lost/);
 });
 
-test("every Company gets an outro (Terraformer 2.0 until the designer deals them out; Surface Terraform, Orbital Claim and 1.0 in System options) and colours", () => {
-  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "surface", "orbital", "terraformer"]);
+// CHANGED 2026-11-27 (designer): Homecoming and Star Chart added to System options.
+test("every Company gets an outro (Terraformer 2.0 until the designer deals them out; Surface Terraform, Orbital Claim, Homecoming, Star Chart and 1.0 in System options) and colours", () => {
+  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "surface", "orbital", "homecoming", "starchart", "terraformer"]);
+  expect(outroFor("V1", "homecoming").name).toBe("Homecoming");
+  expect(outroFor("V2", "starchart").name).toBe("Star Chart");
   expect(outroFor("V2", "surface").name).toBe("Surface Terraform");
   expect(outroFor("V1", "orbital").name).toBe("Orbital Claim");
   expect(DEFAULT_OUTRO).toBe("terraformer2");
@@ -488,4 +492,72 @@ test("Orbital Claim calls its own silent sound hooks", () => {
     expect(typeof f).toBe("function");
     expect(f()).toBeUndefined();
   }
+});
+
+// Homecoming and Star Chart (designer 2026-11-27): two more victory outros, generic for any Company.
+test("Homecoming: four acts; the jump, the honour guard formed before the salute, one burst per mission won, the ring lit, then the dock", () => {
+  const H = VT.HOME;
+  expect([0, H.ARRIVE_AT, H.ESCORT_AT, H.SALUTE_AT, H.DOCK_AT, H.FILM_SECONDS].map((t) => LS.actOf(H.ACT_AT, t))).toEqual([1, 1, 2, 3, 4, 4]);
+  expect(VT.escortsFormed(H.ESCORT_AT)).toBe(0);
+  expect(VT.escortSet(H.ESCORTS - 1)).toBeLessThan(H.ACT_AT[2]);
+  expect(VT.escortsFormed(H.ACT_AT[2])).toBe(H.ESCORTS);
+  for (const n of [1, 2, 5, 7, 12]) {
+    const b = VT.saluteTimes(n);
+    expect(b.length).toBe(n);
+    for (const x of b) expect(LS.actOf(H.ACT_AT, x)).toBe(3);
+    for (let i = 1; i < n; i++) expect(b[i]!).toBeGreaterThan(b[i - 1]!);
+    expect(VT.burstsBy(H.ACT_AT[3], n)).toBe(n);
+    expect(VT.burstsBy(H.SALUTE_AT, n)).toBe(0);
+  }
+  expect(VT.ringLit(H.RING_AT - 0.01)).toBe(0);
+  expect(VT.ringLit(H.RING_FULL)).toBe(H.RING_SEGMENTS);
+  for (let t = 0; t < 12; t += 0.2) {
+    expect(VT.ringLit(t + 0.2)).toBeGreaterThanOrEqual(VT.ringLit(t));
+    expect(VT.shipTravel(t + 0.2)).toBeGreaterThanOrEqual(VT.shipTravel(t));
+  }
+  expect(VT.shipTravel(H.ARRIVE_AT)).toBe(0);
+  expect(VT.shipTravel(H.DOCK_AT)).toBe(1);
+  // It comes to rest at the berth: hardly moving in the last tenth of a second.
+  expect(VT.shipTravel(H.DOCK_AT) - VT.shipTravel(H.DOCK_AT - 0.1)).toBeLessThan(0.001);
+  expect(H.DEBRIEF_AT).toBeGreaterThan(H.RESOLVE_AT);
+  expect(H.DEBRIEF_AT).toBeLessThan(H.FILM_SECONDS);
+  expect(H.STILL_AT).toBeGreaterThan(H.DEBRIEF_AT);
+});
+
+test("Star Chart: one star per mission won in act 1, links drawn in act 2, the pull-back in act 3; the constellation's stars kept apart", () => {
+  const C = VT.CHART;
+  expect([0, C.IGNITE_AT, C.LINK_AT, C.ASCEND_AT, C.PULL_END, C.FILM_SECONDS].map((t) => LS.actOf(C.ACT_AT, t))).toEqual([1, 1, 2, 3, 4, 4]);
+  for (const n of [1, 2, 4, 7, 12]) {
+    const s = VT.starTimes(n);
+    expect(s.length).toBe(n);
+    for (const x of s) expect(LS.actOf(C.ACT_AT, x)).toBe(1);
+    expect(VT.starsLit(C.ACT_AT[1], n)).toBe(n);
+    const l = VT.linkTimes(n);
+    expect(l.length).toBe(n - 1);
+    for (const x of l) {
+      expect(LS.actOf(C.ACT_AT, x)).toBe(2);
+      expect(LS.actOf(C.ACT_AT, x + C.LINK_FLY)).toBe(2);
+    }
+    expect(VT.linksBy(C.ASCEND_AT, n)).toBe(n - 1);
+    const p = VT.starPlaces(n);
+    expect(p.length).toBe(n);
+    for (const q of p) expect(Math.hypot(q.x, q.y)).toBeLessThanOrEqual(1.1);
+    for (let i = 1; i < n; i++) {
+      expect(p[i]!.x).toBeGreaterThan(p[i - 1]!.x);
+      expect(Math.hypot(p[i]!.x - p[i - 1]!.x, p[i]!.y - p[i - 1]!.y)).toBeGreaterThanOrEqual(0.15);
+    }
+  }
+  expect(VT.pullBack(C.ASCEND_AT)).toBe(0);
+  expect(VT.pullBack(C.PULL_END)).toBe(1);
+  for (let t = 0; t < 11; t += 0.2) expect(VT.pullBack(t + 0.2)).toBeGreaterThanOrEqual(VT.pullBack(t));
+  expect(C.DEBRIEF_AT).toBeGreaterThan(C.RESOLVE_AT);
+  expect(C.DEBRIEF_AT).toBeLessThan(C.FILM_SECONDS);
+});
+
+test("Homecoming and Star Chart call their own sound hooks (audio batch 4)", () => {
+  for (const f of [sound.playJumpArrival, sound.playEscortFlyby, sound.playDockingClamp, sound.playConstellationLink, sound.playStarChartAscend]) expect(() => f()).not.toThrow();
+  expect(() => sound.playSaluteBurst(0, 3)).not.toThrow();
+  expect(() => sound.playStarIgnite(2, 3)).not.toThrow();
+  expect(sound.playSaluteBurst.toString()).toMatch(/salute-burst/);
+  expect(sound.playStarIgnite.toString()).toMatch(/star-ignite/);
 });

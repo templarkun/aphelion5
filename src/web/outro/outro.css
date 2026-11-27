@@ -162,3 +162,7 @@ html.still .ou, html.still .ou *, html.still .ou *::before, .ou-still, .ou-still
 .ou-veil-dark { background: #000; }
 @keyframes ou-veil-dark { 0% { opacity: 1; } 100% { opacity: 0; } }
 .ou-veil.ou-veil-dark { animation-name: ou-veil-dark; }
+
+/* Homecoming and Star Chart (designer 2026-11-27): the Company's accent on a dark page. */
+.ou-film { background: #01030a; }
+.ou-film .ou-act { text-shadow: 0 0 16px rgb(var(--acc) / 0.55), 0 2px 6px rgb(0 0 0 / 0.9); }

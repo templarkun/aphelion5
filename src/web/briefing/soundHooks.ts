@@ -131,6 +131,35 @@ export function playJumpFlash(): void {
 export function playDefeatResolve(): void {
   sfx("mission-lost");
 }
+
+/**
+ * Homecoming and Star Chart (designer 2026-11-27), two more victory outros. Both end with
+ * playVictoryResolve, like the other victory outros. The names are audio batch 4 (docs/audio-hooks.md):
+ * each plays as soon as its file is uploaded.
+ */
+export function playJumpArrival(): void {
+  sfx("jump-arrival");
+}
+export function playEscortFlyby(): void {
+  sfx("escort-flyby");
+}
+/** One salute burst per mission won (index of of). */
+export function playSaluteBurst(_index: number, _of: number): void {
+  sfx("salute-burst");
+}
+export function playDockingClamp(): void {
+  sfx("dock-clamp");
+}
+/** One star per mission won ignites (index of of). */
+export function playStarIgnite(_index: number, _of: number): void {
+  sfx("star-ignite");
+}
+export function playConstellationLink(): void {
+  sfx("constellation-link");
+}
+export function playStarChartAscend(): void {
+  sfx("chart-ascend");
+}
 /**
  * Mission celebrations (designer 2026-11-20, src/web/celebrate/). The kill, Alpha Down: the last
  * required Omega unit is destroyed.

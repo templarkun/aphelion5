@@ -13,6 +13,8 @@ choice: `OUTRO_OF_COMPANY` in `index.ts` (empty for now, so every Company gets `
 | `terraformer2` | Terraformer 2.0 (designer 2026-11-17), plays after a won Campaign. Industrial terraforming: the bay doors open, the pylons (atmospheric processors: reactor core, four folding wings, anchor spike, braking thrusters on top, firing down) are lowered out, drift free for 1.2 s while they turn upright, then come down slowly on their thrusters; one by one they anchor and fire blue-green beams up through the toxic storm, which clears in emerald and cyan rings over ocean and green land; the sun rises. About 15 seconds. |
 | `surface` | Surface Terraform (designer 2026-11-19; new look 2026-11-21: hard, gritty science fiction after Dune, Mass Effect and Homeworld, geological, not botanical), System options only for now. Goes on from 2.0 on the planet's surface: an ochre dust storm over a dark basalt valley; three brutalist spires (gunmetal tiers, radiator fins, amber strobes, heat shimmer) fire wide ion plumes, four more far off; the plumes carve a turbulent eye in the storm, cold sunlight breaks through in shafts; water fills the dark canyon beds and pools, the basalt turns wet and mineral-rich, mist on the valley floor; a slow, heavy pan, the spires venting vapour, while the Debrief slides in. Seen as a recon feed (thin visor lines, live telemetry); film grain, vignette, colour fringes. No plants or creatures. About 12.5 seconds. |
 | `orbital` | Orbital Claim (designer 2026-11-19), System options only for now. No terraforming: a corporate-military claim. From low orbit over the night side of the intro's planet a beacon beam in the Company's colour climbs from the liberated sector into space; the camera rises along it as the Company's Flagship (a lit solid in the Company's outline from the Vessel screen) glides in and locks its belly clamps on the beam with a flash; twelve relay satellites snap into a lattice and a hexagonal territory grid sweeps over the curve of the ground, "ASSET SECURED"; a slow orbital drift while the Debrief slides in. About 11.5 seconds. |
+| `homecoming` | Homecoming (designer 2026-11-27), System options only for now. Generic (any Company: the Company's colours, a plain hull): by the Company's home world the Flagship drops out of its jump (flash, streak, ring of particles); 14 escorts peel in on particle trails and form an honour guard; one salute burst per mission won on a tracer from the Flagship; the station's 24 ring lights come on; the Flagship comes to rest at the docking arm, the clamps lock (8.9 s); the escorts peel away. About 11.6 seconds. |
+| `starchart` | Star Chart (designer 2026-11-27), System options only for now. Generic: one star per mission won ignites with its tag, one companion per Threat column; streams of particles draw the Campaign's constellation (its shape from the missions played); it flares and the camera pulls far back to a spiral galaxy, the constellation marked with the Campaign's name. About 11.2 seconds. |
 | `terraformer` | Terraformer 1.0, kept as it was to compare (System options only). Bay doors, one pylon per mission won falls through the air, each hit sends a shock wave over the ground and turns it into a lit sector in the Company's colours; the sun rises. About 11.5 seconds. |
 
 ## The loss outros (designer 2026-11-24)
@@ -70,6 +72,10 @@ surface/sky.ts               Surface: the cold sky, sun and moons, the dust-stor
 surface/scene.ts             Surface: the film: camera pan, layers far to near dissolved in the air, brutalist spires, ion plumes, vapour, water, dust, mist, rain, light shafts, lens flare, grain
 surface/telemetry.ts         Surface: the recon feed's readouts, worked out from the time alone
 OrbitalClaimOutro.tsx        Orbital Claim: the same page with the orbital film
+VictoryFilmOutro.tsx         Homecoming and Star Chart's page (the loss outros' page in the Company's colours)
+victory/timeline.ts          both films' seconds, the escorts, salutes, ring, stars, links, the constellation's shape
+victory/homecoming.ts        Homecoming: home world, station, the plain hull, jump, escorts, salute bursts, dock
+victory/starchart.ts         Star Chart: nebula, stars and companions, links, ascension, galaxy, the marker
 LossOutro.tsx                the two loss outros' page (Signal Lost, Withdrawal)
 loss/timeline.ts             both loss films' seconds, the random pick, the display's sectors, the craft
 loss/kit.ts                  light sprites, grain, vignette, where the picture's middle goes once the card is in
@@ -107,9 +113,11 @@ at the right moments (`playBayDoorsOpen`, `playReentryStreak`, `playTerraformSho
 `playVictoryResolve`, for 2.0 `playRetroThrust`, for Surface Terraform `playSpireIgnition` (once
 per spire; the far beams are silent), `playAtmosphereClear`, `playWaterFlow` and `playVictoryResolve`,
 for Orbital Claim `playSkyBeamFire`, `playOrbitalLock`, `playGridSweep` and `playVictoryResolve`);
-fill them in when there are audio files. The loss outros' hooks are already wired to audio batch 3
+fill them in when there are audio files. Homecoming's and Star Chart's hooks are wired to audio batch 4 names (`playJumpArrival`, `playEscortFlyby`,
+`playSaluteBurst`, `playDockingClamp`, `playStarIgnite`, `playConstellationLink`, `playStarChartAscend`).
+The loss outros' hooks are already wired to audio batch 3
 names (`docs/audio-hooks.md`) and end with `playDefeatResolve` (`sfx-mission-lost`).
 
 To look at an outro without playing a Campaign: System options (the gear) > "Play Terraformer 2.0",
-"Play Surface Terraform", "Play Orbital Claim" or "Play Terraformer 1.0"; the loss outros "Play
+"Play Surface Terraform", "Play Orbital Claim", "Play Homecoming", "Play Star Chart" or "Play Terraformer 1.0"; the loss outros "Play
 Signal Lost" and "Play Withdrawal" (sample numbers of a lost game).

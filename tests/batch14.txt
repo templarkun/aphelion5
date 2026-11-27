@@ -27,6 +27,9 @@
 # The loss outros, 2026-11-24: a lost or conceded game plays one of two loss outros at random
 # (T14_LOSS_01), Signal Lost (T14_LOSS_02), Withdrawal (T14_LOSS_03). CHANGED notes on batch 8
 # T8_END_01 and batch 13 T13_OUT_01. Checked by tests/unit/outro.test.ts and scripts/ui-loss.mjs.
+# Two more victory outros, 2026-11-27: Homecoming and Star Chart in System options (T14_WIN_01),
+# Homecoming (T14_WIN_02), Star Chart (T14_WIN_03). CHANGED note on batch 13 T13_OUT_07. Checked by
+# tests/unit/outro.test.ts and scripts/ui-victory.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -566,3 +569,55 @@ then: about 11 seconds from high orbit. Act 1 "Sector overrun" (0-3 s): the plan
       away to the right and is gone, a ring of particles behind it. Act 4 "Aftermath": the planet
       glowing crimson, debris drifting by; the Debrief slides in at 9.2 s. Sound hooks: overrun,
       evacuation launch, craft lost, jump charge, jump, and the last chord (mission-lost) at 8.6 s.
+
+
+=== SECTION: TWO MORE VICTORY OUTROS (designer 2026-11-27, screen only, no rule change) ===
+
+id: T14_WIN_01
+title: Homecoming and Star Chart are in System options; a won game still plays Terraformer 2.0
+source: designer 2026-11-27 ("create another 2 creative mission complete victory animations")
+given: the briefing, System options (the gear)
+then: six victory outros are listed: "Play Terraformer 2.0", "Play Surface Terraform", "Play
+      Orbital Claim", "Play Homecoming", "Play Star Chart", "Play Terraformer 1.0" (each with the
+      Company chosen on the Vessel step), then the two loss outros. Homecoming and Star Chart play
+      with sample numbers (7 missions won) and end on the Debrief of a won Campaign; Return to
+      Command Deck comes back to the briefing. A won game still plays Terraformer 2.0 until the
+      designer says which Company gets which outro.
+note: Both are generic: the Company lends its name and colours only (no Company outline), so any
+      Company can be given them. Same page rules as the other outros: "Tap twice to skip", the
+      speed setting, reduced motion or Instant = one still picture and the card at once, fewer
+      particles on a slow machine.
+
+id: T14_WIN_02
+title: Homecoming
+source: designer 2026-11-27
+given: System options > "Play Homecoming", Normal speed, 7 missions won
+then: about 11.6 seconds, seen from the side. Act 1 "Jump return" (0-2.8 s): deep space above the
+      night side of the Company's home world (its cities lit); light gathers and at 0.6 s the
+      Flagship drops out of its jump (a white flash, a streak shrinking into the ship, which is
+      stretched and then whole, a ring of particles thrown off). Act 2 "Honour guard" (2.8-5.8 s):
+      14 escort craft peel in from behind on both sides on trails of particles and take their
+      places in a chevron round the Flagship, all 14 in formation before act 3; the station ahead
+      (a ring, spokes, hub, docking arm). Act 3 "Victory salute" (5.8-8.6 s): one burst of light
+      per mission won (7 here), each on a tracer from the Flagship, sparks in the Company's two
+      colours that streak, then crackle; the station's 24 ring lights come on one by one in the
+      Company's colour; the cities brighten. Act 4 "Home berth": the Flagship slows to rest at the
+      docking arm, the clamps lock with a flash at 8.9 s ("BERTH 01 · CLAMPS LOCKED"); the escorts
+      peel away; the Debrief slides in at 9.6 s. Sound hooks (audio batch 4): jump arrival, escort
+      fly-by, one salute burst per mission, docking clamp, and the last chord (playVictoryResolve).
+
+id: T14_WIN_03
+title: Star Chart
+source: designer 2026-11-27
+given: System options > "Play Star Chart", Normal speed, 7 missions won
+then: about 11.2 seconds in deep space with soft nebulae. Act 1 "Campaign record" (0-3.2 s): one
+      star per mission won ignites in the order played (light gathers, a flare, a ring, sparks),
+      left to right, its tag beside it ("M1", "M2X" ...); one small companion star per Threat
+      column of that mission circles it. Act 2 "Constellation" (3.2-6.0 s): streams of particles
+      run from each star to the next (6 links here) and draw the Campaign's constellation; light
+      keeps running along the lines; the caption then says the Threat Levels conquered. Act 3
+      "Ascension" (6.0-8.6 s): the stars flare, a ring of light runs out, the tags fade and the
+      camera pulls far back: a spiral galaxy turns into view round the constellation. Act 4
+      "Legacy": a slow turn of the galaxy, the constellation marked by turning brackets and the
+      Campaign's name; the Debrief slides in at 9.2 s. Sound hooks (audio batch 4): one star
+      ignition per mission, constellation link, ascension, and the last chord (playVictoryResolve).

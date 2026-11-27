@@ -12,6 +12,7 @@ import { TerraformerVictoryOutro2 } from "./TerraformerVictoryOutro2.0.js";
 import { SurfaceTerraformOutro } from "./SurfaceTerraformOutro.js";
 import { OrbitalClaimOutro } from "./OrbitalClaimOutro.js";
 import { SignalLostOutro, WithdrawalOutro } from "./LossOutro.js";
+import { HomecomingOutro, StarChartOutro } from "./VictoryFilmOutro.js";
 import { pickLossOutro } from "./loss/timeline.js";
 import type { OutroDef } from "./types.js";
 
@@ -39,6 +40,19 @@ export const OUTROS: OutroDef[] = [
     Component: OrbitalClaimOutro,
   },
   {
+    // Designer 2026-11-27: two more, generic for any Company. In System options only until the designer says.
+    id: "homecoming",
+    name: "Homecoming",
+    note: "The Flagship drops out of its jump by the Company's home world; an honour guard of escorts forms round it, one salute burst per mission won lights the sky, the station's ring lights up and the clamps lock at the berth.",
+    Component: HomecomingOutro,
+  },
+  {
+    id: "starchart",
+    name: "Star Chart",
+    note: "The Campaign written into the sky: one star per mission won ignites, streams of light draw its constellation with a companion per Threat column; the camera pulls far back and a galaxy turns round it.",
+    Component: StarChartOutro,
+  },
+  {
     // Kept as it was for comparison (designer 2026-11-17: "leave this version in the menu for me to see").
     id: "terraformer",
     name: "Terraformer 1.0",
@@ -47,7 +61,7 @@ export const OUTROS: OutroDef[] = [
   },
 ];
 
-/** Terraformer 2.0 plays after a won Campaign (designer 2026-11-19: "Keep 2.0 as the default after a won game until I say otherwise"); Surface Terraform, Orbital Claim and 1.0 are in System options. */
+/** Terraformer 2.0 plays after a won Campaign (designer 2026-11-19: "Keep 2.0 as the default after a won game until I say otherwise"); Surface Terraform, Orbital Claim, Homecoming, Star Chart and 1.0 are in System options. */
 export const DEFAULT_OUTRO = "terraformer2";
 
 /** Company id -> outro id. THE DESIGNER'S CHOICE, still open: empty until they say. */
