@@ -30,6 +30,10 @@
 # Two more victory outros, 2026-11-27: Homecoming and Star Chart in System options (T14_WIN_01),
 # Homecoming (T14_WIN_02), Star Chart (T14_WIN_03). CHANGED note on batch 13 T13_OUT_07. Checked by
 # tests/unit/outro.test.ts and scripts/ui-victory.mjs.
+# Random victory outros and two new mission wins, 2026-11-27: a won Campaign plays one of five
+# victory outros at random for any Company (T14_WIN_04; CHANGED note on T14_WIN_01); Chain Surge
+# (T14_WIN_05) and Beacon Spiral (T14_WIN_06), two more wins for every mission. Checked by
+# tests/unit/outro.test.ts, tests/unit/celebrate.test.ts, scripts/ui-celebrate.mjs, ui-smoke.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -583,6 +587,8 @@ then: six victory outros are listed: "Play Terraformer 2.0", "Play Surface Terra
       with sample numbers (7 missions won) and end on the Debrief of a won Campaign; Return to
       Command Deck comes back to the briefing. A won game still plays Terraformer 2.0 until the
       designer says which Company gets which outro.
+CHANGED (designer 2026-11-27, later the same day): a won game no longer always plays Terraformer
+      2.0: it plays one of five at random for any Company (T14_WIN_04).
 note: Both are generic: the Company lends its name and colours only (no Company outline), so any
       Company can be given them. Same page rules as the other outros: "Tap twice to skip", the
       speed setting, reduced motion or Instant = one still picture and the card at once, fewer
@@ -621,3 +627,55 @@ then: about 11.2 seconds in deep space with soft nebulae. Act 1 "Campaign record
       "Legacy": a slow turn of the galaxy, the constellation marked by turning brackets and the
       Campaign's name; the Debrief slides in at 9.2 s. Sound hooks (audio batch 4): one star
       ignition per mission, constellation link, ascension, and the last chord (playVictoryResolve).
+
+
+=== SECTION: RANDOM VICTORY OUTROS AND TWO NEW MISSION WINS (designer 2026-11-27, screen only, no rule change) ===
+
+id: T14_WIN_04
+title: A won Campaign plays one of five victory outros at random, for any Company
+source: designer 2026-11-27 ("leave them as a random ending for any of the company. I will assign
+        them in the very end of development")
+given: a Campaign won (the last Upgrade sheet closed), any Company
+then: one of Terraformer 2.0, Surface Terraform, Orbital Claim, Homecoming and Star Chart plays, picked
+      at random each time (Terraformer 1.0 is never picked: kept only to compare), then the Debrief.
+      System options says which five may play and still plays each one on its own button.
+note: Which Company gets which outro is decided at the very end of development (open questions).
+
+id: T14_WIN_05
+title: Chain Surge
+source: designer 2026-11-27 ("create 2 new mission complete celebrations. Be creative and put more
+        effort in making them"; on the card: "Mission win (on the Field)")
+given: a mission won, Chain Surge picked (or System options > Mission celebrations > Chain Surge),
+       Normal speed
+then: about 5.4 seconds on the Field. Act 1 (0-0.9 s): the Field dims; an arc of lightning runs cell
+      to cell along the Mission bar, lighting each; from the last cell a bolt drops into the sector
+      the unit left (the middle after the Developer tool). Act 2 (0.9-2.85 s): the surge leaps sector
+      to sector outwards from there, always to a neighbour (a sector cut off from the rest is struck
+      from the nearest lit one); each leap a jagged, flickering bolt with forks and particles riding
+      it; each sector struck flashes, its charge runs to its six corners as particles, it throws
+      sparks and its tile jumps a little; every leap stays as a faint live link, so every sector is
+      wired by 2.75 s. Act 3 (2.85-3.9 s): light packets run back along every link to the start, the
+      farthest first; a bolt climbs from there to the Mission bar, which turns gold with a crown of
+      sparks; MISSION COMPLETE slams in at 3.45 s with its line and badges (the standard banner).
+      Act 4 (3.9-5.4 s): the network crumbles into motes that rise; everything fades.
+note: The same for every Company. Two taps skip; reduced motion or Instant: the still banner (1.5 s)
+      over the wired Field. A slow machine draws fewer particles and forks, never slower.
+
+id: T14_WIN_06
+title: Beacon Spiral
+source: designer 2026-11-27 (as T14_WIN_05)
+given: a mission won, Beacon Spiral picked (or System options > Mission celebrations > Beacon Spiral),
+       Normal speed
+then: about 5.6 seconds on the Field. Act 1 (0-1.0 s): the Field dims; brackets close on the Mission
+      bar's cells and lock them; a targeting marker (a turning broken ring) opens on every sector,
+      the edge of the Field first. Act 2 (1.0-2.9 s): one beam of falling particles per sector comes
+      down from above the page, in a spiral from the edge of the Field to its middle, evenly apart;
+      each strike flashes the sector, sends a hex ring of particles out, presses its tile down (it
+      bounces back) and lifts motes; the beam narrows and burns out, the sector stays lit with a gold
+      rim. Act 3 (2.9-4.0 s): every lit sector's light swirls into the middle sector; a pillar of
+      light fires up from it off the top of the page with a ring along the ground, every tile lifts a
+      little, the Mission bar turns gold; MISSION COMPLETE slams in at 3.5 s (the standard banner).
+      Act 4 (4.0-5.6 s): the pillar thins, motes rise, everything fades.
+note: As T14_WIN_05. The pick (I19): one of the five wins at random per mission, the same again if
+      the save is reloaded; System options lists Chain Surge and Beacon Spiral for Alpha, Beta, Gamma
+      and Salvage (36 buttons).

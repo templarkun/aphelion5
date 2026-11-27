@@ -14,7 +14,8 @@
  * the game's own random numbers). Screen only: nothing here is a rule.
  *
  * Built so far: two kills for Alpha (I21), one for Beta, three for Gamma (I26; Dimensional Shatter 2026-11-21).
- * Wins (designer 2026-11-21): Mission Complete, Perimeter Sweep and Sector Flip, for every mission won
+ * Wins (designer 2026-11-21): Mission Complete, Perimeter Sweep and Sector Flip; Chain Surge and Beacon Spiral
+ * (designer 2026-11-27); for every mission won
  * (Eliminate Alpha, Beta, Gamma, and Salvage), one picked at random each mission. A lost or conceded game
  * has none.
  */
@@ -52,6 +53,9 @@ export const WIN_PIECES: Piece[] = [
   { id: "missionComplete", name: "Mission Complete", for: EVERY_MISSION },
   { id: "perimeterSweep", name: "Perimeter Sweep", for: EVERY_MISSION },
   { id: "sectorFlip", name: "Sector Flip", for: EVERY_MISSION },
+  // Designer 2026-11-27: two more, for every mission won.
+  { id: "chainSurge", name: "Chain Surge", for: EVERY_MISSION },
+  { id: "beaconSpiral", name: "Beacon Spiral", for: EVERY_MISSION },
 ];
 
 /** A small fixed hash (FNV-1a) of a text. */

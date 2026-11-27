@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import { newRng } from "../../src/engine/rng.js";
 import { playAnswer, startGame, type Game } from "../../src/engine/save.js";
 import { emptyProfile } from "../../src/engine/state.js";
-import { DEFAULT_OUTRO, LOSS_OUTROS, lossOutroFor, OUTROS, outroFor } from "../../src/web/outro/index.js";
+import { DEFAULT_OUTRO, LOSS_OUTROS, lossOutroFor, OUTROS, outroFor, VICTORY_POOL } from "../../src/web/outro/index.js";
 import * as LS from "../../src/web/outro/loss/timeline.js";
 import * as VT from "../../src/web/outro/victory/timeline.js";
 import { pickLossOutro } from "../../src/web/outro/loss/timeline.js";
@@ -289,9 +289,16 @@ test("every Company gets an outro (Terraformer 2.0 until the designer deals them
   expect(outroFor("V1", "orbital").name).toBe("Orbital Claim");
   expect(DEFAULT_OUTRO).toBe("terraformer2");
   expect(outroFor("V1", "terraformer").id).toBe("terraformer");
-  expect(outroFor("V1", "nonsense").id).toBe("terraformer2");
+  // CHANGED 2026-11-27 (designer): a won game picks one of VICTORY_POOL at random, for any Company (1.0 left out).
+  expect([...VICTORY_POOL]).toEqual(["terraformer2", "surface", "orbital", "homecoming", "starchart"]);
+  expect(outroFor("V1", "nonsense", 0).id).toBe("terraformer2");
+  expect(outroFor("V1", undefined, 0.99).id).toBe("starchart");
+  for (const c of ["V1", "V2", "V9"]) {
+    const seen = new Set(Array.from({ length: 300 }, () => outroFor(c).id));
+    expect([...seen].sort()).toEqual([...VICTORY_POOL].sort());
+  }
   for (const c of [...data().companies.companies.map((x) => x.id), "V9"]) {
-    expect(outroFor(c).id).toBe("terraformer2");
+    expect(VICTORY_POOL as readonly string[]).toContain(outroFor(c).id);
     const th = companyTheme(c);
     expect(th.id).toBe(c);
     for (const rgb of [th.primary, th.secondary, th.glow, th.hull, th.livery]) expect(rgb).toMatch(/^\d{1,3} \d{1,3} \d{1,3}$/);

@@ -249,6 +249,22 @@ export function onSectorSlam(index: number, of: number): void {
 export function onAltWinDebrief(): void {
   sfx("mission-complete");
 }
+/** Chain Surge (win), Act 1: the bolt from the Mission bar strikes the first sector. */
+export function onSurgeStrike(): void {}
+/** Chain Surge, Act 2: the surge leaps into a sector (index of count; several may come close together). */
+export function onSurgeLeap(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Chain Surge, Act 3: the charge climbs back to the Mission bar, which turns gold. */
+export function onSurgeUplink(): void {}
+/** Beacon Spiral (win), Act 2: a beam strikes a sector (index of count, the edge of the Field first). */
+export function onBeaconStrike(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Beacon Spiral, Act 3: the pillar of light fires up from the middle of the Field. */
+export function onBeaconPillar(): void {}
 
 /** Salvage: the fifth Power Node ignites (Grid Online). */
 export function playGridOnline(): void {}

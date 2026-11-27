@@ -61,10 +61,17 @@ export const OUTROS: OutroDef[] = [
   },
 ];
 
-/** Terraformer 2.0 plays after a won Campaign (designer 2026-11-19: "Keep 2.0 as the default after a won game until I say otherwise"); Surface Terraform, Orbital Claim, Homecoming, Star Chart and 1.0 are in System options. */
+/** The first in the list, used only when nothing else fits (an empty pool). */
 export const DEFAULT_OUTRO = "terraformer2";
 
-/** Company id -> outro id. THE DESIGNER'S CHOICE, still open: empty until they say. */
+/**
+ * A won Campaign plays one of these, picked at random each time, for any Company (designer 2026-11-27:
+ * "leave them as a random ending for any of the company. I will assign them in the very end of
+ * development"). Terraformer 1.0 is left out: it is kept only to compare with 2.0 (System options).
+ */
+export const VICTORY_POOL = ["terraformer2", "surface", "orbital", "homecoming", "starchart"] as const;
+
+/** Company id -> outro id. THE DESIGNER'S CHOICE, deferred to the end of development (2026-11-27): empty, so every Company gets one from VICTORY_POOL at random. */
 export const OUTRO_OF_COMPANY: Record<string, string> = {};
 
 /**
@@ -89,13 +96,19 @@ export const LOSS_OUTROS: OutroDef[] = [
   },
 ];
 
-export function outroFor(companyId: string, outroId?: string): OutroDef {
+/** One of VICTORY_POOL at random; `r` in 0..1 (Math.random by default). */
+export function pickVictoryOutro(r: number = Math.random()): string {
+  return VICTORY_POOL[Math.min(VICTORY_POOL.length - 1, Math.floor(Math.max(0, r) * VICTORY_POOL.length))]!;
+}
+
+/** A won Campaign: the outro named (System options), else the Company's own (none yet), else one of VICTORY_POOL at random. */
+export function outroFor(companyId: string, outroId?: string, r?: number): OutroDef {
   const byId = (id: string | undefined) => OUTROS.find((o) => o.id === id);
   const any = LOSS_OUTROS.find((o) => o.id === outroId);
-  return byId(outroId) ?? any ?? byId(OUTRO_OF_COMPANY[companyId]) ?? byId(DEFAULT_OUTRO) ?? OUTROS[0]!;
+  return byId(outroId) ?? any ?? byId(OUTRO_OF_COMPANY[companyId]) ?? byId(pickVictoryOutro(r)) ?? byId(DEFAULT_OUTRO) ?? OUTROS[0]!;
 }
 
 /** A lost or conceded game: the loss outro named (System options), else one of the two at random; `r` in 0..1. */
 export function lossOutroFor(outroId?: string, r?: number): OutroDef {
-  return LOSS_OUTROS.find((o) => o.id === outroId) ?? LOSS_OUTROS.find((o) => o.id === pickLossOutro(r))!;
+  return LOSS_OUTROS.find((o) => o.id === outroId) ?? LOSS_OUTROS.find((o) => o.id === pickLossOutro(r)) ?? LOSS_OUTROS[0]!;
 }

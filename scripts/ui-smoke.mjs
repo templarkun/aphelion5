@@ -1251,6 +1251,8 @@ if (runs("outro") && existsSync(`${out}/won-save.json`)) {
     const name = w < 600 ? "-phone" : "";
     const pg = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
     pg.on("pageerror", (e) => errors.push(e.message));
+    // A won game picks its outro at random (designer 2026-11-27); this check names 2.0 to know what to expect.
+    await pg.addInitScript(() => { window.__outroPick = "terraformer2"; });
     await pasteSave(pg, `${out}/won-save.json`);
     await pg.locator(".upsheet").waitFor({ timeout: 6000 }).catch(() => {});
     if (w < 600) await pg.locator(".up-tabs button").first().waitFor({ timeout: 3000 }).catch(() => {});

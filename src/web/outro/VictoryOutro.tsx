@@ -1,6 +1,6 @@
 /**
- * Game End (Core Rules 10.3): after the last mission is won, the outro of the player's Company
- * (index.ts says which); after a loss or a concede, one of the two loss outros at random (designer
+ * Game End (Core Rules 10.3): after the last mission is won, one of the victory outros at random
+ * (index.ts, VICTORY_POOL; designer 2026-11-27); after a loss or a concede, one of the two loss outros at random (designer
  * 2026-11-24, LossOutro.tsx); with the numbers of the finished game, over the whole page. "RETURN TO
  * COMMAND DECK" plays the logo gate (briefing/Gate.tsx) and goes back to the menu behind it.
  * Also the preview of an outro with made-up numbers (System options > Play the outro).
@@ -25,7 +25,12 @@ export function hasOutro(state: GameState): boolean {
 function Show({ company, stats, preview, outro, onLeave }: { company: string; stats: CampaignStats; preview?: boolean; outro?: string | undefined; onLeave: () => void }) {
   const theme = useMemo(() => companyTheme(company), [company]);
   // A loss: one of the two loss outros, picked once at random when the page opens (or the one previewed).
-  const pick = useMemo(() => (stats.result === "won" ? outroFor(company, outro) : lossOutroFor(outro)), [stats.result, company, outro]);
+  // Picked once, at random, when the page opens (a won game: one of VICTORY_POOL; a loss: one of the two loss outros).
+  // The browser check may name one (`window.__outroPick`) so it knows which film to expect.
+  const pick = useMemo(() => {
+    const named = outro ?? (typeof window !== "undefined" ? (window as { __outroPick?: string }).__outroPick : undefined);
+    return stats.result === "won" ? outroFor(company, named) : lossOutroFor(named);
+  }, [stats.result, company, outro]);
   const { Component, name } = pick;
   if (typeof document === "undefined") return null;
   return createPortal(

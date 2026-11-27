@@ -14,9 +14,11 @@ import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winS
 import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
 import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
-import { FLIP, SWEEP } from "../../src/web/celebrate/timeline.js";
+import { BEACON, FLIP, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
+import { leapGrow, packetSpan, surgeCellAt, surgeLook, surgeTree } from "../../src/web/celebrate/chainSurgeFx.js";
+import { beaconLook, beaconMiddle, spiralOrder } from "../../src/web/celebrate/beaconFx.js";
 
-const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip"];
+const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral"];
 import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
 import { betaFlows, crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
@@ -79,6 +81,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     ["missionComplete", every],
     ["perimeterSweep", every],
     ["sectorFlip", every],
+    ["chainSurge", every],
+    ["beaconSpiral", every],
   ]);
   for (const p of KILL_PIECES) {
     expect(KILL_STEPS[p.id]).toBeTypeOf("function");
@@ -101,12 +105,16 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Alpha win missionComplete",
     "Alpha win perimeterSweep",
     "Alpha win sectorFlip",
+    "Alpha win chainSurge",
+    "Alpha win beaconSpiral",
     "Alpha both alphaDown missionComplete",
     "Alpha both alphaPurge missionComplete",
     "Beta kill betaBreach",
     "Beta win missionComplete",
     "Beta win perimeterSweep",
     "Beta win sectorFlip",
+    "Beta win chainSurge",
+    "Beta win beaconSpiral",
     "Beta both betaBreach missionComplete",
     "Gamma kill gammaHorizon",
     "Gamma kill gammaArray",
@@ -114,12 +122,16 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Gamma win missionComplete",
     "Gamma win perimeterSweep",
     "Gamma win sectorFlip",
+    "Gamma win chainSurge",
+    "Gamma win beaconSpiral",
     "Gamma both gammaHorizon missionComplete",
     "Gamma both gammaArray missionComplete",
     "Gamma both gammaShatter missionComplete",
     "Salvage win missionComplete",
     "Salvage win perimeterSweep",
     "Salvage win sectorFlip",
+    "Salvage win chainSurge",
+    "Salvage win beaconSpiral",
     "Salvage kill salvageNodes",
     "Salvage kill salvageCleared",
     "Salvage both salvageNodes missionComplete",
@@ -613,6 +625,93 @@ test("Sector Flip: a wave of lifts, full 360° turns and slams, all down before 
   expect(most).toBeGreaterThan(0.5);
   expect(most).toBeLessThanOrEqual(2.5);
   expect(boardJolt(FLIP.flips[1] + 0.3, st.values(), 80)).toBe(0);
+});
+
+/** A Field of hexes like Mission 1's (radius 3), with a hole in it and one sector cut off. */
+function hexField(): [string, number, number][] {
+  const out: [string, number, number][] = [];
+  for (let q = -3; q <= 3; q++) for (let r = -3; r <= 3; r++) if (Math.abs(q + r) <= 3 && `${q},${r}` !== "1,0") out.push([`${q},${r}`, 400 + 69 * (r + q / 2), 300 + 60 * q]);
+  out.push(["far", 400 + 69 * 6, 300]);
+  return out;
+}
+
+test("Chain Surge (designer 2026-11-27): the bar's arc, then the surge leaps through every sector from where the unit left, then home", () => {
+  expect(SURGE.total).toBe(5.4);
+  for (const n of [1, 3, 6, 8]) expect(surgeCellAt(Math.max(0, n - 1), n)).toBeLessThan(SURGE.drop[0]);
+  const sectors = hexField();
+  const tile = 80;
+  const [, ox, oy] = sectors.find(([k]) => k === "2,-1")!;
+  const leaps = surgeTree(sectors, tile, ox, oy);
+  // Every sector once; the first is where the unit left, struck as the bolt from the bar lands.
+  expect(leaps.map((l) => l.key).sort()).toEqual(sectors.map(([k]) => k).sort());
+  expect(leaps[0]).toMatchObject({ key: "2,-1", from: undefined, depth: 0, at: SURGE.spread[0] });
+  expect(SURGE.drop[1]).toBe(SURGE.spread[0]);
+  const by = new Map(leaps.map((l) => [l.key, l]));
+  const pos = new Map(sectors.map(([k, x, y]) => [k, [x, y]]));
+  for (const l of leaps.slice(1)) {
+    const p = by.get(l.from!)!;
+    // A leap comes from a sector struck before it, one step nearer the start, and lands within act 2.
+    expect(p.depth).toBe(l.depth - 1);
+    expect(p.at).toBeLessThan(l.at - leapGrow(l.depth) + 1e-9);
+    expect(l.at).toBeLessThanOrEqual(SURGE.spread[1]);
+    // Neighbours, except the one cut off (struck from the nearest lit sector).
+    const [x0, y0] = pos.get(l.from!)!;
+    const [x1, y1] = pos.get(l.key)!;
+    if (l.key !== "far") expect(Math.hypot(x1! - x0!, y1! - y0!)).toBeLessThan(tile);
+  }
+  expect(by.get("far")!.from).toBe("0,3");
+  // Through the hole: the sector across it is reached round it.
+  expect(by.get("0,0")!.depth).toBe(2);
+  // The packets run home, the deepest first, and the last arrives as the uplink fires.
+  const deepest = Math.max(...leaps.map((l) => l.depth));
+  expect(packetSpan(deepest, deepest)[0]).toBeCloseTo(SURGE.pulse[0]);
+  expect(packetSpan(1, deepest)[1]).toBeCloseTo(SURGE.pulse[1]);
+  expect(SURGE.uplink[0]).toBeLessThan(SURGE.pulse[1]);
+  expect(SURGE.uplink[1]).toBeLessThanOrEqual(SURGE.slam[0]);
+  // A struck tile jumps up and settles; nothing before it is struck; the same answer every time.
+  expect(surgeLook(-0.01, tile)).toBeUndefined();
+  expect(surgeLook(0, tile)!.scale).toBeGreaterThan(1.05);
+  expect(surgeLook(0, tile)!.dy).toBeLessThan(0);
+  expect(surgeLook(0.6, tile)).toBeUndefined();
+  expect(surgeTree(sectors, tile, ox, oy)).toEqual(leaps);
+  // After the Developer tool (no sector): from the middle.
+  expect(surgeTree(sectors, tile, 400, 300)[0]!.key).toBe("0,0");
+});
+
+test("Beacon Spiral (designer 2026-11-27): markers then beams, the edge of the Field first, spiralling in; the pillar after the last", () => {
+  expect(BEACON.total).toBe(5.6);
+  const sectors = hexField().filter(([k]) => k !== "far");
+  const tile = 80;
+  const order = spiralOrder(sectors, tile);
+  expect(order.map((s) => s.key).sort()).toEqual(sectors.map(([k]) => k).sort());
+  expect(order[0]!.at).toBeCloseTo(BEACON.strikes[0]);
+  expect(order.at(-1)!.at).toBeCloseTo(BEACON.strikes[1]);
+  // Evenly apart; each marker opens before its beam, all within act 1.
+  for (let i = 1; i < order.length; i++) expect(order[i]!.at - order[i - 1]!.at).toBeCloseTo((BEACON.strikes[1] - BEACON.strikes[0]) / (order.length - 1));
+  for (const s of order) {
+    expect(s.mark).toBeGreaterThanOrEqual(BEACON.marks[0]);
+    expect(s.mark).toBeLessThanOrEqual(BEACON.marks[1]);
+    expect(s.mark).toBeLessThan(s.at);
+  }
+  // Outside in: the outer ring all before the inner one, the middle last.
+  const [mx, my] = beaconMiddle(sectors);
+  const ring = (k: string) => {
+    const [, x, y] = sectors.find(([s]) => s === k)!;
+    return Math.round(Math.hypot(x - mx, y - my) / (tile * 0.866));
+  };
+  const rings = order.map((s) => ring(s.key));
+  for (let i = 1; i < rings.length; i++) expect(rings[i]!).toBeLessThanOrEqual(rings[i - 1]!);
+  expect(rings.at(-1)).toBe(0);
+  expect(BEACON.strikes[1] + BEACON.fall).toBeLessThan(BEACON.gather[0] + 0.2);
+  expect(BEACON.pillar).toBeLessThan(BEACON.slam[0]);
+  // A struck tile is pressed down, then bounces back above its size; untouched until its beam.
+  expect(beaconLook(-0.1, 1, tile)).toBeUndefined();
+  expect(beaconLook(0, 1.5, tile)!.scale).toBeLessThan(0.95);
+  const peak = Math.max(...Array.from({ length: 40 }, (_, i) => beaconLook(i * 0.01, 1.5, tile)!.scale));
+  expect(peak).toBeGreaterThan(1.01);
+  expect(beaconLook(0.8, 2, tile)).toBeUndefined();
+  // The pillar's flash lifts every tile a little.
+  expect(beaconLook(-5, BEACON.pillar + 0.02, tile)!.scale).toBeGreaterThan(1.01);
 });
 
 test("Salvage milestones (designer 2026-11-22): Grid Online at the fifth Power Node, Sector Lock at the third Cleared sector with five taken", async () => {

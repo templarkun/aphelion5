@@ -19,7 +19,8 @@
  * STILL seconds. Every moving thing is worked out from the time alone. Screen only: no rule here.
  *
  * This component also plays the other wins (designer 2026-11-21), on the same page and the same props:
- * Perimeter Sweep (sweepFx.ts) and Sector Flip (flipFx.ts). It waits for the Field and the Trophies'
+ * Perimeter Sweep (sweepFx.ts), Sector Flip (flipFx.ts), Chain Surge (chainSurgeFx.ts) and Beacon Spiral (beaconFx.ts;
+ * designer 2026-11-27). It waits for the Field and the Trophies'
  * flight, then plays the piece picked for the mission (`show.piece`), and every mission won has one:
  * Eliminate Alpha, Beta, Gamma, and Salvage.
  */
@@ -30,10 +31,15 @@ import { easeOut, easeOutBack } from "../anim.js";
 import {
   onAltWinDebrief,
   onAltWinTrophyLock,
+  onBeaconPillar,
+  onBeaconStrike,
   onBadgeDrop,
   onMissionBarBurst,
   onSectorLift,
   onSectorSlam,
+  onSurgeLeap,
+  onSurgeStrike,
+  onSurgeUplink,
   onTrophyCellIgnite,
   onUpgradeSheetOpen,
   onVictoryBannerSlam,
@@ -46,10 +52,12 @@ import { trophyFlights } from "../flyers.js";
 import { glyphBadgeUrl } from "../glyphs.js";
 import { isStill, speedFactor } from "../motion.js";
 import type { WinShow } from "./detect.js";
+import { type Strike, beaconLook, paintBeacon, spiralOrder } from "./beaconFx.js";
+import { type Leap, paintSurge, surgeLook, surgeTree } from "./chainSurgeFx.js";
 import { boardJolt, flipLook, flipStarts, paintFlip } from "./flipFx.js";
 import { arrival, shineAt } from "./shine.js";
 import { burstAt, cellAt, paintSweep, recoil } from "./sweepFx.js";
-import { FLIP, FLY, KILL_TIMES, STILL, SWEEP, WIN, span } from "./timeline.js";
+import { BEACON, FLIP, FLY, KILL_TIMES, STILL, SURGE, SWEEP, WIN, span } from "./timeline.js";
 import { type Geo, dot, keepUp, measure, rgba, seq } from "./winKit.js";
 
 /** How a sector's tile is moved for a frame of a win: shaken, lifted (scale), squashed top to bottom (sy, a flip), hidden, drawn in front. */
@@ -380,6 +388,8 @@ const PIECE_TIMES: Record<string, { total: number; out: readonly [number, number
   missionComplete: { total: WIN.total, out: WIN.out, act: (t) => (t < WIN.wave[0] ? 1 : t < WIN.slam[0] ? 2 : t < 3.8 ? 3 : 4) },
   perimeterSweep: { total: SWEEP.total, out: SWEEP.out, act: (t) => (t < SWEEP.wave[0] ? 1 : t < SWEEP.slam[0] ? 2 : t < SWEEP.embers ? 3 : 4) },
   sectorFlip: { total: FLIP.total, out: FLIP.out, act: (t) => (t < FLIP.flips[0] ? 1 : t < FLIP.card[0] ? 2 : t < 4.2 ? 3 : 4) },
+  chainSurge: { total: SURGE.total, out: SURGE.out, act: (t) => (t < SURGE.drop[1] ? 1 : t < SURGE.pulse[0] ? 2 : t < SURGE.crumble ? 3 : 4) },
+  beaconSpiral: { total: BEACON.total, out: BEACON.out, act: (t) => (t < BEACON.strikes[0] ? 1 : t < BEACON.gather[0] ? 2 : t < BEACON.fade ? 3 : 4) },
 };
 
 export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWinProps) {
@@ -421,6 +431,9 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
     let q = 1;
     // Sector Flip: when each sector flips, and the ones with no plate (Cleared).
     let starts = new Map<string, number>();
+    // Chain Surge: the surge's leaps; Beacon Spiral: the beams, in their order.
+    let leaps: Leap[] = [];
+    let beams: Strike[] = [];
     const flat = new Set(Object.entries(show.state.field).filter(([, st]) => st.length === 0).map(([k]) => k));
     cbs.current.onHold(still ? 0 : show.fresh);
     // The Mission bar glows gold once the win has gone through it (on <html>: React rewrites the bar's own classes).
@@ -430,7 +443,16 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
     };
     const tNow = (at: number) => ((at - t0) / 1000) * speed;
     // How much the Field is dimmed at time t (0-1).
-    const [dimSpan, dimTo] = id === "perimeterSweep" ? [SWEEP.dim, SWEEP.dimTo] : id === "sectorFlip" ? [FLIP.dim, FLIP.dimTo] : [WIN.dim, 0.34];
+    const [dimSpan, dimTo] =
+      id === "perimeterSweep"
+        ? [SWEEP.dim, SWEEP.dimTo]
+        : id === "sectorFlip"
+          ? [FLIP.dim, FLIP.dimTo]
+          : id === "chainSurge"
+            ? [SURGE.dim, SURGE.dimTo]
+            : id === "beaconSpiral"
+              ? [BEACON.dim, BEACON.dimTo]
+              : [WIN.dim, 0.34];
     const dimAt = (t: number) => {
       if (still) return dimTo * Math.max(0, Math.min(1, t / 0.15, (STILL - t) / 0.15));
       return dimTo * easeOut(span(t, dimSpan)) * (1 - span(t, T.out));
@@ -446,6 +468,10 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         setBox({ x: r.fx, y: r.fy, w: r.fw, h: r.fh });
         const at = new Map(r.sectors.map(([k, x, y]) => [k, [x, y] as const]));
         starts = flipStarts(r.sectors, r.tile, show.from ? at.get(show.from) : undefined);
+        leaps = surgeTree(r.sectors, r.tile, r.ox, r.oy);
+        beams = spiralOrder(r.sectors, r.tile);
+        const leapAt = new Map(leaps.map((l) => [l.key, l.at]));
+        const beamAt = new Map(beams.map((b) => [b.key, b.at]));
         // The units move as the win passes (nothing moves in the still picture).
         const tau = new Map(r.sectors.map(([k, x, y]) => [k, arrival(r.shine, x, y)]));
         const move = (key: string, t: number): ReturnType<Shake> => {
@@ -454,6 +480,8 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
             const p = at.get(key);
             return p ? recoil(r, p[0], p[1], t) : undefined;
           }
+          if (id === "chainSurge") return surgeLook(t - (leapAt.get(key) ?? Infinity), r.tile);
+          if (id === "beaconSpiral") return beaconLook(t - (beamAt.get(key) ?? Infinity), t, r.tile);
           if (id === "sectorFlip") return flipLook(t, flat.has(key) ? undefined : starts.get(key), r.tile, boardJolt(t, starts.values(), r.tile));
           const age = t - (tau.get(key) ?? Infinity);
           if (!(age >= 0 && age < 0.6)) return undefined;
@@ -487,7 +515,11 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         ? { slam: SWEEP.slam, sub: SWEEP.sub, badgesAt: SWEEP.badgesAt, badgeStep: SWEEP.badgeStep, badgeFall: SWEEP.badgeFall }
         : id === "sectorFlip"
           ? { slam: FLIP.card, sub: FLIP.sub, badgesAt: FLIP.badgesAt, badgeStep: FLIP.badgeStep, badgeFall: FLIP.badgeFall }
-          : { slam: WIN.slam, sub: WIN.sub, badgesAt: WIN.badgesAt, badgeStep: WIN.badgeStep, badgeFall: WIN.badgeFall };
+          : id === "chainSurge"
+            ? { slam: SURGE.slam, sub: SURGE.sub, badgesAt: SURGE.badgesAt, badgeStep: SURGE.badgeStep, badgeFall: SURGE.badgeFall }
+            : id === "beaconSpiral"
+              ? { slam: BEACON.slam, sub: BEACON.sub, badgesAt: BEACON.badgesAt, badgeStep: BEACON.badgeStep, badgeFall: BEACON.badgeFall }
+              : { slam: WIN.slam, sub: WIN.sub, badgesAt: WIN.badgesAt, badgeStep: WIN.badgeStep, badgeFall: WIN.badgeFall };
     const styleBanner = (t: number) => {
       const s = still ? 1 : span(t, B.slam);
       if (band.current) {
@@ -538,6 +570,18 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         });
         if (crossed(FLIP.card[0])) onAltWinDebrief();
         if (crossed(FLIP.out[0])) onUpgradeSheetOpen();
+      } else if (id === "chainSurge") {
+        if (crossed(SURGE.drop[1])) onSurgeStrike();
+        const m = leaps.length;
+        leaps.forEach((l, i) => i > 0 && crossed(l.at) && onSurgeLeap(i, m));
+        if (crossed(SURGE.uplink[1])) (onSurgeUplink(), won(true));
+        if (crossed(SURGE.slam[1])) playMissionComplete();
+        if (crossed(SURGE.out[0])) onUpgradeSheetOpen();
+      } else if (id === "beaconSpiral") {
+        beams.forEach((b) => crossed(b.at) && onBeaconStrike(b.index, beams.length));
+        if (crossed(BEACON.pillar)) (onBeaconPillar(), won(true));
+        if (crossed(BEACON.slam[1])) playMissionComplete();
+        if (crossed(BEACON.out[0])) onUpgradeSheetOpen();
       } else {
         if (crossed(WIN.wave[0])) playWinSweep();
         if (crossed(WIN.slam[1])) playMissionComplete();
@@ -600,6 +644,8 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
           const all = 1 - (still ? 1 - fade : span(t, T.out));
           if (id === "perimeterSweep") paintSweep(g, geo, t, still, all, q, badges);
           else if (id === "sectorFlip") paintFlip(g, geo, t, still, all, q, starts, flat);
+          else if (id === "chainSurge") paintSurge(g, geo, t, still, all, q, leaps);
+          else if (id === "beaconSpiral") paintBeacon(g, geo, t, still, all, q, beams);
           else paint(g, geo, t, still, fade, badges, band.current?.getBoundingClientRect());
         }
         style(t, fade);

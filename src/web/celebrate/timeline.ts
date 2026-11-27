@@ -348,6 +348,74 @@ export const FLIP = {
   out: [4.4, 5.2] as const,
 };
 
+/**
+ * Chain Surge, the fourth win (designer 2026-11-27: "create 2 new mission complete celebrations. Be creative
+ * and put more effort"): 5.4 s. Current runs along the Mission bar and a bolt drops from its last cell into
+ * the Field; lightning leaps sector to sector until the whole Field is one glowing network; light runs back
+ * along it to where it began and a bolt climbs to the Mission bar; the banner; the network crumbles to motes.
+ */
+export const SURGE = {
+  total: 5.4,
+  /** Act 1 (0-1.0): the Field dims; an arc runs cell to cell along the Mission bar, lighting each; the last drops a bolt into the Field (onSurgeStrike). */
+  dim: [0, 0.45] as const,
+  dimTo: 0.42,
+  cellsAt: 0.15,
+  cellsIn: 0.5,
+  cellStep: 0.1,
+  /** The bolt from the last cell to the first sector strikes at drop[1]. */
+  drop: [0.78, 0.9] as const,
+  /** Act 2 (1.0-2.9): the surge leaps sector to sector (onSurgeLeap per hop); every sector lit by spread[1]. */
+  spread: [0.9, 2.75] as const,
+  /** One hop at most this long (fewer hops: slower, more weight to each). */
+  maxHop: 0.2,
+  /** How long a leap's arc burns before it settles into a glowing link. */
+  arc: 0.32,
+  /** Act 3 (2.9-3.9): light runs back along every link to where it began (the pulse), then a bolt climbs to the Mission bar (onSurgeUplink) and the bar turns gold. */
+  pulse: [2.85, 3.35] as const,
+  uplink: [3.3, 3.45] as const,
+  slam: [3.45, 3.68] as const,
+  sub: [3.75, 4.0] as const,
+  badgesAt: 3.95,
+  badgeStep: 0.08,
+  badgeFall: 0.26,
+  /** Act 4 (3.9-5.4): the network crumbles to motes that drift up; the cross-fade. */
+  crumble: 3.9,
+  out: [4.6, 5.4] as const,
+};
+
+/**
+ * Beacon Spiral, the fifth win (designer 2026-11-27): 5.6 s. The Mission bar's cells lock like targets and
+ * markers appear on every sector; beams of light fall from orbit onto the sectors one after another in a
+ * spiral from the edge of the Field to its middle, each pressing its tile down and leaving it lit; every
+ * sector pours its light into the middle and one pillar of light fires up off the screen; the banner.
+ */
+export const BEACON = {
+  total: 5.6,
+  /** Act 1 (0-1.0): the Field dims; the cells lock (brackets close on them); a targeting marker on every sector, outside in. */
+  dim: [0, 0.5] as const,
+  dimTo: 0.5,
+  cellsAt: 0.1,
+  cellsIn: 0.5,
+  cellStep: 0.1,
+  marks: [0.35, 0.95] as const,
+  /** Act 2 (1.0-3.0): the beams fall, the edge of the Field first, spiralling in (onBeaconStrike per beam). */
+  strikes: [1.0, 2.8] as const,
+  /** One beam: it falls this long, then burns and narrows away over `burn`. */
+  fall: 0.09,
+  burn: 0.55,
+  /** Act 3 (3.0-4.0): every sector's light streams into the middle (gather), the pillar fires up (onBeaconPillar) and the bar turns gold; the banner. */
+  gather: [2.9, 3.35] as const,
+  pillar: 3.35,
+  slam: [3.5, 3.72] as const,
+  sub: [3.8, 4.05] as const,
+  badgesAt: 4.0,
+  badgeStep: 0.08,
+  badgeFall: 0.26,
+  /** Act 4 (4.0-5.6): the pillar thins and goes, motes rise; the cross-fade. */
+  fade: 4.0,
+  out: [4.8, 5.6] as const,
+};
+
 /** The still picture of either piece (reduced motion, Instant), seconds. */
 export const STILL = 1.5;
 

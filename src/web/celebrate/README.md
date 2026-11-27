@@ -15,8 +15,9 @@ Several pieces are planned for each kind of mission: Eliminate (an Alpha; a Beta
 Gamma more still) and Salvage. Which one plays (I19): one at random each mission, the same one again
 if the save is reloaded (`pickPiece`: the game's seed and the mission, never the game's own random
 numbers). Built so far: two kills for Alpha (I21), one for Beta, three for Gamma (I26; Dimensional Shatter
-2026-11-21); three wins, Mission Complete, Perimeter Sweep and Sector Flip, for every mission won
-(designer 2026-11-21: Eliminate Alpha, Beta, Gamma, and Salvage), one picked at random each mission.
+2026-11-21); five wins, Mission Complete, Perimeter Sweep, Sector Flip, Chain Surge and Beacon Spiral (the last two
+2026-11-27), for every mission won (designer 2026-11-21: Eliminate Alpha, Beta, Gamma, and Salvage),
+one picked at random each mission.
 A lost or conceded game has none. Salvage missions have no kill.
 
 Every piece looks the same whatever the Company's vessel, and the pick is the same for every Company
@@ -42,6 +43,8 @@ five Power Node badges and three Cleared sector badges (`WinShow.sub`, `badges`;
 | `missionComplete` | win | every mission | Mission Complete, about 5 s: the Field dims, the Mission bar's cells flare one after another and the last bursts (the bar turns gold); an energy sweep (I23, I24: a crackling front made of particles, filaments, an ionised wake with ripples, a spray of particles) crosses the whole Field from beyond one edge to beyond the other, away from the sector the unit left; energy traces each sector's edge, throwing off sparks; the units shiver; "MISSION COMPLETE" slams in with "ALPHA ELIMINATED · 6 / 6" (I20, to try; "BETA ELIMINATED · 3 / 3") and a badge per unit dropping in; sparks drift, it fades. |
 | `perimeterSweep` | win | every mission | Perimeter Sweep (2026-11-21, `sweepFx.ts`), 5.0 s: the Field dims about 35%; the Mission bar's cells charge and ignite left to right, the last bursts in a starburst with spark trails; a crisp ring of energy (white core, cyan body, particles riding it) sweeps out from the sector the unit left right off the Field, each sector's edge flashing then staying "secured" (thin line, gold corner ticks), the units recoiling a little; the standard banner (as Mission Complete's, designer 2026-11-21) at 2.2 s; embers rise as it fades. |
 | `sectorFlip` | win | every mission | Sector Flip (2026-11-21, `flipFx.ts`), 5.2 s: the Field dims, the cells light and the last locks with a ring; column by column every sector (a heavy plate) lifts, turns a full 360° showing its bevelled edge and its underside (machined metal, circuit traces, chevrons), flashes its rim and slams down (shock ring, dust and sparks, a 1-2 px jolt of the board); the units ride on their tiles; Cleared sectors only light; the standard banner (as Mission Complete's, designer 2026-11-21) at 3.1 s; motes drift as it fades. |
+| `chainSurge` | win | every mission | Chain Surge (2026-11-27, `chainSurgeFx.ts`), 5.4 s: the Field dims; an arc of lightning runs cell to cell along the Mission bar and the last cell drops a bolt into the sector the unit left (the middle after the Developer tool); the surge leaps sector to sector along the Field's own neighbours (`surgeTree`, breadth first; a sector cut off is struck from the nearest lit one), each leap a jagged bolt (white core, cyan body, forks, particles riding it) redrawn every 50 ms from a seed; each sector struck flashes, its charge runs to its six corners as particles, it throws sparks and its tile jumps; every leap settles into a faint live link; light packets (comets of particles) run home along every link, the deepest first; a bolt climbs back to the Mission bar, which turns gold with a crown of sparks; the standard banner at 3.45 s; the network crumbles into motes that rise. |
+| `beaconSpiral` | win | every mission | Beacon Spiral (2026-11-27, `beaconFx.ts`), 5.6 s: the Field dims; brackets close on the Mission bar's cells and lock them; a targeting marker opens on every sector, the edge of the Field first; beams of falling particles come down from above the page, one per sector, in a spiral from the edge to the middle (`spiralOrder`, evenly 1.0-2.8 s): each strike flashes the sector, sends a hex shock ring of particles out, presses the tile down and it bounces back, lifts motes; the beam narrows and burns out and the sector stays lit with a gold rim; then every sector's light swirls into the middle sector, a pillar of light fires up off the top of the page with a ground ring (the bar turns gold, every tile lifts a little); the standard banner at 3.5 s; the pillar thins, motes rise. |
 
 ## How to add one
 
@@ -91,6 +94,8 @@ winKit.ts              what the wins share: where the Field and the Mission bar 
 shine.ts               Mission Complete's energy sweep: where its front lies at each moment
 sweepFx.ts             Perimeter Sweep: the cells, the ring, the secured borders, the embers
 flipFx.ts              Sector Flip: the wave, each plate's lift, turn and slam, its edge and underside, the jolt
+chainSurgeFx.ts        Chain Surge: the surge's way through the Field, the lightning, the struck sectors, packets, crumbling
+beaconFx.ts            Beacon Spiral: the spiral order, markers, beams, shock rings, the gather and the pillar
 CelebrationSkip.tsx    "Tap twice to skip", catches every tap while a piece plays
 CelebrationPreview.tsx System options: the pieces on a made-up Field
 previewBoards.ts       that Field (Mission 1 for Alpha, 3 for Beta, 7 for Gamma, 2 for Salvage) and the buttons (also used by the tests)
