@@ -531,22 +531,33 @@ test("Homecoming: four acts; the jump, the honour guard formed before the salute
   expect(H.STILL_AT).toBeGreaterThan(H.DEBRIEF_AT);
 });
 
-test("Star Chart: one star per mission won in act 1, links drawn in act 2, the pull-back in act 3; the constellation's stars kept apart", () => {
+// CHANGED 2026-11-27 (designer): Star Chart made longer and bigger (comet, star chart, new star, flight back, galaxy wave).
+test("Star Chart: one star per mission won in act 1, links and the star chart in act 2, the new star and the flight back in act 3, the wave in act 4; the constellation's stars kept apart", () => {
   const C = VT.CHART;
-  expect([0, C.IGNITE_AT, C.LINK_AT, C.ASCEND_AT, C.PULL_END, C.FILM_SECONDS].map((t) => LS.actOf(C.ACT_AT, t))).toEqual([1, 1, 2, 3, 4, 4]);
+  expect([0, C.IGNITE_AT, C.LINK_AT, C.CHART_AT, C.GATHER_AT, C.NOVA_AT, C.PULL_AT, C.WAVE_AT, C.FILM_SECONDS].map((t) => LS.actOf(C.ACT_AT, t))).toEqual([1, 1, 2, 2, 3, 3, 3, 4, 4]);
+  // The longest victory film.
+  expect(C.FILM_SECONDS).toBeGreaterThanOrEqual(20);
+  expect(C.FILM_SECONDS).toBeGreaterThan(VT.HOME.FILM_SECONDS);
   for (const n of [1, 2, 4, 7, 12]) {
     const s = VT.starTimes(n);
     expect(s.length).toBe(n);
     for (const x of s) expect(LS.actOf(C.ACT_AT, x)).toBe(1);
     expect(VT.starsLit(C.ACT_AT[1], n)).toBe(n);
+    // The comet passes through each star as it ignites, and is gone before act 2.
+    const p = VT.starPlaces(n);
+    s.forEach((x, i) => {
+      const c = VT.cometAt(x, n)!;
+      expect(Math.hypot(c.x - p[i]!.x, c.y - p[i]!.y)).toBeLessThan(1e-9);
+    });
+    expect(VT.cometAt(C.COMET_AT - 0.01, n)).toBeUndefined();
+    expect(VT.cometAt(C.ACT_AT[1], n)).toBeUndefined();
     const l = VT.linkTimes(n);
     expect(l.length).toBe(n - 1);
     for (const x of l) {
       expect(LS.actOf(C.ACT_AT, x)).toBe(2);
-      expect(LS.actOf(C.ACT_AT, x + C.LINK_FLY)).toBe(2);
+      expect(x + C.LINK_FLY).toBeLessThanOrEqual(C.CHART_AT);
     }
-    expect(VT.linksBy(C.ASCEND_AT, n)).toBe(n - 1);
-    const p = VT.starPlaces(n);
+    expect(VT.linksBy(C.CHART_AT, n)).toBe(n - 1);
     expect(p.length).toBe(n);
     for (const q of p) expect(Math.hypot(q.x, q.y)).toBeLessThanOrEqual(1.1);
     for (let i = 1; i < n; i++) {
@@ -554,15 +565,31 @@ test("Star Chart: one star per mission won in act 1, links drawn in act 2, the p
       expect(Math.hypot(p[i]!.x - p[i - 1]!.x, p[i]!.y - p[i - 1]!.y)).toBeGreaterThanOrEqual(0.15);
     }
   }
-  expect(VT.pullBack(C.ASCEND_AT)).toBe(0);
+  expect(VT.chartOpen(C.CHART_AT)).toBe(0);
+  expect(VT.chartOpen(C.CHART_FULL)).toBe(1);
+  expect(C.CHART_FULL).toBeLessThan(C.GATHER_AT);
+  expect(C.NOVA_AT).toBeLessThan(C.PULL_AT);
+  expect(VT.pullBack(C.PULL_AT)).toBe(0);
   expect(VT.pullBack(C.PULL_END)).toBe(1);
-  for (let t = 0; t < 11; t += 0.2) expect(VT.pullBack(t + 0.2)).toBeGreaterThanOrEqual(VT.pullBack(t));
+  expect(VT.waveRadius(C.WAVE_AT)).toBe(0);
+  expect(VT.waveRadius(C.WAVE_END)).toBeCloseTo(C.WAVE_REACH, 9);
+  // The core flares when the wave reaches it, inside act 4 and before the Debrief.
+  expect(VT.waveRadius(VT.coreFlareAt())).toBeCloseTo(C.CHART_RADIUS, 9);
+  expect(VT.coreFlareAt()).toBeGreaterThan(C.WAVE_AT);
+  expect(VT.coreFlareAt()).toBeLessThan(C.DEBRIEF_AT);
+  for (let t = 0; t < C.FILM_SECONDS; t += 0.2) {
+    expect(VT.pullBack(t + 0.2)).toBeGreaterThanOrEqual(VT.pullBack(t));
+    expect(VT.waveRadius(t + 0.2)).toBeGreaterThanOrEqual(VT.waveRadius(t));
+    expect(VT.chartOpen(t + 0.2)).toBeGreaterThanOrEqual(VT.chartOpen(t));
+  }
+  expect(C.WAVE_END).toBeLessThan(C.DEBRIEF_AT);
   expect(C.DEBRIEF_AT).toBeGreaterThan(C.RESOLVE_AT);
   expect(C.DEBRIEF_AT).toBeLessThan(C.FILM_SECONDS);
+  expect(C.STILL_AT).toBeGreaterThan(C.DEBRIEF_AT);
 });
 
 test("Homecoming and Star Chart call their own sound hooks (audio batch 4)", () => {
-  for (const f of [sound.playJumpArrival, sound.playEscortFlyby, sound.playDockingClamp, sound.playConstellationLink, sound.playStarChartAscend]) expect(() => f()).not.toThrow();
+  for (const f of [sound.playJumpArrival, sound.playEscortFlyby, sound.playDockingClamp, sound.playConstellationLink, sound.playStarChartAscend, sound.playStarChartUnfold, sound.playStarChartNova, sound.playStarChartWave]) expect(() => f()).not.toThrow();
   expect(() => sound.playSaluteBurst(0, 3)).not.toThrow();
   expect(() => sound.playStarIgnite(2, 3)).not.toThrow();
   expect(sound.playSaluteBurst.toString()).toMatch(/salute-burst/);

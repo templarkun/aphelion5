@@ -51,33 +51,56 @@ export const HOME = {
 } as const;
 
 /**
- * Star Chart: the Campaign written into the sky.
- *   Act 1  0.0 - 3.2  the dark; one star ignites per mission won, in the order played, its tag beside it
- *   Act 2  3.2 - 6.0  streams of light run from star to star and draw the Campaign's constellation; one small star per Threat column
- *   Act 3  6.0 - 8.6  the constellation flares; the camera pulls far back and a whole galaxy appears round it
- *   Act 4  8.6 -      a slow turn of the galaxy, the new constellation marked on its arm; the Debrief
+ * Star Chart: the Campaign written into the sky. Made longer and bigger (designer 2026-11-27: "not as
+ * spectacular as every other campaign victory animation ... I want players to see a special treat"):
+ * the longest of the victory films.
+ *   Act 1  0.0 - 5.0   the dark; a comet of the Company's light runs the Campaign's road and one star
+ *                      ignites where each mission was won, in the order played, its tag beside it;
+ *                      one small companion per Threat column circles it
+ *   Act 2  5.0 - 9.4   streams of light run from star to star and draw the constellation; then a star
+ *                      chart (rings, degree ticks, the Campaign's name on the rim) unfolds round it
+ *   Act 3  9.4 - 14.4  the stars pour their light into the middle and a new star is born there (a white
+ *                      flash, rays, a shock ring); the camera flies far back through streaking stars
+ *                      and tilts down onto a whole spiral galaxy turning in depth
+ *   Act 4  14.4 -      a wave of the Company's light runs out from the new star across the galaxy, the
+ *                      core answers with a flare, the arms keep the Company's colours; the Debrief
  */
 export const CHART = {
-  FILM_SECONDS: 11.2,
-  ACT_AT: [0, 3.2, 6.0, 8.6] as const,
+  FILM_SECONDS: 21.0,
+  ACT_AT: [0, 5.0, 9.4, 14.4] as const,
   ACT_NAMES: ["Campaign record", "Constellation", "Ascension", "Legacy"] as const,
+  /** The comet comes in from the dark at COMET_AT, reaches the first star at IGNITE_AT and leaves COMET_OUT after the last. */
+  COMET_AT: 0.3,
+  COMET_OUT: 0.55,
   /** The first star ignites (sound hook, once per star); the last no later than IGNITE_END. */
-  IGNITE_AT: 0.5,
-  IGNITE_END: 2.9,
+  IGNITE_AT: 1.0,
+  IGNITE_END: 4.4,
   /** A star's Threat companions appear one after another, this far apart, after it ignites. */
   COMPANION_STEP: 0.14,
   /** The links between the stars: the first leaves at LINK_AT (sound hook), the last arrives by LINK_END; each takes LINK_FLY. */
-  LINK_AT: 3.3,
-  LINK_END: 5.7,
+  LINK_AT: 5.1,
+  LINK_END: 7.4,
   LINK_FLY: 0.6,
-  /** The constellation flares (sound hook) and the camera pulls back until PULL_END. */
-  ASCEND_AT: 6.1,
-  PULL_END: 8.6,
+  /** The star chart unfolds round the constellation (sound hook) until CHART_FULL. */
+  CHART_AT: 7.5,
+  CHART_FULL: 8.9,
+  /** The stars pour their light into the middle from GATHER_AT; the new star is born at NOVA_AT (sound hook). */
+  GATHER_AT: 9.5,
+  NOVA_AT: 10.4,
+  /** The camera flies back (sound hook) from PULL_AT until PULL_END. */
+  PULL_AT: 10.9,
+  PULL_END: 14.2,
+  /** The wave of the Company's light (sound hook) runs out from WAVE_AT to WAVE_END, WAVE_REACH galaxy radii from the new star. */
+  WAVE_AT: 14.6,
+  WAVE_END: 17.6,
+  WAVE_REACH: 1.7,
+  /** How far out from the galaxy's middle the constellation sits (galaxy radii). */
+  CHART_RADIUS: 0.58,
   /** The last chord (sound hook: playVictoryResolve), then the Debrief card. */
-  RESOLVE_AT: 8.6,
-  DEBRIEF_AT: 9.2,
+  RESOLVE_AT: 17.4,
+  DEBRIEF_AT: 18.0,
   /** The moment shown as one still picture with reduced motion or the Instant speed. */
-  STILL_AT: 10.6,
+  STILL_AT: 20.2,
 } as const;
 
 /** The two films' ids. */
@@ -144,10 +167,25 @@ export function linkTimes(missions: number): number[] {
 export function linksBy(t: number, missions: number): number {
   return linkTimes(missions).filter((l) => t >= l + CHART.LINK_FLY).length;
 }
-/** How far the camera has pulled back, 0 (close on the constellation) to 1 (the whole galaxy). */
-export function pullBack(t: number): number {
-  const u = Math.min(1, Math.max(0, (t - CHART.ASCEND_AT) / (CHART.PULL_END - CHART.ASCEND_AT)));
+/** How far the star chart has unfolded, 0..1. */
+export function chartOpen(t: number): number {
+  const u = Math.min(1, Math.max(0, (t - CHART.CHART_AT) / (CHART.CHART_FULL - CHART.CHART_AT)));
   return u * u * (3 - 2 * u);
+}
+/** How far the camera has flown back, 0 (close on the constellation) to 1 (the whole galaxy). */
+export function pullBack(t: number): number {
+  const u = Math.min(1, Math.max(0, (t - CHART.PULL_AT) / (CHART.PULL_END - CHART.PULL_AT)));
+  return u * u * (3 - 2 * u);
+}
+/** How far the wave of light has run from the new star, in galaxy radii (0 before WAVE_AT, WAVE_REACH at WAVE_END), fast at first. */
+export function waveRadius(t: number): number {
+  const u = Math.min(1, Math.max(0, (t - CHART.WAVE_AT) / (CHART.WAVE_END - CHART.WAVE_AT)));
+  return CHART.WAVE_REACH * (1 - (1 - u) * (1 - u));
+}
+/** When the wave reaches the galaxy's core and the core answers with its flare. */
+export function coreFlareAt(): number {
+  const u = 1 - Math.sqrt(1 - CHART.CHART_RADIUS / CHART.WAVE_REACH);
+  return CHART.WAVE_AT + u * (CHART.WAVE_END - CHART.WAVE_AT);
 }
 
 /**
@@ -166,4 +204,32 @@ export function starPlaces(missions: number): { x: number; y: number }[] {
     out.push({ x, y: Math.max(-0.62, Math.min(0.62, y)) });
   }
   return out;
+}
+
+/**
+ * Where the comet is at film time t (constellation units), or undefined while it is not in the sky.
+ * It comes in from the left, passes through each star exactly when that star ignites (a smooth
+ * curve through them), and flies out to the right.
+ */
+export function cometAt(t: number, missions: number): { x: number; y: number } | undefined {
+  const n = Math.max(1, missions);
+  const p = starPlaces(n);
+  const at = starTimes(n);
+  const first = p[0]!;
+  const last = p[n - 1]!;
+  const pts = [{ x: first.x - 1.4, y: first.y + 0.55 }, ...p, { x: last.x + 1.4, y: last.y - 0.55 }];
+  const times = [CHART.COMET_AT, ...at, at[n - 1]! + CHART.COMET_OUT];
+  if (t < times[0]! || t > times[times.length - 1]!) return undefined;
+  let k = 0;
+  while (k < times.length - 2 && t > times[k + 1]!) k++;
+  const span = times[k + 1]! - times[k]!;
+  const u = span > 0 ? (t - times[k]!) / span : 1;
+  // Catmull-Rom through the points (ends repeated).
+  const p0 = pts[Math.max(0, k - 1)]!;
+  const p1 = pts[k]!;
+  const p2 = pts[k + 1]!;
+  const p3 = pts[Math.min(pts.length - 1, k + 2)]!;
+  const cr = (a: number, b: number, c: number, d: number): number =>
+    0.5 * (2 * b + (-a + c) * u + (2 * a - 5 * b + 4 * c - d) * u * u + (-a + 3 * b - 3 * c + d) * u * u * u);
+  return { x: cr(p0.x, p1.x, p2.x, p3.x), y: cr(p0.y, p1.y, p2.y, p3.y) };
 }

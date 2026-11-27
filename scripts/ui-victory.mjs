@@ -1,7 +1,7 @@
 // Browser check of Homecoming and Star Chart (designer 2026-11-27), two more victory outros, previewed
 // from System options with sample numbers (7 missions won): four acts in order, what each act shows
 // (14 escorts in formation, one salute burst per mission, the clamps locked; one star per mission, the
-// links, the pull-back), then the Debrief of a won game and back to the Command Deck. At 1400 px the film
+// links, the star chart, the new star, the flight back, the wave across the galaxy; 2026-11-27 longer), then the Debrief of a won game and back to the Command Deck. At 1400 px the film
 // runs untouched (pictures on the way, for looking at); at 390 px two taps skip; reduced motion shows only
 // the still picture and the card. Called by ui-smoke.mjs (group "outro"); alone: node scripts/ui-victory.mjs [url] [outDir].
 import { createRequire } from "node:module";
@@ -24,10 +24,10 @@ const attr = (pg, k) => pg.locator("[data-outro]").getAttribute(k).catch(() => n
 /** What each film must have shown by the end (sample numbers: 7 missions won). */
 const DONE = {
   homecoming: { "data-escorts": "14", "data-bursts": "7", "data-ring": "24", "data-docked": "1" },
-  starchart: { "data-stars": "7", "data-links": "6", "data-ascended": "1" },
+  starchart: { "data-stars": "7", "data-links": "6", "data-chart": "1", "data-nova": "1", "data-ascended": "1", "data-wave": "1" },
 };
 /** Pictures on the way at 1400 px (seconds of film). */
-const SHOTS = { homecoming: [1.0, 4.6, 7.4, 10.4], starchart: [2.4, 4.8, 7.0, 10.2] };
+const SHOTS = { homecoming: [1.0, 4.6, 7.4, 10.4], starchart: [2.6, 6.4, 8.9, 10.6, 12.6, 15.4, 16.8] };
 
 export async function victoryCheck(browser, url, out) {
   const fails = [];

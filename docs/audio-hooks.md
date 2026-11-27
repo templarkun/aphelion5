@@ -110,7 +110,7 @@ A lost or conceded game plays one of two films at random, **Signal Lost** (the t
 
 ## Batch 4: two more victory outros (designer 2026-11-27)
 
-**Homecoming** (the Flagship comes home: jump, honour guard, salute, docking) and **Star Chart** (the Campaign's missions become a constellation in a galaxy). Already hooked in (`briefing/soundHooks.ts`): each plays as soon as its file is uploaded. Both end on `playVictoryResolve`, the victory outros' shared last chord (no file yet). Same rules as the batches before; add the common style to each prompt. Look at them in System options > "Play Homecoming" / "Play Star Chart".
+**Homecoming** (the Flagship comes home: jump, honour guard, salute, docking) and **Star Chart** (the Campaign's missions become a constellation in a galaxy; made longer and bigger 2026-11-27, about 21 s: three more sounds, 8-10, and number 7 moved). Already hooked in (`briefing/soundHooks.ts`): each plays as soon as its file is uploaded. Both end on `playVictoryResolve`, the victory outros' shared last chord (no file yet). Same rules as the batches before; add the common style to each prompt. Look at them in System options > "Play Homecoming" / "Play Star Chart".
 
 | # | File name | When it plays | Length | Prompt |
 |---|---|---|---|---|
@@ -120,7 +120,10 @@ A lost or conceded game plays one of two films at random, **Signal Lost** (the t
 | 4 | `sfx-dock-clamp` | Homecoming, Act 4: the Flagship's clamps lock onto the docking arm | Fixed, 0.8 s | Heavy docking clamps locking: a deep metal clunk, a hydraulic hiss and a short confirming chime. |
 | 5 | `sfx-star-ignite` | Star Chart, Act 1: one star ignites per mission won (several in a row) | Free, about 0.8 s | A star igniting in space: a soft rising shimmer that blooms into a clear bell-like chime with a gentle glow tail. |
 | 6 | `sfx-constellation-link` | Star Chart, Act 2: streams of light draw the constellation star to star | Free, about 2.5 s | Threads of light connecting stars: a flowing, sparkling energy stream with soft rising harp-like tones, calm and wondrous. |
-| 7 | `sfx-chart-ascend` | Star Chart, Act 3: the constellation flares and the camera pulls back to a whole galaxy | Free, about 2.5 s | A vast cosmic reveal: a swelling airy choir-like synth pad with a deep soft boom at the start and a wide shimmering tail. |
+| 7 | `sfx-chart-ascend` | Star Chart, Act 3: the camera flies far back through streaking stars and tilts down onto a whole galaxy (changed 2026-11-27: now after the new star is born) | Free, about 3.3 s | A vast cosmic reveal: a deep rushing whoosh pulling away into the distance that opens into a swelling airy choir-like synth pad with a wide shimmering tail. |
+| 8 | `sfx-chart-unfold` | Star Chart, Act 2: a star chart (rings, degree ticks, the Campaign's name) unfolds round the finished constellation (added 2026-11-27) | Free, about 1.4 s | An ancient astronomical instrument unfolding in light: soft rotating mechanical ticks and clicks of brass rings, a rising glassy shimmer, precise and elegant. |
+| 9 | `sfx-star-nova` | Star Chart, Act 3: every star pours its light into the middle and a new star is born (white flash, rays, shock rings) (added 2026-11-27) | Free, about 2.5 s | The birth of a star: a short inhaling rise that bursts into a huge bright, warm boom with a ringing crystalline shimmer and a long glowing tail. Triumphant, not violent. |
+| 10 | `sfx-galaxy-wave` | Star Chart, Act 4: a wave of the Company's light crosses the whole galaxy; the galaxy's core answers with a flare (added 2026-11-27) | Free, about 3 s | A wave of light sweeping across a galaxy: a wide airy whoosh that spreads outward with a sparkling shimmer, then a deep soft resonant swell as the core answers. Majestic, final. |
 
 ## Already in place for later
 

@@ -4,9 +4,10 @@
  * until the designer says which Company gets which (2.0 stays the one after a won game). **Homecoming**
  * (victory/homecoming.ts): the Flagship drops out of its jump by the Company's home world, an honour
  * guard of escorts forms, one salute burst per mission won, the station's ring lights up, the clamps
- * lock at the berth. **Star Chart** (victory/starchart.ts): one star per mission won ignites, streams of
- * light draw the Campaign's constellation, one small companion per Threat column; the camera pulls far
- * back and a galaxy turns round it. Built as the other outros: the same props (OutroProps), the shared
+ * lock at the berth. **Star Chart** (victory/starchart.ts), the longest (about 21 s): a comet runs the
+ * Campaign's road and one star per mission won ignites, streams of light draw the constellation, a star
+ * chart unfolds round it; a new star is born in its middle, the camera flies back through the stars to a
+ * 3D galaxy, and a wave of the Company's light crosses it. Built as the other outros: the same props (OutroProps), the shared
  * Debrief card, "Tap twice to skip", every moving thing worked out from the time alone, the speed
  * setting, one still picture with reduced motion or the Instant speed, fewer particles on a slow
  * machine. Generic: the Company lends its name and colours (no Company outline), so any Company can
@@ -23,6 +24,9 @@ import {
   playJumpArrival,
   playSaluteBurst,
   playStarChartAscend,
+  playStarChartNova,
+  playStarChartUnfold,
+  playStarChartWave,
   playStarIgnite,
   playVictoryResolve,
 } from "../briefing/soundHooks.js";
@@ -33,7 +37,7 @@ import type { FreeArea, LossScene } from "./loss/kit.js";
 import { actOf, type ActNo } from "./loss/timeline.js";
 import { createHomecomingScene } from "./victory/homecoming.js";
 import { createStarChartScene } from "./victory/starchart.js";
-import { burstsBy, CHART, escortsFormed, HOME, linksBy, linkTimes, ringLit, saluteTimes, starsLit, starTimes, type VictoryId } from "./victory/timeline.js";
+import { burstsBy, CHART, coreFlareAt, waveRadius, escortsFormed, HOME, linksBy, linkTimes, ringLit, saluteTimes, starsLit, starTimes, type VictoryId } from "./victory/timeline.js";
 
 /** The canvas is never drawn with more points than this. */
 const MAX_PIXELS = 3.2e6;
@@ -92,17 +96,35 @@ const FILMS: Record<VictoryId, VictoryFilm> = {
     cues: (s) => [
       ...starTimes(won(s)).map((at, i, all) => ({ at, play: () => playStarIgnite(i, all.length) })),
       ...(linkTimes(won(s)).length ? [{ at: CHART.LINK_AT, play: playConstellationLink }] : []),
-      { at: CHART.ASCEND_AT, play: playStarChartAscend },
+      { at: CHART.CHART_AT, play: playStarChartUnfold },
+      { at: CHART.NOVA_AT, play: playStarChartNova },
+      { at: CHART.PULL_AT, play: playStarChartAscend },
+      { at: CHART.WAVE_AT, play: playStarChartWave },
       { at: CHART.RESOLVE_AT, keep: true, play: playVictoryResolve },
     ],
     scene: (theme, stats) => createStarChartScene({ theme, stats }),
     caption: (t, act, s) => {
-      if (act === 1) return `Campaign record · ${starsLit(t, won(s))} of ${won(s)} missions`;
-      if (act === 2) return linksBy(t, won(s)) < linkTimes(won(s)).length ? "Charting the constellation" : `${s.threatLevelsConquered} Threat Levels conquered`;
-      if (act === 3) return "The Campaign joins the star chart";
-      return `${s.campaignName} · charted`;
+      if (act === 1) return t < CHART.IGNITE_AT ? "Tracing the Campaign's road" : `Campaign record · ${starsLit(t, won(s))} of ${won(s)} missions`;
+      if (act === 2) {
+        if (linksBy(t, won(s)) < linkTimes(won(s)).length) return "Charting the constellation";
+        return t < CHART.CHART_AT + 0.6 ? `${s.threatLevelsConquered} Threat Levels conquered` : `${s.campaignName} · entered in the star chart`;
+      }
+      if (act === 3) {
+        if (t < CHART.NOVA_AT) return "Every victory gathers its light";
+        if (t < CHART.PULL_AT + 1.2) return "A new star is born";
+        return "The Campaign joins the galaxy";
+      }
+      if (t < coreFlareAt()) return "Its light crosses the galaxy";
+      return waveRadius(t) < CHART.WAVE_REACH ? "The core answers" : `${s.campaignName} · charted`;
     },
-    marks: (t, s) => ({ stars: starsLit(t, won(s)), links: linksBy(t, won(s)), ascended: t >= CHART.ASCEND_AT ? 1 : 0 }),
+    marks: (t, s) => ({
+      stars: starsLit(t, won(s)),
+      links: linksBy(t, won(s)),
+      chart: t >= CHART.CHART_FULL ? 1 : 0,
+      nova: t >= CHART.NOVA_AT ? 1 : 0,
+      ascended: t >= CHART.PULL_AT ? 1 : 0,
+      wave: t >= CHART.WAVE_END ? 1 : 0,
+    }),
   },
 };
 
