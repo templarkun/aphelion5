@@ -185,6 +185,16 @@ export function playOmegaBreak(): void {}
 export function playKillConfirmed(): void {}
 /** Alpha Purge: the pillar of light fires up from the crushed unit (the cage's lock is playTargetLock). */
 export function playPurgeBeam(): void {}
+/** Rail Strike (Alpha): the coils along the sight line charge, one after another. */
+export function playRailCharge(): void {}
+/** Rail Strike: the slug is fired (bullet time). */
+export function playRailFire(): void {}
+/** Rail Strike: the slug strikes and blows the unit out through its far side. */
+export function playRailImpact(): void {}
+/** Alpha Erased: the scan bar sweeps the unit. */
+export function playEraseScan(): void {}
+/** Alpha Erased: the unit's particles are unravelled on the wind. */
+export function playEraseUnravel(): void {}
 /** Beta Breach, Act 2: one of the Beta's three surges against the lock (index 0, 1, 2). */
 export function playBetaSurge(index: number): void {
   void index;

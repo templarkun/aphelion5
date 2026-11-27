@@ -36,6 +36,8 @@
 # tests/unit/outro.test.ts, tests/unit/celebrate.test.ts, scripts/ui-celebrate.mjs, ui-smoke.mjs.
 # Two more mission wins, 2026-11-27 (later): Resonance (T14_WIN_07) and Murmuration (T14_WIN_08),
 # one of seven wins at random per mission. Checked by tests/unit/celebrate.test.ts, scripts/ui-celebrate.mjs.
+# Two more Alpha kills, 2026-11-27 (later): Rail Strike (T14_KILL_01) and Alpha Erased (T14_KILL_02),
+# one of four Alpha kills at random per mission. Checked by the same files.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -746,3 +748,36 @@ then: about 6.0 seconds on the Field. Act 1 (0-1.1 s): the Field dims; a swarm o
 note: As T14_WIN_07. The pick (I19): one of the seven wins at random per mission, the same again if
       the save is reloaded; System options lists Resonance and Murmuration for Alpha, Beta, Gamma
       and Salvage (44 buttons).
+
+id: T14_KILL_01
+title: Rail Strike
+source: designer 2026-11-27 ("Make 2 animations for Alpha unit elimination.")
+given: an Eliminate Alpha mission, the deciding Alpha destroyed, Rail Strike picked (or System options >
+       Mission celebrations > Rail Strike), Normal speed
+then: about 4.5 seconds on the Field. Act 1 (0-0.8 s): the zoom; a red sight line of particles reaches in
+      from beyond the edge of the Field to the unit; a reticle of particles narrows round the tile and
+      locks. Act 2 (0.8-1.8 s): rings of particles light one after another along the line, the far ones
+      first; the slug crosses in slow motion (a white-hot head, a cone of shocked air, a burning
+      channel behind it), each ring flaring as it passes. Act 3 (1.8-3.6 s): it strikes: a flash, the
+      unit is blown out through its far side in a cone of sparks and dark fragments, a shock ring, a
+      hard shake along the shot; the hole glows white, then orange, then red; smoke drifts off along the
+      shot; the Wreck shows again; "ALPHA TERMINATED · 5 / 6" turns to "6 / 6". Act 4 (3.6-4.5 s): the
+      zoom eases back.
+note: The same for every Company. Two taps skip; reduced motion or Instant: the still close-up (1.5 s).
+      The pick (I19): one of the four Alpha kills at random per mission (Alpha Down, Alpha Purge, Rail
+      Strike, Alpha Erased), the same again if the save is reloaded.
+
+id: T14_KILL_02
+title: Alpha Erased
+source: designer 2026-11-27 (as T14_KILL_01)
+given: as T14_KILL_01, Alpha Erased picked
+then: about 4.6 seconds on the Field. Act 1 (0-0.85 s): the zoom; four corner brackets close in and a
+      grid of points is projected over the tile from its middle outwards; they lock. Act 2 (0.85-1.82 s):
+      a bar of light sweeps the tile from left to right; behind it the unit becomes a lattice of
+      particles holding its shape, with a see-through ghost of its glyph; the tile is gone once the bar
+      has passed; the lattice holds and trembles. Act 3 (1.82-3.7 s): the particles peel off from the
+      left, each pulled away to the right on a curling wind, and fade; the Wreck shows again under a
+      fading afterimage of the grid; "ALPHA ERASED · 5 / 6" turns to "6 / 6". Act 4 (3.7-4.6 s): the
+      zoom eases back.
+note: As T14_KILL_01. System options lists Rail Strike and Alpha Erased, and each then Mission Complete
+      (48 buttons).

@@ -32,6 +32,8 @@ export interface PreviewWhat {
 export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
   { kind: "kill", omega: "Alpha", piece: "alphaDown", label: "Alpha Down" },
   { kind: "kill", omega: "Alpha", piece: "alphaPurge", label: "Alpha Purge" },
+  { kind: "kill", omega: "Alpha", piece: "alphaRail", label: "Rail Strike" },
+  { kind: "kill", omega: "Alpha", piece: "alphaErase", label: "Alpha Erased" },
   { kind: "win", omega: "Alpha", win: "missionComplete", label: "Mission Complete" },
   { kind: "win", omega: "Alpha", win: "perimeterSweep", label: "Perimeter Sweep" },
   { kind: "win", omega: "Alpha", win: "sectorFlip", label: "Sector Flip" },
@@ -41,6 +43,8 @@ export const CELEBRATION_PREVIEWS: PreviewWhat[] = [
   { kind: "win", omega: "Alpha", win: "murmuration", label: "Murmuration" },
   { kind: "both", omega: "Alpha", piece: "alphaDown", win: "missionComplete", label: "Alpha Down, then Mission Complete" },
   { kind: "both", omega: "Alpha", piece: "alphaPurge", win: "missionComplete", label: "Alpha Purge, then Mission Complete" },
+  { kind: "both", omega: "Alpha", piece: "alphaRail", win: "missionComplete", label: "Rail Strike, then Mission Complete" },
+  { kind: "both", omega: "Alpha", piece: "alphaErase", win: "missionComplete", label: "Alpha Erased, then Mission Complete" },
   { kind: "kill", omega: "Beta", piece: "betaBreach", label: "Beta Breach" },
   { kind: "win", omega: "Beta", win: "missionComplete", label: "Mission Complete" },
   { kind: "win", omega: "Beta", win: "perimeterSweep", label: "Perimeter Sweep" },

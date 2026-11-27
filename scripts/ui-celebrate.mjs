@@ -75,20 +75,21 @@ export async function celebrateCheck(browser, url, out) {
     const l = await log(pg);
     const ms = killMs(l);
     await pg.close();
-    if (!(listed === 44 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
+    if (!(listed === 48 && shown && armed === "armed" && goesOn && ended && closed && ms > 3500 && ms < 9000)) fails.push(`kill: listed ${listed}, shown ${shown}, one tap ${armed}/${goesOn}, ended ${ended}, closed ${closed}, ${ms} ms`);
   }
 
-  // 1b. Alpha Purge (1100 px), the second Alpha kill (I21): about 4.5 s, then the preview closes.
-  {
-    const pg = await open(1100, 760);
-    await preview(pg, "kill", "Alpha", "alphaPurge");
+  // 1b. Alpha Purge (1100 px), the second Alpha kill (I21), Rail Strike (1400 px) and Alpha Erased (390 px), the third and
+  //     fourth (designer 2026-11-27): about 4.5 s each, then the preview closes.
+  for (const [w, h, piece, name] of [[1100, 760, "alphaPurge", "purge"], [1400, 900, "alphaRail", "rail"], [390, 844, "alphaErase", "erase"]]) {
+    const pg = await open(w, h);
+    await preview(pg, "kill", "Alpha", piece);
     const shown = await pg.waitForSelector("[data-celebration]", { timeout: 10000 }).then(() => true, () => false);
     await pg.waitForTimeout(1500);
-    await pg.screenshot({ path: `${out}/ui-celebrate-purge.png` });
+    await pg.screenshot({ path: `${out}/ui-celebrate-${name}.png` });
     const closed = await pg.waitForSelector("[data-celebration-preview]", { state: "detached", timeout: 14000 }).then(() => true, () => false);
     const ms = killMs(await log(pg));
     await pg.close();
-    if (!(shown && closed && ms > 3500 && ms < 9000)) fails.push(`Alpha Purge: shown ${shown}, closed ${closed}, ${ms} ms`);
+    if (!(shown && closed && ms > 3500 && ms < 9000)) fails.push(`${piece}: shown ${shown}, closed ${closed}, ${ms} ms`);
   }
 
   // 1c. Beta Breach, then Mission Complete (1400 px): the longer kill (about 6.2 s), then the win for Beta (I22): "BETA ELIMINATED · 3 / 3", three badges.

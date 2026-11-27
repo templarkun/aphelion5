@@ -13,7 +13,7 @@
  * mission, the same one again if the save is reloaded (from the game's seed and the mission, never
  * the game's own random numbers). Screen only: nothing here is a rule.
  *
- * Built so far: two kills for Alpha (I21), one for Beta, three for Gamma (I26; Dimensional Shatter 2026-11-21).
+ * Built so far: four kills for Alpha (I21; Rail Strike and Alpha Erased 2026-11-27), one for Beta, three for Gamma (I26; Dimensional Shatter 2026-11-21).
  * Wins (designer 2026-11-21): Mission Complete, Perimeter Sweep and Sector Flip; Chain Surge and Beacon Spiral
  * (designer 2026-11-27); for every mission won
  * (Eliminate Alpha, Beta, Gamma, and Salvage), one picked at random each mission. A lost or conceded game
@@ -31,6 +31,9 @@ export interface Piece {
 export const KILL_PIECES: Piece[] = [
   { id: "alphaDown", name: "Alpha Down", for: ["Alpha"] },
   { id: "alphaPurge", name: "Alpha Purge", for: ["Alpha"] },
+  // Designer 2026-11-27: two more for Alpha.
+  { id: "alphaRail", name: "Rail Strike", for: ["Alpha"] },
+  { id: "alphaErase", name: "Alpha Erased", for: ["Alpha"] },
   { id: "betaBreach", name: "Beta Breach", for: ["Beta"] },
   { id: "gammaHorizon", name: "Event Horizon", for: ["Gamma"] },
   { id: "gammaArray", name: "Field Array", for: ["Gamma"] },

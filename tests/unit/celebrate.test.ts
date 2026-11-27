@@ -14,11 +14,13 @@ import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winS
 import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
 import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
-import { BEACON, FLIP, MURMUR, RESONANCE, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
+import { BEACON, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
 import { leapGrow, packetSpan, surgeCellAt, surgeLook, surgeTree } from "../../src/web/celebrate/chainSurgeFx.js";
 import { beaconLook, beaconMiddle, spiralOrder } from "../../src/web/celebrate/beaconFx.js";
 import { beatTimes, latticeOf, resonanceCellAt, resonanceLook, rippleAt, ringAt as resRingAt, ripplesOf } from "../../src/web/celebrate/resonanceFx.js";
 import { flightOf, headAt, murmurLook, pace, swarmCellAt } from "../../src/web/celebrate/murmurationFx.js";
+import { slugDistance, slugPasses } from "../../src/web/celebrate/railFx.js";
+import { barAt, hexHalfHeight, LATTICE, latticeAt } from "../../src/web/celebrate/eraseFx.js";
 
 const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral", "resonance", "murmuration"];
 import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
@@ -72,6 +74,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   expect(KILL_PIECES.map((p) => [p.id, p.for])).toEqual([
     ["alphaDown", ["Alpha"]],
     ["alphaPurge", ["Alpha"]],
+    ["alphaRail", ["Alpha"]],
+    ["alphaErase", ["Alpha"]],
     ["betaBreach", ["Beta"]],
     ["gammaHorizon", ["Gamma"]],
     ["gammaArray", ["Gamma"]],
@@ -93,8 +97,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     expect(KILL_TIMES[p.id]).toBeDefined();
   }
   const alphas = new Set<string>();
-  for (let seed = 1; seed < 40; seed++) alphas.add(pickPiece(KILL_PIECES, "Alpha", seed, "C1_M1", "kill")!.id);
-  expect([...alphas].sort()).toEqual(["alphaDown", "alphaPurge"]);
+  for (let seed = 1; seed < 80; seed++) alphas.add(pickPiece(KILL_PIECES, "Alpha", seed, "C1_M1", "kill")!.id);
+  expect([...alphas].sort()).toEqual(["alphaDown", "alphaErase", "alphaPurge", "alphaRail"]);
   expect(pickPiece(KILL_PIECES, "Beta", 7, "C1_M3", "kill")?.id).toBe("betaBreach");
   expect(WIN_IDS).toContain(pickPiece(WIN_PIECES, "Beta", 7, "C1_M3", "win")?.id);
   const gammas = new Set<string>();
@@ -106,6 +110,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   expect(CELEBRATION_PREVIEWS.map((w) => `${w.omega} ${w.kind} ${w.piece ?? ""} ${w.win ?? ""}`.replace(/ +/g, " ").trim())).toEqual([
     "Alpha kill alphaDown",
     "Alpha kill alphaPurge",
+    "Alpha kill alphaRail",
+    "Alpha kill alphaErase",
     "Alpha win missionComplete",
     "Alpha win perimeterSweep",
     "Alpha win sectorFlip",
@@ -115,6 +121,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Alpha win murmuration",
     "Alpha both alphaDown missionComplete",
     "Alpha both alphaPurge missionComplete",
+    "Alpha both alphaRail missionComplete",
+    "Alpha both alphaErase missionComplete",
     "Beta kill betaBreach",
     "Beta win missionComplete",
     "Beta win perimeterSweep",
@@ -472,7 +480,7 @@ test("I25: the celebrations are the same for every Company: the same pieces, pic
   const e1 = newEvents(v1.start.events, v1.wonJoined.events);
   const e2 = newEvents(v2.start.events, v2.wonJoined.events);
   const kills = new Set<string>();
-  for (let seed = 1; seed < 30; seed++) {
+  for (let seed = 1; seed < 80; seed++) {
     const k1 = killOf(data(), v1.start, e1, seed)?.piece.id;
     expect(k1).toBeDefined();
     expect(killOf(data(), v2.start, e2, seed)?.piece.id).toBe(k1);
@@ -480,7 +488,7 @@ test("I25: the celebrations are the same for every Company: the same pieces, pic
     kills.add(k1!);
   }
   // Either Alpha kill comes up for either Company.
-  expect([...kills].sort()).toEqual(["alphaDown", "alphaPurge"]);
+  expect([...kills].sort()).toEqual(["alphaDown", "alphaErase", "alphaPurge", "alphaRail"]);
 });
 
 test("the cracks (designer 2026-11-20): tapered, branching, inside the tile, the same every time", () => {
@@ -831,4 +839,42 @@ test("Murmuration (designer 2026-11-27): a swarm flies once through every sector
   expect(murmurLook(f, 3, f.at[3]! - 0.1, 80)).toBeUndefined();
   expect(murmurLook(f, 3, f.at[3]! + 0.02, 80)!.scale).toBeGreaterThan(1);
   expect(murmurLook(f, 3, MURMUR.out[1], 80)).toBeUndefined();
+});
+
+test("Rail Strike (designer 2026-11-27): the slug crosses in bullet time and strikes on time; the coils flare as it passes", () => {
+  expect(RAIL.total).toBe(4.5);
+  expect(KILL_TIMES.alphaRail).toBe(RAIL);
+  const far = 14;
+  expect(slugDistance(RAIL.fire, far)).toBeCloseTo(far);
+  expect(slugDistance(RAIL.impact, far)).toBeCloseTo(0);
+  // Slowing as it nears: the last half of the time covers less than the first.
+  const mid = (RAIL.fire + RAIL.impact) / 2;
+  expect(far - slugDistance(mid, far)).toBeGreaterThan(slugDistance(mid, far));
+  for (const d of [1, 4, 9]) expect(slugDistance(slugPasses(d, far), far)).toBeCloseTo(d, 5);
+  expect(slugPasses(9, far)).toBeLessThan(slugPasses(2, far));
+  expect(RAIL.lock < RAIL.coils[0] && RAIL.coils[1] <= RAIL.fire && RAIL.impact < RAIL.wreckIn[0] && RAIL.count < RAIL.back[0]).toBe(true);
+});
+
+test("Alpha Erased (designer 2026-11-27): the bar sweeps the tile, the lattice holds its shape, then unravels from the left", () => {
+  expect(ERASE.total).toBe(4.6);
+  expect(KILL_TIMES.alphaErase).toBe(ERASE);
+  expect(hexHalfHeight(1, 0)).toBe(1);
+  expect(hexHalfHeight(1, 2)).toBe(0);
+  expect(barAt(ERASE.scan[0])).toBeCloseTo(-1.05);
+  expect(barAt(ERASE.scan[1])).toBeCloseTo(1.05);
+  expect(LATTICE.length).toBeGreaterThan(300);
+  // Ahead of the bar: nothing; behind it: in place; during the unravel: away to the right; after: gone.
+  const p = LATTICE.reduce((a, b) => (b.x > a.x ? b : a));
+  expect(latticeAt(p, ERASE.scan[0] + 0.05).a).toBe(0);
+  const held = latticeAt(p, ERASE.hold[0]);
+  expect(held.a).toBe(1);
+  expect(held.x).toBeCloseTo(p.x, 1);
+  const away = latticeAt(p, p.leave + 0.3);
+  expect(away.x).toBeGreaterThan(p.x);
+  expect(latticeAt(p, p.leave + p.life + 0.01).a).toBe(0);
+  // Left goes first, and every point is gone before the zoom eases back.
+  const left = LATTICE.reduce((a, b) => (b.x < a.x ? b : a));
+  expect(left.leave).toBeLessThan(p.leave);
+  for (const q of LATTICE) expect(q.leave + q.life).toBeLessThan(ERASE.back[0]);
+  expect(Math.min(...LATTICE.map((q) => q.leave))).toBeGreaterThanOrEqual(ERASE.hold[1] - 0.07);
 });

@@ -55,6 +55,57 @@ export const PURGE = {
 };
 
 /**
+ * Rail Strike, the third kill for Alpha (designer 2026-11-27): about 4.5 s. A sight line from the edge of
+ * the Field, accelerator coils light along it, a slug crosses in bullet time with a shock cone, strikes;
+ * the unit is blown out through its far side in a cone of debris; the hole glows and cools to the Wreck.
+ */
+export const RAIL = {
+  total: 4.5,
+  /** Act 1, sight: the zoom; a sight line of particles reaches in from the edge, a reticle narrows and locks (playTargetLock). */
+  zoomIn: [0, 0.8] as const,
+  sight: [0.12, 0.6] as const,
+  reticle: [0.2, 0.74] as const,
+  lock: 0.74,
+  /** Act 2, charge: rings of particles (the coils) light one after another along the line towards the unit (playRailCharge). */
+  coils: [0.82, 1.3] as const,
+  /** The slug crosses in bullet time (playRailFire), strikes at `impact` (playRailImpact). */
+  fire: 1.32,
+  impact: 1.8,
+  /** Act 3, through: the cone of debris out of its far side, the shock ring, the shake; the hole glows and cools. */
+  spray: [1.8, 2.7] as const,
+  cool: [1.9, 3.3] as const,
+  wreckIn: [2.05, 2.45] as const,
+  label: [2.3, 2.55] as const,
+  count: 2.85,
+  /** Act 4, back. */
+  back: [3.6, 4.5] as const,
+};
+
+/**
+ * Alpha Erased, the fourth kill for Alpha (designer 2026-11-27): about 4.6 s. A scan grid projects onto the
+ * unit and a scan bar sweeps it: behind the bar the unit is turned into a lattice of particles, which trembles
+ * and then is unravelled by a wind into streams that curl away; the Wreck is left.
+ */
+export const ERASE = {
+  total: 4.6,
+  /** Act 1, project: the zoom; corner brackets and a grid of points over the tile, locking (playTargetLock). */
+  zoomIn: [0, 0.8] as const,
+  grid: [0.15, 0.7] as const,
+  lock: 0.72,
+  /** Act 2, scan: the bar sweeps left to right (playEraseScan); behind it, the tile becomes particles. */
+  scan: [0.85, 1.6] as const,
+  /** The tile is gone; its particles hold and tremble. */
+  hold: [1.6, 1.82] as const,
+  /** Act 3, unravel: the particles peel off from the left, streams curling away on the wind (playEraseUnravel). */
+  unravel: [1.82, 3.0] as const,
+  wreckIn: [2.15, 2.7] as const,
+  label: [2.4, 2.65] as const,
+  count: 2.95,
+  /** Act 4, back. */
+  back: [3.7, 4.6] as const,
+};
+
+/**
  * Beta Breach, the kill for Beta (designer 2026-11-20, more spectacular than Alpha's): about 6.2 s. The
  * Beta fights the lock, its core breaches and it detonates, knocking the units round it back.
  */
@@ -251,6 +302,8 @@ export const CLEARED = {
 export const KILL_TIMES: Record<string, { total: number; back: readonly [number, number] }> = {
   alphaDown: KILL,
   alphaPurge: PURGE,
+  alphaRail: RAIL,
+  alphaErase: ERASE,
   betaBreach: BREACH,
   gammaHorizon: HORIZON,
   gammaArray: ARRAY,
