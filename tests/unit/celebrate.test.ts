@@ -14,11 +14,13 @@ import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winS
 import { KILL_PIECES, pickPiece, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
 import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
-import { BEACON, FLIP, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
+import { BEACON, FLIP, MURMUR, RESONANCE, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
 import { leapGrow, packetSpan, surgeCellAt, surgeLook, surgeTree } from "../../src/web/celebrate/chainSurgeFx.js";
 import { beaconLook, beaconMiddle, spiralOrder } from "../../src/web/celebrate/beaconFx.js";
+import { beatTimes, latticeOf, resonanceCellAt, resonanceLook, rippleAt, ringAt as resRingAt, ripplesOf } from "../../src/web/celebrate/resonanceFx.js";
+import { flightOf, headAt, murmurLook, pace, swarmCellAt } from "../../src/web/celebrate/murmurationFx.js";
 
-const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral"];
+const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral", "resonance", "murmuration"];
 import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
 import { betaFlows, crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
@@ -83,6 +85,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     ["sectorFlip", every],
     ["chainSurge", every],
     ["beaconSpiral", every],
+    ["resonance", every],
+    ["murmuration", every],
   ]);
   for (const p of KILL_PIECES) {
     expect(KILL_STEPS[p.id]).toBeTypeOf("function");
@@ -107,6 +111,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Alpha win sectorFlip",
     "Alpha win chainSurge",
     "Alpha win beaconSpiral",
+    "Alpha win resonance",
+    "Alpha win murmuration",
     "Alpha both alphaDown missionComplete",
     "Alpha both alphaPurge missionComplete",
     "Beta kill betaBreach",
@@ -115,6 +121,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Beta win sectorFlip",
     "Beta win chainSurge",
     "Beta win beaconSpiral",
+    "Beta win resonance",
+    "Beta win murmuration",
     "Beta both betaBreach missionComplete",
     "Gamma kill gammaHorizon",
     "Gamma kill gammaArray",
@@ -124,6 +132,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Gamma win sectorFlip",
     "Gamma win chainSurge",
     "Gamma win beaconSpiral",
+    "Gamma win resonance",
+    "Gamma win murmuration",
     "Gamma both gammaHorizon missionComplete",
     "Gamma both gammaArray missionComplete",
     "Gamma both gammaShatter missionComplete",
@@ -132,6 +142,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Salvage win sectorFlip",
     "Salvage win chainSurge",
     "Salvage win beaconSpiral",
+    "Salvage win resonance",
+    "Salvage win murmuration",
     "Salvage kill salvageNodes",
     "Salvage kill salvageCleared",
     "Salvage both salvageNodes missionComplete",
@@ -541,7 +553,7 @@ test("the Field's player: one tap finishes animations up to a celebration, which
 test("every mission won has a win (designer 2026-11-21): one of three, at random per mission, the same on reload; Salvage too", () => {
   for (const what of ["Alpha", "Beta", "Gamma", "Salvage"]) {
     const got = new Set<string>();
-    for (let seed = 1; seed < 60; seed++) got.add(pickPiece(WIN_PIECES, what, seed, "C1_M2X", "win")!.id);
+    for (let seed = 1; seed < 120; seed++) got.add(pickPiece(WIN_PIECES, what, seed, "C1_M2X", "win")!.id);
     expect([...got].sort()).toEqual([...WIN_IDS].sort());
   }
   // The Salvage board (Mission 2: 5 Power Nodes, 3 Cleared sectors, 8.2): the fifth Power Node comes in, the mission is won.
@@ -748,4 +760,75 @@ test("Salvage milestones (designer 2026-11-22): Grid Online at the fifth Power N
   expect(KILL_STEPS.salvageNodes).toBeDefined();
   expect(KILL_TIMES.salvageCleared!.total).toBeGreaterThan(4);
   expect(CELEBRATION_PREVIEWS.filter((w) => w.omega === "Salvage" && w.piece).length).toBe(4);
+});
+
+// A Field of hexes for the two wins below.
+function hexField2(): [string, number, number][] {
+  const out: [string, number, number][] = [];
+  for (let q = -2; q <= 2; q++) for (let r = -2; r <= 2; r++) if (Math.abs(q + r) <= 2) out.push([`${q},${r}`, 400 + 69 * (r + q / 2), 300 + 60 * q]);
+  return out;
+}
+
+test("Resonance (designer 2026-11-27): two drops ripple the Field with echoes, it calms, rings as one and locks; worked out from the time alone", () => {
+  expect(RESONANCE.total).toBe(5.8);
+  for (const n of [1, 4, 8]) expect(resonanceCellAt(n - 1, n)).toBeLessThanOrEqual(RESONANCE.cellsAt + RESONANCE.cellsIn + 1e-9);
+  const sectors = hexField2();
+  const rp = ripplesOf(sectors, 80, 400, 300);
+  // Two drops, each with four echoes off the board's edges, weaker.
+  expect(rp.sources.length).toBe(10);
+  expect(rp.first).toEqual([400, 300]);
+  expect(rp.sources[0]!.amp).toBe(1);
+  expect(rp.sources[1]!.amp).toBeLessThan(1);
+  expect(rp.sources[5]!.t0).toBe(RESONANCE.echoAt);
+  // Still before the first ripple comes, moving after it, still again once calm.
+  const [fx, fy] = rp.second;
+  expect(rippleAt(rp, fx, fy, RESONANCE.splash + 0.01)).toBe(0);
+  let moved = 0;
+  for (let t = RESONANCE.splash; t < RESONANCE.calm[0]; t += 0.03) moved = Math.max(moved, Math.abs(rippleAt(rp, 400, 300, t)));
+  expect(moved).toBeGreaterThan(0.2);
+  expect(rippleAt(rp, 400, 300, RESONANCE.calm[1] + 0.01)).toBe(0);
+  // The same answer each time (no clock of its own).
+  expect(rippleAt(rp, 450, 320, 1.4)).toBe(rippleAt(rp, 450, 320, 1.4));
+  // The ring: nothing before or after, its beats inside it, louder each beat.
+  expect(resRingAt(RESONANCE.ring[0])).toBe(0);
+  expect(resRingAt(RESONANCE.ring[1])).toBe(0);
+  const beats = beatTimes();
+  expect(beats.length).toBe(RESONANCE.beats);
+  for (const b of beats) expect(b > RESONANCE.ring[0] && b < RESONANCE.ring[1]).toBe(true);
+  expect(Math.abs(resRingAt(beats.at(-1)!))).toBeGreaterThan(Math.abs(resRingAt(beats[0]!)));
+  // A tile rides the surface: up on a crest; nothing to do before the drop or after the lock's snap.
+  expect(resonanceLook(rp, 400, 300, 0.5)).toBeUndefined();
+  expect(resonanceLook(rp, 400, 300, RESONANCE.lock + 1)).toBeUndefined();
+  const crest = beats.map((b) => [b, resRingAt(b)] as const).find(([, h]) => h > 0)!;
+  expect(resonanceLook(rp, 400, 300, crest[0])!.dy).toBeLessThan(0);
+  // The lattice joins neighbours only, each pair once.
+  const lat = latticeOf(sectors, 80);
+  expect(lat.length).toBe(42);
+  for (const [ax, ay, bx, by] of lat) expect(Math.hypot(bx - ax, by - ay)).toBeLessThan(80 * 1.2);
+});
+
+test("Murmuration (designer 2026-11-27): a swarm flies once through every sector from where the unit left, then forms the emblem", () => {
+  expect(MURMUR.total).toBe(6.0);
+  for (const n of [1, 4, 8]) expect(swarmCellAt(n - 1, n)).toBeLessThanOrEqual(MURMUR.cellsAt + MURMUR.cellsIn + 1e-9);
+  expect(pace(0)).toBe(0);
+  expect(pace(1)).toBeCloseTo(1);
+  for (let u = 0; u < 1; u += 0.05) expect(pace(u + 0.05) - pace(u)).toBeGreaterThan(0.02);
+  const sectors = hexField2();
+  const f = flightOf(sectors, 470, 300);
+  // Every sector once, the first nearest where the unit left; reached one after another inside the route.
+  expect(f.stops.length).toBe(sectors.length);
+  expect(new Set(f.stops.map((s) => s[0])).size).toBe(sectors.length);
+  expect(f.stops[0]![0]).toBe("0,1");
+  expect(f.at[0]).toBeCloseTo(MURMUR.route[0]);
+  expect(f.at.at(-1)!).toBeCloseTo(MURMUR.route[1]);
+  for (let i = 1; i < f.at.length; i++) expect(f.at[i]!).toBeGreaterThan(f.at[i - 1]!);
+  // The head passes over each sector when it claims it.
+  for (let i = 0; i < f.stops.length; i++) {
+    const [x, y] = headAt(f, f.at[i]!);
+    expect(Math.hypot(x - f.stops[i]![1], y - f.stops[i]![2])).toBeLessThan(1);
+  }
+  // A claimed tile is pushed, then settles.
+  expect(murmurLook(f, 3, f.at[3]! - 0.1, 80)).toBeUndefined();
+  expect(murmurLook(f, 3, f.at[3]! + 0.02, 80)!.scale).toBeGreaterThan(1);
+  expect(murmurLook(f, 3, MURMUR.out[1], 80)).toBeUndefined();
 });

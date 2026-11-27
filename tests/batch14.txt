@@ -34,6 +34,8 @@
 # victory outros at random for any Company (T14_WIN_04; CHANGED note on T14_WIN_01); Chain Surge
 # (T14_WIN_05) and Beacon Spiral (T14_WIN_06), two more wins for every mission. Checked by
 # tests/unit/outro.test.ts, tests/unit/celebrate.test.ts, scripts/ui-celebrate.mjs, ui-smoke.mjs.
+# Two more mission wins, 2026-11-27 (later): Resonance (T14_WIN_07) and Murmuration (T14_WIN_08),
+# one of seven wins at random per mission. Checked by tests/unit/celebrate.test.ts, scripts/ui-celebrate.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -707,3 +709,40 @@ then: about 5.6 seconds on the Field. Act 1 (0-1.0 s): the Field dims; brackets 
 note: As T14_WIN_05. The pick (I19): one of the five wins at random per mission, the same again if
       the save is reloaded; System options lists Chain Surge and Beacon Spiral for Alpha, Beta, Gamma
       and Salvage (36 buttons).
+
+id: T14_WIN_07
+title: Resonance
+source: designer 2026-11-27 ("Make 2 more (that will be one of randoms played after each mission). Be ambitious.")
+given: a mission won, Resonance picked (or System options > Mission celebrations > Resonance), Normal speed
+then: about 5.8 seconds on the Field. Act 1 (0-1.0 s): the Field dims; the Mission bar's cells charge
+      one by one; a drop of light falls from the last cell into the sector the unit left (the middle
+      after the Developer tool) and a crown of particles splashes up. Act 2 (1.0-3.0 s): the Field
+      becomes a surface: rings of particles spread from the drop (bright crests, violet troughs),
+      only over the sectors, and echo back off the board's edges; at 1.65 s an answering drop falls
+      from above the page into the sector farthest away and its rings cross the first ones; every
+      tile rides them, lifted on a crest and sunk in a trough; by 3.0 s the surface is calm.
+      Act 3 (3.0-4.4 s): the whole Field rings as one, four beats, each louder, a ring of particles
+      round every sector on each beat; at 3.7 s it locks: a flash, gold corners, a lattice of
+      particles joins every pair of neighbouring sectors with a light pulse running along it, the
+      Mission bar turns gold; MISSION COMPLETE slams in at 3.8 s (the standard banner). Act 4
+      (4.4-5.8 s): motes rise, everything fades.
+note: The same for every Company. Two taps skip; reduced motion or Instant: the still banner (1.5 s).
+      A slow machine draws fewer particles, never slower.
+
+id: T14_WIN_08
+title: Murmuration
+source: designer 2026-11-27 (as T14_WIN_07)
+given: a mission won, Murmuration picked (or System options > Mission celebrations > Murmuration),
+       Normal speed
+then: about 6.0 seconds on the Field. Act 1 (0-1.1 s): the Field dims; a swarm of drones (small
+      light streaks) pours out of the Mission bar's cells and gathers above the sector the unit left.
+      Act 2 (1.1-3.15 s): the swarm flies one smooth curved way through every sector, each once,
+      always to the nearest one not yet visited, folding and breathing like a flock of starlings;
+      each sector it passes is claimed: a tracer of particles runs round its edge, its corners turn
+      gold, it flashes and its tile is pushed along by the swarm's wind and settles. Act 3
+      (3.15-4.6 s): the drones form an emblem round the banner (two turning hexagons and six spokes);
+      it flares and the Mission bar turns gold; MISSION COMPLETE slams in at 3.8 s (the standard
+      banner). Act 4 (4.6-6.0 s): the emblem bursts outwards in streaks, everything fades.
+note: As T14_WIN_07. The pick (I19): one of the seven wins at random per mission, the same again if
+      the save is reloaded; System options lists Resonance and Murmuration for Alpha, Beta, Gamma
+      and Salvage (44 buttons).

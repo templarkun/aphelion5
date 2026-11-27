@@ -56,6 +56,8 @@ export const WIN_PIECES: Piece[] = [
   // Designer 2026-11-27: two more, for every mission won.
   { id: "chainSurge", name: "Chain Surge", for: EVERY_MISSION },
   { id: "beaconSpiral", name: "Beacon Spiral", for: EVERY_MISSION },
+  { id: "resonance", name: "Resonance", for: EVERY_MISSION },
+  { id: "murmuration", name: "Murmuration", for: EVERY_MISSION },
 ];
 
 /** A small fixed hash (FNV-1a) of a text. */

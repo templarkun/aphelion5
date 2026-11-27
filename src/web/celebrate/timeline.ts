@@ -416,6 +416,74 @@ export const BEACON = {
   out: [4.8, 5.6] as const,
 };
 
+/**
+ * Resonance, a win (designer 2026-11-27, "be ambitious"; resonanceFx.ts): the Field turns into a
+ * surface of light that ripples, echoes off its edges, then rings as one and locks.
+ */
+export const RESONANCE = {
+  total: 5.8,
+  /** Act 1 (0-1.0): the Field dims; each cell of the Mission bar charges; the last lets a drop of light fall into the sector the unit left (onResonanceDrop). */
+  dim: [0, 0.45] as const,
+  dimTo: 0.4,
+  cellsAt: 0.15,
+  cellsIn: 0.45,
+  cellStep: 0.1,
+  drop: [0.65, 1.0] as const,
+  /** Act 2 (1.0-3.0): the splash (onResonanceSplash); ripples run out and echo off the Field's edges; a second, answering drop at the far side (echoAt). */
+  splash: 1.0,
+  echoAt: 1.65,
+  /** How long a ripple takes to cross the farthest stretch of the Field (s). */
+  cross: 1.05,
+  /** Ripples per second, and how fast one dies (s). */
+  freq: 2.4,
+  decay: 0.75,
+  /** The ripples calm before the Field rings as one. */
+  calm: [2.55, 3.0] as const,
+  /** Act 3 (3.0-4.4): every tile rises and falls together, louder each beat (onResonancePulse), then locks flat in a flash (onResonanceLock) and the bar turns gold. */
+  ring: [3.0, 3.7] as const,
+  beats: 4,
+  lock: 3.7,
+  slam: [3.78, 4.0] as const,
+  sub: [4.08, 4.32] as const,
+  badgesAt: 4.28,
+  badgeStep: 0.08,
+  badgeFall: 0.26,
+  /** Act 4 (4.4-5.8): the lattice of light fades; motes lift off the still surface. */
+  fade: 4.4,
+  out: [5.0, 5.8] as const,
+};
+
+/**
+ * Murmuration, a win (designer 2026-11-27, "be ambitious"; murmurationFx.ts): a swarm of hundreds of
+ * drones of light pours out of the Mission bar, swoops over every sector, forms an emblem round the
+ * banner, then bursts.
+ */
+export const MURMUR = {
+  total: 6.0,
+  /** Act 1 (0-1.1): the Field dims; streams of drones pour from each cell of the Mission bar into the sector the unit left (onSwarmRelease). */
+  dim: [0, 0.45] as const,
+  dimTo: 0.45,
+  cellsAt: 0.1,
+  cellsIn: 0.45,
+  cellStep: 0.1,
+  gather: 1.1,
+  /** Act 2 (1.1-3.2): the swarm swoops sector to sector over the whole Field, claiming each it passes (onSwarmClaim). */
+  route: [1.1, 3.15] as const,
+  /** How far behind the swarm's head a drone may trail (s): the flock's tail. */
+  lag: 0.24,
+  /** Act 3 (3.2-4.6): the drones form an emblem round the middle (onSwarmForm), it flares and the bar turns gold; the banner. */
+  form: [3.15, 3.7] as const,
+  flare: 3.72,
+  slam: [3.78, 4.0] as const,
+  sub: [4.08, 4.32] as const,
+  badgesAt: 4.28,
+  badgeStep: 0.08,
+  badgeFall: 0.26,
+  /** Act 4 (4.6-6.0): the emblem bursts, the drones streak off the Field (onSwarmBurst); the cross-fade. */
+  burst: 4.6,
+  out: [5.2, 6.0] as const,
+};
+
 /** The still picture of either piece (reduced motion, Instant), seconds. */
 export const STILL = 1.5;
 

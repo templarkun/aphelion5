@@ -278,6 +278,30 @@ export function onBeaconStrike(index: number, of: number): void {
 }
 /** Beacon Spiral, Act 3: the pillar of light fires up from the middle of the Field. */
 export function onBeaconPillar(): void {}
+/** Resonance (win), Act 1: the drop of light falls from the Mission bar. */
+export function onResonanceDrop(): void {}
+/** Resonance, Act 2: a drop splashes into the Field (index 0 the first, 1 the answering drop). */
+export function onResonanceSplash(index: number): void {
+  void index;
+}
+/** Resonance, Act 3: the whole Field rings, one beat (index of count, louder each time). */
+export function onResonancePulse(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Resonance, Act 3: the Field locks flat and the lattice lights. */
+export function onResonanceLock(): void {}
+/** Murmuration (win), Act 1: the drones pour out of the Mission bar. */
+export function onSwarmRelease(): void {}
+/** Murmuration, Act 2: the swarm claims a sector (index of count). */
+export function onSwarmClaim(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Murmuration, Act 3: the drones form the emblem and it flares. */
+export function onSwarmForm(): void {}
+/** Murmuration, Act 4: the emblem bursts. */
+export function onSwarmBurst(): void {}
 
 /** Salvage: the fifth Power Node ignites (Grid Online). */
 export function playGridOnline(): void {}
