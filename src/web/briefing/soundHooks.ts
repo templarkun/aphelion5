@@ -387,3 +387,21 @@ export function onArmillaryLaunch(index: number, of: number): void {
 export function onArmillarySpin(): void {}
 /** Armillary, Act 3: the rings lock as one halo and the bar turns gold. */
 export function onArmillaryLock(): void {}
+/** Aurora (win), Act 1: night falls and the first curtain unfurls. */
+export function onAuroraRise(): void {}
+/** Aurora, Act 2: a curtain of light begins to fold down across the Field (index of count). */
+export function onAuroraCurtain(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Aurora, Act 3: the rays meet in the crown and the bar turns gold. */
+export function onAuroraCrown(): void {}
+/** Circuit Trace (win), Act 1: the pulse from the Mission bar strikes the board's corner. */
+export function onCircuitEntry(): void {}
+/** Circuit Trace, Act 2: a sector's last edge closes and it powers up (index of count, in order). */
+export function onCircuitPower(index: number, of: number): void {
+  void index;
+  void of;
+}
+/** Circuit Trace, Act 3: the whole circuit locks gold. */
+export function onCircuitLock(): void {}

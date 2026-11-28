@@ -743,6 +743,66 @@ export const ARMILLARY = {
   out: [5.0, 5.8] as const,
 };
 
+/**
+ * Aurora, a win (designer 2026-11-28, "be ambitious"; auroraFx.ts): the Field falls into night; three
+ * curtains of aurora light fold down across it, each sector glowing and swaying as one passes; the rays
+ * turn to meet in a crown over the banner.
+ */
+export const AURORA = {
+  total: 6.0,
+  /** Act 1 (0-1.0): the Field falls into night, stars come out, the cells shimmer and the first curtain unfurls from the Mission bar (onAuroraRise). */
+  dim: [0, 0.6] as const,
+  dimTo: 0.55,
+  cellsAt: 0.1,
+  cellsIn: 0.4,
+  cellStep: 0.08,
+  rise: [0.4, 1.0] as const,
+  /** Act 2 (1.0-3.3): the three curtains fold down across the Field, one after another (onAuroraCurtain). */
+  curtains: [0.45, 0.85, 1.25] as const,
+  /** How long a curtain takes from the top of the Field to the bottom (s). */
+  cross: 2.1,
+  /** Act 3 (3.3-4.6): the curtains gather into one band, their rays turn to meet in a crown over the middle; it flares (onAuroraCrown) and the bar turns gold; the banner. */
+  gather: [3.1, 3.65] as const,
+  crown: 3.7,
+  slam: [3.78, 4.0] as const,
+  sub: [4.08, 4.32] as const,
+  badgesAt: 4.28,
+  badgeStep: 0.08,
+  badgeFall: 0.26,
+  /** Act 4 (4.6-6.0): the light climbs away off the top of the Field; the stars fade; the cross-fade. */
+  fade: 4.6,
+  out: [5.2, 6.0] as const,
+};
+
+/**
+ * Circuit Trace, a win (designer 2026-11-28, "be ambitious"; circuitFx.ts): a pulse from the Mission bar
+ * runs into the gutters between the sectors and spreads along every edge like a circuit board; each sector
+ * powers up as its six edges close; the whole board pulses and locks gold.
+ */
+export const CIRCUIT = {
+  total: 5.6,
+  /** Act 1 (0-0.9): the Field dims; the cells light one by one; a pulse drops from the bar into the nearest corner of the board (onCircuitEntry). */
+  dim: [0, 0.45] as const,
+  dimTo: 0.5,
+  cellsAt: 0.1,
+  cellsIn: 0.4,
+  cellStep: 0.09,
+  drop: [0.55, 0.9] as const,
+  /** Act 2 (0.9-3.2): the traces run along every edge, forking at each corner (the farthest corner at run[1]); each sector powers up as its last edge closes (onCircuitPower). */
+  run: [0.9, 2.75] as const,
+  /** Act 3 (3.2-4.4): packets race round the whole circuit; it locks gold (onCircuitLock) and the bar turns gold; the banner. */
+  surge: [2.95, 3.55] as const,
+  lock: 3.6,
+  slam: [3.72, 3.94] as const,
+  sub: [4.02, 4.26] as const,
+  badgesAt: 4.22,
+  badgeStep: 0.08,
+  badgeFall: 0.26,
+  /** Act 4 (4.4-5.6): the traces cool from the edge of the Field inwards; sparks; the cross-fade. */
+  cool: 4.4,
+  out: [4.9, 5.6] as const,
+};
+
 /** The still picture of either piece (reduced motion, Instant), seconds. */
 export const STILL = 1.5;
 

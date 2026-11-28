@@ -20,7 +20,7 @@
  *
  * This component also plays the other wins (designer 2026-11-21), on the same page and the same props:
  * Perimeter Sweep (sweepFx.ts), Sector Flip (flipFx.ts), Chain Surge (chainSurgeFx.ts), Beacon Spiral (beaconFx.ts),
- * Resonance (resonanceFx.ts), Murmuration (murmurationFx.ts), Singularity (singularityFx.ts) and Armillary (armillaryFx.ts) (the last six designer 2026-11-27). It waits for the Field and the Trophies'
+ * Resonance (resonanceFx.ts), Murmuration (murmurationFx.ts), Singularity (singularityFx.ts), Armillary (armillaryFx.ts) (the last six designer 2026-11-27), Aurora (auroraFx.ts) and Circuit Trace (circuitFx.ts) (designer 2026-11-28). It waits for the Field and the Trophies'
  * flight, then plays the piece picked for the mission (`show.piece`), and every mission won has one:
  * Eliminate Alpha, Beta, Gamma, and Salvage.
  */
@@ -34,6 +34,12 @@ import {
   onBeaconPillar,
   onBeaconStrike,
   onArmillaryLaunch,
+  onAuroraCrown,
+  onAuroraCurtain,
+  onAuroraRise,
+  onCircuitEntry,
+  onCircuitLock,
+  onCircuitPower,
   onArmillaryLock,
   onArmillarySpin,
   onResonanceDrop,
@@ -73,7 +79,9 @@ import { type Ripples, beatTimes, latticeOf, paintResonance, resonanceLook, ripp
 import { boardJolt, flipLook, flipStarts, paintFlip } from "./flipFx.js";
 import { arrival, shineAt } from "./shine.js";
 import { burstAt, cellAt, paintSweep, recoil } from "./sweepFx.js";
-import { ARMILLARY, BEACON, FLIP, FLY, KILL_TIMES, MURMUR, RESONANCE, SINGULAR, STILL, SURGE, SWEEP, WIN, span } from "./timeline.js";
+import { ARMILLARY, AURORA, BEACON, CIRCUIT, FLIP, FLY, KILL_TIMES, MURMUR, RESONANCE, SINGULAR, STILL, SURGE, SWEEP, WIN, span } from "./timeline.js";
+import { auroraLook, paintAurora } from "./auroraFx.js";
+import { type Circuit, circuitLook, circuitOf, paintCircuit } from "./circuitFx.js";
 import { armillaryLook, armillaryPlan, paintArmillary } from "./armillaryFx.js";
 import { paintSingularity, singularityLook } from "./singularityFx.js";
 import { type Geo, dot, keepUp, measure, rgba, seq } from "./winKit.js";
@@ -411,6 +419,8 @@ const PIECE_TIMES: Record<string, { total: number; out: readonly [number, number
   resonance: { total: RESONANCE.total, out: RESONANCE.out, act: (t) => (t < RESONANCE.splash ? 1 : t < RESONANCE.ring[0] ? 2 : t < RESONANCE.fade ? 3 : 4) },
   murmuration: { total: MURMUR.total, out: MURMUR.out, act: (t) => (t < MURMUR.gather ? 1 : t < MURMUR.form[0] ? 2 : t < MURMUR.burst ? 3 : 4) },
   singularity: { total: SINGULAR.total, out: SINGULAR.out, act: (t) => (t < SINGULAR.pull[0] ? 1 : t < SINGULAR.nova ? 2 : t < SINGULAR.embers ? 3 : 4) },
+  aurora: { total: AURORA.total, out: AURORA.out, act: (t) => (t < AURORA.rise[1] ? 1 : t < AURORA.gather[0] + 0.2 ? 2 : t < AURORA.fade ? 3 : 4) },
+  circuitTrace: { total: CIRCUIT.total, out: CIRCUIT.out, act: (t) => (t < CIRCUIT.drop[1] ? 1 : t < CIRCUIT.surge[0] + 0.25 ? 2 : t < CIRCUIT.cool ? 3 : 4) },
   armillary: { total: ARMILLARY.total, out: ARMILLARY.out, act: (t) => (t < ARMILLARY.spin[0] ? 1 : t < ARMILLARY.align[0] ? 2 : t < ARMILLARY.release ? 3 : 4) },
 };
 
@@ -462,6 +472,8 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
     let flight: Flight | undefined;
     // Armillary: when each sector is first touched by a ring.
     let touched = new Map<string, number>();
+    // Circuit Trace: the board as a circuit.
+    let circuit: Circuit | undefined;
     const flat = new Set(Object.entries(show.state.field).filter(([, st]) => st.length === 0).map(([k]) => k));
     cbs.current.onHold(still ? 0 : show.fresh);
     // The Mission bar glows gold once the win has gone through it (on <html>: React rewrites the bar's own classes).
@@ -488,7 +500,11 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
                     ? [SINGULAR.dim, SINGULAR.dimTo]
                     : id === "armillary"
                       ? [ARMILLARY.dim, ARMILLARY.dimTo]
-                      : [WIN.dim, 0.34];
+                      : id === "aurora"
+                        ? [AURORA.dim, AURORA.dimTo]
+                        : id === "circuitTrace"
+                          ? [CIRCUIT.dim, CIRCUIT.dimTo]
+                          : [WIN.dim, 0.34];
     const dimAt = (t: number) => {
       if (still) return dimTo * Math.max(0, Math.min(1, t / 0.15, (STILL - t) / 0.15));
       return dimTo * easeOut(span(t, dimSpan)) * (1 - span(t, T.out));
@@ -515,6 +531,9 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         flight = fl;
         const stopOf = new Map(fl.stops.map(([k], i) => [k, i]));
         if (id === "armillary") touched = armillaryPlan(r.sectors, r.fw, r.fh, r.tile);
+        const cc = id === "circuitTrace" ? circuitOf(r.sectors, r.fw, r.tile) : undefined;
+        circuit = cc;
+        const closeOf = new Map(cc?.sectors.map((x) => [x.key, x.closes]) ?? []);
         const reach = Math.max(r.tile, ...r.sectors.map(([, x, y]) => Math.hypot(x - r.fw / 2, y - r.fh / 2)));
         // The units move as the win passes (nothing moves in the still picture).
         const tau = new Map(r.sectors.map(([k, x, y]) => [k, arrival(r.shine, x, y)]));
@@ -535,6 +554,14 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
           if (id === "singularity") {
             const p = at.get(key);
             return p ? singularityLook(r.fw / 2, r.fh / 2, p[0], p[1], reach, t, r.tile) : undefined;
+          }
+          if (id === "aurora") {
+            const p = at.get(key);
+            return p ? auroraLook(r.fw, r.fh, p[0], p[1], t, r.tile) : undefined;
+          }
+          if (id === "circuitTrace") {
+            const c = closeOf.get(key);
+            return c === undefined ? undefined : circuitLook(c, t, r.tile);
           }
           if (id === "armillary") {
             const p = at.get(key);
@@ -587,7 +614,11 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
                     ? { slam: SINGULAR.slam, sub: SINGULAR.sub, badgesAt: SINGULAR.badgesAt, badgeStep: SINGULAR.badgeStep, badgeFall: SINGULAR.badgeFall }
                     : id === "armillary"
                       ? { slam: ARMILLARY.slam, sub: ARMILLARY.sub, badgesAt: ARMILLARY.badgesAt, badgeStep: ARMILLARY.badgeStep, badgeFall: ARMILLARY.badgeFall }
-                      : { slam: WIN.slam, sub: WIN.sub, badgesAt: WIN.badgesAt, badgeStep: WIN.badgeStep, badgeFall: WIN.badgeFall };
+                      : id === "aurora"
+                        ? { slam: AURORA.slam, sub: AURORA.sub, badgesAt: AURORA.badgesAt, badgeStep: AURORA.badgeStep, badgeFall: AURORA.badgeFall }
+                        : id === "circuitTrace"
+                          ? { slam: CIRCUIT.slam, sub: CIRCUIT.sub, badgesAt: CIRCUIT.badgesAt, badgeStep: CIRCUIT.badgeStep, badgeFall: CIRCUIT.badgeFall }
+                          : { slam: WIN.slam, sub: WIN.sub, badgesAt: WIN.badgesAt, badgeStep: WIN.badgeStep, badgeFall: WIN.badgeFall };
     const styleBanner = (t: number) => {
       const s = still ? 1 : span(t, B.slam);
       if (band.current) {
@@ -678,6 +709,19 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
         if (crossed(ARMILLARY.lock)) (onArmillaryLock(), won(true));
         if (crossed(ARMILLARY.slam[1])) playMissionComplete();
         if (crossed(ARMILLARY.out[0])) onUpgradeSheetOpen();
+      } else if (id === "aurora") {
+        if (crossed(AURORA.rise[0])) onAuroraRise();
+        AURORA.curtains.forEach((a, i) => crossed(a) && onAuroraCurtain(i, 3));
+        if (crossed(AURORA.crown)) (onAuroraCrown(), won(true));
+        if (crossed(AURORA.slam[1])) playMissionComplete();
+        if (crossed(AURORA.out[0])) onUpgradeSheetOpen();
+      } else if (id === "circuitTrace") {
+        if (crossed(CIRCUIT.drop[1])) onCircuitEntry();
+        const list = (circuit?.sectors.map((x) => x.closes) ?? []).sort((x, y) => x - y);
+        list.forEach((a, i) => crossed(a) && onCircuitPower(i, list.length));
+        if (crossed(CIRCUIT.lock)) (onCircuitLock(), won(true));
+        if (crossed(CIRCUIT.slam[1])) playMissionComplete();
+        if (crossed(CIRCUIT.out[0])) onUpgradeSheetOpen();
       } else {
         if (crossed(WIN.wave[0])) playWinSweep();
         if (crossed(WIN.slam[1])) playMissionComplete();
@@ -746,6 +790,8 @@ export function MissionWin({ show, onHold, onShake, onDone, killOn }: MissionWin
           else if (id === "murmuration" && flight) paintMurmuration(g, geo, t, still, all, q, flight);
           else if (id === "singularity") paintSingularity(g, geo, t, still, all, q);
           else if (id === "armillary") paintArmillary(g, geo, t, still, all, q, touched);
+          else if (id === "aurora") paintAurora(g, geo, t, still, all, q);
+          else if (id === "circuitTrace" && circuit) paintCircuit(g, geo, t, still, all, q, circuit);
           else paint(g, geo, t, still, fade, badges, band.current?.getBoundingClientRect());
         }
         style(t, fade);
