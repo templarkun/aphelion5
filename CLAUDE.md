@@ -224,4 +224,4 @@ The designer is not a programmer. Explain in plain words, cite rule sections, ke
 - 2026-11-27 (later): Singularity and Armillary, two more mission wins (see Decisions). `tests/unit/celebrate.test.ts` (29 tests); 585 tests passing.
 - 2026-11-28: Aurora and Circuit Trace, two more mission wins (see Decisions). `tests/unit/celebrate.test.ts` (31 tests); 587 tests passing.
 - 2026-11-28: Sunforge, the sixth victory outro (see Decisions). `tests/unit/outro.test.ts` (26 tests); 590 tests passing.
-- 2026-11-28: Burnout and Tether Rip, two more Alpha kills (see Decisions). `tests/unit/celebrate.test.ts` (33 tests); 592 tests passing.
+- 2026-11-28: Burnout and Tether Rip, two more Alpha kills (see Decisions). `tests/unit/celebrate.test.ts` (33 tests); 592 tests passing; browser group celebrate passing; artifact republished (version 87).
