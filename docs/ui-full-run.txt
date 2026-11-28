@@ -1,4 +1,4 @@
 Last full browser check (npm run test:ui, every group)
-commit: 85b822b
-date: 2026-11-25
-result: every group passed on the first run (npm run check: 563 tests passing)
+commit: 8941e0b
+date: 2026-11-28
+result: every group passed on the first run (npm run check: 590 tests passing)
