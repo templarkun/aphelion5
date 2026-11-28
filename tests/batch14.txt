@@ -38,6 +38,8 @@
 # one of seven wins at random per mission. Checked by tests/unit/celebrate.test.ts, scripts/ui-celebrate.mjs.
 # Two more mission wins, 2026-11-27 (later): Singularity (T14_WIN_09) and Armillary (T14_WIN_10), one of
 # nine wins at random per mission. CHANGED note on T14_WIN_08. Checked by the same files.
+# Two more mission wins, 2026-11-28: Aurora (T14_WIN_11) and Circuit Trace (T14_WIN_12), one of eleven
+# wins at random per mission. CHANGED note on T14_WIN_10. Checked by the same files.
 # Two more Alpha kills, 2026-11-27 (later): Rail Strike (T14_KILL_01) and Alpha Erased (T14_KILL_02),
 # one of four Alpha kills at random per mission. Checked by the same files.
 # Two more Beta kills, 2026-11-27 (later): Barrage (T14_KILL_03) and Cryo Shatter (T14_KILL_04),
@@ -803,6 +805,42 @@ then: about 5.8 seconds on the Field. Act 1 (0-1.1 s): the Field dims; three orb
       3.8 s inside the halo. Act 4 (4.5-5.8 s): the halo widens and breaks into motes, everything fades.
 note: As T14_WIN_09. System options lists Singularity and Armillary for Alpha, Beta, Gamma and
       Salvage (68 buttons).
+CHANGED 2026-11-28: one of eleven wins now (T14_WIN_11, T14_WIN_12); 76 buttons in System options.
+
+id: T14_WIN_11
+title: Aurora
+source: designer 2026-11-28 ("Create 2 more mission wins celebrations (which will be played after each
+        mission at random). Be ambitious.")
+given: a mission won, Aurora picked (or System options > Mission celebrations > Aurora), Normal speed
+then: about 6.0 seconds on the Field. Act 1 (0-1.0 s): the Field falls dark like night, stars come out
+      over it, the Mission bar's cells shimmer, the first curtain of light appears at the top. Act 2
+      (1.0-3.3 s): three curtains of aurora light fold down across the Field one after another, each a
+      wavering bright cyan lower edge with rays rising from it that fade into violet and rose, bright
+      patches running along it; each sector a curtain passes glows in its light and sways gently. Act 3
+      (3.3-4.6 s): the curtains gather into one band across the middle and their rays turn to meet in a
+      point above it, a crown; it flares gold, the sectors get gold corners, every tile lifts a little,
+      the Mission bar turns gold; MISSION COMPLETE slams in at 3.8 s (the standard banner). Act 4
+      (4.6-6.0 s): the light climbs away off the top of the Field, the stars fade, everything fades.
+note: Screen only, no rule change. The same for every Company (I25). The pick (I19): one of the eleven
+      wins at random per mission, the same again if the save is reloaded. Reduced motion / Instant: a
+      still picture (the band and its crown), 1.5 s.
+
+id: T14_WIN_12
+title: Circuit Trace
+source: designer 2026-11-28 (as T14_WIN_11)
+given: a mission won, Circuit Trace picked (or System options > Mission celebrations > Circuit Trace),
+       Normal speed
+then: about 5.6 seconds on the Field. Act 1 (0-0.9 s): the Field dims; a faint dotted outline of every
+      sector's edges shows in the gaps between them; the Mission bar's cells light one by one and a pulse
+      drops from the bar into the top corner of the board. Act 2 (0.9-3.2 s): traces of light run from
+      that corner along the gaps between the sectors, forking at every corner, until every edge is lit
+      (two traces meeting on one edge throw a spark); as a sector's last edge is lit it powers up: a
+      flash, three short traces run in from its corners to a glowing node in its middle, its tile jolts.
+      Act 3 (3.2-4.4 s): packets of light race round the whole circuit; it locks gold, every tile pops,
+      the Mission bar turns gold; MISSION COMPLETE slams in at 3.7 s. Act 4 (4.4-5.6 s): the traces go
+      cold from the edge of the Field inwards, throwing off sparks; everything fades.
+note: As T14_WIN_11. Sectors that do not touch the rest of the board are reached by a jump. System
+      options lists Aurora and Circuit Trace for Alpha, Beta, Gamma and Salvage (76 buttons).
 
 id: T14_KILL_01
 title: Rail Strike

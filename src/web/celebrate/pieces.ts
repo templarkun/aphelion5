@@ -72,6 +72,8 @@ export const WIN_PIECES: Piece[] = [
   { id: "murmuration", name: "Murmuration", for: EVERY_MISSION },
   { id: "singularity", name: "Singularity", for: EVERY_MISSION },
   { id: "armillary", name: "Armillary", for: EVERY_MISSION },
+  { id: "aurora", name: "Aurora", for: EVERY_MISSION },
+  { id: "circuitTrace", name: "Circuit Trace", for: EVERY_MISSION },
 ];
 
 /** A small fixed hash (FNV-1a) of a text. */

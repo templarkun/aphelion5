@@ -14,10 +14,12 @@ import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winS
 import { KILL_PIECES, pickPiece, SALVAGE_PIECES, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
 import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
-import { ARMILLARY, BARRAGE, BEACON, CRYO, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SINGULAR, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
+import { ARMILLARY, AURORA, BARRAGE, BEACON, CIRCUIT, CRYO, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SINGULAR, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
 import { leapGrow, packetSpan, surgeCellAt, surgeLook, surgeTree } from "../../src/web/celebrate/chainSurgeFx.js";
 import { beaconLook, beaconMiddle, spiralOrder } from "../../src/web/celebrate/beaconFx.js";
 import { beatTimes, latticeOf, resonanceCellAt, resonanceLook, rippleAt, ringAt as resRingAt, ripplesOf } from "../../src/web/celebrate/resonanceFx.js";
+import { auroraLook, auroraTouch, crownAt, curtainEdge, descent } from "../../src/web/celebrate/auroraFx.js";
+import { circuitLook, circuitOf, edgeDone, litAt } from "../../src/web/celebrate/circuitFx.js";
 import { coreSize, feedCellAt, singularityLook, wellPlace, wellPull } from "../../src/web/celebrate/singularityFx.js";
 import { armillaryLook, armillaryPlan, armillaryTouch, ringAngles, ringDrawn, ringFrame } from "../../src/web/celebrate/armillaryFx.js";
 import { flightOf, headAt, murmurLook, pace, swarmCellAt } from "../../src/web/celebrate/murmurationFx.js";
@@ -26,7 +28,7 @@ import { shellSpot } from "../../src/web/celebrate/barrageFx.js";
 import { FROST_LINES, struggle } from "../../src/web/celebrate/cryoFx.js";
 import { barAt, hexHalfHeight, LATTICE, latticeAt } from "../../src/web/celebrate/eraseFx.js";
 
-const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral", "resonance", "murmuration", "singularity", "armillary"];
+const WIN_IDS = ["missionComplete", "perimeterSweep", "sectorFlip", "chainSurge", "beaconSpiral", "resonance", "murmuration", "singularity", "armillary", "aurora", "circuitTrace"];
 import { KILL_STEPS } from "../../src/web/celebrate/kills.js";
 import { betaFlows, crackTree } from "../../src/web/celebrate/cracksFx.js";
 import { CELEBRATION_PREVIEWS, PREVIEW_SEED, previewBoards } from "../../src/web/celebrate/previewBoards.js";
@@ -99,6 +101,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     ["murmuration", every],
     ["singularity", every],
     ["armillary", every],
+    ["aurora", every],
+    ["circuitTrace", every],
   ]);
   for (const p of KILL_PIECES) {
     expect(KILL_STEPS[p.id]).toBeTypeOf("function");
@@ -131,6 +135,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Alpha win murmuration",
     "Alpha win singularity",
     "Alpha win armillary",
+    "Alpha win aurora",
+    "Alpha win circuitTrace",
     "Alpha both alphaDown missionComplete",
     "Alpha both alphaPurge missionComplete",
     "Alpha both alphaRail missionComplete",
@@ -147,6 +153,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Beta win murmuration",
     "Beta win singularity",
     "Beta win armillary",
+    "Beta win aurora",
+    "Beta win circuitTrace",
     "Beta both betaBreach missionComplete",
     "Beta both betaBarrage missionComplete",
     "Beta both betaCryo missionComplete",
@@ -162,6 +170,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Gamma win murmuration",
     "Gamma win singularity",
     "Gamma win armillary",
+    "Gamma win aurora",
+    "Gamma win circuitTrace",
     "Gamma both gammaHorizon missionComplete",
     "Gamma both gammaArray missionComplete",
     "Gamma both gammaShatter missionComplete",
@@ -174,6 +184,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Salvage win murmuration",
     "Salvage win singularity",
     "Salvage win armillary",
+    "Salvage win aurora",
+    "Salvage win circuitTrace",
     "Salvage kill salvageNodes",
     "Salvage kill salvageCleared",
     "Salvage kill salvageFusion",
@@ -1085,4 +1097,67 @@ test("Armillary (designer 2026-11-27): three rings drawn, tumbling through the F
   expect(armillaryLook(800, 600, x, y, 0.5, 70)).toBeUndefined();
   expect(armillaryLook(800, 600, x, y, ARMILLARY.lock + 0.8, 70)).toBeUndefined();
   expect(sound.onArmillaryLock).toBeTypeOf("function");
+});
+
+/** A small hex board (Field pixels, pointy-topped, touching), as the Field lays sectors out. */
+function hexBoard(d = 70): [string, number, number][] {
+  const out: [string, number, number][] = [];
+  for (let q = -2; q <= 2; q++) for (let r = -2; r <= 2; r++) if (Math.abs(q + r) <= 2) out.push([`${q},${r}`, 400 + d * (r + q / 2), 300 - d * (Math.sqrt(3) / 2) * q]);
+  return out;
+}
+
+test("Aurora (designer 2026-11-28): three curtains fold down the Field, gather into one band and meet in a crown; worked out from the time alone", () => {
+  expect(AURORA.total).toBe(6.0);
+  // Each curtain starts above the Field and comes down; the first lowest.
+  for (let k = 0; k < 3; k++) {
+    expect(descent(k, AURORA.curtains[k]!)).toBe(0);
+    expect(curtainEdge(k, 400, AURORA.curtains[k]!, 800, 600)).toBeLessThan(0);
+  }
+  expect(curtainEdge(0, 400, AURORA.gather[0], 800, 600)).toBeGreaterThan(curtainEdge(2, 400, AURORA.gather[0], 800, 600));
+  // Gathered: one band across the middle.
+  for (let k = 0; k < 3; k++) {
+    const y = curtainEdge(k, 400, AURORA.gather[1], 800, 600);
+    expect(Math.abs(y - 0.56 * 600)).toBeLessThan(600 * 0.12);
+  }
+  // Climbed away off the top at the end.
+  expect(curtainEdge(1, 400, AURORA.out[1], 800, 600)).toBeLessThan(0);
+  expect(crownAt(800, 600)[1]).toBeLessThan(0.56 * 600);
+  // A sector under a lower edge glows and sways; nothing at the start.
+  const t = AURORA.curtains[0]! + 1.0;
+  const y = curtainEdge(0, 400, t, 800, 600);
+  expect(auroraTouch(800, 600, 70, 400, y, t)).toBeGreaterThan(0.9);
+  expect(auroraLook(800, 600, 400, y, t, 70)).toBeDefined();
+  expect(auroraLook(800, 600, 400, 300, 0.2, 70)).toBeUndefined();
+  expect(sound.onAuroraCrown).toBeTypeOf("function");
+});
+
+test("Circuit Trace (designer 2026-11-28): the traces run along every sector edge from one corner, each sector powers up as its last edge closes", () => {
+  expect(CIRCUIT.total).toBe(5.6);
+  const board = hexBoard();
+  const c = circuitOf(board, 800, 70);
+  // Neighbouring sectors share their corners and edges: 19 hexes have 54 corners and 72 edges.
+  expect(c.verts.length).toBe(54);
+  expect(c.edges.filter((e) => !e.jump).length).toBe(72);
+  expect(c.edges.some((e) => e.jump)).toBe(false);
+  // The entry is lit first, the farthest corner at the end of the run.
+  expect(c.at[c.entry]).toBe(CIRCUIT.run[0]);
+  expect(Math.max(...c.at)).toBeCloseTo(CIRCUIT.run[1], 6);
+  expect(c.verts[c.entry]![1]).toBe(Math.min(...c.verts.map((v) => v[1])));
+  // An edge is lit from whichever end comes first, and done when the traces meet.
+  c.edges.forEach((e, i) => {
+    expect(litAt(c, i, 0)).toBeCloseTo(Math.min(c.at[e.a]!, c.at[e.b]! + e.len / c.speed), 6);
+    expect(edgeDone(c, i)).toBeLessThanOrEqual(Math.max(c.at[e.a]!, c.at[e.b]!) + 1e-9);
+    expect(litAt(c, i, e.len / 2)).toBeLessThanOrEqual(edgeDone(c, i) + 1e-9);
+  });
+  // Every sector closes during the run, and its tile jolts then.
+  for (const s of c.sectors) {
+    expect(s.closes > CIRCUIT.run[0] && s.closes <= CIRCUIT.run[1] + 1e-9).toBe(true);
+    expect(circuitLook(s.closes, s.closes + 0.02, 70)!.dy).toBeLessThan(0);
+    expect(circuitLook(s.closes, s.closes - 0.1, 70)).toBeUndefined();
+  }
+  // Two parts that do not touch are joined by a jump.
+  const apart = circuitOf([["a", 100, 100], ["b", 170, 100], ["c", 600, 100]], 800, 70);
+  expect(apart.edges.filter((e) => e.jump).length).toBe(1);
+  expect(apart.at.every((x) => Number.isFinite(x))).toBe(true);
+  expect(sound.onCircuitLock).toBeTypeOf("function");
 });
