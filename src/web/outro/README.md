@@ -8,7 +8,7 @@ same Debrief card ("Campaign lost" / "Campaign conceded").
 There will be several outros, one planned per Company. Which Company gets which is the designer's
 choice, made at the very end of development (designer 2026-11-27): `OUTRO_OF_COMPANY` in `index.ts`
 is empty, so until then a won Campaign plays one of `VICTORY_POOL` at random for any Company
-(`pickVictoryOutro`: Terraformer 2.0, Surface Terraform, Orbital Claim, Homecoming, Star Chart;
+(`pickVictoryOutro`: Terraformer 2.0, Surface Terraform, Orbital Claim, Homecoming, Star Chart, Sunforge;
 Terraformer 1.0 is kept only to compare). `DEFAULT_OUTRO` is used only when nothing else fits.
 
 | Outro | What it is |
@@ -18,6 +18,7 @@ Terraformer 1.0 is kept only to compare). `DEFAULT_OUTRO` is used only when noth
 | `orbital` | Orbital Claim (designer 2026-11-19), in the random pool. No terraforming: a corporate-military claim. From low orbit over the night side of the intro's planet a beacon beam in the Company's colour climbs from the liberated sector into space; the camera rises along it as the Company's Flagship (a lit solid in the Company's outline from the Vessel screen) glides in and locks its belly clamps on the beam with a flash; twelve relay satellites snap into a lattice and a hexagonal territory grid sweeps over the curve of the ground, "ASSET SECURED"; a slow orbital drift while the Debrief slides in. About 11.5 seconds. |
 | `homecoming` | Homecoming (designer 2026-11-27), in the random pool. Generic (any Company: the Company's colours, a plain hull): by the Company's home world the Flagship drops out of its jump (flash, streak, ring of particles); 14 escorts peel in on particle trails and form an honour guard; one salute burst per mission won on a tracer from the Flagship; the station's 24 ring lights come on; the Flagship comes to rest at the docking arm, the clamps lock (8.9 s); the escorts peel away. About 11.6 seconds. |
 | `starchart` | Star Chart (designer 2026-11-27; made longer and bigger the same day: the longest victory film), in the random pool. Generic: a comet of the Company's light runs the Campaign's road and one star per mission won ignites with its tag, one companion per Threat column; streams draw the constellation and a star chart unfolds round it (rings, degrees, the Campaign's name); the stars pour their light into the middle and a new star is born (flash, rays, rings); the camera flies back through streaking stars onto a 3D spiral galaxy, the constellation marked on an arm; a wave of the Company's light crosses the galaxy and the core answers. About 21 seconds, Debrief at 18 s. |
+| `sunforge` | Sunforge (designer 2026-11-28: "spectacular ... Be ambitious"), in the random pool; the longest victory film and the only one in five acts. Generic: a blazing star, the Flagship in silhouette releases its construction swarm; the swarm builds a Goldberg shell of 362 hexagonal panels round the star, poles first, the light squeezed into beams through the last gaps; one keystone per mission won closes them (its tag beside it), total eclipse, two thrums in the dark; the seams ignite in the Company's colour pole to pole, polar jets erupt (white flash, shake, shock rings through the camera); the camera pulls back over the system, a beam lights one world per mission won and its orbit, a lattice of hexagons spreads across the system. About 27 seconds, Debrief at 23.5 s. |
 | `terraformer` | Terraformer 1.0, kept as it was to compare (System options only). Bay doors, one pylon per mission won falls through the air, each hit sends a shock wave over the ground and turns it into a lit sector in the Company's colours; the sun rises. About 11.5 seconds. |
 
 ## The loss outros (designer 2026-11-24)
@@ -75,10 +76,12 @@ surface/sky.ts               Surface: the cold sky, sun and moons, the dust-stor
 surface/scene.ts             Surface: the film: camera pan, layers far to near dissolved in the air, brutalist spires, ion plumes, vapour, water, dust, mist, rain, light shafts, lens flare, grain
 surface/telemetry.ts         Surface: the recon feed's readouts, worked out from the time alone
 OrbitalClaimOutro.tsx        Orbital Claim: the same page with the orbital film
-VictoryFilmOutro.tsx         Homecoming and Star Chart's page (the loss outros' page in the Company's colours)
-victory/timeline.ts          both films' seconds, the escorts, salutes, ring, stars, links, the constellation's shape
+VictoryFilmOutro.tsx         Homecoming, Star Chart and Sunforge's page (the loss outros' page in the Company's colours; any number of acts)
+victory/timeline.ts          the three films' seconds, the escorts, salutes, ring, stars, links, the constellation's shape; Sunforge's panels, keystones, jets, worlds
 victory/homecoming.ts        Homecoming: home world, station, the plain hull, jump, escorts, salute bursts, dock
 victory/starchart.ts         Star Chart: comet, stars and companions, links, star chart, new star, flight back, 3D galaxy, wave, marker
+victory/forgeShell.ts        Sunforge: the Goldberg shell (dual of a subdivided icosahedron), the locking order, the keystones, the worlds' orbits (pure numbers)
+victory/sunforge.ts          Sunforge: star, Flagship, swarm, panels in flight and locked, beams through the gaps, eclipse, ignition, jets, shock rings, the system, the lattice
 LossOutro.tsx                the two loss outros' page (Signal Lost, Withdrawal)
 loss/timeline.ts             both loss films' seconds, the random pick, the display's sectors, the craft
 loss/kit.ts                  light sprites, grain, vignette, where the picture's middle goes once the card is in
@@ -118,9 +121,11 @@ per spire; the far beams are silent), `playAtmosphereClear`, `playWaterFlow` and
 for Orbital Claim `playSkyBeamFire`, `playOrbitalLock`, `playGridSweep` and `playVictoryResolve`);
 fill them in when there are audio files. Homecoming's and Star Chart's hooks are wired to audio batch 4 names (`playJumpArrival`, `playEscortFlyby`,
 `playSaluteBurst`, `playDockingClamp`, `playStarIgnite`, `playConstellationLink`, `playStarChartUnfold`, `playStarChartNova`, `playStarChartAscend`, `playStarChartWave`).
+Sunforge's to audio batch 5 (`playSunforgeSwarm`, `playSunforgeShell`, `playSunforgeKeystone`, `playSunforgeEclipse`,
+`playSunforgeThrum`, `playSunforgeIgnite`, `playSunforgeJets`, `playSunforgeRelay`, `playSunforgeLattice`).
 The loss outros' hooks are already wired to audio batch 3
 names (`docs/audio-hooks.md`) and end with `playDefeatResolve` (`sfx-mission-lost`).
 
 To look at an outro without playing a Campaign: System options (the gear) > "Play Terraformer 2.0",
-"Play Surface Terraform", "Play Orbital Claim", "Play Homecoming", "Play Star Chart" or "Play Terraformer 1.0"; the loss outros "Play
+"Play Surface Terraform", "Play Orbital Claim", "Play Homecoming", "Play Star Chart", "Play Sunforge" or "Play Terraformer 1.0"; the loss outros "Play
 Signal Lost" and "Play Withdrawal" (sample numbers of a lost game).

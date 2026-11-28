@@ -1325,7 +1325,7 @@ if (runs("outro") && existsSync(`${out}/won-save.json`)) {
     await pg.goto(url);
     await briefAt(pg, "campaign");
     await pg.getByRole("button", { name: "System options" }).click();
-    const listed = await pg.locator("[data-action=outro-preview]").count(); // 6 victory outros + 2 loss outros (2026-11-27: Homecoming, Star Chart)
+    const listed = await pg.locator("[data-action=outro-preview]").count(); // 7 victory outros + 2 loss outros (2026-11-27: Homecoming, Star Chart; 2026-11-28: Sunforge)
     await pg.locator(`[data-action=outro-preview][data-outro-id=${version}]`).click();
     const shown = await pg.waitForSelector(`[data-outro=${version}]`, { timeout: 4000 }).then(() => true, () => false);
     const badge = await pg.locator(".ou-preview").count();
@@ -1348,7 +1348,7 @@ if (runs("outro") && existsSync(`${out}/won-save.json`)) {
     await pg.waitForSelector("[data-outro]", { state: "detached", timeout: 6000 }).catch(() => {});
     const back = (await pg.locator("[data-outro]").count()) === 0 && (await pg.locator('.brief[data-step=campaign]').count()) === 1;
     await pg.close();
-    if (!(shown && listed === 8 && badge === 1 && act === "1" && debrief && back)) fails.push(`preview of ${version} in ${style}: shown ${shown}, listed ${listed}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
+    if (!(shown && listed === 9 && badge === 1 && act === "1" && debrief && back)) fails.push(`preview of ${version} in ${style}: shown ${shown}, listed ${listed}, badge ${badge}, act ${act}, debrief ${debrief}, back ${back}`);
   }
   // Surface Terraform (designer 2026-11-19), from System options: at 1400 px the whole film untouched (four acts in order, three
   // spires firing, the Debrief by itself beside the valley at about 10.6 s); at 1100 px pictures of it on its way (nothing timed);

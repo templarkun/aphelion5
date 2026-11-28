@@ -103,8 +103,8 @@ export const CHART = {
   STILL_AT: 20.2,
 } as const;
 
-/** The two films' ids. */
-export const VICTORY_IDS = ["homecoming", "starchart"] as const;
+/** The films' ids. */
+export const VICTORY_IDS = ["homecoming", "starchart", "sunforge"] as const;
 export type VictoryId = (typeof VICTORY_IDS)[number];
 
 /** n moments evenly spread from a to b (one: a). */
@@ -232,4 +232,153 @@ export function cometAt(t: number, missions: number): { x: number; y: number } |
   const cr = (a: number, b: number, c: number, d: number): number =>
     0.5 * (2 * b + (-a + c) * u + (2 * a - 5 * b + 4 * c - d) * u * u + (-a + 3 * b - 3 * c + d) * u * u * u);
   return { x: cr(p0.x, p1.x, p2.x, p3.x), y: cr(p0.y, p1.y, p2.y, p3.y) };
+}
+
+// ---- Sunforge ----
+
+/**
+ * Sunforge (designer 2026-11-28: "Create a spectacular end-of-campaign victory outro animation. Put
+ * more effort into it. Be ambitious."): the Company builds a shell of hexagonal panels round the
+ * system's star and lights it. The longest victory film, in five acts.
+ *   Act 1  0.0 - 4.6    a blazing star (boiling surface, corona, prominences); the Flagship glides past
+ *                       in silhouette and releases its construction swarm, which streams to the star
+ *   Act 2  4.6 - 11.2   the swarm builds the shell: hexagonal panels fly in and lock, the poles first,
+ *                       the light squeezed into a narrowing belt round the equator, rays through the gaps
+ *   Act 3  11.2 - 15.0  one keystone per mission won closes the last gaps, each with its tag; the
+ *                       last light goes out: total eclipse; the shell thrums twice in the dark
+ *   Act 4  15.0 - 19.6  ignition: the seams light in the Company's colour pole to pole, then polar jets
+ *                       erupt, a white flash, the screen shakes, a shock ring runs out past the camera
+ *   Act 5  19.6 -       the camera pulls far back over the system: a beam to one world per mission won,
+ *                       the orbits light, a lattice of the Company's light spreads across the system; the Debrief
+ */
+export const FORGE = {
+  FILM_SECONDS: 27.0,
+  ACT_AT: [0, 4.6, 11.2, 15.0, 19.6] as const,
+  ACT_NAMES: ["Stellar approach", "Shell assembly", "Eclipse", "Ignition", "Dominion"] as const,
+  /** The Flagship comes in from the left at SHIP_AT; the swarm leaves it from SWARM_AT (sound hook), the last drone SWARM_SPAN later. */
+  SHIP_AT: 0.2,
+  SWARM_AT: 1.5,
+  SWARM_SPAN: 1.6,
+  /** How long a drone takes from the ship to its orbit round the star. */
+  SWARM_FLY: 1.5,
+  /** The shell's panels: the geodesic frequency (10 f^2 + 2 tiles: 12 pentagons, the rest hexagons). */
+  FREQ: 6,
+  /** The first panel locks at PANEL_AT (sound hook), the last ordinary one by PANEL_END; each flies PANEL_FLY to its place. */
+  PANEL_AT: 4.9,
+  PANEL_END: 10.8,
+  PANEL_FLY: 0.9,
+  /** One keystone per mission won closes the last gaps (sound hook, once each), from KEY_AT to KEY_END. */
+  KEY_AT: 11.5,
+  KEY_END: 12.9,
+  /** Total eclipse (sound hook); the shell thrums in the dark (sound hook, twice). */
+  DARK_AT: 13.2,
+  THRUM: [13.8, 14.45] as const,
+  /** The seams ignite from the north pole (sound hook) and the front reaches the south pole IGNITE_SPAN later. */
+  IGNITE_AT: 15.0,
+  IGNITE_SPAN: 1.2,
+  /** The polar jets erupt (sound hook): the white flash, the shake, the shock ring. */
+  JETS_AT: 16.6,
+  /** The shock ring runs out past the camera by RING_END. */
+  RING_END: 18.8,
+  /** The camera pulls far back from PULL_AT to PULL_END. */
+  PULL_AT: 18.9,
+  PULL_END: 22.8,
+  /** A beam from the shell reaches one world per mission won (sound hook, once each), from RELAY_AT to RELAY_END; each beam flies RELAY_FLY. */
+  RELAY_AT: 20.2,
+  RELAY_END: 22.4,
+  RELAY_FLY: 0.5,
+  /** The lattice of the Company's light spreads across the system (sound hook) until LATTICE_END. */
+  LATTICE_AT: 22.0,
+  LATTICE_END: 25.4,
+  /** The last chord (sound hook: playVictoryResolve), then the Debrief card. */
+  RESOLVE_AT: 22.9,
+  DEBRIEF_AT: 23.5,
+  /** The moment shown as one still picture with reduced motion or the Instant speed. */
+  STILL_AT: 26.0,
+} as const;
+
+/** Which of a film's acts plays at film time t (1 to the number of acts). */
+export function actAt(at: readonly number[], t: number): number {
+  let a = 1;
+  for (let i = 1; i < at.length; i++) if (t >= at[i]!) a = i + 1;
+  return a;
+}
+
+/** The number of tiles of the shell (a Goldberg sphere of FREQ). */
+export const FORGE_TILES = 10 * FORGE.FREQ * FORGE.FREQ + 2;
+/** How many keystones: one per mission won, at least one, at most 12 (the equator's room). */
+export function keystoneCount(missions: number): number {
+  return Math.max(1, Math.min(12, missions));
+}
+/** How many ordinary panels lock in Act 2 (the tiles less the keystones). */
+export function panelCount(missions: number): number {
+  return FORGE_TILES - keystoneCount(missions);
+}
+/** When the ordinary panel of rank k (0 = first, poles first) locks: quick at first, slowing to the equator. */
+export function panelLockAt(k: number, missions: number): number {
+  const m = panelCount(missions);
+  const u = m <= 1 ? 0 : k / (m - 1);
+  return FORGE.PANEL_AT + (FORGE.PANEL_END - FORGE.PANEL_AT) * Math.pow(u, 1.15);
+}
+/** How many ordinary panels have locked by film time t. */
+export function panelsBy(t: number, missions: number): number {
+  if (t < FORGE.PANEL_AT) return 0;
+  const m = panelCount(missions);
+  if (t >= FORGE.PANEL_END) return m;
+  const u = Math.pow((t - FORGE.PANEL_AT) / (FORGE.PANEL_END - FORGE.PANEL_AT), 1 / 1.15);
+  // The inverse of panelLockAt, checked against it so the count never disagrees with the drawing.
+  let k = Math.min(m, Math.floor(u * (m - 1)) + 1);
+  while (k > 0 && panelLockAt(k - 1, missions) > t) k--;
+  while (k < m && panelLockAt(k, missions) <= t) k++;
+  return k;
+}
+/** When each keystone locks: one per mission won. */
+export function keystoneTimes(missions: number): number[] {
+  return spread(keystoneCount(missions), FORGE.KEY_AT, FORGE.KEY_END);
+}
+/** How many keystones have locked by film time t. */
+export function keysBy(t: number, missions: number): number {
+  return keystoneTimes(missions).filter((k) => t >= k).length;
+}
+/** When the seams of a tile at height y (-1 south pole .. 1 north pole, on the unit sphere) ignite. */
+export function igniteAt(y: number): number {
+  return FORGE.IGNITE_AT + ((1 - Math.max(-1, Math.min(1, y))) / 2) * FORGE.IGNITE_SPAN;
+}
+/** How far the polar jets reach, in shell radii (0 before JETS_AT), fast at first. */
+export function jetLength(t: number): number {
+  if (t < FORGE.JETS_AT) return 0;
+  return 40 * (1 - Math.exp(-(t - FORGE.JETS_AT) * 1.6));
+}
+/** The shock ring's radius in shell radii (0 before JETS_AT); it passes the camera (about 3.4) within a second. */
+export function shockRadius(t: number): number {
+  if (t < FORGE.JETS_AT) return 0;
+  const u = Math.min(1, (t - FORGE.JETS_AT) / (FORGE.RING_END - FORGE.JETS_AT));
+  return 1.1 + 14 * (1 - Math.pow(1 - u, 2.2));
+}
+/** How far the camera has pulled back, 0 (close on the shell) to 1 (the whole system). */
+export function forgePull(t: number): number {
+  const u = Math.min(1, Math.max(0, (t - FORGE.PULL_AT) / (FORGE.PULL_END - FORGE.PULL_AT)));
+  return u * u * (3 - 2 * u);
+}
+/** How many worlds: one per mission won, at least one, at most 10. */
+export function worldCount(missions: number): number {
+  return Math.max(1, Math.min(10, missions));
+}
+/** When the beam leaves the shell for world i; it arrives RELAY_FLY later. */
+export function relayTimes(missions: number): number[] {
+  return spread(worldCount(missions), FORGE.RELAY_AT, FORGE.RELAY_END - FORGE.RELAY_FLY);
+}
+/** How many worlds the beams have reached by film time t. */
+export function relaysBy(t: number, missions: number): number {
+  return relayTimes(missions).filter((r) => t >= r + FORGE.RELAY_FLY).length;
+}
+/** How far the lattice has spread across the system, 0..1. */
+export function latticeReach(t: number): number {
+  const u = Math.min(1, Math.max(0, (t - FORGE.LATTICE_AT) / (FORGE.LATTICE_END - FORGE.LATTICE_AT)));
+  return 1 - (1 - u) * (1 - u);
+}
+/** The shake of the picture at film time t, 0..1: a sharp kick at the jets, dying away. */
+export function forgeShake(t: number): number {
+  if (t < FORGE.JETS_AT) return t >= FORGE.THRUM[0] && t < FORGE.THRUM[0] + 0.3 ? 0.12 * (1 - (t - FORGE.THRUM[0]) / 0.3) : t >= FORGE.THRUM[1] && t < FORGE.THRUM[1] + 0.3 ? 0.18 * (1 - (t - FORGE.THRUM[1]) / 0.3) : 0;
+  return Math.exp(-(t - FORGE.JETS_AT) * 2.2);
 }

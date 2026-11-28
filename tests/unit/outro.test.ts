@@ -7,6 +7,7 @@ import { emptyProfile } from "../../src/engine/state.js";
 import { DEFAULT_OUTRO, LOSS_OUTROS, lossOutroFor, OUTROS, outroFor, VICTORY_POOL } from "../../src/web/outro/index.js";
 import * as LS from "../../src/web/outro/loss/timeline.js";
 import * as VT from "../../src/web/outro/victory/timeline.js";
+import { buildShell, worldOf } from "../../src/web/outro/victory/forgeShell.js";
 import { pickLossOutro } from "../../src/web/outro/loss/timeline.js";
 import { newEvents, type GameEvent } from "../../src/engine/events.js";
 import { campaignStatsOf, overloadsOf, sampleStats } from "../../src/web/outro/stats.js";
@@ -282,7 +283,9 @@ test("the loss outros call their own sound hooks; the last chord is batch 2's mi
 
 // CHANGED 2026-11-27 (designer): Homecoming and Star Chart added to System options.
 test("every Company gets an outro (Terraformer 2.0 until the designer deals them out; Surface Terraform, Orbital Claim, Homecoming, Star Chart and 1.0 in System options) and colours", () => {
-  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "surface", "orbital", "homecoming", "starchart", "terraformer"]);
+  // CHANGED 2026-11-28 (designer): Sunforge added, in the random pool.
+  expect(OUTROS.map((o) => o.id)).toEqual(["terraformer2", "surface", "orbital", "homecoming", "starchart", "sunforge", "terraformer"]);
+  expect(outroFor("V1", "sunforge").name).toBe("Sunforge");
   expect(outroFor("V1", "homecoming").name).toBe("Homecoming");
   expect(outroFor("V2", "starchart").name).toBe("Star Chart");
   expect(outroFor("V2", "surface").name).toBe("Surface Terraform");
@@ -290,9 +293,10 @@ test("every Company gets an outro (Terraformer 2.0 until the designer deals them
   expect(DEFAULT_OUTRO).toBe("terraformer2");
   expect(outroFor("V1", "terraformer").id).toBe("terraformer");
   // CHANGED 2026-11-27 (designer): a won game picks one of VICTORY_POOL at random, for any Company (1.0 left out).
-  expect([...VICTORY_POOL]).toEqual(["terraformer2", "surface", "orbital", "homecoming", "starchart"]);
+  expect([...VICTORY_POOL]).toEqual(["terraformer2", "surface", "orbital", "homecoming", "starchart", "sunforge"]);
   expect(outroFor("V1", "nonsense", 0).id).toBe("terraformer2");
-  expect(outroFor("V1", undefined, 0.99).id).toBe("starchart");
+  expect(outroFor("V1", undefined, 0.8).id).toBe("starchart");
+  expect(outroFor("V1", undefined, 0.99).id).toBe("sunforge");
   for (const c of ["V1", "V2", "V9"]) {
     const seen = new Set(Array.from({ length: 300 }, () => outroFor(c).id));
     expect([...seen].sort()).toEqual([...VICTORY_POOL].sort());
@@ -594,4 +598,111 @@ test("Homecoming and Star Chart call their own sound hooks (audio batch 4)", () 
   expect(() => sound.playStarIgnite(2, 3)).not.toThrow();
   expect(sound.playSaluteBurst.toString()).toMatch(/salute-burst/);
   expect(sound.playStarIgnite.toString()).toMatch(/star-ignite/);
+});
+
+// Sunforge (designer 2026-11-28: "Create a spectacular end-of-campaign victory outro animation ... Be ambitious.").
+test("Sunforge: the longest victory film, in five acts; the swarm in act 1, the shell in act 2, the keystones and the eclipse in act 3, ignition and the jets in act 4, the worlds and the lattice in act 5", () => {
+  const F = VT.FORGE;
+  expect(F.ACT_AT.length).toBe(5);
+  expect(F.ACT_NAMES.length).toBe(5);
+  for (const o of [VT.HOME, VT.CHART]) expect(F.FILM_SECONDS).toBeGreaterThan(o.FILM_SECONDS + 4);
+  const act = (t: number) => VT.actAt(F.ACT_AT, t);
+  expect([0, F.SWARM_AT, F.PANEL_AT, F.PANEL_END, F.KEY_AT, F.DARK_AT, ...F.THRUM, F.IGNITE_AT, F.JETS_AT, F.RELAY_AT, F.LATTICE_AT, F.FILM_SECONDS].map(act)).toEqual([1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5, 5]);
+  // Act 1's swarm has left the ship and reached its orbit before the panels start.
+  expect(F.SWARM_AT + F.SWARM_SPAN + F.SWARM_FLY).toBeLessThan(F.PANEL_AT);
+  for (const n of [1, 2, 5, 7, 12, 15]) {
+    const keys = VT.keystoneTimes(n);
+    expect(keys.length).toBe(Math.min(12, n));
+    for (const k of keys) expect(act(k)).toBe(3);
+    expect(VT.panelsBy(F.PANEL_AT - 0.01, n)).toBe(0);
+    expect(VT.panelsBy(F.PANEL_END, n)).toBe(VT.panelCount(n));
+    expect(VT.panelCount(n) + VT.keystoneCount(n)).toBe(VT.FORGE_TILES);
+    // The count shown always agrees with each panel's own lock time.
+    for (let t = F.PANEL_AT; t <= F.PANEL_END; t += 0.137) {
+      const c = VT.panelsBy(t, n);
+      if (c > 0) expect(VT.panelLockAt(c - 1, n)).toBeLessThanOrEqual(t);
+      if (c < VT.panelCount(n)) expect(VT.panelLockAt(c, n)).toBeGreaterThan(t);
+    }
+    expect(VT.keysBy(F.DARK_AT, n)).toBe(keys.length);
+    const relays = VT.relayTimes(n);
+    expect(relays.length).toBe(Math.min(10, n));
+    for (const r of relays) {
+      expect(act(r)).toBe(5);
+      expect(r + F.RELAY_FLY).toBeLessThanOrEqual(F.RELAY_END + 1e-9);
+    }
+    expect(VT.relaysBy(F.RELAY_END, n)).toBe(relays.length);
+  }
+  // The eclipse comes after the last keystone; the seams light pole to pole before the jets.
+  expect(F.KEY_END).toBeLessThan(F.DARK_AT);
+  expect(VT.igniteAt(1)).toBe(F.IGNITE_AT);
+  expect(VT.igniteAt(-1)).toBeCloseTo(F.IGNITE_AT + F.IGNITE_SPAN, 9);
+  expect(VT.igniteAt(-1)).toBeLessThan(F.JETS_AT);
+  expect(VT.jetLength(F.JETS_AT - 0.01)).toBe(0);
+  expect(VT.forgeShake(F.JETS_AT)).toBe(1);
+  expect(VT.forgeShake(F.ACT_AT[4])).toBeLessThan(0.05);
+  // The shock ring passes the camera (about 3.4 shell radii away) within a second.
+  expect(VT.shockRadius(F.JETS_AT + 1)).toBeGreaterThan(4);
+  expect(VT.forgePull(F.PULL_AT)).toBe(0);
+  expect(VT.forgePull(F.PULL_END)).toBe(1);
+  expect(VT.latticeReach(F.LATTICE_END)).toBe(1);
+  for (let t = 0; t < F.FILM_SECONDS; t += 0.2) {
+    for (const f of [VT.jetLength, VT.shockRadius, VT.forgePull, VT.latticeReach]) expect(f(t + 0.2)).toBeGreaterThanOrEqual(f(t));
+    expect(VT.panelsBy(t + 0.2, 7)).toBeGreaterThanOrEqual(VT.panelsBy(t, 7));
+  }
+  expect(F.DEBRIEF_AT).toBeGreaterThan(F.RESOLVE_AT);
+  expect(F.DEBRIEF_AT).toBeLessThan(F.FILM_SECONDS);
+  expect(F.STILL_AT).toBeGreaterThan(F.LATTICE_END);
+  expect(F.STILL_AT).toBeLessThan(F.FILM_SECONDS);
+});
+
+test("Sunforge: the shell is 362 panels (12 pentagons) covering the whole sphere; the poles lock first, the equator last; one keystone per mission won round the equator", () => {
+  for (const n of [1, 3, 7, 12]) {
+    const tiles = buildShell(n);
+    expect(tiles.length).toBe(VT.FORGE_TILES);
+    expect(tiles.length).toBe(362);
+    expect(tiles.filter((t) => t.corners.length === 5).length).toBe(12);
+    expect(tiles.filter((t) => t.corners.length === 6).length).toBe(350);
+    // The panels tile the sphere: their areas (fans of spherical triangles) add up to 4 pi.
+    let area = 0;
+    for (const t of tiles) {
+      for (let k = 0; k < t.corners.length; k++) {
+        const a = t.c;
+        const b = t.corners[k]!;
+        const c = t.corners[(k + 1) % t.corners.length]!;
+        const triple = a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0]);
+        const d = 1 + a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + b[0] * c[0] + b[1] * c[1] + b[2] * c[2] + c[0] * a[0] + c[1] * a[1] + c[2] * a[2];
+        area += 2 * Math.abs(Math.atan2(triple, d));
+      }
+    }
+    expect(area).toBeCloseTo(4 * Math.PI, 6);
+    const keys = tiles.filter((t) => t.key >= 0);
+    expect(keys.length).toBe(VT.keystoneCount(n));
+    expect(new Set(keys.map((t) => t.key)).size).toBe(keys.length);
+    for (const k of keys) {
+      expect(Math.abs(k.c[1])).toBeLessThan(0.2);
+      expect(k.rank).toBe(-1);
+    }
+    const ranked = tiles.filter((t) => t.key < 0).sort((a, b) => a.rank - b.rank);
+    expect(ranked.map((t) => t.rank)).toEqual(ranked.map((_, i) => i));
+    const tenth = Math.floor(ranked.length / 10);
+    const mean = (xs: typeof ranked) => xs.reduce((s, t) => s + Math.abs(t.c[1]), 0) / xs.length;
+    expect(mean(ranked.slice(0, tenth))).toBeGreaterThan(0.85);
+    expect(mean(ranked.slice(-tenth))).toBeLessThan(0.2);
+  }
+  // One world per mission won (at most 10), each on its own orbit, outside the shell, the same at the same moment.
+  for (const n of [1, 7, 10]) {
+    const orbits = Array.from({ length: VT.worldCount(n) }, (_, i) => worldOf(i, n, 21).orbit);
+    for (let i = 1; i < orbits.length; i++) expect(orbits[i]!).toBeGreaterThan(orbits[i - 1]!);
+    for (const o of orbits) expect(o).toBeGreaterThan(3);
+  }
+  expect(worldOf(2, 7, 21.5)).toEqual(worldOf(2, 7, 21.5));
+});
+
+test("Sunforge calls its own sound hooks (audio batch 5)", () => {
+  for (const f of [sound.playSunforgeSwarm, sound.playSunforgeShell, sound.playSunforgeEclipse, sound.playSunforgeIgnite, sound.playSunforgeJets, sound.playSunforgeLattice]) expect(() => f()).not.toThrow();
+  expect(() => sound.playSunforgeKeystone(0, 7)).not.toThrow();
+  expect(() => sound.playSunforgeThrum(1)).not.toThrow();
+  expect(() => sound.playSunforgeRelay(3, 7)).not.toThrow();
+  expect(sound.playSunforgeJets.toString()).toMatch(/forge-jets/);
+  expect(sound.playSunforgeKeystone.toString()).toMatch(/forge-keystone/);
 });

@@ -1,4 +1,4 @@
-// Browser check of Homecoming and Star Chart (designer 2026-11-27), two more victory outros, previewed
+// Browser check of Homecoming and Star Chart (designer 2026-11-27) and Sunforge (2026-11-28), victory outros, previewed
 // from System options with sample numbers (7 missions won): four acts in order, what each act shows
 // (14 escorts in formation, one salute burst per mission, the clamps locked; one star per mission, the
 // links, the star chart, the new star, the flight back, the wave across the galaxy; 2026-11-27 longer), then the Debrief of a won game and back to the Command Deck. At 1400 px the film
@@ -25,9 +25,15 @@ const attr = (pg, k) => pg.locator("[data-outro]").getAttribute(k).catch(() => n
 const DONE = {
   homecoming: { "data-escorts": "14", "data-bursts": "7", "data-ring": "24", "data-docked": "1" },
   starchart: { "data-stars": "7", "data-links": "6", "data-chart": "1", "data-nova": "1", "data-ascended": "1", "data-wave": "1" },
+  // Sunforge (designer 2026-11-28): five acts, the whole shell, one keystone and one world per mission won.
+  sunforge: { "data-panels": "362", "data-keys": "7", "data-dark": "1", "data-ignited": "1", "data-jets": "1", "data-relays": "7", "data-lattice": "1" },
 };
+/** The acts each film shows, in order. */
+const ACTS = { homecoming: "1234", starchart: "1234", sunforge: "12345" };
+/** How long after the Debrief comes in the film still has something to finish (ms). */
+const AFTER = { homecoming: 1300, starchart: 1300, sunforge: 3200 };
 /** Pictures on the way at 1400 px (seconds of film). */
-const SHOTS = { homecoming: [1.0, 4.6, 7.4, 10.4], starchart: [2.6, 6.4, 8.9, 10.6, 12.6, 15.4, 16.8] };
+const SHOTS = { homecoming: [1.0, 4.6, 7.4, 10.4], starchart: [2.6, 6.4, 8.9, 10.6, 12.6, 15.4, 16.8], sunforge: [3.0, 7.5, 10.5, 12.4, 14.0, 15.7, 17.0, 18.2, 21.5] };
 
 export async function victoryCheck(browser, url, out) {
   const fails = [];
@@ -57,13 +63,13 @@ export async function victoryCheck(browser, url, out) {
         }
       }
       await pg.waitForSelector("[data-outro][data-phase=debrief]", { timeout: 14000 }).catch(() => {});
-      await pg.waitForTimeout(1300);
+      await pg.waitForTimeout(AFTER[id]);
       const acts = await attr(pg, "data-acts");
       const card = await pg.locator(".ou-card.in").count();
       const score = await pg.locator(".ou-score-n").getAttribute("data-score").catch(() => null);
       await pg.screenshot({ path: `${out}/ui-${id}-end${w < 600 ? "-phone" : ""}.png` });
       if (w >= 600) {
-        if (acts !== "1234") fails.push(`${id} ${w}: acts ${acts}`);
+        if (acts !== ACTS[id]) fails.push(`${id} ${w}: acts ${acts}`);
         for (const [k, v] of Object.entries(DONE[id])) {
           const got = await attr(pg, k);
           if (got !== v) fails.push(`${id} ${w}: ${k} ${got} (want ${v})`);
@@ -84,7 +90,8 @@ export async function victoryCheck(browser, url, out) {
     await pg.waitForTimeout(900);
     const phase = await attr(pg, "data-phase");
     const act = await attr(pg, "data-act");
-    if (phase !== "debrief" || act !== "4") fails.push(`${id} reduced motion: phase ${phase} act ${act}`);
+    const lastAct = String(ACTS[id].length);
+    if (phase !== "debrief" || act !== lastAct) fails.push(`${id} reduced motion: phase ${phase} act ${act}`);
     await pg.screenshot({ path: `${out}/ui-${id}-still.png` });
     await pg.close();
   }

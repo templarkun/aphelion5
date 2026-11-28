@@ -12,7 +12,7 @@ import { TerraformerVictoryOutro2 } from "./TerraformerVictoryOutro2.0.js";
 import { SurfaceTerraformOutro } from "./SurfaceTerraformOutro.js";
 import { OrbitalClaimOutro } from "./OrbitalClaimOutro.js";
 import { SignalLostOutro, WithdrawalOutro } from "./LossOutro.js";
-import { HomecomingOutro, StarChartOutro } from "./VictoryFilmOutro.js";
+import { HomecomingOutro, StarChartOutro, SunforgeOutro } from "./VictoryFilmOutro.js";
 import { pickLossOutro } from "./loss/timeline.js";
 import type { OutroDef } from "./types.js";
 
@@ -53,6 +53,13 @@ export const OUTROS: OutroDef[] = [
     Component: StarChartOutro,
   },
   {
+    // Designer 2026-11-28: "a spectacular end-of-campaign victory outro ... Be ambitious." The longest, in five acts.
+    id: "sunforge",
+    name: "Sunforge",
+    note: "The Company seals the system's star in a shell of hexagonal panels: the swarm builds it, one keystone per mission won closes the last gap, total eclipse; the seams ignite, polar jets erupt, and the Company's light spreads across the whole system.",
+    Component: SunforgeOutro,
+  },
+  {
     // Kept as it was for comparison (designer 2026-11-17: "leave this version in the menu for me to see").
     id: "terraformer",
     name: "Terraformer 1.0",
@@ -67,9 +74,9 @@ export const DEFAULT_OUTRO = "terraformer2";
 /**
  * A won Campaign plays one of these, picked at random each time, for any Company (designer 2026-11-27:
  * "leave them as a random ending for any of the company. I will assign them in the very end of
- * development"). Terraformer 1.0 is left out: it is kept only to compare with 2.0 (System options).
+ * development"; Sunforge added 2026-11-28). Terraformer 1.0 is left out: it is kept only to compare with 2.0 (System options).
  */
-export const VICTORY_POOL = ["terraformer2", "surface", "orbital", "homecoming", "starchart"] as const;
+export const VICTORY_POOL = ["terraformer2", "surface", "orbital", "homecoming", "starchart", "sunforge"] as const;
 
 /** Company id -> outro id. THE DESIGNER'S CHOICE, deferred to the end of development (2026-11-27): empty, so every Company gets one from VICTORY_POOL at random. */
 export const OUTRO_OF_COMPANY: Record<string, string> = {};

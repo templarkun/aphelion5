@@ -173,6 +173,42 @@ export function playStarChartNova(): void {
 export function playStarChartWave(): void {
   sfx("galaxy-wave");
 }
+/** Sunforge, Act 1 (designer 2026-11-28): the Flagship's bay opens and the construction swarm streams out to the star. */
+export function playSunforgeSwarm(): void {
+  sfx("forge-swarm");
+}
+/** Sunforge, Act 2: the shell's panels start flying in and locking (one long sound for the whole assembly). */
+export function playSunforgeShell(): void {
+  sfx("forge-shell");
+}
+/** Sunforge, Act 3: one keystone per mission won locks into the last gaps (index of of). */
+export function playSunforgeKeystone(_index: number, _of: number): void {
+  sfx("forge-keystone");
+}
+/** Sunforge, Act 3: the last light goes out: total eclipse. */
+export function playSunforgeEclipse(): void {
+  sfx("forge-eclipse");
+}
+/** Sunforge, Act 3: the shell thrums in the dark (twice: index 0, 1). */
+export function playSunforgeThrum(_index: number): void {
+  sfx("forge-thrum");
+}
+/** Sunforge, Act 4: the seams ignite in the Company's colour from pole to pole. */
+export function playSunforgeIgnite(): void {
+  sfx("forge-ignite");
+}
+/** Sunforge, Act 4: the polar jets erupt (white flash, shake, the shock ring). The film's big moment. */
+export function playSunforgeJets(): void {
+  sfx("forge-jets");
+}
+/** Sunforge, Act 5: a beam from the shell reaches one world per mission won (index of of). */
+export function playSunforgeRelay(_index: number, _of: number): void {
+  sfx("forge-relay");
+}
+/** Sunforge, Act 5: the lattice of the Company's light spreads across the system. */
+export function playSunforgeLattice(): void {
+  sfx("forge-lattice");
+}
 /**
  * Mission celebrations (designer 2026-11-20, src/web/celebrate/). The kill, Alpha Down: the last
  * required Omega unit is destroyed.

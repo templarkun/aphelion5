@@ -125,6 +125,22 @@ A lost or conceded game plays one of two films at random, **Signal Lost** (the t
 | 9 | `sfx-star-nova` | Star Chart, Act 3: every star pours its light into the middle and a new star is born (white flash, rays, shock rings) (added 2026-11-27) | Free, about 2.5 s | The birth of a star: a short inhaling rise that bursts into a huge bright, warm boom with a ringing crystalline shimmer and a long glowing tail. Triumphant, not violent. |
 | 10 | `sfx-galaxy-wave` | Star Chart, Act 4: a wave of the Company's light crosses the whole galaxy; the galaxy's core answers with a flare (added 2026-11-27) | Free, about 3 s | A wave of light sweeping across a galaxy: a wide airy whoosh that spreads outward with a sparkling shimmer, then a deep soft resonant swell as the core answers. Majestic, final. |
 
+## Batch 5: Sunforge, the sixth victory outro (designer 2026-11-28)
+
+**Sunforge** (about 27 s, five acts): the Company seals the system's star in a shell of hexagonal panels, one keystone per mission won closes the last gap, total eclipse, the shell ignites, polar jets erupt, and the Company's light spreads across the system. Already hooked in (`briefing/soundHooks.ts`): each plays as soon as its file is uploaded. It ends on `playVictoryResolve`, the victory outros' shared last chord. Same rules as the batches before; add the common style to each prompt. The quiet beat in the eclipse (13.2-15.0 s) is meant to be nearly silent, so the jets hit harder. Look at it in System options > "Play Sunforge".
+
+| # | File name | When it plays | Length | Prompt |
+|---|---|---|---|---|
+| 1 | `sfx-forge-swarm` | Act 1 (1.5 s): the Flagship's bay opens and a swarm of construction drones streams out to the star | Free, about 3 s | A swarm of hundreds of tiny construction drones launching: a rising insect-like electronic buzz and flutter, thousands of soft whirs blending into one moving cloud that pans away. |
+| 2 | `sfx-forge-shell` | Act 2 (4.9 s): panels fly in and lock round the star, hundreds of them, for about 6 s | Free, about 6 s | A huge structure being assembled in space: a steady rhythm of metallic locks and clanks at many distances, welding hisses and sparks, under a low rising drone. Busy, mechanical, growing. |
+| 3 | `sfx-forge-keystone` | Act 3: one heavy keystone locks into the last gaps (once per mission won, up to 12 in a row) | Fixed, about 0.6 s | A massive keystone panel locking into place: a deep, heavy metal slam with a short resonant ring, like a vault door closing, slightly reverberant. |
+| 4 | `sfx-forge-eclipse` | Act 3 (13.2 s): the last light goes out: total eclipse | Free, about 1.6 s | The sound of all light going out: a soft descending whoosh that sinks into a deep low hum, then near silence. Tense, awed. |
+| 5 | `sfx-forge-thrum` | Act 3 (13.8 s and 14.45 s): the dark shell thrums twice (two in a row) | Fixed, about 0.5 s | A deep heartbeat-like pulse of a giant machine: a sub-bass thump with a faint electric shimmer, felt more than heard. |
+| 6 | `sfx-forge-ignite` | Act 4 (15.0 s): the shell's seams light from pole to pole in 1.2 s | Free, about 1.6 s | A giant energy grid igniting in a sweeping wave: a fast rising electric crackle that rolls across, with a bright humming chord building underneath. |
+| 7 | `sfx-forge-jets` | Act 4 (16.6 s): polar jets erupt, white flash, shake, shock ring (the film's big moment) | Free, about 3.5 s | A colossal stellar eruption: a huge deep boom with a blinding bright burst, a roaring rush of plasma jets and a wide shockwave sweeping past, then a long rumbling tail. Epic, overwhelming, triumphant. |
+| 8 | `sfx-forge-relay` | Act 5: a beam reaches one world (once per mission won, up to 10 in a row) | Fixed, about 0.6 s | An energy beam reaching a distant planet: a quick bright zap that travels away and lands with a soft chime-like ping. |
+| 9 | `sfx-forge-lattice` | Act 5 (22.0 s): a lattice of light spreads across the whole system | Free, about 3 s | A network of light spreading across a star system: a wide airy shimmer expanding outward with soft crystalline chimes, settling into a calm, majestic pad. |
+
 ## Already in place for later
 
 The briefing, intro, outro films and mission celebrations already have empty sound places in `src/web/briefing/soundHooks.ts` (about 60 of them: hover, chips, Threat level, engine hum, every celebration act). They are the next batches. The Field sounds above get the same kind of place when the files arrive.

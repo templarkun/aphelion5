@@ -12,6 +12,12 @@
  * setting, one still picture with reduced motion or the Instant speed, fewer particles on a slow
  * machine. Generic: the Company lends its name and colours (no Company outline), so any Company can
  * have them. Sound hooks (briefing/soundHooks.ts) at the right moments. Screen only.
+ *
+ * **Sunforge** (victory/sunforge.ts; designer 2026-11-28: "spectacular ... Be ambitious"), the longest
+ * (about 27 s) and the only one in five acts: the swarm seals the system's star in a shell of hexagonal
+ * panels, one keystone per mission won closes the last gap, total eclipse, the shell ignites and fires
+ * polar jets, and the Company's light spreads across the system. The page shows as many act marks as
+ * the film has acts.
  */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement } from "react";
@@ -28,16 +34,52 @@ import {
   playStarChartUnfold,
   playStarChartWave,
   playStarIgnite,
+  playSunforgeEclipse,
+  playSunforgeIgnite,
+  playSunforgeJets,
+  playSunforgeKeystone,
+  playSunforgeLattice,
+  playSunforgeRelay,
+  playSunforgeShell,
+  playSunforgeSwarm,
+  playSunforgeThrum,
   playVictoryResolve,
 } from "../briefing/soundHooks.js";
 import { Debrief } from "./Debrief.js";
 import { SkipHint, useTwoTapSkip } from "./SkipHint.js";
 import type { CampaignStats, CompanyTheme, OutroProps } from "./types.js";
 import type { FreeArea, LossScene } from "./loss/kit.js";
-import { actOf, type ActNo } from "./loss/timeline.js";
 import { createHomecomingScene } from "./victory/homecoming.js";
 import { createStarChartScene } from "./victory/starchart.js";
-import { burstsBy, CHART, coreFlareAt, waveRadius, escortsFormed, HOME, linksBy, linkTimes, ringLit, saluteTimes, starsLit, starTimes, type VictoryId } from "./victory/timeline.js";
+import { createSunforgeScene } from "./victory/sunforge.js";
+import {
+  actAt,
+  burstsBy,
+  CHART,
+  coreFlareAt,
+  waveRadius,
+  escortsFormed,
+  FORGE,
+  FORGE_TILES,
+  HOME,
+  keysBy,
+  keystoneCount,
+  keystoneTimes,
+  linksBy,
+  linkTimes,
+  panelCount,
+  panelsBy,
+  relaysBy,
+  relayTimes,
+  ringLit,
+  saluteTimes,
+  starsLit,
+  starTimes,
+  worldCount,
+  latticeReach,
+  igniteAt,
+  type VictoryId,
+} from "./victory/timeline.js";
 
 /** The canvas is never drawn with more points than this. */
 const MAX_PIXELS = 3.2e6;
@@ -63,7 +105,7 @@ interface VictoryFilm {
   STILL_AT: number;
   cues: (stats: CampaignStats) => Cue[];
   scene: (theme: CompanyTheme, stats: CampaignStats) => LossScene;
-  caption: (t: number, act: ActNo, stats: CampaignStats) => string;
+  caption: (t: number, act: number, stats: CampaignStats) => string;
   /** Numbers on the page for the browser check. */
   marks: (t: number, stats: CampaignStats) => Record<string, number>;
 }
@@ -126,6 +168,43 @@ const FILMS: Record<VictoryId, VictoryFilm> = {
       wave: t >= CHART.WAVE_END ? 1 : 0,
     }),
   },
+  sunforge: {
+    id: "sunforge",
+    ...FORGE,
+    cues: (s) => [
+      { at: FORGE.SWARM_AT, play: playSunforgeSwarm },
+      { at: FORGE.PANEL_AT, play: playSunforgeShell },
+      ...keystoneTimes(won(s)).map((at, i, all) => ({ at, play: () => playSunforgeKeystone(i, all.length) })),
+      { at: FORGE.DARK_AT, play: playSunforgeEclipse },
+      ...FORGE.THRUM.map((at, i) => ({ at, play: () => playSunforgeThrum(i) })),
+      { at: FORGE.IGNITE_AT, play: playSunforgeIgnite },
+      { at: FORGE.JETS_AT, play: playSunforgeJets },
+      ...relayTimes(won(s)).map((at, i, all) => ({ at, play: () => playSunforgeRelay(i, all.length) })),
+      { at: FORGE.LATTICE_AT, play: playSunforgeLattice },
+      { at: FORGE.RESOLVE_AT, keep: true, play: playVictoryResolve },
+    ],
+    scene: (theme, stats) => createSunforgeScene({ theme, stats }),
+    caption: (t, act, s) => {
+      if (act === 1) return t < FORGE.SWARM_AT ? "Approaching the system's star" : "Construction swarm released";
+      if (act === 2) return `Shell segments locked · ${panelsBy(t, won(s))} of ${panelCount(won(s))}`;
+      if (act === 3) {
+        if (t < FORGE.DARK_AT) return `Keystones · ${keysBy(t, won(s))} of ${keystoneCount(won(s))} missions`;
+        return t < FORGE.THRUM[0] ? "Total eclipse" : "Core pressure rising";
+      }
+      if (act === 4) return t < FORGE.JETS_AT ? "Ignition" : "Sunforge online";
+      return relaysBy(t, won(s)) < worldCount(won(s)) ? `Power relays · ${relaysBy(t, won(s))} of ${worldCount(won(s))} worlds` : `${s.campaignName} · the system is yours`;
+    },
+    marks: (t, s) => ({
+      panels: panelsBy(t, won(s)) + keysBy(t, won(s)),
+      tiles: FORGE_TILES,
+      keys: keysBy(t, won(s)),
+      dark: t >= FORGE.DARK_AT ? 1 : 0,
+      ignited: t >= igniteAt(-1) ? 1 : 0,
+      jets: t >= FORGE.JETS_AT ? 1 : 0,
+      relays: relaysBy(t, won(s)),
+      lattice: latticeReach(t) >= 1 ? 1 : 0,
+    }),
+  },
 };
 
 function VictoryFilmOutro({ film, companyTheme, campaignStats, onComplete }: OutroProps & { film: VictoryFilm }): ReactElement {
@@ -133,9 +212,10 @@ function VictoryFilmOutro({ film, companyTheme, campaignStats, onComplete }: Out
   const still = useRef(isStill() || speedFactor() === 0).current;
   const speed = useRef(speedFactor() || 1).current;
   const [phase, setPhase] = useState<"film" | "debrief">(still ? "debrief" : "film");
-  const [act, setAct] = useState<ActNo>(still ? 4 : 1);
+  const last = film.ACT_AT.length;
+  const [act, setAct] = useState<number>(still ? last : 1);
   const [acts, setActs] = useState("");
-  const [sub, setSub] = useState(() => film.caption(still ? film.STILL_AT : 0, still ? 4 : 1, stats));
+  const [sub, setSub] = useState(() => film.caption(still ? film.STILL_AT : 0, still ? film.ACT_AT.length : 1, stats));
   const [marks, setMarks] = useState<Record<string, number>>(() => film.marks(still ? film.STILL_AT : 0, stats));
   const [veil, setVeil] = useState(0);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -211,7 +291,7 @@ function VictoryFilmOutro({ film, companyTheme, campaignStats, onComplete }: Out
         const c = cues[next++]!;
         if (!still && (!clock.current.skipped || c.keep)) c.play();
       }
-      const a = actOf(film.ACT_AT, t);
+      const a = actAt(film.ACT_AT, t);
       if (a !== shownAct) {
         setAct((shownAct = a));
         setActs((seen) => seen + a);
@@ -279,8 +359,8 @@ function VictoryFilmOutro({ film, companyTheme, campaignStats, onComplete }: Out
         <div className="ou-sub" key={sub}>
           {sub}
         </div>
-        <div className="ou-ticks" role="img" aria-label={`Act ${act} of 4`}>
-          {[1, 2, 3, 4].map((i) => (
+        <div className="ou-ticks" role="img" aria-label={`Act ${act} of ${last}`}>
+          {film.ACT_AT.map((_, k) => k + 1).map((i) => (
             <i key={i} className={i < act ? "done" : i === act ? "on" : ""} />
           ))}
         </div>
@@ -310,4 +390,7 @@ export function HomecomingOutro(p: OutroProps): ReactElement {
 }
 export function StarChartOutro(p: OutroProps): ReactElement {
   return <VictoryFilmOutro {...p} film={FILMS.starchart} />;
+}
+export function SunforgeOutro(p: OutroProps): ReactElement {
+  return <VictoryFilmOutro {...p} film={FILMS.sunforge} />;
 }

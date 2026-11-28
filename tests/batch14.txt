@@ -50,6 +50,9 @@
 # (T14_ED_02), map 3+1 rings, no Bots in the palette, the Campaign column's order (T14_ED_03), and
 # the mission playtest (T14_ED_04-07). CHANGED notes on T13_ED_01, 02, 03, 06. Checked by
 # tests/unit/editor.test.ts, tests/unit/playtest.test.ts and scripts/ui-playtest.mjs.
+# Sunforge, 2026-11-28: a sixth victory outro, the longest, in five acts (T14_OUTRO_01); a won Campaign
+# now plays one of six at random (CHANGED note on T14_WIN_04). Checked by tests/unit/outro.test.ts and
+# scripts/ui-victory.mjs.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -684,6 +687,7 @@ then: one of Terraformer 2.0, Surface Terraform, Orbital Claim, Homecoming and S
       at random each time (Terraformer 1.0 is never picked: kept only to compare), then the Debrief.
       System options says which five may play and still plays each one on its own button.
 note: Which Company gets which outro is decided at the very end of development (open questions).
+CHANGED (designer 2026-11-28): Sunforge joins them: one of six at random (T14_OUTRO_01).
 
 id: T14_WIN_05
 title: Chain Surge
@@ -1022,3 +1026,42 @@ given: the Campaign editor, started from Campaign 1
 then: the Omega tiles show O_01 -3.3, O_02 -14, O_03 -26; each mission roster's sum counts the Omega
       units placed at those prices; no "has no dev price" warning; no Omega under "no price".
 then: the exported Campaign file writes "dev_price: -3.3" (-14, -26) under each Omega unit.
+
+id: T14_OUTRO_01
+title: Sunforge, the sixth victory outro
+source: designer 2026-11-28 ("Create a spectacular end-of-campaign victory outro animation. Put more
+        effort into it. Be ambitious.")
+given: System options > "Play Sunforge" (or a won Campaign that picked it), Normal speed, 7 missions
+       won
+then: about 27 seconds, the longest victory film, with five act marks under the caption.
+      Act 1 "Stellar approach" (0-4.6 s): out of black, a blazing star (boiling surface, darker rim,
+      corona streamers, prominences of looping particles) to the right of the middle; the Flagship
+      glides in from the left as a dark silhouette, its upper edges lit by the star, engines and
+      running lights in the Company's colours; at 1.5 s its bay lights and a swarm of drones
+      streams out in a bow and falls into orbit round the star.
+      Act 2 "Shell assembly" (4.6-11.2 s): hexagonal panels fly in from the swarm and lock round the
+      star with weld sparks, the poles first; the caption counts "Shell segments locked · N of 355";
+      the star shows through the gaps, the far side's inner faces glow warm, the seams carry
+      starlight; as the shell closes the light is squeezed into a belt round the equator and shines
+      out as beams through the last gaps.
+      Act 3 "Eclipse" (11.2-15.0 s): one keystone per mission won (7 here) flies in from far out and
+      closes one of the last gaps round the equator with a flash, a ring and sparks; its mission's tag
+      shows beside it ("Keystones · N of 7 missions"); the last beam goes out at 12.9 s; total
+      eclipse at 13.2 s: a black sphere, only the keystones glowing; the shell thrums twice in the
+      dark (the seams flicker, a small jolt).
+      Act 4 "Ignition" (15.0-19.6 s): the seams light in the Company's colour from the north pole to
+      the south pole behind a ring of sparks (the panels turn to lit cells with an inner hexagon);
+      energy runs along the meridians to both poles; at 16.6 s the polar jets erupt: a white flash,
+      a wide lens streak, the picture shakes, two shock rings of particles run out through the
+      camera; the jets (a white core in the Company's colours, a twisting stream of particles,
+      bright knots) reach off the picture; "Sunforge online".
+      Act 5 "Dominion" (19.6 s on): the camera pulls far back and looks down on the system: one world
+      per mission won (at most 10) on its own orbit; a beam races from the shell to each world in
+      turn, its orbit lights in the Company's colour and its mission's tag shows ("Power relays · N
+      of 7 worlds"); a lattice of hexagons in the Company's light spreads out across the system;
+      the Debrief slides in at 23.5 s, the film keeps turning slowly beside it.
+then: "Tap twice to skip" jumps to the end and the Debrief; reduced motion or Instant shows one still
+      picture (26 s: the lit system) with act 5 marked and the card at once.
+note: Generic like Homecoming and Star Chart: the Company lends its colours and name only, so any
+      Company can be given it. One of six victory outros a won Campaign picks at random (T14_WIN_04).
+      Silent until its sounds are uploaded (audio batch 5 in docs/audio-hooks.md).
