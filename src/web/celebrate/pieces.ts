@@ -13,7 +13,7 @@
  * mission, the same one again if the save is reloaded (from the game's seed and the mission, never
  * the game's own random numbers). Screen only: nothing here is a rule.
  *
- * Built so far: four kills for Alpha (I21; Rail Strike and Alpha Erased 2026-11-27), three for Beta (Barrage and Cryo Shatter 2026-11-27), three for Gamma (I26; Dimensional Shatter 2026-11-21).
+ * Built so far: six kills for Alpha (I21; Rail Strike and Alpha Erased 2026-11-27; Burnout and Tether Rip 2026-11-28), three for Beta (Barrage and Cryo Shatter 2026-11-27), three for Gamma (I26; Dimensional Shatter 2026-11-21).
  * Wins (designer 2026-11-21): Mission Complete, Perimeter Sweep and Sector Flip; Chain Surge and Beacon Spiral
  * (designer 2026-11-27); for every mission won
  * (Eliminate Alpha, Beta, Gamma, and Salvage), one picked at random each mission. A lost or conceded game
@@ -34,6 +34,9 @@ export const KILL_PIECES: Piece[] = [
   // Designer 2026-11-27: two more for Alpha.
   { id: "alphaRail", name: "Rail Strike", for: ["Alpha"] },
   { id: "alphaErase", name: "Alpha Erased", for: ["Alpha"] },
+  // Designer 2026-11-28: two more for Alpha.
+  { id: "alphaBurnout", name: "Burnout", for: ["Alpha"] },
+  { id: "alphaTether", name: "Tether Rip", for: ["Alpha"] },
   { id: "betaBreach", name: "Beta Breach", for: ["Beta"] },
   // Designer 2026-11-27: two more for Beta (more spectacular than Alpha's).
   { id: "betaBarrage", name: "Barrage", for: ["Beta"] },

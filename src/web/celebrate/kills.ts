@@ -14,6 +14,8 @@ import { alphaDownStep } from "./killFx.js";
 import { alphaPurgeStep } from "./purgeFx.js";
 import { alphaRailStep } from "./railFx.js";
 import { alphaEraseStep } from "./eraseFx.js";
+import { alphaBurnoutStep } from "./burnoutFx.js";
+import { alphaTetherStep } from "./tetherFx.js";
 import { gammaShatterStep } from "./shatterFx.js";
 import { claimStep, surveyStep } from "./clearedFx.js";
 import { cascadeStep, fusionStep } from "./nodesFx.js";
@@ -24,6 +26,8 @@ export const KILL_STEPS: Record<string, (env: KillEnv, k: KillTarget) => Step> =
   alphaPurge: alphaPurgeStep,
   alphaRail: alphaRailStep,
   alphaErase: alphaEraseStep,
+  alphaBurnout: alphaBurnoutStep,
+  alphaTether: alphaTetherStep,
   betaBreach: betaBreachStep,
   betaBarrage: betaBarrageStep,
   betaCryo: betaCryoStep,

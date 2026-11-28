@@ -14,7 +14,7 @@ import { countedSoFar, decidingKill, killOf, objectiveOf, omegaName, winOf, winS
 import { KILL_PIECES, pickPiece, SALVAGE_PIECES, WIN_PIECES, type Piece } from "../../src/web/celebrate/pieces.js";
 import { boardJolt, flipLook, flipPose, flipStarts } from "../../src/web/celebrate/flipFx.js";
 import { burstAt, cellAt, farthest, recoil, ringArrival, ringAt, ringShare } from "../../src/web/celebrate/sweepFx.js";
-import { ARMILLARY, AURORA, BARRAGE, BEACON, CIRCUIT, CRYO, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SINGULAR, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
+import { ARMILLARY, AURORA, BARRAGE, BEACON, BURNOUT, CIRCUIT, TETHER, CRYO, ERASE, FLIP, MURMUR, RAIL, RESONANCE, SINGULAR, SURGE, SWEEP } from "../../src/web/celebrate/timeline.js";
 import { leapGrow, packetSpan, surgeCellAt, surgeLook, surgeTree } from "../../src/web/celebrate/chainSurgeFx.js";
 import { beaconLook, beaconMiddle, spiralOrder } from "../../src/web/celebrate/beaconFx.js";
 import { beatTimes, latticeOf, resonanceCellAt, resonanceLook, rippleAt, ringAt as resRingAt, ripplesOf } from "../../src/web/celebrate/resonanceFx.js";
@@ -24,6 +24,8 @@ import { coreSize, feedCellAt, singularityLook, wellPlace, wellPull } from "../.
 import { armillaryLook, armillaryPlan, armillaryTouch, ringAngles, ringDrawn, ringFrame } from "../../src/web/celebrate/armillaryFx.js";
 import { flightOf, headAt, murmurLook, pace, swarmCellAt } from "../../src/web/celebrate/murmurationFx.js";
 import { slugDistance, slugPasses } from "../../src/web/celebrate/railFx.js";
+import { GRAVITY, SPARKS, sparkAt, surgeAt, veinReach } from "../../src/web/celebrate/burnoutFx.js";
+import { HOOKED, hookAt, pieceOut, pullAngle, slack } from "../../src/web/celebrate/tetherFx.js";
 import { shellSpot } from "../../src/web/celebrate/barrageFx.js";
 import { FROST_LINES, struggle } from "../../src/web/celebrate/cryoFx.js";
 import { barAt, hexHalfHeight, LATTICE, latticeAt } from "../../src/web/celebrate/eraseFx.js";
@@ -82,6 +84,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     ["alphaPurge", ["Alpha"]],
     ["alphaRail", ["Alpha"]],
     ["alphaErase", ["Alpha"]],
+    ["alphaBurnout", ["Alpha"]],
+    ["alphaTether", ["Alpha"]],
     ["betaBreach", ["Beta"]],
     ["betaBarrage", ["Beta"]],
     ["betaCryo", ["Beta"]],
@@ -110,7 +114,7 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
   }
   const alphas = new Set<string>();
   for (let seed = 1; seed < 80; seed++) alphas.add(pickPiece(KILL_PIECES, "Alpha", seed, "C1_M1", "kill")!.id);
-  expect([...alphas].sort()).toEqual(["alphaDown", "alphaErase", "alphaPurge", "alphaRail"]);
+  expect([...alphas].sort()).toEqual(["alphaBurnout", "alphaDown", "alphaErase", "alphaPurge", "alphaRail", "alphaTether"]);
   const betas = new Set<string>();
   for (let seed = 1; seed < 60; seed++) betas.add(pickPiece(KILL_PIECES, "Beta", seed, "C1_M3", "kill")!.id);
   expect([...betas].sort()).toEqual(["betaBarrage", "betaBreach", "betaCryo"]);
@@ -126,6 +130,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Alpha kill alphaPurge",
     "Alpha kill alphaRail",
     "Alpha kill alphaErase",
+    "Alpha kill alphaBurnout",
+    "Alpha kill alphaTether",
     "Alpha win missionComplete",
     "Alpha win perimeterSweep",
     "Alpha win sectorFlip",
@@ -141,6 +147,8 @@ test("I19: one piece per mission, picked from the game's seed and the mission, t
     "Alpha both alphaPurge missionComplete",
     "Alpha both alphaRail missionComplete",
     "Alpha both alphaErase missionComplete",
+    "Alpha both alphaBurnout missionComplete",
+    "Alpha both alphaTether missionComplete",
     "Beta kill betaBreach",
     "Beta kill betaBarrage",
     "Beta kill betaCryo",
@@ -532,7 +540,7 @@ test("I25: the celebrations are the same for every Company: the same pieces, pic
     kills.add(k1!);
   }
   // Either Alpha kill comes up for either Company.
-  expect([...kills].sort()).toEqual(["alphaDown", "alphaErase", "alphaPurge", "alphaRail"]);
+  expect([...kills].sort()).toEqual(["alphaBurnout", "alphaDown", "alphaErase", "alphaPurge", "alphaRail", "alphaTether"]);
 });
 
 test("the cracks (designer 2026-11-20): tapered, branching, inside the tile, the same every time", () => {
@@ -975,7 +983,7 @@ test("Alpha Erased (designer 2026-11-27): the bar sweeps the tile, the lattice h
 });
 
 test("the two Beta kills (designer 2026-11-27): longer than any Alpha kill and Beta Breach's equal or more; Barrage walks in, Cryo freezes still", () => {
-  const alphaLongest = Math.max(...["alphaDown", "alphaPurge", "alphaRail", "alphaErase"].map((id) => KILL_TIMES[id]!.total));
+  const alphaLongest = Math.max(...["alphaDown", "alphaPurge", "alphaRail", "alphaErase", "alphaBurnout", "alphaTether"].map((id) => KILL_TIMES[id]!.total));
   for (const id of ["betaBarrage", "betaCryo"]) {
     expect(KILL_TIMES[id]!.total).toBeGreaterThan(alphaLongest + 1.5);
     expect(KILL_TIMES[id]!.total).toBeGreaterThanOrEqual(KILL_TIMES.betaBreach!.total);
@@ -1160,4 +1168,45 @@ test("Circuit Trace (designer 2026-11-28): the traces run along every sector edg
   expect(apart.edges.filter((e) => e.jump).length).toBe(1);
   expect(apart.at.every((x) => Number.isFinite(x))).toBe(true);
   expect(sound.onCircuitLock).toBeTypeOf("function");
+});
+
+test("Burnout (designer 2026-11-28): heat creeps in, three surges each stronger, the core blows upwards and the sparks fall back", () => {
+  expect(BURNOUT.total).toBe(4.5);
+  expect(KILL_TIMES.alphaBurnout).toBe(BURNOUT);
+  expect(veinReach(BURNOUT.veins[0])).toBe(0);
+  expect(veinReach(BURNOUT.veins[1])).toBeCloseTo(1);
+  const peaks = BURNOUT.surges.map((at) => surgeAt(at));
+  expect(peaks[1]!).toBeGreaterThan(peaks[0]!);
+  expect(peaks[2]!).toBeGreaterThan(peaks[1]!);
+  expect(surgeAt(0.5)).toBe(0);
+  expect(BURNOUT.surges[2]! < BURNOUT.blow && BURNOUT.blow < BURNOUT.wreckIn[0] && BURNOUT.count < BURNOUT.back[0]).toBe(true);
+  expect(GRAVITY).toBeGreaterThan(0);
+  // Every spark starts upwards (screen y down) and is falling before it dies; the same for the same spark.
+  for (const p of SPARKS) {
+    expect(sparkAt(p, 0.02).vy).toBeLessThan(0);
+    expect(sparkAt(p, p.life).vy).toBeGreaterThan(sparkAt(p, 0.02).vy);
+    expect(sparkAt(p, 0.3)).toEqual(sparkAt(p, 0.3));
+    expect(p.born + p.life).toBeLessThan(BURNOUT.back[0]);
+  }
+  expect(SPARKS.some((p) => sparkAt(p, p.life).vy > 0)).toBe(true);
+});
+
+test("Tether Rip (designer 2026-11-28): three hooks bite one after another, the tethers pull taut, three pieces are yanked out after the rip", () => {
+  expect(TETHER.total).toBe(4.6);
+  expect(KILL_TIMES.alphaTether).toBe(TETHER);
+  expect(HOOKED.length).toBe(3);
+  for (let i = 1; i < 3; i++) expect(hookAt(i)).toBeGreaterThan(hookAt(i - 1));
+  expect(hookAt(2)).toBeLessThan(TETHER.taut[0]);
+  expect(slack(TETHER.taut[0])).toBe(1);
+  expect(slack(TETHER.taut[1])).toBeCloseTo(0);
+  // Pulled three ways, 120 degrees apart.
+  const a = HOOKED.map(pullAngle);
+  expect(a[1]! - a[0]!).toBeCloseTo((2 * Math.PI) / 3);
+  for (let i = 0; i < 3; i++) {
+    expect(pieceOut(i, TETHER.rip)).toBe(0);
+    expect(pieceOut(i, TETHER.rip + 0.5)).toBeGreaterThan(pieceOut(i, TETHER.rip + 0.2));
+    // Off the screen (more than ten tile radii) before they fade out.
+    expect(pieceOut(i, TETHER.fling[1])).toBeGreaterThan(8);
+  }
+  expect(TETHER.cracks[1] < TETHER.rip && TETHER.rip < TETHER.wreckIn[0] && TETHER.count < TETHER.back[0]).toBe(true);
 });

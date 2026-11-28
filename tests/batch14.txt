@@ -55,6 +55,8 @@
 # Sunforge, 2026-11-28: a sixth victory outro, the longest, in five acts (T14_OUTRO_01); a won Campaign
 # now plays one of six at random (CHANGED note on T14_WIN_04). Checked by tests/unit/outro.test.ts and
 # scripts/ui-victory.mjs.
+# Two more Alpha kills, 2026-11-28: Burnout (T14_KILL_05) and Tether Rip (T14_KILL_06), one of six
+# Alpha kills at random per mission. CHANGED note on T14_KILL_02. Checked by the same files.
 ################################################################################
 
 === FORMAT SPEC ===
@@ -874,6 +876,41 @@ then: about 4.6 seconds on the Field. Act 1 (0-0.85 s): the zoom; four corner br
       zoom eases back.
 note: As T14_KILL_01. System options lists Rail Strike and Alpha Erased, and each then Mission Complete
       (48 buttons).
+CHANGED 2026-11-28: one of six Alpha kills now (T14_KILL_05, T14_KILL_06); 80 buttons in System options.
+
+id: T14_KILL_05
+title: Burnout
+source: designer 2026-11-28 ("Create 2 additional animations for eliminating the Alpha unit.")
+given: an Eliminate Alpha mission, the deciding Alpha destroyed, Burnout picked (or System options >
+       Mission celebrations > Burnout), Normal speed
+then: about 4.5 seconds on the Field. No weapon from outside: the unit is overloaded from within.
+      Act 1 (0-0.95 s): the zoom; veins of particles creep in from the tile's six corners towards its
+      middle, red, then orange; the tile's edge glows; a low tremble. Act 2 (0.95-1.95 s): three surges
+      throb through it, each stronger (the veins flash white, the tile swells, a ring of heat runs out);
+      arcs of particles leap from its corners to the ground round it, more and more, scorching where they
+      land. Act 3 (1.95-3.6 s): the core blows out upwards: a flash, a jet, then a fountain of molten
+      sparks that rise and fall back under gravity (white, amber, ember); smoke rises; the Wreck shows
+      again over a glowing crater that cools; "ALPHA BURNOUT · 5 / 6" turns to "6 / 6". Act 4
+      (3.6-4.5 s): the zoom eases back.
+note: The same for every Company. Two taps skip; reduced motion or Instant: the still close-up (1.5 s).
+      Less than any Beta kill (one unit, no knock-back, shorter). The pick (I19): one of the six Alpha
+      kills at random per mission (Alpha Down, Alpha Purge, Rail Strike, Alpha Erased, Burnout, Tether
+      Rip), the same again if the save is reloaded.
+
+id: T14_KILL_06
+title: Tether Rip
+source: designer 2026-11-28 (as T14_KILL_05)
+given: as T14_KILL_05, Tether Rip picked
+then: about 4.6 seconds on the Field. Act 1 (0-1.0 s): the zoom; three harpoons shoot in one after
+      another from beyond the Field's edge, each trailing a slack tether of particles, and bite into
+      three corners of the tile (a clamp ring, a spit of sparks, the tile jolts). Act 2 (1.0-1.95 s): the
+      tethers pull taut and thrum, brightening from cyan to white; cracks of light run from the middle
+      of the tile to the three corners between the hooks; the tile trembles. Act 3 (1.95-3.0 s): it is
+      torn into three pieces, each yanked away along its tether, turning, off the screen; sparks spray
+      from the torn edges, a small ring, a hard shake; the tethers whip and fade; the Wreck shows again;
+      "ALPHA TORN · 5 / 6" turns to "6 / 6". Act 4 (3.7-4.6 s): the zoom eases back.
+note: As T14_KILL_05. System options lists Burnout and Tether Rip, and each then Mission Complete (80
+      buttons).
 
 id: T14_KILL_03
 title: Barrage

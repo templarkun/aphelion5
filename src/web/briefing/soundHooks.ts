@@ -231,6 +231,18 @@ export function playRailImpact(): void {}
 export function playEraseScan(): void {}
 /** Alpha Erased: the unit's particles are unravelled on the wind. */
 export function playEraseUnravel(): void {}
+/** Burnout (Alpha): heat creeps into the unit from its corners. */
+export function playBurnoutHeat(): void {}
+/** Burnout: one of three surges through the unit (index 0, 1, 2), each stronger. */
+export function playBurnoutSurge(_index: number): void {}
+/** Burnout: the core blows out upwards in a fountain of sparks. */
+export function playBurnoutBlow(): void {}
+/** Tether Rip (Alpha): a harpoon bites into a corner of the tile (index 0, 1, 2). */
+export function playTetherHook(_index: number): void {}
+/** Tether Rip: the three tethers pull taut and thrum. */
+export function playTetherStrain(): void {}
+/** Tether Rip: the tile is torn into three pieces. */
+export function playTetherRip(): void {}
 /** Beta Breach, Act 2: one of the Beta's three surges against the lock (index 0, 1, 2). */
 export function playBetaSurge(index: number): void {
   void index;

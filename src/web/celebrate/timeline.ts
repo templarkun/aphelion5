@@ -106,6 +106,55 @@ export const ERASE = {
 };
 
 /**
+ * Burnout, the fifth kill for Alpha (designer 2026-11-28: "Create 2 additional animations for eliminating
+ * the Alpha unit"): about 4.5 s. No weapon from outside: the unit is overloaded from within. Heat creeps in
+ * from its corners as veins of particles, three surges throb through it, arcs leap from its corners to the
+ * ground; its core blows out upwards in a fountain of molten sparks that fall back under gravity; smoke rises.
+ */
+export const BURNOUT = {
+  total: 4.5,
+  /** Act 1, heat: the zoom; veins of particles creep in from the corners to the glyph (playBurnoutHeat). */
+  zoomIn: [0, 0.8] as const,
+  veins: [0.3, 1.55] as const,
+  /** Act 2, overload: three surges, each brighter (playBurnoutSurge(index)); arcs to the ground in between. */
+  surges: [0.95, 1.3, 1.62] as const,
+  arcs: [0.9, 1.98] as const,
+  /** Act 3, blow-out (playBurnoutBlow): the core bursts upwards, sparks rise and fall; smoke; the Wreck. */
+  blow: 1.95,
+  fountain: [1.95, 3.5] as const,
+  cool: [2.0, 3.6] as const,
+  wreckIn: [2.2, 2.6] as const,
+  label: [2.4, 2.65] as const,
+  count: 2.95,
+  /** Act 4, back. */
+  back: [3.6, 4.5] as const,
+};
+
+/**
+ * Tether Rip, the sixth kill for Alpha (designer 2026-11-28): about 4.6 s. Three harpoons shoot in from beyond
+ * the Field's edge and bite into three corners of the tile; their tethers of particles pull taut and thrum, the
+ * tile strains and cracks along three lines, and it is torn into three pieces yanked away along the tethers.
+ */
+export const TETHER = {
+  total: 4.6,
+  /** Act 1, hooks: the zoom; three harpoons fly in (one after another) and bite (playTetherHook(index)). */
+  zoomIn: [0, 0.8] as const,
+  shots: [0.2, 0.34, 0.48] as const,
+  flight: 0.34,
+  /** Act 2, strain: the tethers pull taut and thrum (playTetherStrain), cracks of light run from the middle. */
+  taut: [1.0, 1.7] as const,
+  cracks: [1.2, 1.92] as const,
+  /** Act 3, rip (playTetherRip): three pieces yanked out along the tethers; sparks from the torn edges; the Wreck. */
+  rip: 1.95,
+  fling: [1.95, 3.0] as const,
+  wreckIn: [2.2, 2.6] as const,
+  label: [2.4, 2.65] as const,
+  count: 2.95,
+  /** Act 4, back. */
+  back: [3.7, 4.6] as const,
+};
+
+/**
  * Beta Breach, the kill for Beta (designer 2026-11-20, more spectacular than Alpha's): about 6.2 s. The
  * Beta fights the lock, its core breaches and it detonates, knocking the units round it back.
  */
@@ -445,6 +494,8 @@ export const KILL_TIMES: Record<string, { total: number; back: readonly [number,
   alphaPurge: PURGE,
   alphaRail: RAIL,
   alphaErase: ERASE,
+  alphaBurnout: BURNOUT,
+  alphaTether: TETHER,
   betaBreach: BREACH,
   betaBarrage: BARRAGE,
   betaCryo: CRYO,
